@@ -37,7 +37,6 @@ interface SortableNoteItemProps {
   note: Note;
   isSelected: boolean;
   onSelectNote: (note: Note) => void;
-  stripHtml: (html: string) => string;
   getPreview: (content: string) => string;
   showDragHandle: boolean;
   onMouseEnter?: () => void;
@@ -45,7 +44,7 @@ interface SortableNoteItemProps {
   noteRef?: (el: HTMLDivElement | null) => void;
 }
 
-const SortableNoteItem = ({ note, isSelected, onSelectNote, stripHtml, getPreview, showDragHandle, onMouseEnter, onMouseLeave, noteRef }: SortableNoteItemProps) => {
+const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDragHandle, onMouseEnter, onMouseLeave, noteRef }: SortableNoteItemProps) => {
   const {
     attributes,
     listeners,
@@ -333,7 +332,6 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               note={note}
               isSelected={currentNote?.id === note.id}
               onSelectNote={onSelectNote}
-              stripHtml={stripHtml}
               getPreview={getPreview}
               showDragHandle={true}
               onMouseEnter={() => handleMouseEnter(index)}
