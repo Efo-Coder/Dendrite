@@ -20,7 +20,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { noteService } from '../services/note.service';
 
 interface NoteListProps {
@@ -40,9 +40,12 @@ interface SortableNoteItemProps {
   stripHtml: (html: string) => string;
   getPreview: (content: string) => string;
   showDragHandle: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  noteRef?: (el: HTMLDivElement | null) => void;
 }
 
-const SortableNoteItem = ({ note, isSelected, onSelectNote, stripHtml, getPreview, showDragHandle }: SortableNoteItemProps) => {
+const SortableNoteItem = ({ note, isSelected, onSelectNote, stripHtml, getPreview, showDragHandle, onMouseEnter, onMouseLeave, noteRef }: SortableNoteItemProps) => {
   const {
     attributes,
     listeners,
@@ -56,17 +59,25 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, stripHtml, getPrevie
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 1,
+  };
+
+  const combineRefs = (el: HTMLDivElement | null) => {
+    setNodeRef(el);
+    if (noteRef) noteRef(el);
   };
 
   return (
     <div
-      ref={setNodeRef}
+      ref={combineRefs}
       style={style}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       className={clsx(
-        'w-full border-b border-dark-border flex',
+        'w-full border-b border-dark-border flex relative h-[100px]',
         isSelected
-          ? 'bg-accent-green-500/10 border-l-2 border-l-accent-green-500'
-          : 'hover:bg-dark-elevated'
+          ? 'bg-accent-green-500/10'
+          : ''
       )}
     >
       {/* Drag Handle - nur anzeigen wenn nicht im Papierkorb */}
@@ -74,7 +85,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, stripHtml, getPrevie
         <div
           {...attributes}
           {...listeners}
-          className="flex items-center justify-center w-8 cursor-grab active:cursor-grabbing text-dark-text-muted hover:text-dark-text-primary"
+          className="flex items-center justify-center w-8 flex-shrink-0 cursor-grab active:cursor-grabbing text-dark-text-muted hover:text-dark-text-primary"
         >
           <GripVertical className="w-4 h-4" />
         </div>
@@ -83,14 +94,14 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, stripHtml, getPrevie
       {/* Note Content */}
       <button
         onClick={() => onSelectNote(note)}
-        className="flex-1 p-4 text-left"
+        className="flex-1 p-4 text-left flex flex-col justify-between"
       >
         {/* Note Header */}
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start justify-between">
           <h3 className="text-sm font-semibold text-dark-text-primary line-clamp-1 flex-1">
             {note.title}
           </h3>
-          <div className="flex items-center space-x-1 ml-2">
+          <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
             {note.isPinned && <Pin className="w-3 h-3 text-accent-green-500" />}
             {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
             {note.isLocked && <Lock className="w-3 h-3 text-dark-text-muted" />}
@@ -98,8 +109,8 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, stripHtml, getPrevie
         </div>
 
         {/* Note Preview */}
-        <p className="text-xs text-dark-text-secondary line-clamp-2 mb-2">
-          {getPreview(note.content)}
+        <p className="text-xs text-dark-text-secondary line-clamp-1">
+          {getPreview(note.content) || '\u00A0'}
         </p>
 
         {/* Note Meta */}
@@ -133,6 +144,9 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, stripHtml, getPrevie
 
 const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextType, contextId, isTrash }: NoteListProps) => {
   const [localNotes, setLocalNotes] = useState(notes);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [highlighterStyle, setHighlighterStyle] = useState({ top: 0, height: 0 });
+  const noteRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -144,6 +158,19 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   useEffect(() => {
     setLocalNotes(notes);
   }, [notes]);
+
+  const handleMouseEnter = (index: number) => {
+    setHoveredIndex(index);
+    const noteElement = noteRefs.current[index];
+    if (noteElement) {
+      const { offsetTop, offsetHeight } = noteElement;
+      setHighlighterStyle({ top: offsetTop, height: offsetHeight });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredIndex(null);
+  };
 
   const stripHtml = (html: string) => {
     const tmp = document.createElement('DIV');
@@ -196,27 +223,44 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   // Im Papierkorb: Kein Drag & Drop
   if (isTrash) {
     return (
-      <div className="flex-1 overflow-y-auto">
-        {localNotes.map((note) => (
+      <div className="flex-1 overflow-y-auto relative">
+        {/* Highlighter */}
+        {hoveredIndex !== null && (
+          <div
+            className="absolute left-0 w-full bg-white/5 backdrop-blur-sm pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
+            style={{
+              top: `${highlighterStyle.top}px`,
+              height: `${highlighterStyle.height}px`,
+            }}
+          />
+        )}
+
+        {localNotes.map((note, index) => (
           <div
             key={note.id}
+            ref={(el) => (noteRefs.current[index] = el)}
+            onMouseEnter={() => handleMouseEnter(index)}
+            onMouseLeave={handleMouseLeave}
             className={clsx(
-              'w-full border-b border-dark-border flex',
+              'w-full border-b border-dark-border flex relative h-[100px]',
               currentNote?.id === note.id
-                ? 'bg-accent-green-500/10 border-l-2 border-l-accent-green-500'
-                : 'hover:bg-dark-elevated'
+                ? 'bg-accent-green-500/10'
+                : ''
             )}
           >
+            {/* Platzhalter für Drag Handle - damit Layout konsistent bleibt */}
+            <div className="w-8 flex-shrink-0" />
+
             <button
               onClick={() => onSelectNote(note)}
-              className="flex-1 p-4 text-left"
+              className="flex-1 p-4 text-left flex flex-col justify-between"
             >
               {/* Note Header */}
-              <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start justify-between">
                 <h3 className="text-sm font-semibold text-dark-text-primary line-clamp-1 flex-1">
                   {note.title}
                 </h3>
-                <div className="flex items-center space-x-1 ml-2">
+                <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
                   {note.isPinned && <Pin className="w-3 h-3 text-accent-green-500" />}
                   {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
                   {note.isLocked && <Lock className="w-3 h-3 text-dark-text-muted" />}
@@ -224,8 +268,8 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               </div>
 
               {/* Note Preview */}
-              <p className="text-xs text-dark-text-secondary line-clamp-2 mb-2">
-                {getPreview(note.content)}
+              <p className="text-xs text-dark-text-secondary line-clamp-1">
+                {getPreview(note.content) || '\u00A0'}
               </p>
 
               {/* Note Meta */}
@@ -270,8 +314,19 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
         items={localNotes.map(note => note.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="flex-1 overflow-y-auto">
-          {localNotes.map((note) => (
+        <div className="flex-1 overflow-y-auto relative">
+          {/* Highlighter */}
+          {hoveredIndex !== null && (
+            <div
+              className="absolute left-0 w-full bg-white/5 backdrop-blur-sm pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
+              style={{
+                top: `${highlighterStyle.top}px`,
+                height: `${highlighterStyle.height}px`,
+              }}
+            />
+          )}
+
+          {localNotes.map((note, index) => (
             <SortableNoteItem
               key={note.id}
               note={note}
@@ -280,6 +335,9 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               stripHtml={stripHtml}
               getPreview={getPreview}
               showDragHandle={true}
+              onMouseEnter={() => handleMouseEnter(index)}
+              onMouseLeave={handleMouseLeave}
+              noteRef={(el) => (noteRefs.current[index] = el)}
             />
           ))}
         </div>
