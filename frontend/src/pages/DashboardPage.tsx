@@ -6,16 +6,18 @@ import Sidebar from '../components/Sidebar';
 import NoteList from '../components/NoteList';
 import NoteEditor from '../components/NoteEditor';
 import Header from '../components/Header';
-import { Plus, FileText } from 'lucide-react';
+import { Plus, FileText, Trash2 } from 'lucide-react';
+import Modal from '../components/modals/Modal';
 
 type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag';
 
 const DashboardPage = () => {
-  const { notes, fetchNotes, createNote, currentNote, setCurrentNote } = useNoteStore();
+  const { notes, fetchNotes, createNote, currentNote, setCurrentNote, deleteNote } = useNoteStore();
   const { user } = useAuthStore();
   const toast = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showEmptyTrashModal, setShowEmptyTrashModal] = useState(false);
 
   // View State
   const [currentView, setCurrentView] = useState<ViewType>('all');
@@ -148,6 +150,25 @@ const DashboardPage = () => {
     }
   };
 
+  const handleEmptyTrash = async () => {
+    try {
+      const trashedNotes = notes.filter(n => n.isDeleted);
+      if (trashedNotes.length === 0) {
+        setShowEmptyTrashModal(false);
+        return;
+      }
+      await Promise.all(trashedNotes.map(n => deleteNote(n.id)));
+      await fetchNotes({ deleted: true });
+      toast.success('Papierkorb geleert');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Papierkorb konnte nicht geleert werden');
+    } finally {
+      setShowEmptyTrashModal(false);
+      // Trigger sidebar refresh
+      setRefreshTrigger(prev => prev + 1);
+    }
+  };
+
   const getViewTitle = () => {
     switch (currentView) {
       case 'all':
@@ -192,7 +213,7 @@ const DashboardPage = () => {
                 {getViewTitle()}
               </h2>
               <div className="w-9 h-9 flex items-center justify-center">
-                {currentView !== 'trash' && (
+                {currentView !== 'trash' ? (
                   <button
                     onClick={handleCreateNote}
                     disabled={isCreating}
@@ -200,6 +221,14 @@ const DashboardPage = () => {
                     title="Neue Notiz"
                   >
                     <Plus className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowEmptyTrashModal(true)}
+                    className="btn-ghost px-3 py-2 rounded-lg text-red-500 hover:bg-dark-elevated flex items-center gap-2"
+                    title="Papierkorb leeren"
+                  >
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 )}
               </div>
@@ -238,7 +267,6 @@ const DashboardPage = () => {
             {currentNote ? (
               <NoteEditor
                 note={currentNote}
-                currentView={currentView}
                 onNoteUpdate={refreshCurrentView}
               />
             ) : (
@@ -251,6 +279,29 @@ const DashboardPage = () => {
             )}
           </div>
         </div>
+
+        {/* Empty Trash Modal */}
+        <Modal isOpen={showEmptyTrashModal} onClose={() => setShowEmptyTrashModal(false)} title="Papierkorb leeren?">
+          <div className="space-y-4">
+            <p className="text-sm text-dark-text-secondary">
+              Möchtest du wirklich alle Notizen im Papierkorb endgültig löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowEmptyTrashModal(false)}
+                className="px-3 py-2 rounded-lg bg-dark-elevated text-dark-text-primary hover:bg-dark-border"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleEmptyTrash}
+                className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500"
+              >
+                Endgültig löschen
+              </button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </div>
   );

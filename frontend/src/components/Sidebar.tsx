@@ -169,19 +169,21 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     key={tag.id}
                     onClick={() => onViewChange('tag', tag.id)}
                     className={clsx(
-                      'w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200',
+                      'w-full flex items-center px-3 py-2 rounded-lg transition-all duration-200',
                       currentView === 'tag' && selectedTagId === tag.id
                         ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
                         : 'text-dark-text-secondary hover:bg-dark-elevated hover:text-dark-text-primary'
                     )}
                   >
-                    <Tag
-                      className="w-4 h-4"
-                      style={{ color: tag.color }}
-                    />
-                    <span className="text-sm truncate">{tag.name}</span>
+                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                      <Tag
+                        className="w-4 h-4 flex-shrink-0"
+                        style={{ color: tag.color }}
+                      />
+                      <span className="text-sm truncate">{tag.name}</span>
+                    </div>
                     {tag.notes && tag.notes.length > 0 && (
-                      <span className="ml-auto text-xs text-dark-text-muted">
+                      <span className="text-xs text-dark-text-muted flex-shrink-0 ml-2">
                         {tag.notes.length}
                       </span>
                     )}

@@ -73,7 +73,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDrag
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={clsx(
-        'w-full border-b border-dark-border flex relative h-[100px]',
+        'w-full border-b border-dark-border flex relative h-[120px]',
         isSelected
           ? 'bg-accent-green-500/10'
           : ''
@@ -93,10 +93,10 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDrag
       {/* Note Content */}
       <button
         onClick={() => onSelectNote(note)}
-        className="flex-1 p-4 text-left flex flex-col justify-between min-w-0"
+        className="flex-1 px-4 py-3 text-left flex flex-col min-w-0"
       >
         {/* Note Header */}
-        <div className="flex items-start justify-between gap-2 min-w-0">
+        <div className="flex items-start justify-between gap-2 min-w-0 mb-2">
           <h3 className="text-sm font-semibold text-dark-text-primary line-clamp-1 flex-1 min-w-0 break-words">
             {note.title}
           </h3>
@@ -107,34 +107,48 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDrag
           </div>
         </div>
 
+        {/* Tags */}
+        {note.tags && note.tags.length > 0 && (
+          <div className="flex items-center space-x-1 flex-wrap gap-1 mb-2">
+            {note.tags.slice(0, 3).map((tag, index) => (
+              <span
+                key={tag.id}
+                className="px-1.5 text-xs rounded border whitespace-nowrap animate-fade-in"
+                style={{ 
+                  animationDelay: `${index * 100}ms`,
+                  backgroundColor: `${tag.color || '#10b981'}20`,
+                  color: tag.color || '#10b981',
+                  borderColor: `${tag.color || '#10b981'}40`
+                }}
+              >
+                {tag.name}
+              </span>
+            ))}
+            {note.tags.length > 3 && (
+              <span className="text-xs text-dark-text-muted whitespace-nowrap animate-fade-in">
+                +{note.tags.length - 3}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Note Preview */}
-        <p className="text-xs text-dark-text-secondary line-clamp-1 break-words min-w-0">
+        <p className={clsx(
+          "text-xs text-dark-text-secondary break-words min-w-0 mb-2 flex-1",
+          note.tags && note.tags.length > 0 ? "line-clamp-1" : "line-clamp-3",
+          !note.tags || note.tags.length === 0 ? "-mt-1" : ""
+        )}>
           {getPreview(note.content) || '\u00A0'}
         </p>
 
         {/* Note Meta */}
-        <div className="flex items-center justify-between gap-2 min-w-0">
+        <div className="flex items-center justify-between gap-2 min-w-0 mt-auto">
           <span className="text-xs text-dark-text-muted flex-shrink-0">
             {formatDistanceToNow(new Date(note.updatedAt), {
               addSuffix: true,
               locale: de,
             })}
           </span>
-          {note.tags && note.tags.length > 0 && (
-            <div className="flex items-center space-x-1 flex-shrink-0">
-              {note.tags.slice(0, 2).map((tag) => (
-                <span
-                  key={tag.id}
-                  className="px-1.5 py-0.5 bg-accent-green-500/10 text-accent-green-500 text-xs rounded border border-accent-green-500/20 whitespace-nowrap"
-                >
-                  {tag.name}
-                </span>
-              ))}
-              {note.tags.length > 2 && (
-                <span className="text-xs text-dark-text-muted whitespace-nowrap">+{note.tags.length - 2}</span>
-              )}
-            </div>
-          )}
         </div>
       </button>
     </div>
@@ -241,7 +255,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             onMouseEnter={() => handleMouseEnter(index)}
             onMouseLeave={handleMouseLeave}
             className={clsx(
-              'w-full border-b border-dark-border flex relative h-[100px]',
+              'w-full border-b border-dark-border flex relative h-[120px]',
               currentNote?.id === note.id
                 ? 'bg-accent-green-500/10'
                 : ''
@@ -252,10 +266,10 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
 
             <button
               onClick={() => onSelectNote(note)}
-              className="flex-1 p-4 text-left flex flex-col justify-between min-w-0"
+              className="flex-1 px-4 py-3 text-left flex flex-col min-w-0"
             >
               {/* Note Header */}
-              <div className="flex items-start justify-between gap-2 min-w-0">
+              <div className="flex items-start justify-between gap-2 min-w-0 mb-2">
                 <h3 className="text-sm font-semibold text-dark-text-primary line-clamp-1 flex-1 min-w-0 break-words">
                   {note.title}
                 </h3>
@@ -266,34 +280,48 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
                 </div>
               </div>
 
+              {/* Tags */}
+              {note.tags && note.tags.length > 0 && (
+                <div className="flex items-center space-x-1 flex-wrap gap-1 mb-2">
+                  {note.tags.slice(0, 3).map((tag, index) => (
+                    <span
+                      key={tag.id}
+                      className="px-1.5 text-xs rounded border whitespace-nowrap animate-fade-in"
+                      style={{ 
+                        animationDelay: `${index * 100}ms`,
+                        backgroundColor: `${tag.color || '#10b981'}20`,
+                        color: tag.color || '#10b981',
+                        borderColor: `${tag.color || '#10b981'}40`
+                      }}
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                  {note.tags.length > 3 && (
+                    <span className="text-xs text-dark-text-muted whitespace-nowrap animate-fade-in">
+                      +{note.tags.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Note Preview */}
-              <p className="text-xs text-dark-text-secondary line-clamp-1 break-words min-w-0">
+              <p className={clsx(
+                "text-xs text-dark-text-secondary break-words min-w-0 mb-2 flex-1",
+                note.tags && note.tags.length > 0 ? "line-clamp-1" : "line-clamp-3",
+                !note.tags || note.tags.length === 0 ? "-mt-1" : ""
+              )}>
                 {getPreview(note.content) || '\u00A0'}
               </p>
 
               {/* Note Meta */}
-              <div className="flex items-center justify-between gap-2 min-w-0">
+              <div className="flex items-center justify-between gap-2 min-w-0 mt-auto">
                 <span className="text-xs text-dark-text-muted flex-shrink-0">
                   {formatDistanceToNow(new Date(note.updatedAt), {
                     addSuffix: true,
                     locale: de,
                   })}
                 </span>
-                {note.tags && note.tags.length > 0 && (
-                  <div className="flex items-center space-x-1 flex-shrink-0">
-                    {note.tags.slice(0, 2).map((tag) => (
-                      <span
-                        key={tag.id}
-                        className="px-1.5 py-0.5 bg-accent-green-500/10 text-accent-green-500 text-xs rounded border border-accent-green-500/20 whitespace-nowrap"
-                      >
-                        {tag.name}
-                      </span>
-                    ))}
-                    {note.tags.length > 2 && (
-                      <span className="text-xs text-dark-text-muted whitespace-nowrap">+{note.tags.length - 2}</span>
-                    )}
-                  </div>
-                )}
               </div>
             </button>
           </div>

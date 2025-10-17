@@ -22,11 +22,10 @@ import clsx from 'clsx';
 
 interface NoteEditorProps {
   note: Note;
-  currentView?: string;
   onNoteUpdate?: () => void;
 }
 
-const NoteEditor = ({ note, currentView, onNoteUpdate }: NoteEditorProps) => {
+const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const { updateNote, deleteNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, setCurrentNote } = useNoteStore();
   const { folders } = useFolderStore();
   const { tags } = useTagStore();
@@ -70,7 +69,7 @@ const NoteEditor = ({ note, currentView, onNoteUpdate }: NoteEditorProps) => {
 
   const handleMoveToFolder = async (folderId: string | null) => {
     try {
-      await updateNote(note.id, { folderId });
+      await updateNote(note.id, { folderId: folderId || undefined });
       setShowFolderDropdown(false);
       toast.success('Notiz verschoben');
       if (onNoteUpdate) onNoteUpdate();
@@ -148,7 +147,7 @@ const NoteEditor = ({ note, currentView, onNoteUpdate }: NoteEditorProps) => {
   return (
     <div className="h-full flex flex-col bg-dark-bg">
       {/* Toolbar */}
-      <div className="h-14 border-b border-dark-border px-6 flex items-center justify-between">
+      <div className="h-14 border-b border-dark-border px-6 md:px-12 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           {!isInTrash && !isArchived && (
             <>
@@ -243,19 +242,21 @@ const NoteEditor = ({ note, currentView, onNoteUpdate }: NoteEditorProps) => {
                               key={tag.id}
                               onClick={() => handleToggleTag(tag.id)}
                               className={clsx(
-                                'w-full px-4 py-2 text-left text-sm hover:bg-dark-elevated transition-colors flex items-center space-x-2',
+                                'w-full px-4 py-2 text-left text-sm hover:bg-dark-elevated transition-colors flex items-center',
                                 isSelected && 'bg-accent-green-500/10'
                               )}
                             >
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => {}}
-                                className="w-4 h-4 rounded border-dark-border"
-                                style={{ accentColor: tag.color }}
-                              />
-                              <TagIcon className="w-4 h-4" style={{ color: tag.color }} />
-                              <span>{tag.name}</span>
+                              <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => {}}
+                                  className="w-4 h-4 rounded border-dark-border flex-shrink-0"
+                                  style={{ accentColor: tag.color }}
+                                />
+                                <TagIcon className="w-4 h-4 flex-shrink-0" style={{ color: tag.color }} />
+                                <span className="truncate">{tag.name}</span>
+                              </div>
                             </button>
                           );
                         })
@@ -342,7 +343,7 @@ const NoteEditor = ({ note, currentView, onNoteUpdate }: NoteEditorProps) => {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 md:px-12 md:py-8">
+      <div className="flex-1 overflow-y-auto pl-12 pr-12 py-8">
         <div className="w-full h-full flex flex-col">
           {/* Title Input */}
           <input
@@ -359,7 +360,7 @@ const NoteEditor = ({ note, currentView, onNoteUpdate }: NoteEditorProps) => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Beginne zu schreiben..."
-            className="w-full flex-1 bg-transparent border-none outline-none text-dark-text-primary placeholder-dark-text-muted text-base md:text-lg leading-relaxed resize-none"
+            className="w-full flex-1 bg-transparent border-none outline-none text-dark-text-primary placeholder-dark-text-muted text-base md:text-lg leading-relaxed resize-none pr-6 md:pr-12"
             disabled={isInTrash}
           />
         </div>
