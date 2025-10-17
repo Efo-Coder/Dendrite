@@ -94,14 +94,14 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, stripHtml, getPrevie
       {/* Note Content */}
       <button
         onClick={() => onSelectNote(note)}
-        className="flex-1 p-4 text-left flex flex-col justify-between"
+        className="flex-1 p-4 text-left flex flex-col justify-between min-w-0"
       >
         {/* Note Header */}
-        <div className="flex items-start justify-between">
-          <h3 className="text-sm font-semibold text-dark-text-primary line-clamp-1 flex-1">
+        <div className="flex items-start justify-between gap-2 min-w-0">
+          <h3 className="text-sm font-semibold text-dark-text-primary line-clamp-1 flex-1 min-w-0 break-words">
             {note.title}
           </h3>
-          <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
+          <div className="flex items-center space-x-1 flex-shrink-0">
             {note.isPinned && <Pin className="w-3 h-3 text-accent-green-500" />}
             {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
             {note.isLocked && <Lock className="w-3 h-3 text-dark-text-muted" />}
@@ -109,30 +109,30 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, stripHtml, getPrevie
         </div>
 
         {/* Note Preview */}
-        <p className="text-xs text-dark-text-secondary line-clamp-1">
+        <p className="text-xs text-dark-text-secondary line-clamp-1 break-words min-w-0">
           {getPreview(note.content) || '\u00A0'}
         </p>
 
         {/* Note Meta */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-dark-text-muted">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="text-xs text-dark-text-muted flex-shrink-0">
             {formatDistanceToNow(new Date(note.updatedAt), {
               addSuffix: true,
               locale: de,
             })}
           </span>
           {note.tags && note.tags.length > 0 && (
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-1 flex-shrink-0">
               {note.tags.slice(0, 2).map((tag) => (
                 <span
                   key={tag.id}
-                  className="px-1.5 py-0.5 bg-accent-green-500/10 text-accent-green-500 text-xs rounded border border-accent-green-500/20"
+                  className="px-1.5 py-0.5 bg-accent-green-500/10 text-accent-green-500 text-xs rounded border border-accent-green-500/20 whitespace-nowrap"
                 >
                   {tag.name}
                 </span>
               ))}
               {note.tags.length > 2 && (
-                <span className="text-xs text-dark-text-muted">+{note.tags.length - 2}</span>
+                <span className="text-xs text-dark-text-muted whitespace-nowrap">+{note.tags.length - 2}</span>
               )}
             </div>
           )}
@@ -223,7 +223,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   // Im Papierkorb: Kein Drag & Drop
   if (isTrash) {
     return (
-      <div className="flex-1 overflow-y-auto relative">
+      <div className="flex-1 overflow-y-scroll relative scrollbar-hide">
         {/* Highlighter */}
         {hoveredIndex !== null && (
           <div
@@ -253,14 +253,14 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
 
             <button
               onClick={() => onSelectNote(note)}
-              className="flex-1 p-4 text-left flex flex-col justify-between"
+              className="flex-1 p-4 text-left flex flex-col justify-between min-w-0"
             >
               {/* Note Header */}
-              <div className="flex items-start justify-between">
-                <h3 className="text-sm font-semibold text-dark-text-primary line-clamp-1 flex-1">
+              <div className="flex items-start justify-between gap-2 min-w-0">
+                <h3 className="text-sm font-semibold text-dark-text-primary line-clamp-1 flex-1 min-w-0 break-words">
                   {note.title}
                 </h3>
-                <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
+                <div className="flex items-center space-x-1 flex-shrink-0">
                   {note.isPinned && <Pin className="w-3 h-3 text-accent-green-500" />}
                   {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
                   {note.isLocked && <Lock className="w-3 h-3 text-dark-text-muted" />}
@@ -268,30 +268,30 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               </div>
 
               {/* Note Preview */}
-              <p className="text-xs text-dark-text-secondary line-clamp-1">
+              <p className="text-xs text-dark-text-secondary line-clamp-1 break-words min-w-0">
                 {getPreview(note.content) || '\u00A0'}
               </p>
 
               {/* Note Meta */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-dark-text-muted">
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <span className="text-xs text-dark-text-muted flex-shrink-0">
                   {formatDistanceToNow(new Date(note.updatedAt), {
                     addSuffix: true,
                     locale: de,
                   })}
                 </span>
                 {note.tags && note.tags.length > 0 && (
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1 flex-shrink-0">
                     {note.tags.slice(0, 2).map((tag) => (
                       <span
                         key={tag.id}
-                        className="px-1.5 py-0.5 bg-accent-green-500/10 text-accent-green-500 text-xs rounded border border-accent-green-500/20"
+                        className="px-1.5 py-0.5 bg-accent-green-500/10 text-accent-green-500 text-xs rounded border border-accent-green-500/20 whitespace-nowrap"
                       >
                         {tag.name}
                       </span>
                     ))}
                     {note.tags.length > 2 && (
-                      <span className="text-xs text-dark-text-muted">+{note.tags.length - 2}</span>
+                      <span className="text-xs text-dark-text-muted whitespace-nowrap">+{note.tags.length - 2}</span>
                     )}
                   </div>
                 )}
@@ -305,16 +305,17 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
 
   // Normale Ansichten: Mit Drag & Drop
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={localNotes.map(note => note.id)}
-        strategy={verticalListSortingStrategy}
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
-        <div className="flex-1 overflow-y-auto relative">
+        <SortableContext
+          items={localNotes.map(note => note.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="flex-1 overflow-y-auto relative scrollbar-hide">
           {/* Highlighter */}
           {hoveredIndex !== null && (
             <div
@@ -343,6 +344,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
         </div>
       </SortableContext>
     </DndContext>
+    </div>
   );
 };
 

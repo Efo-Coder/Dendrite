@@ -22,6 +22,9 @@ const DashboardPage = () => {
   const [selectedFolderId, setSelectedFolderId] = useState<string>();
   const [selectedTagId, setSelectedTagId] = useState<string>();
 
+  // Animation State
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   useEffect(() => {
     // Initial load - nur Notizen die nicht archiviert/gelöscht sind
     fetchNotes({ archived: false, deleted: false });
@@ -66,53 +69,64 @@ const DashboardPage = () => {
   };
 
   const handleViewChange = (view: ViewType, id?: string) => {
-    setCurrentView(view);
-    setCurrentNote(null); // Clear current note when switching views
+    // Start fade-out animation
+    setIsTransitioning(true);
 
-    if (view === 'folder') {
-      setSelectedFolderId(id);
-      setSelectedTagId(undefined);
-    } else if (view === 'tag') {
-      setSelectedTagId(id);
-      setSelectedFolderId(undefined);
-    } else {
-      setSelectedFolderId(undefined);
-      setSelectedTagId(undefined);
-    }
+    // Wait for fade-out to complete
+    setTimeout(() => {
+      setCurrentView(view);
+      setCurrentNote(null); // Clear current note when switching views
 
-    // Fetch notes based on view
-    const filters: any = {};
+      if (view === 'folder') {
+        setSelectedFolderId(id);
+        setSelectedTagId(undefined);
+      } else if (view === 'tag') {
+        setSelectedTagId(id);
+        setSelectedFolderId(undefined);
+      } else {
+        setSelectedFolderId(undefined);
+        setSelectedTagId(undefined);
+      }
 
-    switch (view) {
-      case 'all':
-        filters.archived = false;
-        filters.deleted = false;
-        break;
-      case 'favorites':
-        filters.favorite = true;
-        filters.archived = false;
-        filters.deleted = false;
-        break;
-      case 'archive':
-        filters.archived = true;
-        filters.deleted = false;
-        break;
-      case 'trash':
-        filters.deleted = true;
-        break;
-      case 'folder':
-        filters.folderId = id;
-        filters.archived = false;
-        filters.deleted = false;
-        break;
-      case 'tag':
-        filters.tagId = id;
-        filters.archived = false;
-        filters.deleted = false;
-        break;
-    }
+      // Fetch notes based on view
+      const filters: any = {};
 
-    fetchNotes(filters);
+      switch (view) {
+        case 'all':
+          filters.archived = false;
+          filters.deleted = false;
+          break;
+        case 'favorites':
+          filters.favorite = true;
+          filters.archived = false;
+          filters.deleted = false;
+          break;
+        case 'archive':
+          filters.archived = true;
+          filters.deleted = false;
+          break;
+        case 'trash':
+          filters.deleted = true;
+          break;
+        case 'folder':
+          filters.folderId = id;
+          filters.archived = false;
+          filters.deleted = false;
+          break;
+        case 'tag':
+          filters.tagId = id;
+          filters.archived = false;
+          filters.deleted = false;
+          break;
+      }
+
+      fetchNotes(filters);
+
+      // Start fade-in animation
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 50);
+    }, 200); // 200ms fade-out duration
   };
 
   const handleCreateNote = async () => {
@@ -192,25 +206,31 @@ const DashboardPage = () => {
             </div>
 
             {/* Note List Items */}
-            <NoteList
-              notes={notes}
-              currentNote={currentNote}
-              onSelectNote={setCurrentNote}
-              onNotesReordered={refreshCurrentView}
-              contextType={
-                currentView === 'folder' ? 'folder' :
-                currentView === 'tag' ? 'tag' :
-                currentView === 'favorites' ? 'favorites' :
-                currentView === 'archive' ? 'archive' :
-                'all'
-              }
-              contextId={
-                currentView === 'folder' ? selectedFolderId :
-                currentView === 'tag' ? selectedTagId :
-                undefined
-              }
-              isTrash={currentView === 'trash'}
-            />
+            <div
+              className={`flex-1 flex flex-col overflow-hidden transition-opacity duration-200 ${
+                isTransitioning ? 'opacity-0' : 'opacity-100'
+              }`}
+            >
+              <NoteList
+                notes={notes}
+                currentNote={currentNote}
+                onSelectNote={setCurrentNote}
+                onNotesReordered={refreshCurrentView}
+                contextType={
+                  currentView === 'folder' ? 'folder' :
+                  currentView === 'tag' ? 'tag' :
+                  currentView === 'favorites' ? 'favorites' :
+                  currentView === 'archive' ? 'archive' :
+                  'all'
+                }
+                contextId={
+                  currentView === 'folder' ? selectedFolderId :
+                  currentView === 'tag' ? selectedTagId :
+                  undefined
+                }
+                isTrash={currentView === 'trash'}
+              />
+            </div>
           </div>
 
           {/* Note Editor */}

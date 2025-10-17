@@ -342,8 +342,8 @@ const NoteEditor = ({ note, currentView, onNoteUpdate }: NoteEditorProps) => {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 overflow-y-auto p-6 md:p-12">
-        <div className="max-w-4xl mx-auto">
+      <div className="flex-1 overflow-y-auto px-6 py-6 md:px-12 md:py-8">
+        <div className="w-full h-full flex flex-col">
           {/* Title Input */}
           <input
             type="text"
@@ -359,7 +359,7 @@ const NoteEditor = ({ note, currentView, onNoteUpdate }: NoteEditorProps) => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Beginne zu schreiben..."
-            className="w-full min-h-[500px] bg-transparent border-none outline-none text-dark-text-primary placeholder-dark-text-muted text-base md:text-lg leading-relaxed resize-none"
+            className="w-full flex-1 bg-transparent border-none outline-none text-dark-text-primary placeholder-dark-text-muted text-base md:text-lg leading-relaxed resize-none"
             disabled={isInTrash}
           />
         </div>
