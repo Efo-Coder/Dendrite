@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes       Note[]
+  folders     Folder[]
+  tags        Tag[]
+  noteOrders  NoteOrder[]
+}
+
+model Folder {
+  id        String   @id @default(uuid())
+  name      String
+  color     String?  @default("#10b981") // Grüner Akzent
+  icon      String?
+  parentId  String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Folder?  @relation("SubFolders", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Folder[] @relation("SubFolders")
+  notes     Note[]
+
+  @@index([userId])
+  @@index([parentId])
+}
+
+model Note {
+  id          String   @id @default(uuid())
+  title       String
+  content     String   @db.Text
+  isPinned    Boolean  @default(false)
+  isLocked    Boolean  @default(false)
+  isFavorite  Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  isDeleted   Boolean  @default(false)
+  order       Int      @default(0)
+  folderId    String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags        Tag[]    @relation("NoteTags")
+  attachments Attachment[]
+
+  @@index([userId])
+  @@index([folderId])
+  @@index([isPinned])
+  @@index([isFavorite])
+  @@index([isArchived])
+  @@index([isDeleted])
+  @@index([order])
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  color     String   @default("#10b981")
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes     Note[]   @relation("NoteTags")
+
+  @@unique([name, userId])
+  @@index([userId])
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  filename  String
+  fileType  String
+  fileSize  Int
+  url       String
+  noteId    String
+  createdAt DateTime @default(now())
+
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+}
+
+model NoteOrder {
+  id          String   @id @default(uuid())
+  noteId      String
+  userId      String
+  contextType String   // 'all', 'folder', 'tag', 'favorites', 'archive'
+  contextId   String   @default("_none") // folder-id oder tag-id, "_none" für all/favorites/archive
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, userId, contextType, contextId])
+  @@index([userId, contextType, contextId])
+}

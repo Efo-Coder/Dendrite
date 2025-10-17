@@ -1,0 +1,218 @@
+feat: Vollständige Notizen-App mit Ordner, Tags, Archiv und Papierkorb
+
+Diese umfassende Implementierung beinhaltet eine komplett funktionsfähige
+Notizen-Verwaltungs-App mit modernem Dark Theme und allen wesentlichen Features.
+
+## Backend Features
+
+### Datenbank & Schema
+- PostgreSQL 16 Datenbank mit Prisma ORM
+- User-Authentifizierung mit JWT
+- Vollständiges Notizen-Schema mit Beziehungen
+- Soft-Delete Funktionalität (isDeleted)
+- Archivierungs-System (isArchived)
+- Ordner-Hierarchie mit Parent-Child-Beziehungen
+- Tags mit Farb-Support
+- Attachment-Schema für zukünftige Datei-Uploads
+- Optimierte Indizes für Performance
+
+### API Endpoints
+- Auth: `/api/auth/register`, `/api/auth/login`, `/api/auth/me`
+- Notes: CRUD + Search + Pin + Favorite + Archive + Trash
+- Folders: CRUD mit Farbunterstützung
+- Tags: CRUD mit Farbunterstützung
+- Filter-Unterstützung für alle Views (archived, deleted, favorite, etc.)
+
+### Technologie-Stack
+- Node.js 20 mit Express
+- TypeScript für Type-Safety
+- Prisma für Datenbank-Migrations
+- bcryptjs für Passwort-Hashing
+- JWT für sichere Authentifizierung
+- Zod für Validierung
+
+## Frontend Features
+
+### UI/UX
+- **Elegantes Dark Theme** mit dunkelgrauem Background und grünen Akzenten
+- **Responsive Layout** mit Sidebar, Note-List und Editor
+- **Smooth Animationen** für bessere User Experience
+- **Toast-Notifications** mit Auto-Close und visuellem Progress-Bar
+- **Modal-System** für Ordner- und Tag-Erstellung
+- **Dropdown-Menüs** für Ordner und Tag-Auswahl
+
+### Sidebar Navigation
+- "Alle Notizen" - Zeigt aktive Notizen
+- "Favoriten" - Gefiltert nach Favoriten
+- "Archiv" - Archivierte Notizen
+- "Papierkorb" - Gelöschte Notizen (Soft Delete)
+- Ordner-Liste mit dynamischer Anzeige und Farben
+- Tag-Liste mit dynamischer Anzeige und Farben
+- Plus-Buttons für schnelles Erstellen
+
+### Notizen-Editor
+- **Auto-Save** - Speichert automatisch nach 1 Sekunde
+- **Rich Toolbar** mit folgenden Funktionen:
+  - Pin/Unpin Notiz
+  - Favorisieren/Unfavorisieren
+  - Ordner-Auswahl Dropdown
+  - Tag-Management Dropdown (Multi-Select)
+  - Archivieren
+  - In Papierkorb verschieben
+  - Wiederherstellen aus Archiv/Papierkorb
+  - Endgültiges Löschen aus Papierkorb
+- **Visual Feedback** für alle Aktionen
+- **Disabled State** im Papierkorb
+
+### Ordner-Management
+- Ordner erstellen mit Namen und Farbe (8 Farben verfügbar)
+- Ordner-Hierarchie vorbereitet (Parent-Child)
+- Notizen in Ordner verschieben via Dropdown
+- Farbige Icons in Sidebar und Dropdowns
+
+### Tag-Management
+- Tags erstellen mit Namen und Farbe (8 Farben verfügbar)
+- Multi-Select Tag-Dropdown mit Checkboxen
+- Tags zu Notizen hinzufügen/entfernen
+- Farbige Tag-Badges
+
+### State Management
+- **Zustand** für globalen State
+- Separate Stores für Notes, Folders, Tags, Auth
+- Optimistische Updates
+- Error Handling mit Toasts
+- Auto-Refresh nach Aktionen
+
+### Toast-Notification-System
+- 4 Typen: Success, Error, Info, Warning
+- Auto-Close nach 3 Sekunden (konfigurierbar)
+- Visueller Progress-Bar
+- Slide-In/Slide-Out Animationen
+- Manuelles Schließen möglich
+- Stapelbare Notifications
+
+## Docker Setup
+
+### Container-Architektur
+- **Database Container**: PostgreSQL 16
+- **Backend Container**: Node.js 20-slim mit Prisma
+- **Frontend Container**: Vite Dev Server
+- Health-Checks für zuverlässigen Startup
+- Volume-Mounting für Hot-Reload
+- Netzwerk-Isolation
+
+### Startup-Scripts
+- `start.bat` / `start.sh` - Startet alle Container
+- `restart.bat` - Neustart mit Volume-Cleanup
+- `update-database.bat` - Schema-Updates
+- `backend-logs.bat` - Backend-Logs anzeigen
+- `logs.bat` - Alle Logs
+
+## Design-System
+
+### Farben
+- Background: #0f0f0f (sehr dunkel)
+- Surface: #1a1a1a (Cards, Sidebar)
+- Elevated: #242424 (Hover States)
+- Border: #2a2a2a
+- Text Primary: #e5e5e5
+- Text Secondary: #a3a3a3
+- Text Muted: #737373
+- Accent Green: #10b981
+
+### Komponenten-System
+- Wiederverwendbare Button-Styles (btn, btn-primary, btn-secondary, btn-ghost)
+- Input-Komponenten mit Focus-States
+- Card-System
+- Badge-System
+- Modal-Basis-Komponente
+
+### Animationen
+- Fade-In für Modals
+- Slide-Up für Dropdowns
+- Slide-In/Out für Toasts
+- Smooth Transitions für alle Interaktionen
+
+## Technologie-Stack
+
+### Frontend
+- React 18 mit TypeScript
+- Vite für schnelles Development
+- Tailwind CSS für Styling
+- Zustand für State Management
+- Axios für HTTP-Requests
+- React Router für Navigation
+- date-fns für Datum-Formatierung
+- lucide-react für Icons
+- clsx für Conditional Classnames
+
+### Backend
+- Express 4 mit TypeScript
+- Prisma 5 ORM
+- PostgreSQL 16
+- JWT Authentication
+- bcryptjs für Hashing
+- CORS Support
+- Error Handling Middleware
+
+### DevOps
+- Docker Compose Orchestrierung
+- Multi-Stage Builds
+- Volume Persistence
+- Hot-Reload Support
+- Health-Check System
+
+## Sicherheit
+
+- JWT-basierte Authentifizierung
+- Password Hashing mit bcrypt
+- CORS-Konfiguration
+- SQL-Injection-Schutz durch Prisma
+- XSS-Schutz durch React
+- Sichere HTTP-Only Cookies vorbereitet
+
+## Performance-Optimierungen
+
+- Datenbank-Indizes auf häufigen Queries
+- Lazy-Loading für Komponenten
+- Optimistische UI-Updates
+- Debounced Auto-Save
+- Effiziente Re-Renders mit React Memo vorbereitet
+
+## Code-Qualität
+
+- TypeScript für Type-Safety
+- ESLint Konfiguration
+- Konsistente Code-Struktur
+- Modularer Aufbau
+- Separation of Concerns
+- Error Boundaries vorbereitet
+
+## Deployment-Ready
+
+- Docker-basiert für einfaches Deployment
+- Environment-Variable-Support
+- Produktions-Build-Scripts
+- Database-Migration-System
+- Logging-System
+
+## Nächste Features (geplant)
+
+- Rich-Text Editor (TipTap)
+- Dateianhänge
+- Markdown-Support
+- Export-Funktionen (PDF, Markdown)
+- Keyboard Shortcuts
+- Dark/Light Mode Toggle
+- Collaborative Editing
+- Mobile App
+- Offline-Support (PWA)
+
+---
+
+**Aktueller Stand:** Alle Basis-Features sind vollständig implementiert und
+getestet. Die App ist produktionsbereit für grundlegende Notizen-Verwaltung.
+
+**Breaking Changes:** Keine - Erste stabile Version
+
+**Migration:** Führe `docker-compose up --build` aus für initiales Setup
