@@ -22,6 +22,11 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useState, useEffect, useRef } from 'react';
 import { noteService } from '../services/note.service';
+import { useNoteStore } from '../store/useNoteStore';
+import { useToast } from './ToastContainer';
+import NoteContextMenu from './NoteContextMenu';
+import MoveToFolderModal from './modals/MoveToFolderModal';
+import TagSelectionModal from './modals/TagSelectionModal';
 
 interface NoteListProps {
   notes: Note[];
@@ -42,9 +47,10 @@ interface SortableNoteItemProps {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   noteRef?: (el: HTMLDivElement | null) => void;
+  onRightClick?: (e: React.MouseEvent, note: Note) => void;
 }
 
-const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDragHandle, onMouseEnter, onMouseLeave, noteRef }: SortableNoteItemProps) => {
+const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDragHandle, onMouseEnter, onMouseLeave, noteRef, onRightClick }: SortableNoteItemProps) => {
   const {
     attributes,
     listeners,
@@ -93,6 +99,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDrag
       {/* Note Content */}
       <button
         onClick={() => onSelectNote(note)}
+        onContextMenu={(e) => onRightClick?.(e, note)}
         className="flex-1 px-4 py-3 text-left flex flex-col min-w-0"
       >
         {/* Note Header */}
@@ -158,6 +165,9 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDrag
 type SortOption = 'createdAt' | 'updatedAt' | 'title' | 'pinned' | 'manual';
 
 const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextType, contextId, isTrash }: NoteListProps) => {
+  const { updateNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, deleteNote } = useNoteStore();
+  const toast = useToast();
+  
   const [localNotes, setLocalNotes] = useState(notes);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [highlighterStyle, setHighlighterStyle] = useState({ top: 0, height: 0 });
@@ -168,6 +178,21 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   // Context-specific sorting state
   const getContextKey = () => `${contextType}-${contextId || '_none'}`;
   const [contextSortStates, setContextSortStates] = useState<Record<string, { sortBy: SortOption; sortOrder: 'asc' | 'desc' }>>({});
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    isOpen: boolean;
+    position: { x: number; y: number };
+    note: Note | null;
+  }>({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    note: null,
+  });
+
+  // Modal states
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [showTagModal, setShowTagModal] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -204,6 +229,124 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
       ...prev,
       [contextKey]: { sortBy: newSortBy, sortOrder: newSortOrder }
     }));
+  };
+
+  // Context menu handlers
+  const handleNoteRightClick = (e: React.MouseEvent, note: Note) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setContextMenu({
+      isOpen: true,
+      position: { x: e.clientX, y: e.clientY },
+      note,
+    });
+  };
+
+  const closeContextMenu = () => {
+    setContextMenu({
+      isOpen: false,
+      position: { x: 0, y: 0 },
+      note: null,
+    });
+  };
+
+  const handleEdit = () => {
+    if (contextMenu.note) {
+      onSelectNote(contextMenu.note);
+    }
+  };
+
+  const handleMove = () => {
+    setShowMoveModal(true);
+  };
+
+  const handleMoveToFolder = async (folderId: string | null) => {
+    if (contextMenu.note) {
+      try {
+        await updateNote(contextMenu.note.id, { folderId: folderId || undefined });
+        toast.success('Notiz verschoben');
+        if (onNotesReordered) onNotesReordered();
+      } catch (error) {
+        toast.error('Fehler beim Verschieben');
+      }
+    }
+  };
+
+  const handlePin = async () => {
+    if (contextMenu.note) {
+      try {
+        await togglePin(contextMenu.note.id);
+        toast.success(contextMenu.note.isPinned ? 'Anheften entfernt' : 'Notiz angeheftet');
+        if (onNotesReordered) onNotesReordered();
+      } catch (error) {
+        toast.error('Fehler beim Anheften');
+      }
+    }
+  };
+
+  const handleFavorite = async () => {
+    if (contextMenu.note) {
+      try {
+        await toggleFavorite(contextMenu.note.id);
+        toast.success(contextMenu.note.isFavorite ? 'Aus Favoriten entfernt' : 'Zu Favoriten hinzugefügt');
+        if (onNotesReordered) onNotesReordered();
+      } catch (error) {
+        toast.error('Fehler beim Favorisieren');
+      }
+    }
+  };
+
+  const handleArchive = async () => {
+    if (contextMenu.note) {
+      try {
+        await toggleArchive(contextMenu.note.id);
+        toast.success(contextMenu.note.isArchived ? 'Aus Archiv geholt' : 'Notiz archiviert');
+        if (onNotesReordered) onNotesReordered();
+      } catch (error) {
+        toast.error('Fehler beim Archivieren');
+      }
+    }
+  };
+
+  const handleTag = () => {
+    setShowTagModal(true);
+  };
+
+  const handleUpdateTags = async (tagIds: string[]) => {
+    if (contextMenu.note) {
+      try {
+        await updateNote(contextMenu.note.id, { tags: tagIds });
+        toast.success('Tags aktualisiert');
+        if (onNotesReordered) onNotesReordered();
+      } catch (error) {
+        toast.error('Fehler beim Aktualisieren der Tags');
+      }
+    }
+  };
+
+  const handleDelete = async () => {
+    if (contextMenu.note) {
+      if (contextMenu.note.isDeleted) {
+        // Permanent delete
+        try {
+          await deleteNote(contextMenu.note.id);
+          toast.error('Notiz endgültig gelöscht');
+          if (onNotesReordered) onNotesReordered();
+        } catch (error) {
+          toast.error('Fehler beim Löschen');
+        }
+      } else {
+        // Move to trash
+        try {
+          await toggleTrash(contextMenu.note.id);
+          toast.error('Notiz gelöscht');
+          if (onNotesReordered) onNotesReordered();
+        } catch (error) {
+          toast.error('Fehler beim Löschen der Notiz');
+        }
+      }
+    }
   };
 
   // Sortierung anwenden (außer bei manueller Sortierung)
@@ -306,6 +449,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   // Im Papierkorb: Kein Drag & Drop
   if (isTrash) {
     return (
+      <>
       <div className="flex-1 overflow-y-scroll relative scrollbar-hide">
         {/* Highlighter */}
         {hoveredIndex !== null && (
@@ -336,6 +480,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
 
             <button
               onClick={() => onSelectNote(note)}
+              onContextMenu={(e) => handleNoteRightClick(e, note)}
               className="flex-1 px-4 py-3 text-left flex flex-col min-w-0"
             >
               {/* Note Header */}
@@ -397,11 +542,44 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
           </div>
         ))}
       </div>
+
+      {/* Context Menu */}
+      <NoteContextMenu
+        isOpen={contextMenu.isOpen}
+        position={contextMenu.position}
+        onClose={closeContextMenu}
+        onEdit={handleEdit}
+        onMove={handleMove}
+        onPin={handlePin}
+        onFavorite={handleFavorite}
+        onArchive={handleArchive}
+        onTag={handleTag}
+        onDelete={handleDelete}
+        note={contextMenu.note || { isPinned: false, isFavorite: false, isArchived: false, isDeleted: false }}
+      />
+
+      {/* Move to Folder Modal */}
+      <MoveToFolderModal
+        isOpen={showMoveModal}
+        onClose={() => setShowMoveModal(false)}
+        onMove={handleMoveToFolder}
+        currentFolderId={contextMenu.note?.folderId}
+      />
+
+      {/* Tag Selection Modal */}
+      <TagSelectionModal
+        isOpen={showTagModal}
+        onClose={() => setShowTagModal(false)}
+        onUpdateTags={handleUpdateTags}
+        currentTagIds={contextMenu.note?.tags?.map(t => t.id) || []}
+      />
+      </>
     );
   }
 
   // Alle Ansichten: Mit Sortierung und Drag & Drop
   return (
+    <>
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Sortierung Header */}
       <div className="px-4 py-3 border-b border-dark-border bg-dark-surface">
@@ -464,12 +642,45 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               onMouseEnter={() => handleMouseEnter(index)}
               onMouseLeave={handleMouseLeave}
               noteRef={(el) => (noteRefs.current[index] = el)}
+              onRightClick={handleNoteRightClick}
             />
           ))}
         </div>
       </SortableContext>
     </DndContext>
     </div>
+
+    {/* Context Menu */}
+    <NoteContextMenu
+      isOpen={contextMenu.isOpen}
+      position={contextMenu.position}
+      onClose={closeContextMenu}
+      onEdit={handleEdit}
+      onMove={handleMove}
+      onPin={handlePin}
+      onFavorite={handleFavorite}
+      onArchive={handleArchive}
+      onTag={handleTag}
+      onDelete={handleDelete}
+      note={contextMenu.note || { isPinned: false, isFavorite: false, isArchived: false, isDeleted: false }}
+    />
+
+    {/* Move to Folder Modal */}
+    <MoveToFolderModal
+      isOpen={showMoveModal}
+      onClose={() => setShowMoveModal(false)}
+      onMove={handleMoveToFolder}
+      currentFolderId={contextMenu.note?.folderId}
+    />
+
+    {/* Tag Selection Modal */}
+    <TagSelectionModal
+      isOpen={showTagModal}
+      onClose={() => setShowTagModal(false)}
+      onUpdateTags={handleUpdateTags}
+      currentTagIds={contextMenu.note?.tags?.map(t => t.id) || []}
+    />
+    </>
   );
 };
 
