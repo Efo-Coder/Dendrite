@@ -138,6 +138,7 @@ const DashboardPage = () => {
         title: 'Neue Notiz',
         content: '',
         folderId: currentView === 'folder' ? selectedFolderId : undefined,
+        tags: currentView === 'tag' && selectedTagId ? [selectedTagId] : undefined,
       });
       setCurrentNote(newNote);
       toast.success('Notiz erstellt');
@@ -159,7 +160,7 @@ const DashboardPage = () => {
       }
       await Promise.all(trashedNotes.map(n => deleteNote(n.id)));
       await fetchNotes({ deleted: true });
-      toast.success('Papierkorb geleert');
+      toast.error('Papierkorb geleert');
     } catch (error: any) {
       toast.error(error?.response?.data?.error || 'Papierkorb konnte nicht geleert werden');
     } finally {
@@ -191,13 +192,14 @@ const DashboardPage = () => {
   return (
     <div className="flex h-screen bg-dark-bg overflow-hidden">
       {/* Sidebar */}
-      <Sidebar
-        currentView={currentView}
-        onViewChange={handleViewChange}
-        selectedFolderId={selectedFolderId}
-        selectedTagId={selectedTagId}
-        refreshTrigger={refreshTrigger}
-      />
+            <Sidebar
+              currentView={currentView}
+              onViewChange={handleViewChange}
+              selectedFolderId={selectedFolderId}
+              selectedTagId={selectedTagId}
+              refreshTrigger={refreshTrigger}
+              onTagUpdated={refreshCurrentView}
+            />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">

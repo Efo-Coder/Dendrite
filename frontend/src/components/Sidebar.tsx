@@ -5,6 +5,10 @@ import { useTagStore } from '../store/useTagStore';
 import clsx from 'clsx';
 import CreateFolderModal from './modals/CreateFolderModal';
 import CreateTagModal from './modals/CreateTagModal';
+import EditTagModal from './modals/EditTagModal';
+import EditFolderModal from './modals/EditFolderModal';
+import ContextMenu from './ContextMenu';
+import { Tag as TagType, Folder as FolderType } from '../types';
 
 type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag';
 
@@ -14,18 +18,119 @@ interface SidebarProps {
   selectedFolderId?: string;
   selectedTagId?: string;
   refreshTrigger?: number;
+  onTagUpdated?: () => void;
 }
 
-const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, refreshTrigger }: SidebarProps) => {
-  const { folders, fetchFolders } = useFolderStore();
-  const { tags, fetchTags } = useTagStore();
+const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, refreshTrigger, onTagUpdated }: SidebarProps) => {
+  const { folders, fetchFolders, deleteFolder } = useFolderStore();
+  const { tags, fetchTags, deleteTag } = useTagStore();
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
+  const [showEditTagModal, setShowEditTagModal] = useState(false);
+  const [showEditFolderModal, setShowEditFolderModal] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<TagType | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<FolderType | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    isOpen: boolean;
+    position: { x: number; y: number };
+    tag: TagType | null;
+    folder: FolderType | null;
+  }>({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    tag: null,
+    folder: null,
+  });
 
   useEffect(() => {
     fetchFolders();
     fetchTags();
   }, [fetchFolders, fetchTags, refreshTrigger]);
+
+  const handleTagRightClick = (e: React.MouseEvent, tag: TagType) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setContextMenu({
+      isOpen: true,
+      position: { x: e.clientX, y: e.clientY },
+      tag,
+      folder: null,
+    });
+  };
+
+  const handleFolderRightClick = (e: React.MouseEvent, folder: FolderType) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setContextMenu({
+      isOpen: true,
+      position: { x: e.clientX, y: e.clientY },
+      tag: null,
+      folder,
+    });
+  };
+
+  const handleEditTag = () => {
+    if (contextMenu.tag) {
+      setSelectedTag(contextMenu.tag);
+      setShowEditTagModal(true);
+    }
+  };
+
+  const handleEditFolder = () => {
+    if (contextMenu.folder) {
+      setSelectedFolder(contextMenu.folder);
+      setShowEditFolderModal(true);
+    }
+  };
+
+  const handleTagUpdated = () => {
+    // Tags neu laden nach dem Update
+    fetchTags();
+    // Notizen auch aktualisieren, damit die neuen Tag-Farben angezeigt werden
+    onTagUpdated?.();
+  };
+
+  const handleFolderUpdated = () => {
+    // Ordner neu laden nach dem Update
+    fetchFolders();
+    // Notizen auch aktualisieren
+    onTagUpdated?.();
+  };
+
+  const handleDeleteTag = async () => {
+    if (contextMenu.tag) {
+      if (window.confirm(`Möchtest du den Tag "${contextMenu.tag.name}" wirklich löschen?`)) {
+        try {
+          await deleteTag(contextMenu.tag.id);
+        } catch (error) {
+          console.error('Fehler beim Löschen des Tags:', error);
+        }
+      }
+    }
+  };
+
+  const handleDeleteFolder = async () => {
+    if (contextMenu.folder) {
+      if (window.confirm(`Möchtest du den Ordner "${contextMenu.folder.name}" wirklich löschen?`)) {
+        try {
+          await deleteFolder(contextMenu.folder.id);
+        } catch (error) {
+          console.error('Fehler beim Löschen des Ordners:', error);
+        }
+      }
+    }
+  };
+
+  const closeContextMenu = () => {
+    setContextMenu({
+      isOpen: false,
+      position: { x: 0, y: 0 },
+      tag: null,
+      folder: null,
+    });
+  };
 
   const menuItems = [
     {
@@ -120,20 +225,23 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                   <button
                     key={folder.id}
                     onClick={() => onViewChange('folder', folder.id)}
+                    onContextMenu={(e) => handleFolderRightClick(e, folder)}
                     className={clsx(
-                      'w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200',
+                      'w-full flex items-center px-3 py-2 rounded-lg transition-all duration-200',
                       currentView === 'folder' && selectedFolderId === folder.id
                         ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
                         : 'text-dark-text-secondary hover:bg-dark-elevated hover:text-dark-text-primary'
                     )}
                   >
-                    <Folder
-                      className="w-4 h-4"
-                      style={{ color: folder.color || '#10b981' }}
-                    />
-                    <span className="text-sm truncate">{folder.name}</span>
+                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                      <Folder
+                        className="w-4 h-4 flex-shrink-0"
+                        style={{ color: folder.color || '#10b981' }}
+                      />
+                      <span className="text-sm truncate">{folder.name}</span>
+                    </div>
                     {folder.notes && folder.notes.length > 0 && (
-                      <span className="ml-auto text-xs text-dark-text-muted">
+                      <span className="text-xs text-dark-text-muted flex-shrink-0 ml-2">
                         {folder.notes.length}
                       </span>
                     )}
@@ -168,6 +276,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                   <button
                     key={tag.id}
                     onClick={() => onViewChange('tag', tag.id)}
+                    onContextMenu={(e) => handleTagRightClick(e, tag)}
                     className={clsx(
                       'w-full flex items-center px-3 py-2 rounded-lg transition-all duration-200',
                       currentView === 'tag' && selectedTagId === tag.id
@@ -203,6 +312,33 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
       <CreateTagModal
         isOpen={showTagModal}
         onClose={() => setShowTagModal(false)}
+      />
+      <EditTagModal
+        isOpen={showEditTagModal}
+        onClose={() => {
+          setShowEditTagModal(false);
+          setSelectedTag(null);
+        }}
+        onTagUpdated={handleTagUpdated}
+        tag={selectedTag}
+      />
+      <EditFolderModal
+        isOpen={showEditFolderModal}
+        onClose={() => {
+          setShowEditFolderModal(false);
+          setSelectedFolder(null);
+        }}
+        onFolderUpdated={handleFolderUpdated}
+        folder={selectedFolder}
+      />
+
+      {/* Context Menu */}
+      <ContextMenu
+        isOpen={contextMenu.isOpen}
+        position={contextMenu.position}
+        onClose={closeContextMenu}
+        onEdit={contextMenu.tag ? handleEditTag : handleEditFolder}
+        onDelete={contextMenu.tag ? handleDeleteTag : handleDeleteFolder}
       />
     </>
   );

@@ -7,7 +7,6 @@ import { useToast } from './ToastContainer';
 import {
   Pin,
   Star,
-  MoreVertical,
   Trash2,
   FolderOpen,
   Tag as TagIcon,
@@ -15,6 +14,7 @@ import {
   Archive,
   ArchiveRestore,
   RotateCcw,
+  X,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -34,7 +34,6 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
   const [isSaving, setIsSaving] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
   const [showFolderDropdown, setShowFolderDropdown] = useState(false);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
 
@@ -71,7 +70,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
     try {
       await updateNote(note.id, { folderId: folderId || undefined });
       setShowFolderDropdown(false);
-      toast.success('Notiz verschoben');
+      toast.info('Notiz verschoben');
       if (onNoteUpdate) onNoteUpdate();
     } catch (error) {
       toast.error('Fehler beim Verschieben');
@@ -86,7 +85,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
     try {
       await updateNote(note.id, { tags: newTagIds });
-      toast.success('Tags aktualisiert');
+      toast.info('Tags aktualisiert');
       if (onNoteUpdate) onNoteUpdate();
     } catch (error) {
       toast.error('Fehler beim Aktualisieren der Tags');
@@ -99,7 +98,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
       try {
         await deleteNote(note.id);
         setCurrentNote(null);
-        toast.success('Notiz endgültig gelöscht');
+        toast.error('Notiz endgültig gelöscht');
         if (onNoteUpdate) onNoteUpdate();
       } catch (error) {
         toast.error('Fehler beim Löschen');
@@ -108,10 +107,11 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
       // Move to trash
       try {
         await toggleTrash(note.id);
-        toast.info('Notiz in Papierkorb verschoben');
+        setCurrentNote(null); // Close editor after moving to trash
+        toast.error('Notiz gelöscht');
         if (onNoteUpdate) onNoteUpdate();
       } catch (error) {
-        toast.error('Fehler beim Verschieben in den Papierkorb');
+        toast.error('Fehler beim Löschen der Notiz');
       }
     }
   };
@@ -139,6 +139,10 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
     } catch (error) {
       toast.error('Fehler beim Wiederherstellen');
     }
+  };
+
+  const handleClose = () => {
+    setCurrentNote(null);
   };
 
   const isInTrash = note.isDeleted;
@@ -174,6 +178,13 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                 title="Zu Favoriten hinzufügen"
               >
                 <Star className={clsx('w-4 h-4', note.isFavorite && 'fill-yellow-500')} />
+              </button>
+              <button
+                onClick={handleArchive}
+                className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+                title="Archivieren"
+              >
+                <Archive className="w-4 h-4" />
               </button>
 
               <div className="h-4 w-px bg-dark-border mx-2" />
@@ -306,38 +317,38 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             </div>
           )}
 
-          {/* More Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
-            >
-              <MoreVertical className="w-4 h-4" />
-            </button>
-
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 mt-2 w-48 bg-dark-surface border border-dark-border rounded-lg shadow-2xl z-20 overflow-hidden animate-fade-in">
-                  {!isInTrash && !isArchived && (
-                    <button
-                      onClick={() => { handleArchive(); setShowMenu(false); }}
-                      className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-dark-text-primary hover:bg-dark-elevated transition-colors"
-                    >
-                      <Archive className="w-4 h-4" />
-                      <span>Archivieren</span>
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { handleDelete(); setShowMenu(false); }}
-                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-500 hover:bg-dark-elevated transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>{isInTrash ? 'Endgültig löschen' : 'In Papierkorb'}</span>
-                  </button>
-                </div>
-              </>
+          {/* Right side icons */}
+          <div className="flex items-center space-x-2">
+            {/* Trash/Delete Button - only show when not in trash/archive */}
+            {!isInTrash && !isArchived && (
+              <button
+                onClick={handleDelete}
+                className="p-2 rounded-lg text-dark-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                title="In Papierkorb"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             )}
+
+            {/* Endgültig löschen Button - only show in trash */}
+            {isInTrash && (
+              <button
+                onClick={handleDelete}
+                className="p-2 rounded-lg text-dark-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                title="Endgültig löschen"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Close Button */}
+            <button
+              onClick={handleClose}
+              className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+              title="Notiz schließen"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
