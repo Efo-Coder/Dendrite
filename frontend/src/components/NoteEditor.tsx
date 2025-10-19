@@ -4,6 +4,8 @@ import { useNoteStore } from '../store/useNoteStore';
 import { useFolderStore } from '../store/useFolderStore';
 import { useTagStore } from '../store/useTagStore';
 import { useToast } from './ToastContainer';
+import RichTextToolbar from './RichTextToolbar';
+import RichTextEditor from './RichTextEditor';
 import {
   Pin,
   Star,
@@ -353,6 +355,9 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
         </div>
       </div>
 
+      {/* Rich Text Toolbar */}
+      <RichTextToolbar disabled={isInTrash} />
+
       {/* Editor */}
       <div className="flex-1 overflow-y-auto pl-12 pr-12 py-8">
         <div className="w-full h-full flex flex-col">
@@ -362,16 +367,15 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Titel"
-            className="w-full text-3xl md:text-4xl font-bold bg-transparent border-none outline-none text-dark-text-primary placeholder-dark-text-muted mb-6"
+            className="w-full text-3xl md:text-4xl font-bold bg-transparent border-none outline-none text-dark-text-primary placeholder-dark-text-muted mb-8"
             disabled={isInTrash}
           />
 
-          {/* Content Textarea */}
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
+          {/* Rich Text Editor */}
+          <RichTextEditor
+            content={content}
+            onChange={setContent}
             placeholder="Beginne zu schreiben..."
-            className="w-full flex-1 bg-transparent border-none outline-none text-dark-text-primary placeholder-dark-text-muted text-base md:text-lg leading-relaxed resize-none pr-6 md:pr-12"
             disabled={isInTrash}
           />
         </div>
