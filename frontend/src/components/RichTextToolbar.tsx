@@ -29,59 +29,28 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [savedSelection, setSavedSelection] = useState<Range | null>(null);
 
-  const getEditor = () => {
-    // Try multiple selectors to find the editor
-    let editor = document.querySelector('[contenteditable="true"]') as HTMLElement;
-    if (!editor) {
-      editor = document.querySelector('[contenteditable]') as HTMLElement;
-    }
-    if (!editor) {
-      // Fallback: look for the specific editor class
-      editor = document.querySelector('.rich-text-editor') as HTMLElement;
-    }
-    return editor;
+  const getCKEditor = () => {
+    // Find CKEditor instance
+    const editorElement = document.querySelector('.ck-editor__editable');
+    if (!editorElement) return null;
+    
+    // Get CKEditor instance from the element
+    return (editorElement as any).ckeditorInstance;
   };
 
   const execCommand = (command: string, value?: string) => {
-    const editor = getEditor();
+    const editor = getCKEditor();
     if (!editor) return;
 
-    editor.focus();
-    
-    // Handle list commands specially
-    if (command === 'insertUnorderedList') {
-      insertList('ul');
-    } else if (command === 'insertOrderedList') {
-      insertList('ol');
-    } else {
-      // Use execCommand for other formatting
-      try {
-        document.execCommand(command, false, value);
-      } catch (error) {
-        console.warn(`Command ${command} not supported:`, error);
-      }
+    try {
+      editor.execute(command, value);
+    } catch (error) {
+      console.warn(`Command ${command} not supported:`, error);
     }
-  };
-
-  const insertList = (type: 'ul' | 'ol') => {
-    const editor = getEditor();
-    if (!editor) return;
-
-    editor.focus();
-    
-    // Use execCommand for list insertion
-    const command = type === 'ul' ? 'insertUnorderedList' : 'insertOrderedList';
-    document.execCommand(command, false);
   };
 
   const insertLink = () => {
-    // Save current selection before opening modal
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      setSavedSelection(selection.getRangeAt(0).cloneRange());
-    }
     setShowLinkModal(true);
   };
 
@@ -91,75 +60,15 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
 
   const handleLinkSubmit = () => {
     if (linkUrl.trim()) {
-      const editor = getEditor();
-      if (!editor) return;
-
-      // Use saved selection or current selection
-      const selection = window.getSelection();
-      if (!selection) return;
-
-      let range: Range;
-      if (savedSelection) {
-        // Restore saved selection
-        selection.removeAllRanges();
-        selection.addRange(savedSelection);
-        range = savedSelection;
-      } else if (selection.rangeCount > 0) {
-        range = selection.getRangeAt(0);
-      } else {
-        // Fallback: create range at end of editor
-        range = document.createRange();
-        range.selectNodeContents(editor);
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-
-      if (range.collapsed) {
-        // No text selected, insert link with URL as text
-        const link = document.createElement('a');
-        link.href = linkUrl;
-        link.textContent = linkUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        
-        // Insert at saved cursor position
-        range.insertNode(link);
-        
-        // Position cursor after the link
-        const newRange = document.createRange();
-        newRange.setStartAfter(link);
-        newRange.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-      } else {
-        // Text is selected, wrap it in a link
-        const selectedText = range.toString();
-        const link = document.createElement('a');
-        link.href = linkUrl;
-        link.textContent = selectedText;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        range.deleteContents();
-        range.insertNode(link);
-        
-        // Clear selection and position cursor after the link
-        const newRange = document.createRange();
-        newRange.setStartAfter(link);
-        newRange.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-      }
-      
+      execCommand('link', linkUrl);
       setLinkUrl('');
-      setSavedSelection(null);
       setShowLinkModal(false);
     }
   };
 
   const handleImageSubmit = () => {
     if (imageUrl.trim()) {
-      execCommand('insertImage', imageUrl);
+      execCommand('imageInsert', { src: imageUrl });
       setImageUrl('');
       setShowImageModal(false);
     }
@@ -169,17 +78,17 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
     { icon: Bold, command: 'bold', title: 'Fett' },
     { icon: Italic, command: 'italic', title: 'Kursiv' },
     { icon: Underline, command: 'underline', title: 'Unterstrichen' },
-    { icon: Strikethrough, command: 'strikeThrough', title: 'Durchgestrichen' },
+    { icon: Strikethrough, command: 'strikethrough', title: 'Durchgestrichen' },
     { separator: true },
-    { icon: List, command: 'insertUnorderedList', title: 'Aufzählung' },
-    { icon: ListOrdered, command: 'insertOrderedList', title: 'Nummerierte Liste' },
-    { icon: Quote, command: 'formatBlock', value: 'blockquote', title: 'Zitat' },
-    { icon: Code, command: 'formatBlock', value: 'pre', title: 'Code' },
+    { icon: List, command: 'bulletedList', title: 'Aufzählung' },
+    { icon: ListOrdered, command: 'numberedList', title: 'Nummerierte Liste' },
+    { icon: Quote, command: 'blockQuote', title: 'Zitat' },
+    { icon: Code, command: 'codeBlock', title: 'Code' },
     { separator: true },
-    { icon: AlignLeft, command: 'justifyLeft', title: 'Linksbündig' },
-    { icon: AlignCenter, command: 'justifyCenter', title: 'Zentriert' },
-    { icon: AlignRight, command: 'justifyRight', title: 'Rechtsbündig' },
-    { icon: AlignJustify, command: 'justifyFull', title: 'Blocksatz' },
+    { icon: AlignLeft, command: 'alignment', value: 'left', title: 'Linksbündig' },
+    { icon: AlignCenter, command: 'alignment', value: 'center', title: 'Zentriert' },
+    { icon: AlignRight, command: 'alignment', value: 'right', title: 'Rechtsbündig' },
+    { icon: AlignJustify, command: 'alignment', value: 'justify', title: 'Blocksatz' },
     { separator: true },
     { icon: Link, action: insertLink, title: 'Link einfügen' },
     { icon: Image, action: insertImage, title: 'Bild einfügen' },
@@ -331,4 +240,3 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
 };
 
 export default RichTextToolbar;
-
