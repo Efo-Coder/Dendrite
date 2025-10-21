@@ -8,6 +8,7 @@ import CreateTagModal from './modals/CreateTagModal';
 import EditTagModal from './modals/EditTagModal';
 import EditFolderModal from './modals/EditFolderModal';
 import ContextMenu from './ContextMenu';
+import Logo from './Logo';
 import { Tag as TagType, Folder as FolderType } from '../types';
 
 type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag';
@@ -164,12 +165,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
       <aside className="w-64 bg-dark-surface border-r border-dark-border flex flex-col">
         {/* Logo */}
         <div className="h-16 px-6 flex items-center border-b border-dark-border">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-accent-green-500/10 rounded-lg flex items-center justify-center border border-accent-green-500/20">
-              <FileText className="w-4 h-4 text-accent-green-500" />
-            </div>
-            <h1 className="text-xl font-bold text-dark-text-primary">Dendrite</h1>
-          </div>
+          <Logo size="md" showText={true} />
         </div>
 
         {/* Navigation */}
