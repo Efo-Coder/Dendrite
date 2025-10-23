@@ -1,15 +1,15 @@
-import { useEffect } from 'react';
+import { ReactNode } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
-import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
+import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
@@ -18,12 +18,14 @@ import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { $getRoot, $insertNodes } from 'lexical';
+import { useEffect } from 'react';
 
-interface RichTextEditorProps {
+interface LexicalEditorWrapperProps {
   content: string;
   onChange: (content: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  toolbar?: ReactNode;
 }
 
 const editorTheme = {
@@ -128,7 +130,13 @@ function HtmlPlugin({ content, onChange }: { content: string; onChange: (html: s
   return <OnChangePlugin onChange={handleChange} ignoreSelectionChange />;
 }
 
-const RichTextEditor = ({ content, onChange, placeholder = "Beginne zu schreiben...", disabled = false }: RichTextEditorProps) => {
+const LexicalEditorWrapper = ({
+  content,
+  onChange,
+  placeholder = "Beginne zu schreiben...",
+  disabled = false,
+  toolbar,
+}: LexicalEditorWrapperProps) => {
   const initialConfig = {
     namespace: 'DendriteEditor',
     theme: editorTheme,
@@ -150,7 +158,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Beginne zu schreiben
   };
 
   return (
-    <div className="relative flex-1">
+    <>
       <style>{`
         .editor-container {
           position: relative;
@@ -355,22 +363,28 @@ const RichTextEditor = ({ content, onChange, placeholder = "Beginne zu schreiben
 
       <LexicalComposer initialConfig={initialConfig}>
         <HtmlPlugin content={content} onChange={onChange} />
-        <div className="editor-container">
-          <RichTextPlugin
-            contentEditable={<ContentEditable className="editor-input" />}
-            placeholder={<div className="editor-placeholder">{placeholder}</div>}
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-          <HistoryPlugin />
-          <AutoFocusPlugin />
-          <ListPlugin />
-          <LinkPlugin />
-          <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+
+        {/* Toolbar */}
+        {toolbar}
+
+        {/* Editor */}
+        <div className="flex-1 overflow-y-auto pl-12 pr-12 py-8">
+          <div className="editor-container">
+            <RichTextPlugin
+              contentEditable={<ContentEditable className="editor-input" />}
+              placeholder={<div className="editor-placeholder">{placeholder}</div>}
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <HistoryPlugin />
+            <AutoFocusPlugin />
+            <ListPlugin />
+            <LinkPlugin />
+            <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+          </div>
         </div>
       </LexicalComposer>
-    </div>
+    </>
   );
 };
 
-export default RichTextEditor;
-export { editorTheme, onError };
+export default LexicalEditorWrapper;

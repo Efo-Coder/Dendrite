@@ -5,7 +5,7 @@ import { useFolderStore } from '../store/useFolderStore';
 import { useTagStore } from '../store/useTagStore';
 import { useToast } from './ToastContainer';
 import RichTextToolbar from './RichTextToolbar';
-import RichTextEditor from './RichTextEditor';
+import LexicalEditorWrapper from './LexicalEditorWrapper';
 import {
   Pin,
   Star,
@@ -355,31 +355,26 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
         </div>
       </div>
 
-      {/* Rich Text Toolbar */}
-      <RichTextToolbar disabled={isInTrash} />
-
-      {/* Editor */}
-      <div className="flex-1 overflow-y-auto pl-12 pr-12 py-8">
-        <div className="w-full h-full flex flex-col">
-          {/* Title Input */}
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Titel"
-            className="w-full text-3xl md:text-4xl font-bold bg-transparent border-none outline-none text-dark-text-primary placeholder-dark-text-muted mb-8"
-            disabled={isInTrash}
-          />
-
-          {/* Rich Text Editor */}
-          <RichTextEditor
-            content={content}
-            onChange={setContent}
-            placeholder="Beginne zu schreiben..."
-            disabled={isInTrash}
-          />
-        </div>
+      {/* Title Input */}
+      <div className="px-12 pt-8">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Titel"
+          className="w-full text-3xl md:text-4xl font-bold bg-transparent border-none outline-none text-dark-text-primary placeholder-dark-text-muted mb-8"
+          disabled={isInTrash}
+        />
       </div>
+
+      {/* Lexical Editor with Toolbar */}
+      <LexicalEditorWrapper
+        content={content}
+        onChange={setContent}
+        placeholder="Beginne zu schreiben..."
+        disabled={isInTrash}
+        toolbar={<RichTextToolbar disabled={isInTrash} />}
+      />
     </div>
   );
 };
