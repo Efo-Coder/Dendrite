@@ -356,7 +356,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
       {/* Lexical Editor with Toolbar */}
       <LexicalEditorWrapper
         key={note.id}
-        content={content}
+        content={note.content}
         onChange={setContent}
         placeholder="Beginne zu schreiben..."
         disabled={isInTrash}

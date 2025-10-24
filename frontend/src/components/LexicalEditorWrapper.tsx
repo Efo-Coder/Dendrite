@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useRef } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
@@ -26,6 +26,7 @@ interface LexicalEditorWrapperProps {
   placeholder?: string;
   disabled?: boolean;
   toolbar?: ReactNode;
+  key?: string;
 }
 
 const editorTheme = {
@@ -100,29 +101,29 @@ function onError(error: Error) {
   console.error(error);
 }
 
-// Plugin to sync HTML content with editor state
-function HtmlPlugin({ content, onChange }: { content: string; onChange: (html: string) => void }) {
+// Plugin to load initial content on mount
+function InitialContentPlugin({ content }: { content: string }) {
   const [editor] = useLexicalComposerContext();
-  const [lastContent, setLastContent] = useState(content);
 
-  // Load content when note changes
   useEffect(() => {
-    // Only update if content actually changed (different note selected)
-    if (content !== lastContent) {
-      editor.update(() => {
-        const parser = new DOMParser();
-        const dom = parser.parseFromString(content || '<p></p>', 'text/html');
-        const nodes = $generateNodesFromDOM(editor, dom);
+    editor.update(() => {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(content || '<p></p>', 'text/html');
+      const nodes = $generateNodesFromDOM(editor, dom);
 
-        const root = $getRoot();
-        root.clear();
-        $insertNodes(nodes);
-      });
-      setLastContent(content);
-    }
-  }, [content, editor, lastContent]);
+      const root = $getRoot();
+      root.clear();
+      $insertNodes(nodes);
+    });
+  }, [editor]); // Only run on mount, not when content changes
 
-  // Handle changes
+  return null;
+}
+
+// Plugin to handle content changes from user typing
+function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
+  const [editor] = useLexicalComposerContext();
+
   const handleChange = () => {
     editor.read(() => {
       const htmlString = $generateHtmlFromNodes(editor);
@@ -365,7 +366,8 @@ const LexicalEditorWrapper = ({
       `}</style>
 
       <LexicalComposer initialConfig={initialConfig}>
-        <HtmlPlugin content={content} onChange={onChange} />
+        <InitialContentPlugin content={content} />
+        <ChangePlugin onChange={onChange} />
 
         {/* Toolbar */}
         {toolbar}
