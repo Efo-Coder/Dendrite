@@ -223,13 +223,13 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     onClick={() => onViewChange('folder', folder.id)}
                     onContextMenu={(e) => handleFolderRightClick(e, folder)}
                     className={clsx(
-                      'w-full flex items-center px-3 py-2 rounded-lg transition-all duration-200',
+                      'w-full flex items-center pl-3 pr-3 py-2 rounded-lg transition-all duration-200',
                       currentView === 'folder' && selectedFolderId === folder.id
                         ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
                         : 'text-dark-text-secondary hover:bg-dark-elevated hover:text-dark-text-primary'
                     )}
                   >
-                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                       <Folder
                         className="w-4 h-4 flex-shrink-0"
                         style={{ color: folder.color || '#10b981' }}
@@ -237,7 +237,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                       <span className="text-sm truncate">{folder.name}</span>
                     </div>
                     {folder.notes && folder.notes.length > 0 && (
-                      <span className="text-xs text-dark-text-muted flex-shrink-0 ml-2">
+                      <span className="text-xs text-dark-text-muted flex-shrink-0 w-4 text-center">
                         {folder.notes.length}
                       </span>
                     )}
@@ -274,13 +274,13 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     onClick={() => onViewChange('tag', tag.id)}
                     onContextMenu={(e) => handleTagRightClick(e, tag)}
                     className={clsx(
-                      'w-full flex items-center px-3 py-2 rounded-lg transition-all duration-200',
+                      'w-full flex items-center pl-3 pr-3 py-2 rounded-lg transition-all duration-200',
                       currentView === 'tag' && selectedTagId === tag.id
                         ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
                         : 'text-dark-text-secondary hover:bg-dark-elevated hover:text-dark-text-primary'
                     )}
                   >
-                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                       <Tag
                         className="w-4 h-4 flex-shrink-0"
                         style={{ color: tag.color }}
@@ -288,7 +288,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                       <span className="text-sm truncate">{tag.name}</span>
                     </div>
                     {tag.notes && tag.notes.length > 0 && (
-                      <span className="text-xs text-dark-text-muted flex-shrink-0 ml-2">
+                      <span className="text-xs text-dark-text-muted flex-shrink-0 w-4 text-center">
                         {tag.notes.length}
                       </span>
                     )}
