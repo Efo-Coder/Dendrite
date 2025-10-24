@@ -19,7 +19,7 @@ interface NoteState {
   }) => Promise<void>;
   fetchNoteById: (id: string) => Promise<void>;
   createNote: (data: {
-    title: string;
+    title?: string;
     content: string;
     folderId?: string;
     tags?: string[];

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
@@ -103,21 +103,24 @@ function onError(error: Error) {
 // Plugin to sync HTML content with editor state
 function HtmlPlugin({ content, onChange }: { content: string; onChange: (html: string) => void }) {
   const [editor] = useLexicalComposerContext();
+  const [lastContent, setLastContent] = useState(content);
 
-  // Load initial content
+  // Load content when note changes
   useEffect(() => {
-    if (content) {
+    // Only update if content actually changed (different note selected)
+    if (content !== lastContent) {
       editor.update(() => {
         const parser = new DOMParser();
-        const dom = parser.parseFromString(content, 'text/html');
+        const dom = parser.parseFromString(content || '<p></p>', 'text/html');
         const nodes = $generateNodesFromDOM(editor, dom);
 
         const root = $getRoot();
         root.clear();
         $insertNodes(nodes);
       });
+      setLastContent(content);
     }
-  }, [content, editor]);
+  }, [content, editor, lastContent]);
 
   // Handle changes
   const handleChange = () => {
@@ -368,7 +371,7 @@ const LexicalEditorWrapper = ({
         {toolbar}
 
         {/* Editor */}
-        <div className="flex-1 overflow-y-auto pl-12 pr-12 py-8">
+        <div className="flex-1 overflow-y-auto px-12 pt-8 pb-8">
           <div className="editor-container">
             <RichTextPlugin
               contentEditable={<ContentEditable className="editor-input" />}

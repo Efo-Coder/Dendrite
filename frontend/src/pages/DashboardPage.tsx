@@ -135,16 +135,23 @@ const DashboardPage = () => {
     setIsCreating(true);
     try {
       const newNote = await createNote({
-        title: 'Neue Notiz',
         content: '',
         folderId: currentView === 'folder' ? selectedFolderId : undefined,
         tags: currentView === 'tag' && selectedTagId ? [selectedTagId] : undefined,
       });
+      console.log('New note created:', newNote);
+
+      // Setze die neue Notiz als aktuelle Notiz
       setCurrentNote(newNote);
+
+      // Aktualisiere die Notizliste
+      refreshCurrentView();
+
       toast.success('Notiz erstellt');
       // Trigger sidebar refresh
       setRefreshTrigger(prev => prev + 1);
     } catch (error: any) {
+      console.error('Error creating note:', error);
       toast.error(error.response?.data?.error || 'Notiz konnte nicht erstellt werden');
     } finally {
       setIsCreating(false);

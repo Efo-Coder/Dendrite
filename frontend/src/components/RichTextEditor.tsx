@@ -102,7 +102,7 @@ function onError(error: Error) {
 function HtmlPlugin({ content, onChange }: { content: string; onChange: (html: string) => void }) {
   const [editor] = useLexicalComposerContext();
 
-  // Load initial content
+  // Load initial content only once
   useEffect(() => {
     if (content) {
       editor.update(() => {
@@ -115,7 +115,8 @@ function HtmlPlugin({ content, onChange }: { content: string; onChange: (html: s
         $insertNodes(nodes);
       });
     }
-  }, [content, editor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // Handle changes
   const handleChange = () => {

@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Note } from '../types';
-import { Pin, Star, Lock, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { Pin, Star, Lock, GripVertical, ArrowUp, ArrowDown, Folder } from 'lucide-react';
 import clsx from 'clsx';
 import {
   DndContext,
@@ -43,6 +43,7 @@ interface SortableNoteItemProps {
   isSelected: boolean;
   onSelectNote: (note: Note) => void;
   getPreview: (content: string) => string;
+  getFirstLine: (content: string) => string;
   showDragHandle: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -50,7 +51,7 @@ interface SortableNoteItemProps {
   onRightClick?: (e: React.MouseEvent, note: Note) => void;
 }
 
-const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDragHandle, onMouseEnter, onMouseLeave, noteRef, onRightClick }: SortableNoteItemProps) => {
+const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirstLine, showDragHandle, onMouseEnter, onMouseLeave, noteRef, onRightClick }: SortableNoteItemProps) => {
   const {
     attributes,
     listeners,
@@ -102,11 +103,29 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDrag
         onContextMenu={(e) => onRightClick?.(e, note)}
         className="flex-1 px-4 py-3 text-left flex flex-col min-w-0"
       >
-        {/* Note Header */}
-        <div className="flex items-start justify-between gap-2 min-w-0 mb-2">
-          <h3 className="text-sm font-semibold text-dark-text-primary line-clamp-1 flex-1 min-w-0 break-words">
-            {note.title}
+        {/* Note Header mit Title, Tag und Icons */}
+        <div className="flex items-center gap-2 min-w-0 mb-2">
+          {/* Title */}
+          <h3 className="text-sm font-semibold text-dark-text-primary truncate flex-shrink min-w-0">
+            {getFirstLine(note.content)}
           </h3>
+
+          {/* Tag - nur der erste, weiter rechts positioniert */}
+          {note.tags && note.tags.length > 0 && (
+            <span
+              className="px-1.5 py-0.5 text-xs rounded border whitespace-nowrap flex-shrink-0 max-w-[80px] truncate ml-auto"
+              style={{
+                backgroundColor: `${note.tags[0].color || '#10b981'}20`,
+                color: note.tags[0].color || '#10b981',
+                borderColor: `${note.tags[0].color || '#10b981'}40`
+              }}
+              title={note.tags[0].name}
+            >
+              {note.tags[0].name}
+            </span>
+          )}
+
+          {/* Icons */}
           <div className="flex items-center space-x-1 flex-shrink-0">
             {note.isPinned && <Pin className="w-3 h-3 text-accent-green-500" />}
             {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
@@ -114,39 +133,18 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, showDrag
           </div>
         </div>
 
-        {/* Tags */}
-        {note.tags && note.tags.length > 0 && (
-          <div className="flex items-center space-x-1 flex-wrap gap-1 mb-2">
-            {note.tags.slice(0, 3).map((tag, index) => (
-              <span
-                key={tag.id}
-                className="px-1.5 text-xs rounded border whitespace-nowrap animate-fade-in"
-                style={{ 
-                  animationDelay: `${index * 100}ms`,
-                  backgroundColor: `${tag.color || '#10b981'}20`,
-                  color: tag.color || '#10b981',
-                  borderColor: `${tag.color || '#10b981'}40`
-                }}
-              >
-                {tag.name}
-              </span>
-            ))}
-            {note.tags.length > 3 && (
-              <span className="text-xs text-dark-text-muted whitespace-nowrap animate-fade-in">
-                +{note.tags.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Note Preview */}
-        <p className={clsx(
-          "text-xs text-dark-text-secondary break-words min-w-0 mb-2 flex-1",
-          note.tags && note.tags.length > 0 ? "line-clamp-1" : "line-clamp-3",
-          !note.tags || note.tags.length === 0 ? "-mt-1" : ""
-        )}>
-          {getPreview(note.content) || '\u00A0'}
+        {/* Note Preview - nur eine Zeile */}
+        <p className="text-xs text-dark-text-secondary truncate min-w-0 mb-2">
+          {getPreview(note.content)}
         </p>
+
+        {/* Folder Info */}
+        <div className="flex items-center gap-1 min-w-0 mb-2">
+          <Folder className="w-3 h-3 text-dark-text-muted flex-shrink-0" />
+          <span className="text-xs text-dark-text-muted truncate">
+            {note.folder?.name || 'Alle Notizen'}
+          </span>
+        </div>
 
         {/* Note Meta */}
         <div className="flex items-center justify-between gap-2 min-w-0 mt-auto">
@@ -369,7 +367,9 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
           comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
           break;
         case 'title':
-          comparison = a.title.localeCompare(b.title);
+          const aTitleText = getFirstLine(a.content);
+          const bTitleText = getFirstLine(b.content);
+          comparison = aTitleText.localeCompare(bTitleText);
           break;
         case 'pinned':
           comparison = a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1;
@@ -398,12 +398,42 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   const stripHtml = (html: string) => {
     const tmp = document.createElement('DIV');
     tmp.innerHTML = html;
+
+    // Ersetze Block-Level-Elemente durch Zeilenumbrüche
+    const blockElements = tmp.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6, li, br');
+    blockElements.forEach((el) => {
+      if (el.tagName === 'BR') {
+        el.replaceWith('\n');
+      } else {
+        const textNode = document.createTextNode('\n' + (el.textContent || '') + '\n');
+        el.replaceWith(textNode);
+      }
+    });
+
     return tmp.textContent || tmp.innerText || '';
+  };
+
+  const getFirstLine = (content: string) => {
+    const text = stripHtml(content);
+    // Erste Zeile bis zum ersten Zeilenumbruch
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
+    const firstLine = lines[0] || 'Neue Notiz';
+    // Truncate wenn zu lang (maximal 50 Zeichen)
+    return firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine;
   };
 
   const getPreview = (content: string) => {
     const text = stripHtml(content);
-    return text.length > 100 ? text.substring(0, 100) + '...' : text;
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
+
+    // Wenn es keine zweite Zeile gibt, gib "Kein zusätzlicher Text" zurück
+    if (lines.length < 2) return 'Kein zusätzlicher Text';
+
+    // Nimm nur die zweite Zeile (Index 1)
+    const secondLine = lines[1];
+
+    // Truncate wenn zu lang (maximal 100 Zeichen)
+    return secondLine.length > 100 ? secondLine.substring(0, 100) + '...' : secondLine;
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -483,11 +513,29 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               onContextMenu={(e) => handleNoteRightClick(e, note)}
               className="flex-1 px-4 py-3 text-left flex flex-col min-w-0"
             >
-              {/* Note Header */}
-              <div className="flex items-start justify-between gap-2 min-w-0 mb-2">
-                <h3 className="text-sm font-semibold text-dark-text-primary line-clamp-1 flex-1 min-w-0 break-words">
-                  {note.title}
+              {/* Note Header mit Title, Tag und Icons */}
+              <div className="flex items-center gap-2 min-w-0 mb-2">
+                {/* Title */}
+                <h3 className="text-sm font-semibold text-dark-text-primary truncate flex-shrink min-w-0">
+                  {getFirstLine(note.content)}
                 </h3>
+
+                {/* Tag - nur der erste, weiter rechts positioniert */}
+                {note.tags && note.tags.length > 0 && (
+                  <span
+                    className="px-1.5 py-0.5 text-xs rounded border whitespace-nowrap flex-shrink-0 max-w-[80px] truncate ml-auto"
+                    style={{
+                      backgroundColor: `${note.tags[0].color || '#10b981'}20`,
+                      color: note.tags[0].color || '#10b981',
+                      borderColor: `${note.tags[0].color || '#10b981'}40`
+                    }}
+                    title={note.tags[0].name}
+                  >
+                    {note.tags[0].name}
+                  </span>
+                )}
+
+                {/* Icons */}
                 <div className="flex items-center space-x-1 flex-shrink-0">
                   {note.isPinned && <Pin className="w-3 h-3 text-accent-green-500" />}
                   {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
@@ -495,39 +543,18 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
                 </div>
               </div>
 
-              {/* Tags */}
-              {note.tags && note.tags.length > 0 && (
-                <div className="flex items-center space-x-1 flex-wrap gap-1 mb-2">
-                  {note.tags.slice(0, 3).map((tag, index) => (
-                    <span
-                      key={tag.id}
-                      className="px-1.5 text-xs rounded border whitespace-nowrap animate-fade-in"
-                      style={{ 
-                        animationDelay: `${index * 100}ms`,
-                        backgroundColor: `${tag.color || '#10b981'}20`,
-                        color: tag.color || '#10b981',
-                        borderColor: `${tag.color || '#10b981'}40`
-                      }}
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
-                  {note.tags.length > 3 && (
-                    <span className="text-xs text-dark-text-muted whitespace-nowrap animate-fade-in">
-                      +{note.tags.length - 3}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Note Preview */}
-              <p className={clsx(
-                "text-xs text-dark-text-secondary break-words min-w-0 mb-2 flex-1",
-                note.tags && note.tags.length > 0 ? "line-clamp-1" : "line-clamp-3",
-                !note.tags || note.tags.length === 0 ? "-mt-1" : ""
-              )}>
-                {getPreview(note.content) || '\u00A0'}
+              {/* Note Preview - nur eine Zeile */}
+              <p className="text-xs text-dark-text-secondary truncate min-w-0 mb-2">
+                {getPreview(note.content)}
               </p>
+
+              {/* Folder Info */}
+              <div className="flex items-center gap-1 min-w-0 mb-2">
+                <Folder className="w-3 h-3 text-dark-text-muted flex-shrink-0" />
+                <span className="text-xs text-dark-text-muted truncate">
+                  {note.folder?.name || 'Alle Notizen'}
+                </span>
+              </div>
 
               {/* Note Meta */}
               <div className="flex items-center justify-between gap-2 min-w-0 mt-auto">
@@ -638,6 +665,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               isSelected={currentNote?.id === note.id}
               onSelectNote={onSelectNote}
               getPreview={getPreview}
+              getFirstLine={getFirstLine}
               showDragHandle={!isTrash}
               onMouseEnter={() => handleMouseEnter(index)}
               onMouseLeave={handleMouseLeave}

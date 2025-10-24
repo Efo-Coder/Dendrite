@@ -21,4 +21,4 @@ COPY . .
 EXPOSE 3000
 
 # Start-Script inline
-CMD ["sh", "-c", "npx prisma db push && npm run dev"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npm run dev"]

@@ -27,7 +27,7 @@ const Logo: React.FC<LogoProps> = ({
     <div className={`flex items-center space-x-2 ${className}`}>
       <div className={`${sizeClasses[size]} rounded-lg overflow-hidden flex items-center justify-center`}>
         <img 
-          src="/dendrite_green.svg" 
+          src="/dendrite.svg" 
           alt="Dendrite Logo"
           className="w-full h-full object-contain"
           style={{

@@ -33,34 +33,32 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const { tags } = useTagStore();
   const toast = useToast();
 
-  const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
   const [isSaving, setIsSaving] = useState(false);
   const [showFolderDropdown, setShowFolderDropdown] = useState(false);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
 
   useEffect(() => {
-    setTitle(note.title);
     setContent(note.content);
-  }, [note.id, note.title, note.content]);
+  }, [note.id]); // Only update when note ID changes, not content
 
   // Auto-save
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (title !== note.title || content !== note.content) {
+      if (content !== note.content) {
         handleSave();
       }
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [title, content]);
+  }, [content]);
 
   const handleSave = async () => {
-    if (title === note.title && content === note.content) return;
+    if (content === note.content) return;
 
     setIsSaving(true);
     try {
-      await updateNote(note.id, { title, content });
+      await updateNote(note.id, { content });
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
     } finally {
@@ -355,20 +353,9 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
         </div>
       </div>
 
-      {/* Title Input */}
-      <div className="px-12 pt-8">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titel"
-          className="w-full text-3xl md:text-4xl font-bold bg-transparent border-none outline-none text-dark-text-primary placeholder-dark-text-muted mb-8"
-          disabled={isInTrash}
-        />
-      </div>
-
       {/* Lexical Editor with Toolbar */}
       <LexicalEditorWrapper
+        key={note.id}
         content={content}
         onChange={setContent}
         placeholder="Beginne zu schreiben..."

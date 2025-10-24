@@ -128,15 +128,14 @@ export const getNoteById = async (req: AuthRequest, res: Response) => {
 
 export const createNote = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, content, folderId, tags } = req.body;
+    const { content, folderId, tags } = req.body;
 
-    if (!title || content === undefined || content === null) {
-      return res.status(400).json({ error: 'Titel ist erforderlich' });
+    if (content === undefined || content === null) {
+      return res.status(400).json({ error: 'Inhalt ist erforderlich' });
     }
 
     const note = await prisma.note.create({
       data: {
-        title,
         content,
         userId: req.userId!,
         folderId: folderId || null,
@@ -163,7 +162,7 @@ export const createNote = async (req: AuthRequest, res: Response) => {
 export const updateNote = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, content, folderId, tags } = req.body;
+    const { content, folderId, tags } = req.body;
 
     // Prüfe ob Notiz existiert und dem User gehört
     const existingNote = await prisma.note.findFirst({
@@ -177,7 +176,6 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
     const note = await prisma.note.update({
       where: { id },
       data: {
-        title: title !== undefined ? title : existingNote.title,
         content: content !== undefined ? content : existingNote.content,
         folderId: folderId !== undefined ? folderId : existingNote.folderId,
         tags: tags
@@ -233,10 +231,7 @@ export const searchNotes = async (req: AuthRequest, res: Response) => {
     const notes = await prisma.note.findMany({
       where: {
         userId: req.userId,
-        OR: [
-          { title: { contains: q, mode: 'insensitive' } },
-          { content: { contains: q, mode: 'insensitive' } },
-        ],
+        content: { contains: q, mode: 'insensitive' },
       },
       include: {
         folder: true,
