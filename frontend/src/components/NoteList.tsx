@@ -23,6 +23,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useState, useEffect, useRef } from 'react';
 import { noteService } from '../services/note.service';
 import { useNoteStore } from '../store/useNoteStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { useToast } from './ToastContainer';
 import NoteContextMenu from './NoteContextMenu';
 import MoveToFolderModal from './modals/MoveToFolderModal';
@@ -45,13 +46,14 @@ interface SortableNoteItemProps {
   getPreview: (content: string) => string;
   getFirstLine: (content: string) => string;
   showDragHandle: boolean;
+  dateDisplayMode: 'updatedAt' | 'createdAt';
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   noteRef?: (el: HTMLDivElement | null) => void;
   onRightClick?: (e: React.MouseEvent, note: Note) => void;
 }
 
-const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirstLine, showDragHandle, onMouseEnter, onMouseLeave, noteRef, onRightClick }: SortableNoteItemProps) => {
+const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirstLine, showDragHandle, dateDisplayMode, onMouseEnter, onMouseLeave, noteRef, onRightClick }: SortableNoteItemProps) => {
   const {
     attributes,
     listeners,
@@ -149,7 +151,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
         {/* Note Meta */}
         <div className="flex items-center justify-between gap-2 min-w-0">
           <span className="text-xs text-dark-text-muted flex-shrink-0">
-            {formatDistanceToNow(new Date(note.updatedAt), {
+            {formatDistanceToNow(new Date(dateDisplayMode === 'createdAt' ? note.createdAt : note.updatedAt), {
               addSuffix: true,
               locale: de,
             })}
@@ -164,6 +166,7 @@ type SortOption = 'createdAt' | 'updatedAt' | 'title' | 'pinned' | 'manual';
 
 const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextType, contextId, isTrash }: NoteListProps) => {
   const { updateNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, deleteNote } = useNoteStore();
+  const { dateDisplayMode } = useSettingsStore();
   const toast = useToast();
   
   const [localNotes, setLocalNotes] = useState(notes);
@@ -559,7 +562,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               {/* Note Meta */}
               <div className="flex items-center justify-between gap-2 min-w-0">
                 <span className="text-xs text-dark-text-muted flex-shrink-0">
-                  {formatDistanceToNow(new Date(note.updatedAt), {
+                  {formatDistanceToNow(new Date(dateDisplayMode === 'createdAt' ? note.createdAt : note.updatedAt), {
                     addSuffix: true,
                     locale: de,
                   })}
@@ -667,6 +670,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               getPreview={getPreview}
               getFirstLine={getFirstLine}
               showDragHandle={!isTrash}
+              dateDisplayMode={dateDisplayMode}
               onMouseEnter={() => handleMouseEnter(index)}
               onMouseLeave={handleMouseLeave}
               noteRef={(el) => (noteRefs.current[index] = el)}

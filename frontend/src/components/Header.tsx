@@ -3,6 +3,7 @@ import { Search, User, LogOut, Settings } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNoteStore } from '../store/useNoteStore';
 import { User as UserType } from '../types';
+import SettingsModal from './modals/SettingsModal';
 
 interface HeaderProps {
   user: UserType | null;
@@ -13,6 +14,7 @@ const Header = ({ user }: HeaderProps) => {
   const { searchNotes, fetchNotes } = useNoteStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +79,7 @@ const Header = ({ user }: HeaderProps) => {
                 <button
                   onClick={() => {
                     setShowUserMenu(false);
-                    // TODO: Implement settings
+                    setShowSettingsModal(true);
                   }}
                   className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-dark-text-primary hover:bg-dark-elevated rounded-md transition-colors"
                 >
@@ -99,6 +101,12 @@ const Header = ({ user }: HeaderProps) => {
           </>
         )}
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
     </header>
   );
 };

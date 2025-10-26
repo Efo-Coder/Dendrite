@@ -7,30 +7,30 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Elegantes dunkles Design mit grünen Akzenten
+        // Elegantes dunkles Design mit dynamischen Akzenten
         dark: {
-          bg: '#0f0f0f',        // Haupthintergrund - sehr dunkel
-          surface: '#1a1a1a',    // Cards, Sidebar
-          elevated: '#242424',   // Hover States
-          border: '#2a2a2a',     // Borders
+          bg: 'var(--color-bg)',
+          surface: 'var(--color-surface)',
+          elevated: 'var(--color-elevated)',
+          border: 'var(--color-border)',
           text: {
-            primary: '#e5e5e5',   // Haupttext
-            secondary: '#a3a3a3', // Sekundärtext
-            muted: '#737373',     // Deaktivierter Text
+            primary: 'var(--color-text-primary)',
+            secondary: 'var(--color-text-secondary)',
+            muted: 'var(--color-text-muted)',
           }
         },
         accent: {
           green: {
-            50: '#ecfdf5',
-            100: '#d1fae5',
-            200: '#a7f3d0',
-            300: '#6ee7b7',
-            400: '#34d399',
-            500: '#10b981',  // Hauptakzent
-            600: '#059669',
-            700: '#047857',
-            800: '#065f46',
-            900: '#064e3b',
+            50: 'var(--color-accent-50)',
+            100: 'var(--color-accent-100)',
+            200: 'var(--color-accent-200)',
+            300: 'var(--color-accent-300)',
+            400: 'var(--color-accent-400)',
+            500: 'var(--color-accent-500)',
+            600: 'var(--color-accent-600)',
+            700: 'var(--color-accent-700)',
+            800: 'var(--color-accent-800)',
+            900: 'var(--color-accent-900)',
           }
         }
       },

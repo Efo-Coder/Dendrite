@@ -3,6 +3,27 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Default theme: Leaf Green */
+    --color-bg: #0f0f0f;
+    --color-surface: #1a1a1a;
+    --color-elevated: #242424;
+    --color-border: #2a2a2a;
+    --color-text-primary: #e5e5e5;
+    --color-text-secondary: #a3a3a3;
+    --color-text-muted: #737373;
+    --color-accent-50: #ecfdf5;
+    --color-accent-100: #d1fae5;
+    --color-accent-200: #a7f3d0;
+    --color-accent-300: #6ee7b7;
+    --color-accent-400: #34d399;
+    --color-accent-500: #10b981;
+    --color-accent-600: #059669;
+    --color-accent-700: #047857;
+    --color-accent-800: #065f46;
+    --color-accent-900: #064e3b;
+  }
+
   * {
     @apply border-dark-border;
   }
@@ -33,36 +54,72 @@
   /* Button Styles */
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200
-           focus:outline-none focus:ring-2 focus:ring-accent-green-500 focus:ring-offset-2
-           focus:ring-offset-dark-bg disabled:opacity-50 disabled:cursor-not-allowed;
+           focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--color-bg);
+  }
+
+  .btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent-500);
   }
 
   .btn-primary {
-    @apply bg-accent-green-500 text-white hover:bg-accent-green-600
-           active:bg-accent-green-700;
+    background-color: var(--color-accent-500);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-accent-600);
+  }
+
+  .btn-primary:active {
+    background-color: var(--color-accent-700);
   }
 
   .btn-secondary {
-    @apply bg-dark-surface text-dark-text-primary hover:bg-dark-elevated
-           border border-dark-border;
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--color-elevated);
   }
 
   .btn-ghost {
-    @apply text-dark-text-primary hover:bg-dark-elevated;
+    color: var(--color-text-primary);
+  }
+
+  .btn-ghost:hover {
+    background-color: var(--color-elevated);
   }
 
   /* Input Styles */
   .input {
-    @apply w-full px-4 py-2 bg-dark-surface border border-dark-border
-           rounded-lg text-dark-text-primary placeholder-dark-text-muted
-           focus:outline-none focus:ring-2 focus:ring-accent-green-500
-           transition-all duration-200;
+    @apply w-full px-4 py-2 rounded-lg transition-all duration-200;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  .input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-accent-500);
   }
 
   /* Card Styles */
   .card {
-    @apply bg-dark-surface border border-dark-border rounded-lg p-4
-           hover:bg-dark-elevated transition-all duration-200;
+    @apply rounded-lg p-4 transition-all duration-200;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+
+  .card:hover {
+    background-color: var(--color-elevated);
   }
 
   /* Badge Styles */
@@ -71,7 +128,9 @@
   }
 
   .badge-green {
-    @apply bg-accent-green-500/10 text-accent-green-500 border border-accent-green-500/20;
+    background-color: color-mix(in srgb, var(--color-accent-500) 10%, transparent);
+    color: var(--color-accent-500);
+    border: 1px solid color-mix(in srgb, var(--color-accent-500) 20%, transparent);
   }
 }
 
