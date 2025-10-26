@@ -261,7 +261,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     onContextMenu={(e) => handleFolderRightClick(e, folder)}
                     className={clsx(
                       'w-full flex items-center rounded-lg transition-all duration-200',
-                      isCollapsed ? 'justify-center px-2 py-2' : 'pl-3 pr-3 py-2',
+                      isCollapsed ? 'justify-center px-2 py-2.5' : 'pl-3 pr-3 py-2.5',
                       currentView === 'folder' && selectedFolderId === folder.id
                         ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
                         : 'text-dark-text-secondary hover:bg-dark-elevated hover:text-dark-text-primary'
@@ -269,7 +269,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     title={isCollapsed ? folder.name : undefined}
                   >
                     <Folder
-                      className="w-4 h-4 flex-shrink-0"
+                      className="w-5 h-5 flex-shrink-0"
                       style={{ color: folder.color || '#10b981' }}
                     />
                     {!isCollapsed && (
@@ -338,7 +338,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     onContextMenu={(e) => handleTagRightClick(e, tag)}
                     className={clsx(
                       'w-full flex items-center rounded-lg transition-all duration-200',
-                      isCollapsed ? 'justify-center px-2 py-2' : 'pl-3 pr-3 py-2',
+                      isCollapsed ? 'justify-center px-2 py-2.5' : 'pl-3 pr-3 py-2.5',
                       currentView === 'tag' && selectedTagId === tag.id
                         ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
                         : 'text-dark-text-secondary hover:bg-dark-elevated hover:text-dark-text-primary'
@@ -346,7 +346,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     title={isCollapsed ? tag.name : undefined}
                   >
                     <Tag
-                      className="w-4 h-4 flex-shrink-0"
+                      className="w-5 h-5 flex-shrink-0"
                       style={{ color: tag.color }}
                     />
                     {!isCollapsed && (
