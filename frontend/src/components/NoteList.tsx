@@ -80,7 +80,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={clsx(
-        'w-full border-b border-dark-border flex relative h-[120px]',
+        'w-full border-b border-dark-border flex relative h-[100px]',
         isSelected
           ? 'bg-accent-green-500/10'
           : ''
@@ -101,10 +101,10 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
       <button
         onClick={() => onSelectNote(note)}
         onContextMenu={(e) => onRightClick?.(e, note)}
-        className="flex-1 px-4 py-3 text-left flex flex-col min-w-0"
+        className="flex-1 px-4 py-2 text-left flex flex-col min-w-0"
       >
         {/* Note Header mit Title, Tag und Icons */}
-        <div className="flex items-center gap-2 min-w-0 mb-2">
+        <div className="flex items-center gap-2 min-w-0 mb-1">
           {/* Title */}
           <h3 className="text-sm font-semibold text-dark-text-primary truncate flex-shrink min-w-0">
             {getFirstLine(note.content)}
@@ -134,12 +134,12 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
         </div>
 
         {/* Note Preview - nur eine Zeile */}
-        <p className="text-xs text-dark-text-secondary truncate min-w-0 mb-2">
+        <p className="text-xs text-dark-text-secondary truncate min-w-0 mb-1">
           {getPreview(note.content)}
         </p>
 
         {/* Folder Info */}
-        <div className="flex items-center gap-1 min-w-0 mb-2">
+        <div className="flex items-center gap-1 min-w-0 mb-1">
           <Folder className="w-3 h-3 text-dark-text-muted flex-shrink-0" />
           <span className="text-xs text-dark-text-muted truncate">
             {note.folder?.name || 'Alle Notizen'}
@@ -147,7 +147,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
         </div>
 
         {/* Note Meta */}
-        <div className="flex items-center justify-between gap-2 min-w-0 mt-auto">
+        <div className="flex items-center justify-between gap-2 min-w-0">
           <span className="text-xs text-dark-text-muted flex-shrink-0">
             {formatDistanceToNow(new Date(note.updatedAt), {
               addSuffix: true,
@@ -499,7 +499,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             onMouseEnter={() => handleMouseEnter(index)}
             onMouseLeave={handleMouseLeave}
             className={clsx(
-              'w-full border-b border-dark-border flex relative h-[120px]',
+              'w-full border-b border-dark-border flex relative h-[100px]',
               currentNote?.id === note.id
                 ? 'bg-accent-green-500/10'
                 : ''
@@ -511,10 +511,10 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             <button
               onClick={() => onSelectNote(note)}
               onContextMenu={(e) => handleNoteRightClick(e, note)}
-              className="flex-1 px-4 py-3 text-left flex flex-col min-w-0"
+              className="flex-1 px-4 py-2 text-left flex flex-col min-w-0"
             >
               {/* Note Header mit Title, Tag und Icons */}
-              <div className="flex items-center gap-2 min-w-0 mb-2">
+              <div className="flex items-center gap-2 min-w-0 mb-1">
                 {/* Title */}
                 <h3 className="text-sm font-semibold text-dark-text-primary truncate flex-shrink min-w-0">
                   {getFirstLine(note.content)}
@@ -544,12 +544,12 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               </div>
 
               {/* Note Preview - nur eine Zeile */}
-              <p className="text-xs text-dark-text-secondary truncate min-w-0 mb-2">
+              <p className="text-xs text-dark-text-secondary truncate min-w-0 mb-1">
                 {getPreview(note.content)}
               </p>
 
               {/* Folder Info */}
-              <div className="flex items-center gap-1 min-w-0 mb-2">
+              <div className="flex items-center gap-1 min-w-0 mb-1">
                 <Folder className="w-3 h-3 text-dark-text-muted flex-shrink-0" />
                 <span className="text-xs text-dark-text-muted truncate">
                   {note.folder?.name || 'Alle Notizen'}
@@ -557,7 +557,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               </div>
 
               {/* Note Meta */}
-              <div className="flex items-center justify-between gap-2 min-w-0 mt-auto">
+              <div className="flex items-center justify-between gap-2 min-w-0">
                 <span className="text-xs text-dark-text-muted flex-shrink-0">
                   {formatDistanceToNow(new Date(note.updatedAt), {
                     addSuffix: true,
