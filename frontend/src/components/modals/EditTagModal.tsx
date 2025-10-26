@@ -104,7 +104,7 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
           <label className="block text-sm font-medium text-dark-text-primary mb-2">
             Farbe
           </label>
-          <div className="grid grid-cols-8 gap-2">
+          <div className="grid grid-cols-8 gap-2 mb-3">
             {colors.map((color) => (
               <button
                 key={color}
@@ -119,6 +119,26 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
                 title={color}
               />
             ))}
+          </div>
+
+          {/* Custom Color Picker */}
+          <div className="flex items-center gap-3">
+            <label htmlFor="custom-color" className="text-sm text-dark-text-secondary">
+              Oder eigene Farbe:
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="custom-color"
+                type="color"
+                value={selectedColor}
+                onChange={(e) => setSelectedColor(e.target.value)}
+                className="w-10 h-10 rounded-lg cursor-pointer border-2 border-dark-border bg-dark-elevated"
+                title="Eigene Farbe wählen"
+              />
+              <span className="text-xs text-dark-text-muted font-mono">
+                {selectedColor}
+              </span>
+            </div>
           </div>
         </div>
 
