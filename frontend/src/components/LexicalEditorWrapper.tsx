@@ -167,7 +167,7 @@ const LexicalEditorWrapper = ({
         .editor-container {
           position: relative;
           background: transparent;
-          color: #f3f4f6;
+          color: var(--color-text-primary);
           font-size: 16px;
           line-height: 1.6;
         }
@@ -176,17 +176,17 @@ const LexicalEditorWrapper = ({
           min-height: 200px;
           resize: none;
           font-size: 16px;
-          caret-color: #10b981;
+          caret-color: var(--color-accent-500);
           position: relative;
           tab-size: 1;
           outline: 0;
           padding: 0;
           background: transparent;
-          color: #f3f4f6;
+          color: var(--color-text-primary);
         }
 
         .editor-placeholder {
-          color: #6b7280;
+          color: var(--color-text-muted);
           overflow: hidden;
           position: absolute;
           text-overflow: ellipsis;
@@ -211,10 +211,10 @@ const LexicalEditorWrapper = ({
         .editor-quote {
           margin: 16px 0;
           padding: 12px 16px;
-          border-left: 4px solid #10b981;
-          background-color: rgba(16, 185, 129, 0.05);
+          border-left: 4px solid var(--color-accent-500);
+          background-color: color-mix(in srgb, var(--color-accent-500) 5%, transparent);
           border-radius: 4px;
-          color: #9ca3af;
+          color: var(--color-text-secondary);
           font-style: italic;
         }
 
@@ -222,21 +222,21 @@ const LexicalEditorWrapper = ({
           font-size: 2em;
           font-weight: 700;
           margin: 0.67em 0;
-          color: #f3f4f6;
+          color: var(--color-text-primary);
         }
 
         .editor-heading-h2 {
           font-size: 1.5em;
           font-weight: 700;
           margin: 0.75em 0;
-          color: #f3f4f6;
+          color: var(--color-text-primary);
         }
 
         .editor-heading-h3 {
           font-size: 1.25em;
           font-weight: 700;
           margin: 0.83em 0;
-          color: #f3f4f6;
+          color: var(--color-text-primary);
         }
 
         .editor-list-ol {
@@ -257,11 +257,11 @@ const LexicalEditorWrapper = ({
 
         .editor-listitem {
           margin-bottom: 5px;
-          color: #f3f4f6;
+          color: var(--color-text-primary);
         }
 
         .editor-listitem::marker {
-          color: #6b7280;
+          color: var(--color-text-muted);
         }
 
         .editor-nested-listitem {
@@ -269,17 +269,17 @@ const LexicalEditorWrapper = ({
         }
 
         .editor-link {
-          color: #10b981;
+          color: var(--color-accent-500);
           text-decoration: underline;
           cursor: pointer;
         }
 
         .editor-link:hover {
-          color: #059669;
+          color: var(--color-accent-600);
         }
 
         .editor-link:visited {
-          color: #8b5cf6;
+          color: var(--color-accent-700);
         }
 
         .editor-text-bold {

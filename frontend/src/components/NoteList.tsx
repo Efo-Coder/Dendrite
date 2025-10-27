@@ -487,10 +487,11 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
         {/* Highlighter */}
         {hoveredIndex !== null && (
           <div
-            className="absolute left-0 w-full bg-white/5 backdrop-blur-sm pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
+            className="absolute left-0 w-full backdrop-blur-sm pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
             style={{
               top: `${highlighterStyle.top}px`,
               height: `${highlighterStyle.height}px`,
+              backgroundColor: 'var(--color-elevated)',
             }}
           />
         )}
@@ -653,10 +654,11 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
           {/* Highlighter */}
           {hoveredIndex !== null && (
             <div
-              className="absolute left-0 w-full bg-white/5 backdrop-blur-sm pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
+              className="absolute left-0 w-full backdrop-blur-sm pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
               style={{
                 top: `${highlighterStyle.top}px`,
                 height: `${highlighterStyle.height}px`,
+                backgroundColor: 'var(--color-elevated)',
               }}
             />
           )}

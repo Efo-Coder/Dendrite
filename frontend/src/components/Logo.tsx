@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { themes } from '../themes/themes';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -6,11 +8,24 @@ interface LogoProps {
   className?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({ 
-  size = 'md', 
-  showText = true, 
-  className = '' 
+const Logo: React.FC<LogoProps> = ({
+  size = 'md',
+  showText = true,
+  className = ''
 }) => {
+  const { theme: themeId } = useSettingsStore();
+  const [logoColor, setLogoColor] = useState('#10b981');
+
+  useEffect(() => {
+    const theme = themes[themeId];
+    if (theme) {
+      // Bei dunklen Themes (wie Leaf Green): Akzentfarbe
+      // Bei hellen Pastellthemes: Dunkle Textfarbe für Kontrast
+      const isDarkTheme = theme.id === 'leafGreen';
+      setLogoColor(isDarkTheme ? theme.colors.accent500 : theme.colors.textPrimary);
+    }
+  }, [themeId]);
+
   const sizeClasses = {
     sm: 'w-6 h-6',
     md: 'w-8 h-8',
@@ -25,19 +40,20 @@ const Logo: React.FC<LogoProps> = ({
 
   return (
     <div className={`flex items-center space-x-2 ${className}`}>
-      <div className={`${sizeClasses[size]} rounded-lg overflow-hidden flex items-center justify-center`}>
-        <img 
-          src="/dendrite.svg" 
-          alt="Dendrite Logo"
-          className="w-full h-full object-contain"
-          style={{
-            // Schneidet den Hintergrund außerhalb des Vierecks weg
-            clipPath: 'inset(0)',
-            // Stellt sicher, dass nur der Inhalt des Vierecks sichtbar ist
-            objectFit: 'contain'
-          }}
-        />
-      </div>
+      <div
+        className={`${sizeClasses[size]} rounded-lg`}
+        style={{
+          backgroundColor: logoColor,
+          WebkitMaskImage: 'url(/dendrite.svg)',
+          maskImage: 'url(/dendrite.svg)',
+          WebkitMaskSize: 'contain',
+          maskSize: 'contain',
+          WebkitMaskRepeat: 'no-repeat',
+          maskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+          maskPosition: 'center',
+        }}
+      />
       {showText && (
         <h1 className={`${textSizeClasses[size]} font-bold text-dark-text-primary`}>
           Dendrite
