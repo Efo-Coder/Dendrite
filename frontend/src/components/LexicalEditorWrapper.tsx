@@ -1,6 +1,6 @@
 import { ReactNode, useState, useRef } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { HeadingNode, QuoteNode } from '@lexical/rich-text';
+import { HeadingNode, QuoteNode, $isQuoteNode } from '@lexical/rich-text';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
@@ -17,7 +17,17 @@ import { TRANSFORMERS } from '@lexical/markdown';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
-import { $getRoot, $insertNodes } from 'lexical';
+import {
+  $getRoot,
+  $insertNodes,
+  $getSelection,
+  $isRangeSelection,
+  $createParagraphNode,
+  $isParagraphNode,
+  KEY_ENTER_COMMAND,
+  KEY_ESCAPE_COMMAND,
+  COMMAND_PRIORITY_HIGH,
+} from 'lexical';
 import { useEffect } from 'react';
 
 interface LexicalEditorWrapperProps {
@@ -132,6 +142,130 @@ function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
   };
 
   return <OnChangePlugin onChange={handleChange} ignoreSelectionChange />;
+}
+
+// Plugin to enable multiline blockquotes
+function MultilineQuotePlugin(): null {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    // Handle Enter key in quotes
+    const removeEnterListener = editor.registerCommand(
+      KEY_ENTER_COMMAND,
+      (event: KeyboardEvent | null) => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const anchorNode = selection.anchor.getNode();
+        let element = anchorNode;
+
+        // Find the parent element (could be paragraph inside quote)
+        if ($isParagraphNode(element)) {
+          const parent = element.getParent();
+          if (parent && $isQuoteNode(parent)) {
+            element = parent;
+          }
+        }
+
+        // If parent is quote node, we're in a quote
+        const parentElement = element.getParent();
+        if ($isQuoteNode(element) || ($isQuoteNode(parentElement))) {
+          const quoteNode = $isQuoteNode(element) ? element : parentElement!;
+
+          // Don't handle if shift is pressed (let default soft break happen)
+          if (event?.shiftKey) {
+            return false;
+          }
+
+          // Check if current paragraph is empty
+          const currentNode = $isParagraphNode(anchorNode) ? anchorNode : anchorNode.getParent();
+          if (currentNode && $isParagraphNode(currentNode)) {
+            const textContent = currentNode.getTextContent();
+
+            // If current line is empty and it's the last child, exit the quote
+            if (textContent.trim() === '' && currentNode === quoteNode.getLastChild()) {
+              event?.preventDefault();
+
+              // Remove the empty paragraph
+              currentNode.remove();
+
+              // Create new paragraph after quote
+              const newParagraph = $createParagraphNode();
+              quoteNode.insertAfter(newParagraph);
+              newParagraph.select();
+
+              return true;
+            }
+          }
+
+          // Create new paragraph inside quote
+          event?.preventDefault();
+          const newParagraph = $createParagraphNode();
+
+          // Insert after current paragraph
+          if (currentNode && $isParagraphNode(currentNode)) {
+            currentNode.insertAfter(newParagraph);
+          } else {
+            quoteNode.append(newParagraph);
+          }
+
+          newParagraph.select();
+          return true;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_HIGH
+    );
+
+    // Handle Escape key to exit quote
+    const removeEscapeListener = editor.registerCommand(
+      KEY_ESCAPE_COMMAND,
+      (event: KeyboardEvent) => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const anchorNode = selection.anchor.getNode();
+        let element = anchorNode;
+
+        // Find the quote node
+        if ($isParagraphNode(element)) {
+          const parent = element.getParent();
+          if (parent && $isQuoteNode(parent)) {
+            element = parent;
+          }
+        }
+
+        const parentElement = element.getParent();
+        if ($isQuoteNode(element) || ($isQuoteNode(parentElement))) {
+          const quoteNode = $isQuoteNode(element) ? element : parentElement!;
+
+          event.preventDefault();
+
+          // Create new paragraph after quote
+          const newParagraph = $createParagraphNode();
+          quoteNode.insertAfter(newParagraph);
+          newParagraph.select();
+
+          return true;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_HIGH
+    );
+
+    return () => {
+      removeEnterListener();
+      removeEscapeListener();
+    };
+  }, [editor]);
+
+  return null;
 }
 
 const LexicalEditorWrapper = ({
@@ -368,6 +502,7 @@ const LexicalEditorWrapper = ({
       <LexicalComposer initialConfig={initialConfig}>
         <InitialContentPlugin content={content} />
         <ChangePlugin onChange={onChange} />
+        <MultilineQuotePlugin />
 
         {/* Toolbar */}
         {toolbar}
