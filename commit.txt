@@ -216,3 +216,86 @@ getestet. Die App ist produktionsbereit für grundlegende Notizen-Verwaltung.
 **Breaking Changes:** Keine - Erste stabile Version
 
 **Migration:** Führe `docker-compose up --build` aus für initiales Setup
+
+feat: Minimalistisches Dialog-Design mit horizontalem Scheinenlicht-Effekt
+
+Modernisierung der Link- und Bild-Upload-Dialoge mit professionellem,
+minimalistischem Design und innovativen Hover-Effekten.
+
+## Dialog-Redesign
+
+### Glasmorphism-Effekte
+- Backdrop-Blur für Modal-Hintergründe (`backdrop-blur-sm`)
+- Halbtransparente Oberflächen (`bg-dark-surface/95`)
+- Modernere rounded-xl Ecken
+- Subtile Shadow-Effekte (`shadow-2xl`)
+
+### Horizontaler Scheinenlicht-Effekt
+- **Hover-Effekt**: Weißer horizontaler Gradient-Schein bei allen Buttons
+- **Aktive Tabs**: Grüner Akzent-Schein für ausgewählten Tab
+- **Implementierung**: `bg-gradient-to-r from-transparent via-[color] to-transparent`
+- **Position**: Bottom-aligned mit sanfter Opacity-Transition
+
+### Segmented Control für Tabs
+- Modernes Segmented-Control-Design statt Border-Bottom
+- Aktiver Tab mit Hintergrund und Schatten
+- Fließende Übergänge zwischen Tabs
+- Bessere visuelle Hierarchie
+
+### Input-Felder
+- Konsistenter grauer Hintergrund (`bg-dark-elevated`)
+- Subtiler Focus-State mit grünem Border
+- Keine störenden Farbwechsel mehr
+- Verbesserte Placeholder-Darstellung
+
+### Typografie & Farben
+- Labels: Uppercase mit tracking-wide für professionellen Look
+- Button-Text: `text-white/70` mit `hover:text-white` für bessere Lesbarkeit
+- Einheitliche Textfarben über alle Dialog-Elemente
+- Optimierter Kontrast für Accessibility
+
+### Upload-Bereich
+- Größere Drop-Zone (`py-6`) für bessere Usability
+- Gestrichelte Border mit Hover-Effekt
+- Sanfter grüner Glow bei Hover
+- Kompaktere Datei-Anzeige mit Border
+
+## Technische Details
+
+### Button-Struktur
+```tsx
+<button className="relative group">
+  <span className="relative z-10">Text</span>
+  <span className="absolute bottom-0 ... opacity-0 group-hover:opacity-100" />
+</button>
+```
+
+### Tab-Logik
+- Aktiver Tab: Grüner Schein permanent sichtbar
+- Inaktiver Tab: Weißer Schein nur bei Hover
+- Disabled-State: Kein Schein
+
+### Responsive Verhalten
+- Alle Effekte funktionieren auf allen Bildschirmgrößen
+- Touch-Friendly für mobile Geräte
+- Optimierte Animationen für Performance
+
+## UI-Verbesserungen
+
+- Konsistentes Design über alle Dialoge
+- Professionellere Appearance
+- Bessere Benutzererfahrung durch visuelle Hinweise
+- Reduzierte visuelle Ablenkung
+- Fokus auf Inhalte
+
+## Betroffene Komponenten
+
+- `RichTextToolbar.tsx` - Link- und Bild-Dialoge
+- Alle Modal-Buttons mit Hover-Effekt
+- Tab-Navigation im Bild-Upload-Dialog
+- Input-Felder für URL-Eingabe
+
+---
+
+**Design-Philosophie:** Minimalismus trifft Innovation - Subtile Effekte,
+die die User Experience verbessern ohne zu überladen
