@@ -2,12 +2,15 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+import path from 'path';
 
 // Routes
 import authRoutes from './routes/auth.routes';
 import noteRoutes from './routes/note.routes';
 import folderRoutes from './routes/folder.routes';
 import tagRoutes from './routes/tag.routes';
+import attachmentRoutes from './routes/attachment.routes';
+import uploadRoutes from './routes/upload.routes';
 
 dotenv.config();
 
@@ -22,6 +25,9 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Static file serving für Uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Health Check
 app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -32,6 +38,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/tags', tagRoutes);
+app.use('/api/attachments', attachmentRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {

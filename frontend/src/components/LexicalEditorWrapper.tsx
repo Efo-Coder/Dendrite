@@ -5,6 +5,8 @@ import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
+import { ImageNode } from '../nodes/ImageNode';
+import ImagesPlugin from '../plugins/ImagePlugin';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
@@ -292,6 +294,7 @@ const LexicalEditorWrapper = ({
       TableRowNode,
       AutoLinkNode,
       LinkNode,
+      ImageNode,
     ],
   };
 
@@ -520,6 +523,7 @@ const LexicalEditorWrapper = ({
             <ListPlugin />
             <LinkPlugin />
             <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+            <ImagesPlugin />
           </div>
         </div>
       </LexicalComposer>

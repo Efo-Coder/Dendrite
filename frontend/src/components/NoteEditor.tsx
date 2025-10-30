@@ -6,6 +6,7 @@ import { useTagStore } from '../store/useTagStore';
 import { useToast } from './ToastContainer';
 import RichTextToolbar from './RichTextToolbar';
 import LexicalEditorWrapper from './LexicalEditorWrapper';
+import AttachmentList from './AttachmentList';
 import {
   Pin,
   Star,
@@ -360,8 +361,11 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
         onChange={setContent}
         placeholder="Beginne zu schreiben..."
         disabled={isInTrash}
-        toolbar={<RichTextToolbar disabled={isInTrash} />}
+        toolbar={<RichTextToolbar disabled={isInTrash} noteId={note.id} />}
       />
+
+      {/* Attachments */}
+      <AttachmentList noteId={note.id} onAttachmentsChange={onNoteUpdate} />
     </div>
   );
 };

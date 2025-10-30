@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   $getSelection,
@@ -12,6 +12,7 @@ import {
   $createTextNode,
   ElementFormatType,
   LexicalNode,
+  $getRoot,
 } from 'lexical';
 import {
   INSERT_ORDERED_LIST_COMMAND,
@@ -23,6 +24,8 @@ import { $isHeadingNode, $createHeadingNode, $createQuoteNode, $isQuoteNode } fr
 import { $setBlocksType, $getSelectionStyleValueForProperty } from '@lexical/selection';
 import { $createCodeNode } from '@lexical/code';
 import { TOGGLE_LINK_COMMAND } from '@lexical/link';
+import { $generateNodesFromDOM, $generateHtmlFromNodes } from '@lexical/html';
+import { INSERT_IMAGE_COMMAND } from '../plugins/ImagePlugin';
 import {
   Bold,
   Italic,
@@ -44,14 +47,18 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  Upload,
+  Loader2,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { attachmentService } from '../services/attachment.service';
 
 interface RichTextToolbarProps {
   disabled?: boolean;
+  noteId?: string;
 }
 
-const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
+const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => {
   const [editor] = useLexicalComposerContext();
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
@@ -62,6 +69,10 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [imageMode, setImageMode] = useState<'url' | 'upload'>('url');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
@@ -246,19 +257,54 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
     }
   };
 
-  const handleImageSubmit = () => {
-    if (imageUrl.trim()) {
-      editor.update(() => {
-        const selection = $getSelection();
-        if ($isRangeSelection(selection)) {
-          const imgElement = document.createElement('img');
-          imgElement.src = imageUrl;
-          imgElement.style.maxWidth = '100%';
-          selection.insertNodes([imgElement as any]);
-        }
-      });
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Prüfen, ob es ein Bild ist
+      if (!file.type.startsWith('image/')) {
+        alert('Bitte wähle eine Bilddatei aus.');
+        return;
+      }
+      // Größenlimit prüfen (10 MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Die Datei ist zu groß. Maximale Größe: 10 MB');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const insertImageFromUrl = (url: string) => {
+    editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+      altText: 'Uploaded image',
+      src: url,
+    });
+  };
+
+  const handleImageSubmit = async () => {
+    if (imageMode === 'url' && imageUrl.trim()) {
+      // URL-basiertes Bild einfügen
+      insertImageFromUrl(imageUrl);
       setImageUrl('');
       setShowImageModal(false);
+    } else if (imageMode === 'upload' && selectedFile) {
+      // Datei hochladen (kein noteId nötig, keine DB-Einträge)
+      setIsUploading(true);
+      try {
+        const result = await attachmentService.uploadImage(selectedFile);
+        const uploadedImageUrl = attachmentService.getAttachmentUrl(result.url);
+
+        // Hochgeladenes Bild einfügen
+        insertImageFromUrl(uploadedImageUrl);
+
+        setSelectedFile(null);
+        setShowImageModal(false);
+      } catch (error) {
+        console.error('Fehler beim Hochladen:', error);
+        alert('Fehler beim Hochladen des Bildes. Bitte versuche es erneut.');
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -378,50 +424,141 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
       {/* Image Modal */}
       {showImageModal && (
         <>
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowImageModal(false)} />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-dark-surface border border-dark-border rounded-lg p-6 z-50 w-96">
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => !isUploading && setShowImageModal(false)} />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-dark-surface border border-dark-border rounded-lg p-6 z-50 w-[450px]">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-dark-text-primary">Bild hinzufügen</h3>
               <button
-                onClick={() => setShowImageModal(false)}
-                className="p-1 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+                onClick={() => !isUploading && setShowImageModal(false)}
+                disabled={isUploading}
+                className="p-1 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-dark-text-secondary mb-2">
-                Bild-URL
-              </label>
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text-primary placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-accent-green-500"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleImageSubmit();
-                  } else if (e.key === 'Escape') {
-                    setShowImageModal(false);
-                  }
-                }}
-              />
+
+            {/* Tabs */}
+            <div className="flex space-x-2 mb-4 border-b border-dark-border">
+              <button
+                onClick={() => setImageMode('url')}
+                disabled={isUploading}
+                className={clsx(
+                  'px-4 py-2 text-sm font-medium transition-colors border-b-2',
+                  imageMode === 'url'
+                    ? 'text-accent-green-500 border-accent-green-500'
+                    : 'text-dark-text-muted border-transparent hover:text-dark-text-primary',
+                  'disabled:opacity-50'
+                )}
+              >
+                URL
+              </button>
+              <button
+                onClick={() => setImageMode('upload')}
+                disabled={isUploading}
+                className={clsx(
+                  'px-4 py-2 text-sm font-medium transition-colors border-b-2',
+                  imageMode === 'upload'
+                    ? 'text-accent-green-500 border-accent-green-500'
+                    : 'text-dark-text-muted border-transparent hover:text-dark-text-primary',
+                  'disabled:opacity-50'
+                )}
+              >
+                Datei hochladen
+              </button>
             </div>
+
+            {/* URL Input */}
+            {imageMode === 'url' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-dark-text-secondary mb-2">
+                  Bild-URL
+                </label>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text-primary placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-accent-green-500"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleImageSubmit();
+                    } else if (e.key === 'Escape') {
+                      setShowImageModal(false);
+                    }
+                  }}
+                />
+              </div>
+            )}
+
+            {/* File Upload */}
+            {imageMode === 'upload' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-dark-text-secondary mb-2">
+                  Datei auswählen
+                </label>
+                <div className="flex flex-col space-y-3">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="flex items-center justify-center space-x-2 px-4 py-3 border-2 border-dashed border-dark-border rounded-lg text-dark-text-muted hover:border-accent-green-500 hover:text-accent-green-500 transition-colors disabled:opacity-50"
+                  >
+                    <Upload className="w-5 h-5" />
+                    <span className="text-sm">
+                      {selectedFile ? 'Andere Datei wählen' : 'Datei auswählen'}
+                    </span>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  {selectedFile && (
+                    <div className="flex items-center justify-between px-3 py-2 bg-dark-elevated rounded-lg">
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <Image className="w-4 h-4 text-accent-green-500 flex-shrink-0" />
+                        <span className="text-sm text-dark-text-primary truncate">
+                          {selectedFile.name}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedFile(null)}
+                        disabled={isUploading}
+                        className="ml-2 p-1 rounded text-dark-text-muted hover:text-dark-text-primary transition-colors disabled:opacity-50"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                  <p className="text-xs text-dark-text-muted">
+                    Unterstützte Formate: JPG, PNG, GIF, WebP, SVG (max. 10 MB)
+                  </p>
+                </div>
+              </div>
+            )}
+
+
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowImageModal(false)}
-                className="px-4 py-2 text-sm text-dark-text-muted hover:text-dark-text-primary transition-colors"
+                disabled={isUploading}
+                className="px-4 py-2 text-sm text-dark-text-muted hover:text-dark-text-primary transition-colors disabled:opacity-50"
               >
                 Abbrechen
               </button>
               <button
                 onClick={handleImageSubmit}
-                disabled={!imageUrl.trim()}
-                className="px-4 py-2 text-sm bg-accent-green-500 text-white rounded-lg hover:bg-accent-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                disabled={
+                  isUploading ||
+                  (imageMode === 'url' && !imageUrl.trim()) ||
+                  (imageMode === 'upload' && !selectedFile)
+                }
+                className="flex items-center space-x-2 px-4 py-2 text-sm bg-accent-green-500 text-white rounded-lg hover:bg-accent-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Hinzufügen
+                {isUploading && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>{isUploading ? 'Wird hochgeladen...' : 'Hinzufügen'}</span>
               </button>
             </div>
           </div>

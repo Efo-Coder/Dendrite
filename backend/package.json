@@ -11,17 +11,24 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
   },
-  "keywords": ["notes", "api", "express", "typescript"],
+  "keywords": [
+    "notes",
+    "api",
+    "express",
+    "typescript"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "@types/multer": "^2.0.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "express-validator": "^7.2.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
