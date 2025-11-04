@@ -299,3 +299,141 @@ minimalistischem Design und innovativen Hover-Effekten.
 
 **Design-Philosophie:** Minimalismus trifft Innovation - Subtile Effekte,
 die die User Experience verbessern ohne zu überladen
+
+---
+
+
+
+refactor: Modernisiertes Modal-Design mit verbessertem Color Picker
+
+Umfassende Design-Überarbeitung der Modal-Komponenten für Ordner und Tags mit
+konsistentem, minimalistischem Erscheinungsbild und verbesserter Benutzerfreundlichkeit.
+
+## Color Picker Verbesserungen
+
+### Custom Color Picker ohne Browser-Rahmen
+- Nativer `<input type="color">` komplett versteckt (opacity-0)
+- Sichtbares `<div>` mit Farbe als Overlay-Element
+- Verhindert störende Browser-Standard-Rahmen vollständig
+- Click-Handler auf div löst versteckten Color Picker aus
+- Konsistente Größe (w-8 h-8) mit Preset-Farben
+
+### Vereinfachtes Ring-Styling
+- Ring reduziert von `ring-2 ring-offset-2` auf `ring-1`
+- Kein Ring-Offset mehr für klareres Design
+- Ring-Farbe: `ring-accent-green-500` für Konsistenz
+- Automatische Ring-Anzeige bei Custom-Farben (nicht in Preset-Liste)
+- Scale-Effekt (110%) bei ausgewählter Farbe
+
+### Hover-Effekte entfernt
+- Horizontale Scheineffekte bei Color Pickern entfernt
+- Fokus auf Farb-Auswahl ohne visuelle Ablenkung
+- Nur noch scale-Hover-Effekt (105%) für subtiles Feedback
+
+## Input-Felder
+
+### Glasmorphism-Effekt
+- Hintergrund: `bg-black/10 backdrop-blur-sm` statt `bg-dark-elevated`
+- Subtiler, modernerer Look
+- Konsistent über alle Modals
+
+### Focus-State
+- Border bei Fokus: `focus:border-accent-green-500`
+- Einheitliche grüne Akzentfarbe wie bei Ringen
+- Outline entfernt für saubereres Design
+
+## Typografie
+
+### Labels
+- Schriftgröße: `text-xs` statt `text-sm`
+- Stil: `uppercase tracking-wide`
+- Professionellerer, kompakterer Look
+- Bessere visuelle Hierarchie
+
+## Button-Styling
+
+### Hover-Effekte
+- Horizontaler Scheinenlicht-Effekt beibehalten
+- Konsistente Text-Farben: `text-white/70` mit `hover:text-white`
+- Relative positioning mit z-index für sauberes Layering
+
+### Disabled-States
+- Opacity reduziert: `disabled:opacity-40`
+- Cursor: `disabled:cursor-not-allowed`
+- Hover-Effekte deaktiviert: `group-disabled:opacity-0`
+
+## Bugfixes
+
+### TypeScript-Fehler behoben
+- `EditFolderModal`: `folder.color` kann `null` sein
+- Fallback-Wert hinzugefügt: `folder.color || '#10b981'`
+- Verhindert Type-Mismatch-Error
+
+## Betroffene Komponenten
+
+- `CreateFolderModal.tsx` - Neuer Ordner erstellen
+- `EditFolderModal.tsx` - Ordner bearbeiten
+- `CreateTagModal.tsx` - Neuer Tag erstellen
+- `EditTagModal.tsx` - Tag bearbeiten
+
+## Design-Konsistenz
+
+### Vereinheitlichte Elemente
+- Alle Modals teilen identisches Styling
+- Gleiche Input-Felder über alle Formulare
+- Konsistente Color Picker-Implementierung
+- Einheitliche Button-Styles und -Abstände
+
+### Spacing
+- Button-Abstand reduziert: `space-x-2` statt `space-x-3`
+- Kompakteres, moderneres Layout
+- Bessere Ausnutzung des Modal-Platzes
+
+## Technische Details
+
+### Custom Color Picker Struktur
+```tsx
+<div className="relative">
+  {/* Versteckter nativer Picker */}
+  <input type="color" className="absolute inset-0 opacity-0" />
+
+  {/* Sichtbares Farb-Div */}
+  <div
+    className="w-8 h-8 rounded-lg ring-1 ring-accent-green-500"
+    style={{ backgroundColor: selectedColor }}
+    onClick={() => document.getElementById('custom-color')?.click()}
+  />
+</div>
+```
+
+### Bedingte Ring-Anzeige
+```tsx
+className={`${
+  !colors.includes(selectedColor)
+    ? 'ring-1 ring-accent-green-500 scale-110'
+    : 'hover:scale-105'
+}`}
+```
+
+## User Experience
+
+### Verbesserte Benutzerführung
+- Klarere visuelle Hierarchie durch einheitliches Design
+- Weniger visuelle Ablenkung
+- Fokus auf Inhalte (Name, Farbe)
+- Konsistentes Verhalten über alle Modals
+
+### Accessibility
+- Bessere Kontraste bei Input-Feldern
+- Deutliche Focus-States
+- Cursor-Feedback bei Disabled-States
+- Touch-Friendly Größen (8x8 für Color Picker)
+
+---
+
+**Design-Philosophie:** Konsistenz und Klarheit - Ein einheitliches,
+minimalistisches Design über alle Ordner- und Tag-Modals hinweg.
+
+**Breaking Changes:** Keine - Nur visuelle Verbesserungen
+
+**Migration:** Keine Aktion erforderlich
