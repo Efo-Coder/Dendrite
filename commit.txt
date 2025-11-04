@@ -437,3 +437,13 @@ minimalistisches Design über alle Ordner- und Tag-Modals hinweg.
 **Breaking Changes:** Keine - Nur visuelle Verbesserungen
 
 **Migration:** Keine Aktion erforderlich
+
+---
+
+feat: Sidebar-Layout optimiert - Logo und Toggle-Button neupositioniert
+
+- Logo nach rechts verschoben für bessere Ausrichtung mit anderen Icons
+- Logo bleibt im kollabierten Zustand sichtbar (nur Icon, zentriert)
+- Toggle-Button von Header an das Ende der Navigation verschoben
+- Visuelles Balance verbessert durch separaten Toggle-Bereich mit Border
+- Logo-Header vereinfacht ohne zusätzlichen Toggle-Button

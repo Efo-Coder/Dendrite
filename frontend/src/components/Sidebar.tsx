@@ -167,21 +167,12 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
         "bg-dark-surface border-r border-dark-border flex flex-col transition-all duration-300 overflow-hidden",
         isCollapsed ? "w-16" : "w-64"
       )}>
-        {/* Logo and Toggle */}
-        <div className="h-16 px-4 flex items-center justify-between border-b border-dark-border flex-shrink-0">
-          <div className={clsx(
-            "transition-opacity duration-200",
-            isCollapsed ? "opacity-0" : "opacity-100 delay-150"
-          )}>
-            {!isCollapsed && <Logo size="md" showText={true} />}
-          </div>
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors flex-shrink-0"
-            title={isCollapsed ? "Sidebar erweitern" : "Sidebar minimieren"}
-          >
-            {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-          </button>
+        {/* Logo */}
+        <div className={clsx(
+          "h-16 border-b border-dark-border flex-shrink-0 flex items-center",
+          isCollapsed ? "justify-center px-2" : "justify-start px-4 ml-2"
+        )}>
+          <Logo size="md" showText={!isCollapsed} />
         </div>
 
         {/* Navigation */}
@@ -373,6 +364,20 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Toggle Button at bottom */}
+          <div className={clsx(
+            "mt-auto pt-4 pb-2 border-t border-dark-border",
+            isCollapsed ? "flex justify-center" : "flex justify-end pr-3"
+          )}>
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+              title={isCollapsed ? "Sidebar erweitern" : "Sidebar minimieren"}
+            >
+              {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+            </button>
           </div>
         </nav>
       </aside>
