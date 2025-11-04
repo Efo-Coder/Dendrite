@@ -84,7 +84,7 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
 
         {/* Name Input */}
         <div>
-          <label htmlFor="tag-name" className="block text-sm font-medium text-dark-text-primary mb-2">
+          <label htmlFor="tag-name" className="block text-xs font-medium text-dark-text-primary mb-2 uppercase tracking-wide">
             Name
           </label>
           <input
@@ -92,7 +92,7 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="input"
+            className="w-full px-3 py-2.5 bg-black/10 backdrop-blur-sm border border-dark-border rounded-lg text-dark-text-primary text-sm placeholder-dark-text-muted focus:outline-none focus:border-accent-green-500 transition-all"
             placeholder="z.B. Wichtig, Idee, ToDo"
             autoFocus
             required
@@ -101,7 +101,7 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
 
         {/* Color Picker */}
         <div>
-          <label className="block text-sm font-medium text-dark-text-primary mb-2">
+          <label className="block text-xs font-medium text-dark-text-primary mb-2 uppercase tracking-wide">
             Farbe
           </label>
           <div className="grid grid-cols-8 gap-2 mb-3">
@@ -110,9 +110,9 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
                 key={color}
                 type="button"
                 onClick={() => setSelectedColor(color)}
-                className={`w-8 h-8 rounded-lg transition-all ${
+                className={`w-8 h-8 rounded-lg transition-all relative group ${
                   selectedColor === color
-                    ? 'ring-2 ring-offset-2 ring-offset-dark-surface ring-accent-green-500 scale-110'
+                    ? 'ring-1 ring-accent-green-500 scale-110'
                     : 'hover:scale-105'
                 }`}
                 style={{ backgroundColor: color }}
@@ -127,14 +127,25 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
               Oder eigene Farbe:
             </label>
             <div className="flex items-center gap-2">
-              <input
-                id="custom-color"
-                type="color"
-                value={selectedColor}
-                onChange={(e) => setSelectedColor(e.target.value)}
-                className="w-10 h-10 rounded-lg cursor-pointer border-2 border-dark-border bg-dark-elevated"
-                title="Eigene Farbe wählen"
-              />
+              <div className="relative">
+                <input
+                  id="custom-color"
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-8 h-8"
+                  title="Eigene Farbe wählen"
+                />
+                <div
+                  className={`w-8 h-8 rounded-lg cursor-pointer transition-all relative group ${
+                    !colors.includes(selectedColor)
+                      ? 'ring-1 ring-accent-green-500 scale-110'
+                      : 'hover:scale-105'
+                  }`}
+                  style={{ backgroundColor: selectedColor }}
+                  onClick={() => document.getElementById('custom-color')?.click()}
+                />
+              </div>
               <span className="text-xs text-dark-text-muted font-mono">
                 {selectedColor}
               </span>
@@ -143,21 +154,23 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
         </div>
 
         {/* Buttons */}
-        <div className="flex items-center justify-end space-x-3 pt-2">
+        <div className="flex items-center justify-end space-x-2 pt-2">
           <button
             type="button"
             onClick={handleClose}
-            className="btn btn-secondary"
+            className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group"
             disabled={isSubmitting}
           >
-            Abbrechen
+            <span className="relative z-10">Abbrechen</span>
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
           </button>
           <button
             type="submit"
-            className="btn btn-primary"
+            className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Speichere...' : 'Speichern'}
+            <span className="relative z-10">{isSubmitting ? 'Speichere...' : 'Speichern'}</span>
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 group-disabled:opacity-0 transition-opacity"></span>
           </button>
         </div>
       </form>

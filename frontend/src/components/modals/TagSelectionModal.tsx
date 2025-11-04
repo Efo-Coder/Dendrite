@@ -69,7 +69,7 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
                   <button
                     key={tag.id}
                     onClick={() => handleTagToggle(tag.id)}
-                    className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                    className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative group ${
                       isSelected
                         ? 'bg-accent-green-500/10 text-accent-green-500'
                         : 'hover:bg-dark-elevated text-dark-text-primary'
@@ -83,7 +83,10 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
                       style={{ accentColor: tag.color }}
                     />
                     <Tag className="w-4 h-4 flex-shrink-0" style={{ color: tag.color }} />
-                    <span className="text-sm">{tag.name}</span>
+                    <span className="text-sm relative z-10">{tag.name}</span>
+                    {!isSelected && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    )}
                   </button>
                 );
               })
@@ -92,10 +95,11 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
             {/* Create new tag option */}
             <button
               onClick={handleCreateTag}
-              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover:bg-dark-elevated text-dark-text-primary border-t border-dark-border pt-3 mt-3"
+              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover:bg-dark-elevated text-dark-text-primary border-t border-dark-border pt-3 mt-3 relative group"
             >
               <Plus className="w-4 h-4 text-accent-green-500" />
-              <span className="text-sm text-accent-green-500">Neuen Tag erstellen</span>
+              <span className="text-sm text-accent-green-500 relative z-10">Neuen Tag erstellen</span>
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </button>
           </div>
 
@@ -103,18 +107,20 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
             <div className="text-xs text-dark-text-muted">
               {selectedTagIds.length} Tag{selectedTagIds.length !== 1 ? 's' : ''} ausgewählt
             </div>
-            <div className="flex gap-2">
+            <div className="flex space-x-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg bg-dark-elevated text-dark-text-primary hover:bg-dark-border transition-colors"
+                className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group"
               >
-                Abbrechen
+                <span className="relative z-10">Abbrechen</span>
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 rounded-lg bg-accent-green-500 text-white hover:bg-accent-green-600 transition-colors"
+                className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group"
               >
-                Speichern
+                <span className="relative z-10">Speichern</span>
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
               </button>
             </div>
           </div>

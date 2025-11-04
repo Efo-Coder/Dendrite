@@ -50,14 +50,17 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
             {/* No folder option */}
             <button
               onClick={() => handleMove(null)}
-              className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${
+              className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative group ${
                 currentFolderId === null
                   ? 'bg-accent-green-500/10 text-accent-green-500'
                   : 'hover:bg-dark-elevated text-dark-text-primary'
               }`}
             >
               <FolderOpen className="w-4 h-4 text-dark-text-muted" />
-              <span className="text-sm">Kein Ordner</span>
+              <span className="text-sm relative z-10">Kein Ordner</span>
+              {currentFolderId !== null && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
+              )}
             </button>
 
             {/* Existing folders */}
@@ -65,36 +68,41 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
               <button
                 key={folder.id}
                 onClick={() => handleMove(folder.id)}
-                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative group ${
                   currentFolderId === folder.id
                     ? 'bg-accent-green-500/10 text-accent-green-500'
                     : 'hover:bg-dark-elevated text-dark-text-primary'
                 }`}
               >
-                <FolderOpen 
-                  className="w-4 h-4" 
-                  style={{ color: folder.color || '#10b981' }} 
+                <FolderOpen
+                  className="w-4 h-4"
+                  style={{ color: folder.color || '#10b981' }}
                 />
-                <span className="text-sm">{folder.name}</span>
+                <span className="text-sm relative z-10">{folder.name}</span>
+                {currentFolderId !== folder.id && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                )}
               </button>
             ))}
 
             {/* Create new folder option */}
             <button
               onClick={handleCreateFolder}
-              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover:bg-dark-elevated text-dark-text-primary border-t border-dark-border pt-3 mt-3"
+              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover:bg-dark-elevated text-dark-text-primary border-t border-dark-border pt-3 mt-3 relative group"
             >
               <Plus className="w-4 h-4 text-accent-green-500" />
-              <span className="text-sm text-accent-green-500">Neuen Ordner erstellen</span>
+              <span className="text-sm text-accent-green-500 relative z-10">Neuen Ordner erstellen</span>
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </button>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end pt-4">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-dark-elevated text-dark-text-primary hover:bg-dark-border transition-colors"
+              className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group"
             >
-              Abbrechen
+              <span className="relative z-10">Abbrechen</span>
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </button>
           </div>
         </div>

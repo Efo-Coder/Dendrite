@@ -157,59 +157,10 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
       editor.update(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
-          // Get all selected nodes
-          const nodes = selection.getNodes();
-
-          if (nodes.length === 0) return;
-
-          // Collect all top-level block elements
-          const blockElements: LexicalNode[] = [];
-          const seenElements = new Set<string>();
-
-          for (const node of nodes) {
-            const topLevelElement = node.getTopLevelElementOrThrow();
-            const key = topLevelElement.getKey();
-
-            if (!seenElements.has(key)) {
-              seenElements.add(key);
-              blockElements.push(topLevelElement);
-            }
-          }
-
-          // Create a new quote node
-          const quoteNode = $createQuoteNode();
-
-          // For each block element, create a paragraph inside the quote
-          for (let i = 0; i < blockElements.length; i++) {
-            const element = blockElements[i];
-            const paragraph = $createParagraphNode();
-
-            // Copy all child nodes (preserves formatting)
-            const children = element.getChildren();
-            for (const child of children) {
-              const clonedChild = child.clone();
-              paragraph.append(clonedChild);
-            }
-
-            quoteNode.append(paragraph);
-
-            // Remove the original element (except for the first one)
-            if (i > 0) {
-              element.remove();
-            }
-          }
-
-          // Replace the first element with the quote
-          if (blockElements.length > 0) {
-            blockElements[0].replace(quoteNode);
-          }
-
-          // Select the quote
-          quoteNode.selectEnd();
+          $setBlocksType(selection, () => $createQuoteNode());
         }
       });
     } else {
-      // Exit quote - convert back to paragraphs
       editor.update(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {

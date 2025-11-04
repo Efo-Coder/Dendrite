@@ -31,20 +31,20 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-dark-surface border border-dark-border rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-slide-up">
+      <div className="relative bg-dark-surface/95 backdrop-blur-md border border-dark-border rounded-xl shadow-2xl w-full max-w-md mx-4 animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-dark-border">
-          <h2 className="text-xl font-semibold text-dark-text-primary">{title}</h2>
+          <h2 className="text-base font-semibold text-dark-text-primary">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+            className="p-1.5 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-all"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
