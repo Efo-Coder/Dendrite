@@ -197,7 +197,7 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="flex h-screen bg-dark-bg overflow-hidden">
+    <div className="flex h-screen bg-theme-bg overflow-hidden">
       {/* Sidebar */}
             <Sidebar
               currentView={currentView}
@@ -215,10 +215,10 @@ const DashboardPage = () => {
 
         <div className="flex-1 flex overflow-hidden">
           {/* Note List */}
-          <div className="w-80 border-r border-dark-border bg-dark-surface flex flex-col">
+          <div className="w-80 border-r border-theme bg-theme-surface flex flex-col">
             {/* Note List Header */}
-            <div className="p-4 border-b border-dark-border flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-dark-text-primary">
+            <div className="p-4 border-b border-theme flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-theme-text-primary">
                 {getViewTitle()}
               </h2>
               <div className="w-9 h-9 flex items-center justify-center">
@@ -234,7 +234,7 @@ const DashboardPage = () => {
                 ) : (
                   <button
                     onClick={() => setShowEmptyTrashModal(true)}
-                    className="btn-ghost px-3 py-2 rounded-lg text-red-500 hover:bg-dark-elevated flex items-center gap-2"
+                    className="btn-ghost px-3 py-2 rounded-lg text-red-500 hover:bg-theme-elevated flex items-center gap-2"
                     title="Papierkorb leeren"
                   >
                     <Trash2 className="w-5 h-5" />
@@ -279,7 +279,7 @@ const DashboardPage = () => {
                 onNoteUpdate={refreshCurrentView}
               />
             ) : (
-              <div className="h-full flex items-center justify-center text-dark-text-muted">
+              <div className="h-full flex items-center justify-center text-theme-text-muted">
                 <div className="text-center">
                   <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="text-lg">Wähle eine Notiz oder erstelle eine neue</p>
@@ -292,13 +292,13 @@ const DashboardPage = () => {
         {/* Empty Trash Modal */}
         <Modal isOpen={showEmptyTrashModal} onClose={() => setShowEmptyTrashModal(false)} title="Papierkorb leeren?">
           <div className="space-y-4">
-            <p className="text-sm text-dark-text-secondary">
+            <p className="text-sm text-theme-text-secondary">
               Möchtest du wirklich alle Notizen im Papierkorb endgültig löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.
             </p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowEmptyTrashModal(false)}
-                className="px-3 py-2 rounded-lg bg-dark-elevated text-dark-text-primary hover:bg-dark-border"
+                className="px-3 py-2 rounded-lg bg-theme-elevated text-theme-text-primary hover:bg-theme-divider"
               >
                 Abbrechen
               </button>

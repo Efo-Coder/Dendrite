@@ -150,9 +150,9 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const isArchived = note.isArchived && !note.isDeleted;
 
   return (
-    <div className="h-full flex flex-col bg-dark-bg">
+    <div className="h-full flex flex-col bg-theme-bg">
       {/* Toolbar */}
-      <div className="h-14 border-b border-dark-border px-6 md:px-12 flex items-center justify-between">
+      <div className="h-14 border-b border-theme px-6 md:px-12 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           {!isInTrash && !isArchived && (
             <>
@@ -162,7 +162,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                   'p-2 rounded-lg transition-colors',
                   note.isPinned
                     ? 'text-accent-green-500 bg-accent-green-500/10'
-                    : 'text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary'
+                    : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
                 )}
                 title="Notiz anheften"
               >
@@ -174,7 +174,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                   'p-2 rounded-lg transition-colors',
                   note.isFavorite
                     ? 'text-yellow-500'
-                    : 'text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary'
+                    : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
                 )}
                 title="Zu Favoriten hinzufügen"
               >
@@ -182,19 +182,19 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
               </button>
               <button
                 onClick={handleArchive}
-                className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+                className="p-2 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"
                 title="Archivieren"
               >
                 <Archive className="w-4 h-4" />
               </button>
 
-              <div className="h-4 w-px bg-dark-border mx-2" />
+              <div className="h-4 w-px bg-theme-divider mx-2" />
 
               {/* Folder Dropdown */}
               <div className="relative">
                 <button
                   onClick={() => setShowFolderDropdown(!showFolderDropdown)}
-                  className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+                  className="p-2 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"
                   title="Ordner wählen"
                 >
                   <FolderOpen className="w-4 h-4" />
@@ -203,19 +203,19 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                 {showFolderDropdown && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setShowFolderDropdown(false)} />
-                    <div className="absolute left-0 mt-2 w-56 bg-dark-surface border border-dark-border rounded-lg shadow-2xl z-20 max-h-64 overflow-y-auto">
+                    <div className="absolute left-0 mt-2 w-56 bg-theme-surface border border-theme rounded-lg shadow-2xl z-20 max-h-64 overflow-y-auto">
                       <button
                         onClick={() => handleMoveToFolder(null)}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-dark-elevated transition-colors"
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-theme-elevated transition-colors"
                       >
-                        <span className="text-dark-text-secondary">Kein Ordner</span>
+                        <span className="text-theme-text-secondary">Kein Ordner</span>
                       </button>
                       {folders.map((folder) => (
                         <button
                           key={folder.id}
                           onClick={() => handleMoveToFolder(folder.id)}
                           className={clsx(
-                            'w-full px-4 py-2 text-left text-sm hover:bg-dark-elevated transition-colors flex items-center space-x-2',
+                            'w-full px-4 py-2 text-left text-sm hover:bg-theme-elevated transition-colors flex items-center space-x-2',
                             note.folderId === folder.id && 'bg-accent-green-500/10 text-accent-green-500'
                           )}
                         >
@@ -232,7 +232,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
               <div className="relative">
                 <button
                   onClick={() => setShowTagDropdown(!showTagDropdown)}
-                  className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+                  className="p-2 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"
                   title="Tags verwalten"
                 >
                   <TagIcon className="w-4 h-4" />
@@ -241,9 +241,9 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                 {showTagDropdown && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setShowTagDropdown(false)} />
-                    <div className="absolute left-0 mt-2 w-56 bg-dark-surface border border-dark-border rounded-lg shadow-2xl z-20 max-h-64 overflow-y-auto">
+                    <div className="absolute left-0 mt-2 w-56 bg-theme-surface border border-theme rounded-lg shadow-2xl z-20 max-h-64 overflow-y-auto">
                       {tags.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-dark-text-muted italic">
+                        <div className="px-4 py-3 text-sm text-theme-text-muted italic">
                           Keine Tags verfügbar
                         </div>
                       ) : (
@@ -254,7 +254,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                               key={tag.id}
                               onClick={() => handleToggleTag(tag.id)}
                               className={clsx(
-                                'w-full px-4 py-2 text-left text-sm hover:bg-dark-elevated transition-colors flex items-center',
+                                'w-full px-4 py-2 text-left text-sm hover:bg-theme-elevated transition-colors flex items-center',
                                 isSelected && 'bg-accent-green-500/10'
                               )}
                             >
@@ -263,7 +263,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                                   type="checkbox"
                                   checked={isSelected}
                                   onChange={() => {}}
-                                  className="w-4 h-4 rounded border-dark-border flex-shrink-0"
+                                  className="w-4 h-4 rounded border-theme flex-shrink-0"
                                   style={{ accentColor: tag.color }}
                                 />
                                 <TagIcon className="w-4 h-4 flex-shrink-0" style={{ color: tag.color }} />
@@ -284,7 +284,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
           {isArchived && (
             <button
               onClick={handleRestore}
-              className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+              className="p-2 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"
               title="Aus Archiv wiederherstellen"
             >
               <ArchiveRestore className="w-4 h-4" />
@@ -294,7 +294,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
           {isInTrash && (
             <button
               onClick={handleRestore}
-              className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+              className="p-2 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"
               title="Wiederherstellen"
             >
               <RotateCcw className="w-4 h-4" />
@@ -305,7 +305,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
         <div className="flex items-center space-x-3">
           {/* Save Status */}
           {!isInTrash && (
-            <div className="flex items-center space-x-2 text-xs text-dark-text-muted">
+            <div className="flex items-center space-x-2 text-xs text-theme-text-muted">
               <Clock className="w-3 h-3" />
               <span>
                 {isSaving
@@ -324,7 +324,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             {!isInTrash && !isArchived && (
               <button
                 onClick={handleDelete}
-                className="p-2 rounded-lg text-dark-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                className="p-2 rounded-lg text-theme-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors"
                 title="In Papierkorb"
               >
                 <Trash2 className="w-4 h-4" />
@@ -335,7 +335,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             {isInTrash && (
               <button
                 onClick={handleDelete}
-                className="p-2 rounded-lg text-dark-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                className="p-2 rounded-lg text-theme-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors"
                 title="Endgültig löschen"
               >
                 <Trash2 className="w-4 h-4" />
@@ -345,7 +345,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             {/* Close Button */}
             <button
               onClick={handleClose}
-              className="p-2 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-colors"
+              className="p-2 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"
               title="Notiz schließen"
             >
               <X className="w-4 h-4" />

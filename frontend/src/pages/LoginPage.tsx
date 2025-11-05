@@ -20,19 +20,19 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-bg px-4">
+    <div className="min-h-screen flex items-center justify-center bg-theme-bg px-4">
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-green-500/10 rounded-2xl mb-4 border border-accent-green-500/20">
             <FileText className="w-8 h-8 text-accent-green-500" />
           </div>
-          <h1 className="text-3xl font-bold text-dark-text-primary mb-2">Dendrite</h1>
-          <p className="text-dark-text-secondary">Melde dich an, um fortzufahren</p>
+          <h1 className="text-3xl font-bold text-theme-text-primary mb-2">Dendrite</h1>
+          <p className="text-theme-text-secondary">Melde dich an, um fortzufahren</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-dark-surface border border-dark-border rounded-2xl p-8 shadow-2xl">
+        <div className="bg-theme-surface border border-theme rounded-2xl p-8 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg text-sm">
@@ -41,7 +41,7 @@ const LoginPage = () => {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-dark-text-primary mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-theme-text-primary mb-2">
                 E-Mail
               </label>
               <input
@@ -56,7 +56,7 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-dark-text-primary mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-theme-text-primary mb-2">
                 Passwort
               </label>
               <input
@@ -80,7 +80,7 @@ const LoginPage = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-dark-text-secondary text-sm">
+            <p className="text-theme-text-secondary text-sm">
               Noch kein Konto?{' '}
               <Link to="/register" className="text-accent-green-500 hover:text-accent-green-400 font-medium">
                 Registrieren

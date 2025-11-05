@@ -36,13 +36,13 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
       />
 
       {/* Modal */}
-      <div className="relative bg-dark-surface/95 backdrop-blur-md border border-dark-border rounded-xl shadow-2xl w-full max-w-md mx-4 animate-slide-up">
+      <div className="relative bg-theme-surface/95 backdrop-blur-md border border-theme rounded-xl shadow-2xl w-full max-w-md mx-4 animate-slide-up">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-dark-border">
-          <h2 className="text-base font-semibold text-dark-text-primary">{title}</h2>
+        <div className="flex items-center justify-between p-6 border-b border-theme">
+          <h2 className="text-base font-semibold text-theme-text-primary">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary transition-all"
+            className="p-1.5 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-all"
           >
             <X className="w-4 h-4" />
           </button>

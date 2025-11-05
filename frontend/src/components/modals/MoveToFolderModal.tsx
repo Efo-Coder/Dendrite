@@ -42,7 +42,7 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
     <>
       <Modal isOpen={isOpen} onClose={onClose} title="Notiz verschieben">
         <div className="space-y-4">
-          <p className="text-sm text-dark-text-secondary">
+          <p className="text-sm text-theme-text-secondary">
             Wähle einen Ordner aus, in den die Notiz verschoben werden soll:
           </p>
 
@@ -53,10 +53,10 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
               className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative group ${
                 currentFolderId === null
                   ? 'bg-accent-green-500/10 text-accent-green-500'
-                  : 'hover:bg-dark-elevated text-dark-text-primary'
+                  : 'hover:bg-theme-elevated text-theme-text-primary'
               }`}
             >
-              <FolderOpen className="w-4 h-4 text-dark-text-muted" />
+              <FolderOpen className="w-4 h-4 text-theme-text-muted" />
               <span className="text-sm relative z-10">Kein Ordner</span>
               {currentFolderId !== null && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
@@ -71,7 +71,7 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
                 className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative group ${
                   currentFolderId === folder.id
                     ? 'bg-accent-green-500/10 text-accent-green-500'
-                    : 'hover:bg-dark-elevated text-dark-text-primary'
+                    : 'hover:bg-theme-elevated text-theme-text-primary'
                 }`}
               >
                 <FolderOpen
@@ -88,7 +88,7 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
             {/* Create new folder option */}
             <button
               onClick={handleCreateFolder}
-              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover:bg-dark-elevated text-dark-text-primary border-t border-dark-border pt-3 mt-3 relative group"
+              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover:bg-theme-elevated text-theme-text-primary border-t border-theme pt-3 mt-3 relative group"
             >
               <Plus className="w-4 h-4 text-accent-green-500" />
               <span className="text-sm text-accent-green-500 relative z-10">Neuen Ordner erstellen</span>

@@ -186,7 +186,7 @@ const ResizableImage = ({
           onMouseLeave={handleMouseLeave}
         >
           <div
-            className="bg-dark-surface/95 backdrop-blur-sm border border-dark-border rounded-lg shadow-xl flex items-center gap-0.5 px-1.5 py-1"
+            className="bg-theme-surface/95 backdrop-blur-sm border border-theme rounded-lg shadow-xl flex items-center gap-0.5 px-1.5 py-1"
             onMouseEnter={handleMouseEnter}
           >
             <button
@@ -194,7 +194,7 @@ const ResizableImage = ({
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'left'
                   ? 'bg-accent-green-500/20 text-accent-green-500'
-                  : 'text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary'
+                  : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
               }`}
               title="Links ausrichten"
             >
@@ -205,7 +205,7 @@ const ResizableImage = ({
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'center'
                   ? 'bg-accent-green-500/20 text-accent-green-500'
-                  : 'text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary'
+                  : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
               }`}
               title="Zentrieren"
             >
@@ -216,19 +216,19 @@ const ResizableImage = ({
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'right'
                   ? 'bg-accent-green-500/20 text-accent-green-500'
-                  : 'text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary'
+                  : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
               }`}
               title="Rechts ausrichten"
             >
               <AlignRight className="w-3.5 h-3.5" />
             </button>
-            <div className="w-px h-4 bg-dark-border/50 mx-1" />
+            <div className="w-px h-4 bg-theme-divider/50 mx-1" />
             <button
               onClick={() => setMaintainAspectRatio(!maintainAspectRatio)}
               className={`p-1.5 rounded-md transition-all ${
                 maintainAspectRatio
                   ? 'bg-accent-green-500/20 text-accent-green-500'
-                  : 'text-dark-text-muted hover:bg-dark-elevated hover:text-dark-text-primary'
+                  : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
               }`}
               title={maintainAspectRatio ? 'Seitenverhältnis gesperrt' : 'Seitenverhältnis entsperrt'}
             >
@@ -238,11 +238,11 @@ const ResizableImage = ({
                 <Unlock className="w-3.5 h-3.5" />
               )}
             </button>
-            <div className="w-px h-4 bg-dark-border/50 mx-1" />
+            <div className="w-px h-4 bg-theme-divider/50 mx-1" />
             {onDelete && (
               <button
                 onClick={onDelete}
-                className="p-1.5 rounded-md text-dark-text-muted hover:bg-red-500/10 hover:text-red-500 transition-all"
+                className="p-1.5 rounded-md text-theme-text-muted hover:bg-red-500/10 hover:text-red-500 transition-all"
                 title="Bild löschen"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -261,7 +261,7 @@ const ResizableImage = ({
         <img
           src={src}
           alt={altText}
-          className="w-full h-full object-contain rounded-lg border border-dark-border"
+          className="w-full h-full object-contain rounded-lg border border-theme"
           draggable={false}
         />
 
@@ -282,7 +282,7 @@ const ResizableImage = ({
               className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all border-2"
               style={{
                 touchAction: 'none',
-                background: 'var(--color-dark-bg)',
+                background: 'var(--color-bg)',
                 borderColor: 'var(--color-accent-500)',
               }}
             />
@@ -301,7 +301,7 @@ const ResizableImage = ({
               className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rounded-full cursor-ns-resize opacity-0 group-hover:opacity-100 transition-all border-2"
               style={{
                 touchAction: 'none',
-                background: 'var(--color-dark-bg)',
+                background: 'var(--color-bg)',
                 borderColor: 'var(--color-accent-500)',
               }}
             />
@@ -312,7 +312,7 @@ const ResizableImage = ({
               className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-all border-2"
               style={{
                 touchAction: 'none',
-                background: 'var(--color-dark-bg)',
+                background: 'var(--color-bg)',
                 borderColor: 'var(--color-accent-500)',
               }}
             />
@@ -333,12 +333,12 @@ const ResizableImage = ({
 
       {/* Size Indicator */}
       {isResizing && (
-        <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 bg-dark-surface/95 backdrop-blur-sm border border-dark-border rounded-lg px-3 py-1.5 text-xs text-dark-text-primary shadow-xl font-mono">
+        <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 bg-theme-surface/95 backdrop-blur-sm border border-theme rounded-lg px-3 py-1.5 text-xs text-theme-text-primary shadow-xl font-mono">
           <span className="text-accent-green-500 font-semibold">{Math.round(width)}%</span>
-          <span className="text-dark-text-muted mx-1">×</span>
+          <span className="text-theme-text-muted mx-1">×</span>
           <span className="text-accent-green-500 font-semibold">{Math.round(height)}px</span>
           {maintainAspectRatio && (
-            <span className="ml-2 text-dark-text-muted">
+            <span className="ml-2 text-theme-text-muted">
               <Lock className="w-3 h-3 inline" />
             </span>
           )}

@@ -55,7 +55,7 @@ const Logo: React.FC<LogoProps> = ({
         }}
       />
       {showText && (
-        <h1 className={`${textSizeClasses[size]} font-bold text-dark-text-primary`}>
+        <h1 className={`${textSizeClasses[size]} font-bold text-theme-text-primary`}>
           Dendrite
         </h1>
       )}

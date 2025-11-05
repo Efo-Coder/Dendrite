@@ -68,7 +68,7 @@ const CreateTagModal = ({ isOpen, onClose }: CreateTagModalProps) => {
 
         {/* Name Input */}
         <div>
-          <label htmlFor="tag-name" className="block text-xs font-medium text-dark-text-primary mb-2 uppercase tracking-wide">
+          <label htmlFor="tag-name" className="block text-xs font-medium text-theme-text-primary mb-2 uppercase tracking-wide">
             Name
           </label>
           <input
@@ -76,7 +76,7 @@ const CreateTagModal = ({ isOpen, onClose }: CreateTagModalProps) => {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2.5 bg-black/10 backdrop-blur-sm border border-dark-border rounded-lg text-dark-text-primary text-sm placeholder-dark-text-muted focus:outline-none focus:border-accent-green-500 transition-all"
+            className="w-full px-3 py-2.5 bg-black/10 backdrop-blur-sm border border-theme rounded-lg text-theme-text-primary text-sm placeholder-theme-text-muted focus:outline-none focus:border-accent-green-500 transition-all"
             placeholder="z.B. Wichtig, Idee, ToDo"
             autoFocus
             required
@@ -85,7 +85,7 @@ const CreateTagModal = ({ isOpen, onClose }: CreateTagModalProps) => {
 
         {/* Color Picker */}
         <div>
-          <label className="block text-xs font-medium text-dark-text-primary mb-2 uppercase tracking-wide">
+          <label className="block text-xs font-medium text-theme-text-primary mb-2 uppercase tracking-wide">
             Farbe
           </label>
           <div className="grid grid-cols-8 gap-2 mb-3">
@@ -107,7 +107,7 @@ const CreateTagModal = ({ isOpen, onClose }: CreateTagModalProps) => {
 
           {/* Custom Color Picker */}
           <div className="flex items-center gap-3">
-            <label htmlFor="custom-color" className="text-sm text-dark-text-secondary">
+            <label htmlFor="custom-color" className="text-sm text-theme-text-secondary">
               Oder eigene Farbe:
             </label>
             <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ const CreateTagModal = ({ isOpen, onClose }: CreateTagModalProps) => {
                   onClick={() => document.getElementById('custom-color')?.click()}
                 />
               </div>
-              <span className="text-xs text-dark-text-muted font-mono">
+              <span className="text-xs text-theme-text-muted font-mono">
                 {selectedColor}
               </span>
             </div>

@@ -67,7 +67,7 @@ const NoteContextMenu = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 bg-dark-elevated border border-dark-border rounded-lg shadow-lg py-1 min-w-[180px]"
+      className="fixed z-50 bg-theme-elevated border border-theme rounded-lg shadow-lg py-1 min-w-[180px]"
       style={{
         left: position.x,
         top: position.y,
@@ -80,7 +80,7 @@ const NoteContextMenu = ({
             onEdit();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-dark-text-primary hover:bg-dark-surface transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-theme-text-primary hover:bg-theme-surface transition-colors"
         >
           <Edit className="w-4 h-4" />
           <span>Bearbeiten</span>
@@ -94,7 +94,7 @@ const NoteContextMenu = ({
             onMove();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-dark-text-primary hover:bg-dark-surface transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-theme-text-primary hover:bg-theme-surface transition-colors"
         >
           <FolderOpen className="w-4 h-4" />
           <span>Verschieben</span>
@@ -108,7 +108,7 @@ const NoteContextMenu = ({
             onPin();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-dark-text-primary hover:bg-dark-surface transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-theme-text-primary hover:bg-theme-surface transition-colors"
         >
           <Pin className="w-4 h-4" />
           <span>{note.isPinned ? 'Anheften entfernen' : 'Anpinnen'}</span>
@@ -122,7 +122,7 @@ const NoteContextMenu = ({
             onFavorite();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-dark-text-primary hover:bg-dark-surface transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-theme-text-primary hover:bg-theme-surface transition-colors"
         >
           <Star className="w-4 h-4" />
           <span>{note.isFavorite ? 'Aus Favoriten entfernen' : 'Favorisieren'}</span>
@@ -136,7 +136,7 @@ const NoteContextMenu = ({
             onArchive();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-dark-text-primary hover:bg-dark-surface transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-theme-text-primary hover:bg-theme-surface transition-colors"
         >
           <Archive className="w-4 h-4" />
           <span>{note.isArchived ? 'Aus Archiv holen' : 'Archivieren'}</span>
@@ -150,7 +150,7 @@ const NoteContextMenu = ({
             onTag();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-dark-text-primary hover:bg-dark-surface transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-theme-text-primary hover:bg-theme-surface transition-colors"
         >
           <Tag className="w-4 h-4" />
           <span>Tag</span>

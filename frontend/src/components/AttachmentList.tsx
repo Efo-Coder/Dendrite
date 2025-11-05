@@ -65,7 +65,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4">
-        <Loader2 className="w-5 h-5 text-dark-text-muted animate-spin" />
+        <Loader2 className="w-5 h-5 text-theme-text-muted animate-spin" />
       </div>
     );
   }
@@ -75,8 +75,8 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
   }
 
   return (
-    <div className="px-6 md:px-12 py-4 border-t border-dark-border">
-      <h4 className="text-sm font-medium text-dark-text-secondary mb-3">
+    <div className="px-6 md:px-12 py-4 border-t border-theme">
+      <h4 className="text-sm font-medium text-theme-text-secondary mb-3">
         Anhänge ({attachments.length})
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -87,7 +87,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
           return (
             <div
               key={attachment.id}
-              className="flex items-start space-x-3 p-3 bg-dark-elevated rounded-lg border border-dark-border hover:border-accent-green-500/50 transition-colors"
+              className="flex items-start space-x-3 p-3 bg-theme-elevated rounded-lg border border-theme hover:border-accent-green-500/50 transition-colors"
             >
               {isImage ? (
                 <a
@@ -103,8 +103,8 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                   />
                 </a>
               ) : (
-                <div className="flex-shrink-0 w-12 h-12 bg-dark-surface rounded flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-dark-text-muted" />
+                <div className="flex-shrink-0 w-12 h-12 bg-theme-surface rounded flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-theme-text-muted" />
                 </div>
               )}
 
@@ -113,12 +113,12 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                   href={attachmentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-dark-text-primary hover:text-accent-green-500 transition-colors truncate block font-medium"
+                  className="text-sm text-theme-text-primary hover:text-accent-green-500 transition-colors truncate block font-medium"
                   title={attachment.filename}
                 >
                   {attachment.filename}
                 </a>
-                <p className="text-xs text-dark-text-muted mt-0.5">
+                <p className="text-xs text-theme-text-muted mt-0.5">
                   {formatFileSize(attachment.fileSize)}
                 </p>
               </div>
@@ -127,7 +127,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 <a
                   href={attachmentUrl}
                   download={attachment.filename}
-                  className="p-1.5 rounded text-dark-text-muted hover:bg-dark-surface hover:text-accent-green-500 transition-colors"
+                  className="p-1.5 rounded text-theme-text-muted hover:bg-theme-surface hover:text-accent-green-500 transition-colors"
                   title="Herunterladen"
                 >
                   <Download className="w-4 h-4" />
@@ -135,7 +135,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 <button
                   onClick={() => handleDelete(attachment.id)}
                   disabled={deletingId === attachment.id}
-                  className="p-1.5 rounded text-dark-text-muted hover:bg-dark-surface hover:text-red-500 transition-colors disabled:opacity-50"
+                  className="p-1.5 rounded text-theme-text-muted hover:bg-theme-surface hover:text-red-500 transition-colors disabled:opacity-50"
                   title="Löschen"
                 >
                   {deletingId === attachment.id ? (
