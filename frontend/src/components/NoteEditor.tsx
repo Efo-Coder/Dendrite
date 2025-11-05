@@ -152,7 +152,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   return (
     <div className="h-full flex flex-col bg-theme-bg">
       {/* Toolbar */}
-      <div className="h-14 border-b border-theme px-6 md:px-12 flex items-center justify-between">
+      <div className="p-4 h-9 border-b border-theme px-6 md:px-12 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           {!isInTrash && !isArchived && (
             <>
