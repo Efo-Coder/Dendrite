@@ -36,7 +36,10 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
       />
 
       {/* Modal */}
-      <div className="relative bg-theme-surface/95 backdrop-blur-md border border-theme rounded-xl shadow-2xl w-full max-w-md mx-4 animate-slide-up">
+      <div
+        className="relative backdrop-blur-md border border-theme rounded-xl shadow-2xl w-full max-w-md mx-4 animate-slide-up"
+        style={{ backgroundColor: 'color-mix(in srgb, var(--color-surface) 35%, transparent)' }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-theme">
           <h2 className="text-base font-semibold text-theme-text-primary">{title}</h2>

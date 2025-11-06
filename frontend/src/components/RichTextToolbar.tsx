@@ -287,7 +287,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
   ];
 
   return (
-    <div className="p-4 h-8 border-b border-theme px-6 md:px-12 flex items-center space-x-1 bg-theme-surface">
+    <div className="p-4 h-8 border-b bg-theme-surface px-6 md:px-12 flex items-center space-x-1">
       {toolbarButtons.map((button, index) => {
         if (button.separator) {
           return <div key={index} className="h-6 w-px bg-theme-divider mx-1" />;

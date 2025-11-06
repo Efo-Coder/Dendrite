@@ -8,6 +8,7 @@
     --color-bg: #0f0f0f;
     --color-surface: #1a1a1a;
     --color-elevated: #242424;
+    --color-textarea: #242424;
     --color-border: #2a2a2a;
     --color-text-primary: #e5e5e5;
     --color-text-secondary: #a3a3a3;
@@ -24,29 +25,30 @@
     --color-accent-900: #064e3b;
   }
 
-  * {
-    @apply border-dark-border;
-  }
-
   body {
-    @apply bg-dark-bg text-dark-text-primary antialiased;
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Custom Scrollbar */
   ::-webkit-scrollbar {
-    @apply w-2 h-2;
+    width: 0.5rem;
+    height: 0.5rem;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-dark-surface;
+    background-color: var(--color-surface);
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-dark-elevated rounded-full;
+    background-color: var(--color-elevated);
+    border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-accent-green-500;
+    background-color: var(--color-accent-500);
   }
 }
 

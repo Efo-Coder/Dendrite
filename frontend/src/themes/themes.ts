@@ -6,6 +6,7 @@ export interface Theme {
     bg: string;
     surface: string;
     elevated: string;
+    textarea: string;
     border: string;
     textPrimary: string;
     textSecondary: string;
@@ -32,6 +33,7 @@ export const themes: Record<string, Theme> = {
       bg: '#0f0f0f',
       surface: '#1a1a1a',
       elevated: '#242424',
+      textarea: '#242424',
       border: '#2a2a2a',
       textPrimary: '#e5e5e5',
       textSecondary: '#a3a3a3',
@@ -56,6 +58,7 @@ export const themes: Record<string, Theme> = {
       bg: '#f0fdf4',
       surface: '#dcfce7',
       elevated: '#bbf7d0',
+      textarea: '#e6f9eb',
       border: '#86efac',
       textPrimary: '#14532d',
       textSecondary: '#166534',
@@ -80,6 +83,7 @@ export const themes: Record<string, Theme> = {
       bg: '#fdf2f8',
       surface: '#fce7f3',
       elevated: '#fbcfe8',
+      textarea: '#fef0f6',
       border: '#f9a8d4',
       textPrimary: '#831843',
       textSecondary: '#9d174d',
@@ -104,6 +108,7 @@ export const themes: Record<string, Theme> = {
       bg: '#eff6ff',
       surface: '#dbeafe',
       elevated: '#bfdbfe',
+      textarea: '#e8f2fe',
       border: '#93c5fd',
       textPrimary: '#1e3a8a',
       textSecondary: '#1e40af',
@@ -128,6 +133,7 @@ export const themes: Record<string, Theme> = {
       bg: '#fefce8',
       surface: '#fef9c3',
       elevated: '#fef08a',
+      textarea: '#fffde2',
       border: '#fde047',
       textPrimary: '#713f12',
       textSecondary: '#854d0e',
@@ -152,6 +158,7 @@ export const themes: Record<string, Theme> = {
       bg: '#fff7ed',
       surface: '#ffedd5',
       elevated: '#fed7aa',
+      textarea: '#fff2e0',
       border: '#fdba74',
       textPrimary: '#7c2d12',
       textSecondary: '#9a3412',
@@ -176,6 +183,7 @@ export const themes: Record<string, Theme> = {
       bg: '#fdf8f6',
       surface: '#f2e8e5',
       elevated: '#eaddd7',
+      textarea: '#f8ede9',
       border: '#e0cec7',
       textPrimary: '#43302b',
       textSecondary: '#5a4238',
@@ -200,6 +208,7 @@ export const themes: Record<string, Theme> = {
       bg: '#faf9f7',
       surface: '#e7e5df',
       elevated: '#d3cec4',
+      textarea: '#f0eeea',
       border: '#b8b2a7',
       textPrimary: '#3e3b35',
       textSecondary: '#4e4a42',
@@ -224,6 +233,7 @@ export const themes: Record<string, Theme> = {
       bg: '#f9fafb',
       surface: '#f3f4f6',
       elevated: '#e5e7eb',
+      textarea: '#f8f9fa',
       border: '#d1d5db',
       textPrimary: '#111827',
       textSecondary: '#1f2937',

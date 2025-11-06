@@ -7,12 +7,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Elegantes dunkles Design mit dynamischen Akzenten
-        dark: {
+        // Dynamisches Theme-System für helle und dunkle Designs
+        theme: {
           bg: 'var(--color-bg)',
           surface: 'var(--color-surface)',
           elevated: 'var(--color-elevated)',
-          border: 'var(--color-border)',
+          textarea: 'var(--color-textarea)',
+          divider: 'var(--color-border)',
           text: {
             primary: 'var(--color-text-primary)',
             secondary: 'var(--color-text-secondary)',
@@ -33,6 +34,10 @@ export default {
             900: 'var(--color-accent-900)',
           }
         }
+      },
+      borderColor: {
+        DEFAULT: 'var(--color-border)',
+        'theme': 'var(--color-border)',
       },
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'sans-serif'],

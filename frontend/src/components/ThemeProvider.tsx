@@ -19,6 +19,7 @@ const ThemeProvider = ({ children }: ThemeProviderProps) => {
     root.style.setProperty('--color-bg', theme.colors.bg);
     root.style.setProperty('--color-surface', theme.colors.surface);
     root.style.setProperty('--color-elevated', theme.colors.elevated);
+    root.style.setProperty('--color-textarea', theme.colors.textarea);
     root.style.setProperty('--color-border', theme.colors.border);
     root.style.setProperty('--color-text-primary', theme.colors.textPrimary);
     root.style.setProperty('--color-text-secondary', theme.colors.textSecondary);

@@ -303,7 +303,6 @@ const LexicalEditorWrapper = ({
       <style>{`
         .editor-container {
           position: relative;
-          background: transparent;
           color: var(--color-text-primary);
           font-size: 16px;
           line-height: 1.6;
@@ -511,7 +510,7 @@ const LexicalEditorWrapper = ({
         {toolbar}
 
         {/* Editor */}
-        <div className="flex-1 overflow-y-auto px-12 pt-8 pb-8">
+        <div className="flex-1 overflow-y-auto px-12 pt-8 pb-8 bg-theme-textarea">
           <div className="editor-container">
             <RichTextPlugin
               contentEditable={<ContentEditable className="editor-input" />}
