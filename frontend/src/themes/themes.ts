@@ -131,9 +131,9 @@ export const themes: Record<string, Theme> = {
     description: 'Warmes Creme-Design',
     colors: {
       bg: '#fefce8',
-      surface: '#fef9c3',
+      surface: '#fffde2',
       elevated: '#fef08a',
-      textarea: '#fffde2',
+      textarea: '#fef9c3',
       border: '#fde047',
       textPrimary: '#713f12',
       textSecondary: '#854d0e',

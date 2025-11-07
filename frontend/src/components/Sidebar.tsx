@@ -168,10 +168,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
         isCollapsed ? "w-16" : "w-64"
       )}>
         {/* Logo */}
-        <div className={clsx(
-          "h-16 border-b border-theme flex-shrink-0 flex items-center",
-          isCollapsed ? "justify-center px-2" : "justify-start px-4 ml-2"
-        )}>
+        <div className="h-16 border-b border-theme flex-shrink-0 flex items-center px-4">
           <Logo size="md" showText={!isCollapsed} />
         </div>
 
@@ -186,8 +183,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                 key={item.label}
                 onClick={item.onClick}
                 className={clsx(
-                  'w-full flex items-center rounded-lg transition-all duration-200',
-                  isCollapsed ? 'justify-center px-2 py-2.5' : 'space-x-3 px-3 py-2.5',
+                  'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
                   isActive
                     ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
                     : 'text-theme-text-secondary hover:bg-theme-elevated hover:text-theme-text-primary'
@@ -197,7 +193,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                 <Icon className="w-5 h-5 flex-shrink-0" />
                 {!isCollapsed && (
                   <span className={clsx(
-                    "text-sm whitespace-nowrap transition-opacity duration-200",
+                    "text-sm whitespace-nowrap transition-opacity duration-200 ml-3",
                     isCollapsed ? "opacity-0" : "opacity-100 delay-100"
                   )}>
                     {item.label}
@@ -251,8 +247,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     onClick={() => onViewChange('folder', folder.id)}
                     onContextMenu={(e) => handleFolderRightClick(e, folder)}
                     className={clsx(
-                      'w-full flex items-center rounded-lg transition-all duration-200',
-                      isCollapsed ? 'justify-center px-2 py-2.5' : 'pl-3 pr-3 py-2.5',
+                      'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
                       currentView === 'folder' && selectedFolderId === folder.id
                         ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
                         : 'text-theme-text-secondary hover:bg-theme-elevated hover:text-theme-text-primary'
@@ -265,7 +260,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     />
                     {!isCollapsed && (
                       <>
-                        <div className="flex items-center space-x-2 flex-1 min-w-0 mr-2 ml-2">
+                        <div className="flex items-center space-x-2 flex-1 min-w-0 ml-3">
                           <span className={clsx(
                             "text-sm truncate whitespace-nowrap transition-opacity duration-200",
                             isCollapsed ? "opacity-0" : "opacity-100 delay-100"
@@ -275,7 +270,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                         </div>
                         {folder.notes && folder.notes.length > 0 && (
                           <span className={clsx(
-                            "text-xs text-theme-text-muted flex-shrink-0 w-4 text-center transition-opacity duration-200",
+                            "text-xs text-theme-text-muted flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2",
                             isCollapsed ? "opacity-0" : "opacity-100 delay-100"
                           )}>
                             {folder.notes.length}
@@ -328,8 +323,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     onClick={() => onViewChange('tag', tag.id)}
                     onContextMenu={(e) => handleTagRightClick(e, tag)}
                     className={clsx(
-                      'w-full flex items-center rounded-lg transition-all duration-200',
-                      isCollapsed ? 'justify-center px-2 py-2.5' : 'pl-3 pr-3 py-2.5',
+                      'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
                       currentView === 'tag' && selectedTagId === tag.id
                         ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
                         : 'text-theme-text-secondary hover:bg-theme-elevated hover:text-theme-text-primary'
@@ -342,7 +336,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     />
                     {!isCollapsed && (
                       <>
-                        <div className="flex items-center space-x-2 flex-1 min-w-0 mr-2 ml-2">
+                        <div className="flex items-center space-x-2 flex-1 min-w-0 ml-3">
                           <span className={clsx(
                             "text-sm truncate whitespace-nowrap transition-opacity duration-200",
                             isCollapsed ? "opacity-0" : "opacity-100 delay-100"
@@ -352,7 +346,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                         </div>
                         {tag.notes && tag.notes.length > 0 && (
                           <span className={clsx(
-                            "text-xs text-theme-text-muted flex-shrink-0 w-4 text-center transition-opacity duration-200",
+                            "text-xs text-theme-text-muted flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2",
                             isCollapsed ? "opacity-0" : "opacity-100 delay-100"
                           )}>
                             {tag.notes.length}
@@ -367,10 +361,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
           </div>
 
           {/* Toggle Button at bottom */}
-          <div className={clsx(
-            "mt-auto pt-4 pb-2 border-t border-theme",
-            isCollapsed ? "flex justify-center" : "flex justify-end pr-3"
-          )}>
+          <div className="mt-auto pt-4 pb-2 border-t border-theme flex justify-end">
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-2 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"

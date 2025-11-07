@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Tag, Plus, X } from 'lucide-react';
+import { Tag, Plus } from 'lucide-react';
 import { useTagStore } from '../../store/useTagStore';
 import { useToast } from '../ToastContainer';
 import Modal from './Modal';

@@ -279,7 +279,7 @@ const DashboardPage = () => {
                 onNoteUpdate={refreshCurrentView}
               />
             ) : (
-              <div className="h-full flex items-center justify-center text-theme-text-muted">
+              <div className="h-full flex items-center bg-theme-textarea justify-center text-theme-text-muted">
                 <div className="text-center">
                   <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="text-lg">Wähle eine Notiz oder erstelle eine neue</p>

@@ -613,14 +613,14 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     <>
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Sortierung Header */}
-      <div className="px-4 py-3 border-b border-theme bg-theme-surface">
+      <div className="px-4 py-2 border-b border-theme bg-theme-surface -mt-[1px]">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-theme-text-primary">Sortierung</span>
           <div className="flex items-center space-x-2">
             <select
               value={sortBy}
               onChange={(e) => updateSorting(e.target.value as SortOption, sortOrder)}
-              className="px-3 py-1 bg-theme-elevated border border-theme rounded text-sm text-theme-text-primary"
+              className="px-1 pb-[2px] bg-theme-elevated border border-theme rounded text-sm text-theme-text-primary leading-tight"
             >
               <option value="createdAt">Erstellt</option>
               <option value="updatedAt">Aktualisiert</option>

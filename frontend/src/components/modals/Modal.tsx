@@ -31,14 +31,14 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
         className="relative backdrop-blur-md border border-theme rounded-xl shadow-2xl w-full max-w-md mx-4 animate-slide-up"
-        style={{ backgroundColor: 'color-mix(in srgb, var(--color-surface) 35%, transparent)' }}
+        style={{ backgroundColor: 'color-mix(in srgb, var(--color-surface) 55%, transparent)' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-theme">

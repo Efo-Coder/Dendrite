@@ -5,6 +5,7 @@ import { useTagStore } from '../../store/useTagStore';
 interface CreateTagModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onTagCreated?: () => void;
 }
 
 const colors = [
@@ -18,7 +19,7 @@ const colors = [
   '#84cc16', // lime
 ];
 
-const CreateTagModal = ({ isOpen, onClose }: CreateTagModalProps) => {
+const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) => {
   const { createTag } = useTagStore();
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#10b981');
@@ -42,6 +43,7 @@ const CreateTagModal = ({ isOpen, onClose }: CreateTagModalProps) => {
       });
       setName('');
       setSelectedColor('#10b981');
+      onTagCreated?.();
       onClose();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Fehler beim Erstellen des Tags');
