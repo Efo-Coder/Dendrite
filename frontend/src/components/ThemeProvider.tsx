@@ -7,10 +7,12 @@ interface ThemeProviderProps {
 }
 
 const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const { theme: themeId } = useSettingsStore();
+  const { theme: themeId, themeMode } = useSettingsStore();
 
   useEffect(() => {
-    const theme = themes[themeId];
+    // Wähle Dark-Variante wenn Dark Mode aktiv ist
+    const selectedThemeId = themeMode === 'dark' ? `${themeId}Dark` : themeId;
+    const theme = themes[selectedThemeId];
     if (!theme) return;
 
     const root = document.documentElement;
@@ -34,7 +36,7 @@ const ThemeProvider = ({ children }: ThemeProviderProps) => {
     root.style.setProperty('--color-accent-700', theme.colors.accent700);
     root.style.setProperty('--color-accent-800', theme.colors.accent800);
     root.style.setProperty('--color-accent-900', theme.colors.accent900);
-  }, [themeId]);
+  }, [themeId, themeMode]);
 
   return <>{children}</>;
 };

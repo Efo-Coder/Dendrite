@@ -19,10 +19,7 @@ const Logo: React.FC<LogoProps> = ({
   useEffect(() => {
     const theme = themes[themeId];
     if (theme) {
-      // Bei dunklen Themes (wie Leaf Green): Akzentfarbe
-      // Bei hellen Pastellthemes: Dunkle Textfarbe für Kontrast
-      const isDarkTheme = theme.id === 'leafGreen';
-      setLogoColor(isDarkTheme ? theme.colors.accent500 : theme.colors.accent500);
+      setLogoColor(theme.colors.accent500);
     }
   }, [themeId]);
 

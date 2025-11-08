@@ -12,7 +12,7 @@ interface SettingsModalProps {
 const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const { dateDisplayMode, setDateDisplayMode, theme, setTheme } = useSettingsStore();
 
-  const currentTheme = useMemo(() => themes[theme], [theme]);
+  const currentTheme = useMemo(() => themes[theme] || themes.sproutGreen, [theme]);
 
   const handleDateModeChange = (mode: DateDisplayMode) => {
     setDateDisplayMode(mode);
