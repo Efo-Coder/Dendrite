@@ -24,6 +24,7 @@ import { useState, useEffect, useRef } from 'react';
 import { noteService } from '../services/note.service';
 import { useNoteStore } from '../store/useNoteStore';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { themes } from '../themes/themes';
 import { useToast } from './ToastContainer';
 import NoteContextMenu from './NoteContextMenu';
 import MoveToFolderModal from './modals/MoveToFolderModal';
@@ -166,7 +167,8 @@ type SortOption = 'createdAt' | 'updatedAt' | 'title' | 'pinned' | 'manual';
 
 const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextType, contextId, isTrash }: NoteListProps) => {
   const { updateNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, deleteNote } = useNoteStore();
-  const { dateDisplayMode } = useSettingsStore();
+  const { dateDisplayMode, theme: themeId } = useSettingsStore();
+  const currentTheme = themes[themeId];
   const toast = useToast();
   
   const [localNotes, setLocalNotes] = useState(notes);
@@ -620,7 +622,11 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             <select
               value={sortBy}
               onChange={(e) => updateSorting(e.target.value as SortOption, sortOrder)}
-              className="px-1 pb-[2px] bg-theme-elevated border border-theme rounded text-sm text-theme-text-primary leading-tight"
+              className="px-1 pb-[2px] border border-theme rounded text-sm leading-tight"
+              style={{ 
+                backgroundColor: currentTheme.colors.bg,
+                color: currentTheme.colors.textPrimary
+              }}
             >
               <option value="createdAt">Erstellt</option>
               <option value="updatedAt">Aktualisiert</option>

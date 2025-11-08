@@ -106,8 +106,8 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                 >
                   {/* Color Preview Circle */}
                   <div
-                    className="w-10 h-10 rounded-full mb-2 border-2 border-theme"
-                    style={{ backgroundColor: themeData.colors.accent500 }}
+                    className="w-10 h-10 rounded-full mb-2 border-2"
+                    style={{ backgroundColor: themeData.colors.accent200 }}
                   />
 
                   {/* Theme Name */}
