@@ -71,7 +71,7 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
                     onClick={() => handleTagToggle(tag.id)}
                     className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative group ${
                       isSelected
-                        ? 'bg-accent-green-500/10 text-accent-green-500'
+                        ? 'bg-accent-500/10 text-accent-500'
                         : 'hover:bg-theme-elevated text-theme-text-primary'
                     }`}
                   >
@@ -97,8 +97,8 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
               onClick={handleCreateTag}
               className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover:bg-theme-elevated text-theme-text-primary border-t border-theme pt-3 mt-3 relative group"
             >
-              <Plus className="w-4 h-4 text-accent-green-500" />
-              <span className="text-sm text-accent-green-500 relative z-10">Neuen Tag erstellen</span>
+              <Plus className="w-4 h-4 text-accent-500" />
+              <span className="text-sm text-accent-500 relative z-10">Neuen Tag erstellen</span>
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </button>
           </div>

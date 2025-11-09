@@ -308,7 +308,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
             className={clsx(
               'p-2 rounded-lg transition-colors',
               button.isActive
-                ? 'bg-accent-green-500/20 text-accent-green-500'
+                ? 'bg-accent-500/20 text-accent-500'
                 : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
@@ -342,7 +342,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
                 placeholder="https://example.com"
-                className="w-full px-3 py-2.5 bg-theme-elevated border border-theme rounded-lg text-theme-text-primary text-sm placeholder-theme-text-muted focus:outline-none focus:border-accent-green-500/50 transition-all"
+                className="w-full px-3 py-2.5 bg-theme-elevated border border-theme rounded-lg text-theme-text-primary text-sm placeholder-theme-text-muted focus:outline-none focus:border-accent-500/50 transition-all"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -398,7 +398,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                 className={clsx(
                   'flex-1 px-4 py-2 text-sm font-medium transition-all relative group disabled:opacity-50',
                   imageMode === 'url'
-                    ? 'text-accent-green-500'
+                    ? 'text-accent-500'
                     : 'text-white/70 hover:text-white'
                 )}
               >
@@ -406,7 +406,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                 <span className={clsx(
                   'absolute bottom-0 left-0 right-0 h-0.5 transition-opacity',
                   imageMode === 'url'
-                    ? 'bg-gradient-to-r from-transparent via-accent-green-500 to-transparent opacity-100'
+                    ? 'bg-gradient-to-r from-transparent via-accent-500 to-transparent opacity-100'
                     : 'bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100'
                 )}></span>
               </button>
@@ -416,7 +416,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                 className={clsx(
                   'flex-1 px-4 py-2 text-sm font-medium transition-all relative group disabled:opacity-50',
                   imageMode === 'upload'
-                    ? 'text-accent-green-500'
+                    ? 'text-accent-500'
                     : 'text-white/70 hover:text-white'
                 )}
               >
@@ -424,7 +424,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                 <span className={clsx(
                   'absolute bottom-0 left-0 right-0 h-0.5 transition-opacity',
                   imageMode === 'upload'
-                    ? 'bg-gradient-to-r from-transparent via-accent-green-500 to-transparent opacity-100'
+                    ? 'bg-gradient-to-r from-transparent via-accent-500 to-transparent opacity-100'
                     : 'bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100'
                 )}></span>
               </button>
@@ -441,7 +441,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
                   placeholder="https://example.com/image.jpg"
-                  className="w-full px-3 py-2.5 bg-theme-elevated border border-theme rounded-lg text-theme-text-primary text-sm placeholder-theme-text-muted focus:outline-none focus:border-accent-green-500/50 transition-all"
+                  className="w-full px-3 py-2.5 bg-theme-elevated border border-theme rounded-lg text-theme-text-primary text-sm placeholder-theme-text-muted focus:outline-none focus:border-accent-500/50 transition-all"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -464,7 +464,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="flex items-center justify-center space-x-2 px-4 py-6 border-2 border-dashed border-theme/50 rounded-xl text-white/70 hover:border-accent-green-500/50 hover:text-accent-green-500 hover:bg-accent-green-500/5 transition-all disabled:opacity-50"
+                    className="flex items-center justify-center space-x-2 px-4 py-6 border-2 border-dashed border-theme/50 rounded-xl text-white/70 hover:border-accent-500/50 hover:text-accent-500 hover:bg-accent-500/5 transition-all disabled:opacity-50"
                   >
                     <Upload className="w-5 h-5" />
                     <span className="text-sm font-medium">
@@ -481,7 +481,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                   {selectedFile && (
                     <div className="flex items-center justify-between px-3 py-2.5 bg-theme-elevated border border-theme rounded-lg">
                       <div className="flex items-center space-x-2 flex-1 min-w-0">
-                        <Image className="w-4 h-4 text-accent-green-500 flex-shrink-0" />
+                        <Image className="w-4 h-4 text-accent-500 flex-shrink-0" />
                         <span className="text-sm text-white truncate">
                           {selectedFile.name}
                         </span>

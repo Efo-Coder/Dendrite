@@ -11,7 +11,7 @@ const DarkModeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="w-8 h-8 bg-accent-green-500/10 rounded-full flex items-center justify-center border border-accent-green-500/20 hover:bg-theme-elevated transition-colors"
+      className="w-8 h-8 bg-accent-500/10 rounded-full flex items-center justify-center border border-accent-500/20 hover:bg-theme-elevated transition-colors"
       title={`Zu ${themeMode === 'dark' ? 'hellem' : 'dunklem'} Modus wechseln`}
       aria-label={`Zu ${themeMode === 'dark' ? 'hellem' : 'dunklem'} Modus wechseln`}
     >

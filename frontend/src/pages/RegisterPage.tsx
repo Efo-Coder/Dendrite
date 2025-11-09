@@ -41,8 +41,8 @@ const RegisterPage = () => {
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-green-500/10 rounded-2xl mb-4 border border-accent-green-500/20">
-            <FileText className="w-8 h-8 text-accent-green-500" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-500/10 rounded-2xl mb-4 border border-accent-500/20">
+            <FileText className="w-8 h-8 text-accent-500" />
           </div>
           <h1 className="text-3xl font-bold text-theme-text-primary mb-2">Dendrite</h1>
           <p className="text-theme-text-secondary">Erstelle dein Konto</p>
@@ -128,7 +128,7 @@ const RegisterPage = () => {
           <div className="mt-6 text-center">
             <p className="text-theme-text-secondary text-sm">
               Bereits ein Konto?{' '}
-              <Link to="/login" className="text-accent-green-500 hover:text-accent-green-400 font-medium">
+              <Link to="/login" className="text-accent-500 hover:text-accent-400 font-medium">
                 Anmelden
               </Link>
             </p>

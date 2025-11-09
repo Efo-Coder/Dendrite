@@ -44,7 +44,7 @@ const Header = ({ user }: HeaderProps) => {
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Notizen durchsuchen..."
-            className="w-full pl-10 pr-4 py-2 bg-theme-bg border border-theme rounded-lg text-theme-text-primary placeholder-theme-text-muted focus:outline-none focus:ring-2 focus:ring-accent-green-500 transition-all"
+            className="w-full pl-10 pr-4 py-2 bg-theme-bg border border-theme rounded-lg text-theme-text-primary placeholder-theme-text-muted focus:outline-none focus:ring-2 focus:ring-accent-500 transition-all"
           />
         </div>
       </form>
@@ -58,7 +58,7 @@ const Header = ({ user }: HeaderProps) => {
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group"
           >
-            <div className="w-8 h-8 bg-accent-green-500/10 rounded-full flex items-center justify-center border border-accent-green-500/20 group-hover:bg-theme-elevated transition-colors">
+            <div className="w-8 h-8 bg-accent-500/10 rounded-full flex items-center justify-center border border-accent-500/20 group-hover:bg-theme-elevated transition-colors">
               <User className="w-4 h-4 text-theme-text-primary" />
             </div>
             <span className="text-sm text-theme-text-primary font-medium group-hover:underline">

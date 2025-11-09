@@ -173,7 +173,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {/* Main Menu */}
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -185,7 +185,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                 className={clsx(
                   'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
                   isActive
-                    ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
+                    ? 'bg-accent-500/10 text-accent-500 font-medium'
                     : 'text-theme-text-secondary hover:bg-theme-elevated hover:text-theme-text-primary'
                 )}
                 title={isCollapsed ? item.label : undefined}
@@ -205,19 +205,19 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
 
           {/* Divider */}
           <div className="pt-4 pb-2">
-            <div className="h-px bg-theme-divider" />
+            <div className="h-px border-t border-theme" />
           </div>
 
           {/* Folders Section */}
           <div className="pt-2">
             {!isCollapsed ? (
-              <div className="flex items-center justify-between px-3 py-2">
+              <div className="flex items-center justify-between px-1.5 py-2">
                 <span className="text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
                   Ordner
                 </span>
                 <button
                   onClick={() => setShowFolderModal(true)}
-                  className="text-theme-text-muted hover:text-accent-green-500 transition-colors"
+                  className="text-theme-text-muted hover:text-accent-500 transition-colors"
                   title="Neuer Ordner"
                 >
                   <Plus className="w-4 h-4" />
@@ -227,7 +227,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               <div className="flex justify-center py-2">
                 <button
                   onClick={() => setShowFolderModal(true)}
-                  className="text-theme-text-muted hover:text-accent-green-500 transition-colors"
+                  className="text-theme-text-muted hover:text-accent-500 transition-colors"
                   title="Neuer Ordner"
                 >
                   <Plus className="w-4 h-4" />
@@ -249,7 +249,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     className={clsx(
                       'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
                       currentView === 'folder' && selectedFolderId === folder.id
-                        ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
+                        ? 'bg-accent-500/10 text-accent-500 font-medium'
                         : 'text-theme-text-secondary hover:bg-theme-elevated hover:text-theme-text-primary'
                     )}
                     title={isCollapsed ? folder.name : undefined}
@@ -287,13 +287,13 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
           {/* Tags Section */}
           <div className="pt-4">
             {!isCollapsed ? (
-              <div className="flex items-center justify-between px-3 py-2">
+              <div className="flex items-center justify-between px-1.5 py-2">
                 <span className="text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
                   Tags
                 </span>
                 <button
                   onClick={() => setShowTagModal(true)}
-                  className="text-theme-text-muted hover:text-accent-green-500 transition-colors"
+                  className="text-theme-text-muted hover:text-accent-500 transition-colors"
                   title="Neuer Tag"
                 >
                   <Plus className="w-4 h-4" />
@@ -303,7 +303,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               <div className="flex justify-center py-2">
                 <button
                   onClick={() => setShowTagModal(true)}
-                  className="text-theme-text-muted hover:text-accent-green-500 transition-colors"
+                  className="text-theme-text-muted hover:text-accent-500 transition-colors"
                   title="Neuer Tag"
                 >
                   <Plus className="w-4 h-4" />
@@ -325,7 +325,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     className={clsx(
                       'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
                       currentView === 'tag' && selectedTagId === tag.id
-                        ? 'bg-accent-green-500/10 text-accent-green-500 font-medium'
+                        ? 'bg-accent-500/10 text-accent-500 font-medium'
                         : 'text-theme-text-secondary hover:bg-theme-elevated hover:text-theme-text-primary'
                     )}
                     title={isCollapsed ? tag.name : undefined}
@@ -361,7 +361,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
           </div>
 
           {/* Toggle Button at bottom */}
-          <div className="mt-auto pt-4 pb-2 border-t border-theme flex justify-end">
+          <div className="mt-auto flex justify-end">
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-2 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"

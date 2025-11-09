@@ -78,7 +78,7 @@ const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) 
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2.5 bg-black/10 backdrop-blur-sm border border-theme rounded-lg text-theme-text-primary text-sm placeholder-theme-text-muted focus:outline-none focus:border-accent-green-500 transition-all"
+            className="w-full px-3 py-2.5 bg-black/10 backdrop-blur-sm border border-theme rounded-lg text-theme-text-primary text-sm placeholder-theme-text-muted focus:outline-none focus:border-accent-500 transition-all"
             placeholder="z.B. Wichtig, Idee, ToDo"
             autoFocus
             required
@@ -98,7 +98,7 @@ const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) 
                 onClick={() => setSelectedColor(color)}
                 className={`w-8 h-8 rounded-lg transition-all relative group ${
                   selectedColor === color
-                    ? 'ring-1 ring-accent-green-500 scale-110'
+                    ? 'ring-1 ring-accent-500 scale-110'
                     : 'hover:scale-105'
                 }`}
                 style={{ backgroundColor: color }}
@@ -125,7 +125,7 @@ const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) 
                 <div
                   className={`w-8 h-8 rounded-lg cursor-pointer transition-all relative group ${
                     !colors.includes(selectedColor)
-                      ? 'ring-1 ring-accent-green-500 scale-110'
+                      ? 'ring-1 ring-accent-500 scale-110'
                       : 'hover:scale-105'
                   }`}
                   style={{ backgroundColor: selectedColor }}

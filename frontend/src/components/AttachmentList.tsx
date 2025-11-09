@@ -87,7 +87,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
           return (
             <div
               key={attachment.id}
-              className="flex items-start space-x-3 p-3 bg-theme-elevated rounded-lg border border-theme hover:border-accent-green-500/50 transition-colors"
+              className="flex items-start space-x-3 p-3 bg-theme-elevated rounded-lg border border-theme hover:border-accent-500/50 transition-colors"
             >
               {isImage ? (
                 <a
@@ -113,7 +113,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                   href={attachmentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-theme-text-primary hover:text-accent-green-500 transition-colors truncate block font-medium"
+                  className="text-sm text-theme-text-primary hover:text-accent-500 transition-colors truncate block font-medium"
                   title={attachment.filename}
                 >
                   {attachment.filename}
@@ -127,7 +127,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 <a
                   href={attachmentUrl}
                   download={attachment.filename}
-                  className="p-1.5 rounded text-theme-text-muted hover:bg-theme-surface hover:text-accent-green-500 transition-colors"
+                  className="p-1.5 rounded text-theme-text-muted hover:bg-theme-surface hover:text-accent-500 transition-colors"
                   title="Herunterladen"
                 >
                   <Download className="w-4 h-4" />

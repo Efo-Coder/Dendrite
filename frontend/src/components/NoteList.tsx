@@ -85,7 +85,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
       className={clsx(
         'w-full border-b border-theme flex relative h-[100px]',
         isSelected
-          ? 'bg-accent-green-500/10'
+          ? 'bg-accent-500/10'
           : ''
       )}
     >
@@ -130,7 +130,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
 
           {/* Icons */}
           <div className="flex items-center space-x-1 flex-shrink-0">
-            {note.isPinned && <Pin className="w-3 h-3 text-accent-green-500" />}
+            {note.isPinned && <Pin className="w-3 h-3 text-accent-500" />}
             {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
             {note.isLocked && <Lock className="w-3 h-3 text-theme-text-muted" />}
           </div>
@@ -507,7 +507,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             className={clsx(
               'w-full border-b border-theme flex relative h-[100px]',
               currentNote?.id === note.id
-                ? 'bg-accent-green-500/10'
+                ? 'bg-accent-500/10'
                 : ''
             )}
           >
@@ -543,7 +543,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
 
                 {/* Icons */}
                 <div className="flex items-center space-x-1 flex-shrink-0">
-                  {note.isPinned && <Pin className="w-3 h-3 text-accent-green-500" />}
+                  {note.isPinned && <Pin className="w-3 h-3 text-accent-500" />}
                   {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
                   {note.isLocked && <Lock className="w-3 h-3 text-theme-text-muted" />}
                 </div>

@@ -161,7 +161,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                 className={clsx(
                   'p-2 rounded-lg transition-colors',
                   note.isPinned
-                    ? 'text-accent-green-500 bg-accent-green-500/10'
+                    ? 'text-accent-500 bg-accent-500/10'
                     : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
                 )}
                 title="Notiz anheften"
@@ -216,7 +216,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                           onClick={() => handleMoveToFolder(folder.id)}
                           className={clsx(
                             'w-full px-4 py-2 text-left text-sm hover:bg-theme-elevated transition-colors flex items-center space-x-2',
-                            note.folderId === folder.id && 'bg-accent-green-500/10 text-accent-green-500'
+                            note.folderId === folder.id && 'bg-accent-500/10 text-accent-500'
                           )}
                         >
                           <FolderOpen className="w-4 h-4" style={{ color: folder.color || '#10b981' }} />
@@ -255,7 +255,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                               onClick={() => handleToggleTag(tag.id)}
                               className={clsx(
                                 'w-full px-4 py-2 text-left text-sm hover:bg-theme-elevated transition-colors flex items-center',
-                                isSelected && 'bg-accent-green-500/10'
+                                isSelected && 'bg-accent-500/10'
                               )}
                             >
                               <div className="flex items-center space-x-2 flex-1 min-w-0">

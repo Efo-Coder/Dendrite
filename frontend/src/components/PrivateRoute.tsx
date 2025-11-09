@@ -11,7 +11,7 @@ const PrivateRoute = ({ children }: PrivateRouteProps) => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-accent-green-500">Lade...</div>
+        <div className="text-accent-500">Lade...</div>
       </div>
     );
   }

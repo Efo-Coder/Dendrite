@@ -193,7 +193,7 @@ const ResizableImage = ({
               onClick={() => handleAlignmentChange('left')}
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'left'
-                  ? 'bg-accent-green-500/20 text-accent-green-500'
+                  ? 'bg-accent-500/20 text-accent-500'
                   : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
               }`}
               title="Links ausrichten"
@@ -204,7 +204,7 @@ const ResizableImage = ({
               onClick={() => handleAlignmentChange('center')}
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'center'
-                  ? 'bg-accent-green-500/20 text-accent-green-500'
+                  ? 'bg-accent-500/20 text-accent-500'
                   : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
               }`}
               title="Zentrieren"
@@ -215,7 +215,7 @@ const ResizableImage = ({
               onClick={() => handleAlignmentChange('right')}
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'right'
-                  ? 'bg-accent-green-500/20 text-accent-green-500'
+                  ? 'bg-accent-500/20 text-accent-500'
                   : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
               }`}
               title="Rechts ausrichten"
@@ -227,7 +227,7 @@ const ResizableImage = ({
               onClick={() => setMaintainAspectRatio(!maintainAspectRatio)}
               className={`p-1.5 rounded-md transition-all ${
                 maintainAspectRatio
-                  ? 'bg-accent-green-500/20 text-accent-green-500'
+                  ? 'bg-accent-500/20 text-accent-500'
                   : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary'
               }`}
               title={maintainAspectRatio ? 'Seitenverhältnis gesperrt' : 'Seitenverhältnis entsperrt'}
@@ -334,9 +334,9 @@ const ResizableImage = ({
       {/* Size Indicator */}
       {isResizing && (
         <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 bg-theme-surface/95 backdrop-blur-sm border border-theme rounded-lg px-3 py-1.5 text-xs text-theme-text-primary shadow-xl font-mono">
-          <span className="text-accent-green-500 font-semibold">{Math.round(width)}%</span>
+          <span className="text-accent-500 font-semibold">{Math.round(width)}%</span>
           <span className="text-theme-text-muted mx-1">×</span>
-          <span className="text-accent-green-500 font-semibold">{Math.round(height)}px</span>
+          <span className="text-accent-500 font-semibold">{Math.round(height)}px</span>
           {maintainAspectRatio && (
             <span className="ml-2 text-theme-text-muted">
               <Lock className="w-3 h-3 inline" />
