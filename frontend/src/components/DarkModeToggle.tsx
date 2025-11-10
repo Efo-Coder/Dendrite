@@ -8,6 +8,8 @@ const DarkModeToggle = () => {
     setThemeMode(themeMode === 'dark' ? 'light' : 'dark');
   };
 
+  const iconColorClass = themeMode === 'dark' ? 'text-accent-500' : 'text-theme-text-primary';
+
   return (
     <button
       onClick={toggleTheme}
@@ -16,9 +18,9 @@ const DarkModeToggle = () => {
       aria-label={`Zu ${themeMode === 'dark' ? 'hellem' : 'dunklem'} Modus wechseln`}
     >
       {themeMode === 'dark' ? (
-        <Sun className="w-4 h-4 text-theme-text-primary" />
+        <Sun className={`w-4 h-4 ${iconColorClass}`} />
       ) : (
-        <Moon className="w-4 h-4 text-theme-text-primary" />
+        <Moon className={`w-4 h-4 ${iconColorClass}`} />
       )}
     </button>
   );

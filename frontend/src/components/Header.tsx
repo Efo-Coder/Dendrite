@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Search, User, LogOut, Settings } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNoteStore } from '../store/useNoteStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { User as UserType } from '../types';
 import SettingsModal from './modals/SettingsModal';
 import DarkModeToggle from './DarkModeToggle';
@@ -13,6 +14,7 @@ interface HeaderProps {
 const Header = ({ user }: HeaderProps) => {
   const { logout } = useAuthStore();
   const { searchNotes, fetchNotes } = useNoteStore();
+  const { themeMode } = useSettingsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -59,7 +61,7 @@ const Header = ({ user }: HeaderProps) => {
             className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group"
           >
             <div className="w-8 h-8 bg-accent-500/10 rounded-full flex items-center justify-center border border-accent-500/20 group-hover:bg-theme-elevated transition-colors">
-              <User className="w-4 h-4 text-theme-text-primary" />
+              <User className={`w-4 h-4 ${themeMode === 'dark' ? 'text-accent-500' : 'text-theme-text-primary'}`} />
             </div>
             <span className="text-sm text-theme-text-primary font-medium group-hover:underline">
               {user?.name || user?.email}

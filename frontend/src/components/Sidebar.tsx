@@ -185,7 +185,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                 className={clsx(
                   'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
                   isActive
-                    ? 'bg-accent-500/10 text-accent-500 font-medium'
+                    ? 'bg-accent-500/10 text-accent-500'
                     : 'text-theme-text-secondary hover:bg-theme-elevated hover:text-theme-text-primary'
                 )}
                 title={isCollapsed ? item.label : undefined}
@@ -361,7 +361,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
           </div>
 
           {/* Toggle Button at bottom */}
-          <div className="mt-auto flex justify-end">
+          <div className="mt-auto pl-9 flex justify-end">
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-2 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"
