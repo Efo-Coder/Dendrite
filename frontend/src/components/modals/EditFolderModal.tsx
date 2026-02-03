@@ -84,7 +84,7 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
 
         {/* Name Input */}
         <div>
-          <label htmlFor="folder-name" className="block text-xs font-medium text-theme-text-primary mb-2 uppercase tracking-wide">
+          <label htmlFor="folder-name" className="block text-xs font-medium text-accent-900 mb-2 uppercase tracking-wide">
             Name
           </label>
           <input
@@ -92,7 +92,7 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2.5 bg-black/10 backdrop-blur-sm border border-theme rounded-lg text-theme-text-primary text-sm placeholder-theme-text-muted focus:outline-none focus:border-accent-500 transition-all"
+            className="w-full px-3 py-2.5 bg-black/10 backdrop-blur-sm border border-accent-300 rounded-lg text-accent-900 text-sm placeholder:text-accent-700 focus:outline-none focus:border-accent-500 transition-all"
             placeholder="z.B. Arbeit, Persönlich, Projekte"
             autoFocus
             required
@@ -101,7 +101,7 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
 
         {/* Color Picker */}
         <div>
-          <label className="block text-xs font-medium text-theme-text-primary mb-2 uppercase tracking-wide">
+          <label className="block text-xs font-medium text-accent-900 mb-2 uppercase tracking-wide">
             Farbe
           </label>
           <div className="grid grid-cols-8 gap-2 mb-3">
@@ -123,7 +123,7 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
 
           {/* Custom Color Picker */}
           <div className="flex items-center gap-3">
-            <label htmlFor="custom-color" className="text-sm text-theme-text-secondary">
+            <label htmlFor="custom-color" className="text-sm text-accent-800">
               Oder eigene Farbe:
             </label>
             <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
                   onClick={() => document.getElementById('custom-color')?.click()}
                 />
               </div>
-              <span className="text-xs text-theme-text-muted font-mono">
+              <span className="text-xs text-accent-700 font-mono">
                 {selectedColor}
               </span>
             </div>

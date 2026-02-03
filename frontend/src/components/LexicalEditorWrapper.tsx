@@ -303,7 +303,7 @@ const LexicalEditorWrapper = ({
       <style>{`
         .editor-container {
           position: relative;
-          color: var(--color-text-primary);
+          color: var(--color-accent-900);
           font-size: 16px;
           line-height: 1.6;
         }
@@ -318,11 +318,11 @@ const LexicalEditorWrapper = ({
           outline: 0;
           padding: 0;
           background: transparent;
-          color: var(--color-text-primary);
+          color: var(--color-accent-900);
         }
 
         .editor-placeholder {
-          color: var(--color-text-muted);
+          color: var(--color-accent-700);
           overflow: hidden;
           position: absolute;
           text-overflow: ellipsis;
@@ -350,7 +350,7 @@ const LexicalEditorWrapper = ({
           border-left: 4px solid var(--color-accent-500);
           background-color: color-mix(in srgb, var(--color-accent-500) 5%, transparent);
           border-radius: 4px;
-          color: var(--color-text-secondary);
+          color: var(--color-accent-800);
           font-style: italic;
         }
 
@@ -358,21 +358,21 @@ const LexicalEditorWrapper = ({
           font-size: 2em;
           font-weight: 700;
           margin: 0.67em 0;
-          color: var(--color-text-primary);
+          color: var(--color-accent-900);
         }
 
         .editor-heading-h2 {
           font-size: 1.5em;
           font-weight: 700;
           margin: 0.75em 0;
-          color: var(--color-text-primary);
+          color: var(--color-accent-900);
         }
 
         .editor-heading-h3 {
           font-size: 1.25em;
           font-weight: 700;
           margin: 0.83em 0;
-          color: var(--color-text-primary);
+          color: var(--color-accent-900);
         }
 
         .editor-list-ol {
@@ -393,11 +393,11 @@ const LexicalEditorWrapper = ({
 
         .editor-listitem {
           margin-bottom: 5px;
-          color: var(--color-text-primary);
+          color: var(--color-accent-900);
         }
 
         .editor-listitem::marker {
-          color: var(--color-text-muted);
+          color: var(--color-accent-700);
         }
 
         .editor-nested-listitem {
@@ -510,7 +510,7 @@ const LexicalEditorWrapper = ({
         {toolbar}
 
         {/* Editor */}
-        <div className="flex-1 overflow-y-auto px-12 pt-8 pb-8 bg-theme-textarea">
+        <div className="flex-1 overflow-y-auto px-12 pt-8 pb-8 bg-accent-50">
           <div className="editor-container">
             <RichTextPlugin
               contentEditable={<ContentEditable className="editor-input" />}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { FileText } from 'lucide-react';
+import Logo from '../components/Logo';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -41,10 +41,9 @@ const RegisterPage = () => {
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-500/10 rounded-2xl mb-4 border border-accent-500/20">
-            <FileText className="w-8 h-8 text-accent-500" />
+          <div className="flex justify-center mb-4">
+            <Logo size="lg" showText={true} />
           </div>
-          <h1 className="text-3xl font-bold text-theme-text-primary mb-2">Dendrite</h1>
           <p className="text-theme-text-secondary">Erstelle dein Konto</p>
         </div>
 

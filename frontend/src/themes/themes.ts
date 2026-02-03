@@ -3,20 +3,13 @@ export interface Theme {
   name: string;
   description: string;
   colors: {
-    bg: string;
-    surface: string;
-    elevated: string;
-    textarea: string;
-    border: string;
-    textPrimary: string;
-    textSecondary: string;
-    textMuted: string;
+    iconColor: string;
     accent50: string;
     accent100: string;
     accent200: string;
     accent300: string;
     accent400: string;
-    accent500: string; // Hauptakzent
+    accent500: string;
     accent600: string;
     accent700: string;
     accent800: string;
@@ -24,16 +17,19 @@ export interface Theme {
   };
 }
 
-// Dark Mode Basis-Farben (vom ehemaligen Leaf Green)
+// Dark Mode Basis-Farben (verwendet für alle Dark Themes)
 const darkModeBase = {
-  bg: '#0f0f0f',
-  surface: '#1a1a1a',
-  elevated: '#242424',
-  textarea: '#000000ff',
-  border: '#2a2a2a',
-  textPrimary: '#e5e5e5',
-  textSecondary: '#a3a3a3',
-  textMuted: '#737373',
+  iconColor: '#a3a3a3',     // Icon-Füllung (textSecondary)
+  accent50: '#0f0f0f',      // bg
+  accent100: '#1a1a1a',     // surface
+  accent200: '#242424',     // elevated
+  accent300: '#2a2a2a',     // border
+  accent400: '#737373',     // (muted als Platzhalter)
+  accent500: '#a3a3a3',     // textSecondary als Hauptakzent
+  accent600: '#a3a3a3',     // textSecondary
+  accent700: '#737373',     // textMuted
+  accent800: '#a3a3a3',     // textSecondary
+  accent900: '#e5e5e5',     // textPrimary
 };
 
 export const themes: Record<string, Theme> = {
@@ -43,14 +39,7 @@ export const themes: Record<string, Theme> = {
     name: 'Sprout Green',
     description: 'Sanftes Pastell-Grün',
     colors: {
-      bg: '#f0fdf4',
-      surface: '#dcfce7',
-      elevated: '#bbf7d0',
-      textarea: '#e6f9eb',
-      border: '#86efac',
-      textPrimary: '#14532d',
-      textSecondary: '#166534',
-      textMuted: '#15803d',
+      iconColor: '#4ade80',
       accent50: '#f0fdf4',
       accent100: '#dcfce7',
       accent200: '#bbf7d0',
@@ -69,16 +58,8 @@ export const themes: Record<string, Theme> = {
     description: 'Dunkles Design mit Grün',
     colors: {
       ...darkModeBase,
-      accent50: '#ecfdf5',
-      accent100: '#d1fae5',
-      accent200: '#a7f3d0',
-      accent300: '#6ee7b7',
-      accent400: '#34d399',
+      iconColor: '#10b981',
       accent500: '#10b981',
-      accent600: '#059669',
-      accent700: '#047857',
-      accent800: '#065f46',
-      accent900: '#064e3b',
     },
   },
   // Blossom Pink - Light & Dark
@@ -87,14 +68,7 @@ export const themes: Record<string, Theme> = {
     name: 'Blossom Rose',
     description: 'Zartes Rosa-Design',
     colors: {
-      bg: '#fdf2f8',
-      surface: '#fce7f3',
-      elevated: '#fbcfe8',
-      textarea: '#fef0f6',
-      border: '#f9a8d4',
-      textPrimary: '#831843',
-      textSecondary: '#9d174d',
-      textMuted: '#be185d',
+      iconColor: '#f472b6',
       accent50: '#fdf2f8',
       accent100: '#fce7f3',
       accent200: '#fbcfe8',
@@ -113,16 +87,8 @@ export const themes: Record<string, Theme> = {
     description: 'Dunkles Design mit Rosa',
     colors: {
       ...darkModeBase,
-      accent50: '#fdf2f8',
-      accent100: '#fce7f3',
-      accent200: '#fbcfe8',
-      accent300: '#f9a8d4',
-      accent400: '#f472b6',
+      iconColor: '#f472b6',
       accent500: '#f472b6',
-      accent600: '#db2777',
-      accent700: '#be185d',
-      accent800: '#9d174d',
-      accent900: '#831843',
     },
   },
   // Neural Blue - Light & Dark
@@ -131,14 +97,7 @@ export const themes: Record<string, Theme> = {
     name: 'Neural Blue',
     description: 'Beruhigendes Blau',
     colors: {
-      bg: '#eff6ff',
-      surface: '#dbeafe',
-      elevated: '#bfdbfe',
-      textarea: '#e8f2fe',
-      border: '#93c5fd',
-      textPrimary: '#1e3a8a',
-      textSecondary: '#1e40af',
-      textMuted: '#1d4ed8',
+      iconColor: '#93c5fd',
       accent50: '#eff6ff',
       accent100: '#dbeafe',
       accent200: '#bfdbfe',
@@ -157,16 +116,8 @@ export const themes: Record<string, Theme> = {
     description: 'Dunkles Design mit Blau',
     colors: {
       ...darkModeBase,
-      accent50: '#eff6ff',
-      accent100: '#dbeafe',
-      accent200: '#bfdbfe',
-      accent300: '#93c5fd',
-      accent400: '#60a5fa',
+      iconColor: '#93c5fd',
       accent500: '#93c5fd',
-      accent600: '#2563eb',
-      accent700: '#1d4ed8',
-      accent800: '#1e40af',
-      accent900: '#1e3a8a',
     },
   },
   // Synapse Cream - Light & Dark
@@ -175,14 +126,7 @@ export const themes: Record<string, Theme> = {
     name: 'Synapse Cream',
     description: 'Warmes Creme-Design',
     colors: {
-      bg: '#fefce8',
-      surface: '#fffde2',
-      elevated: '#fef08a',
-      textarea: '#fdfceeff',
-      border: '#fde047',
-      textPrimary: '#713f12',
-      textSecondary: '#854d0e',
-      textMuted: '#a16207',
+      iconColor: '#eab308',
       accent50: '#fefce8',
       accent100: '#fef9c3',
       accent200: '#fef08a',
@@ -201,16 +145,8 @@ export const themes: Record<string, Theme> = {
     description: 'Dunkles Design mit Gelb',
     colors: {
       ...darkModeBase,
-      accent50: '#fefce8',
-      accent100: '#fef9c3',
-      accent200: '#fef08a',
-      accent300: '#fde047',
-      accent400: '#facc15',
+      iconColor: '#eab308',
       accent500: '#eab308',
-      accent600: '#ca8a04',
-      accent700: '#a16207',
-      accent800: '#854d0e',
-      accent900: '#713f12',
     },
   },
   // Pulse Orange - Light & Dark
@@ -219,14 +155,7 @@ export const themes: Record<string, Theme> = {
     name: 'Pulse Orange',
     description: 'Energetisches Orange',
     colors: {
-      bg: '#fff7ed',
-      surface: '#ffedd5',
-      elevated: '#fed7aa',
-      textarea: '#fff2e0',
-      border: '#fdba74',
-      textPrimary: '#7c2d12',
-      textSecondary: '#9a3412',
-      textMuted: '#c2410c',
+      iconColor: '#fb923c',
       accent50: '#fff7ed',
       accent100: '#ffedd5',
       accent200: '#fed7aa',
@@ -245,16 +174,8 @@ export const themes: Record<string, Theme> = {
     description: 'Dunkles Design mit Orange',
     colors: {
       ...darkModeBase,
-      accent50: '#fff7ed',
-      accent100: '#ffedd5',
-      accent200: '#fed7aa',
-      accent300: '#fdba74',
-      accent400: '#fb923c',
+      iconColor: '#fb923c',
       accent500: '#fb923c',
-      accent600: '#ea580c',
-      accent700: '#c2410c',
-      accent800: '#9a3412',
-      accent900: '#7c2d12',
     },
   },
   // Branch Brown - Light & Dark
@@ -263,14 +184,7 @@ export const themes: Record<string, Theme> = {
     name: 'Branch Brown',
     description: 'Erdiges Braun',
     colors: {
-      bg: '#fdf8f6',
-      surface: '#f2e8e5',
-      elevated: '#eaddd7',
-      textarea: '#f8ede9',
-      border: '#e0cec7',
-      textPrimary: '#43302b',
-      textSecondary: '#5a4238',
-      textMuted: '#977669',
+      iconColor: '#846358',
       accent50: '#fdf8f6',
       accent100: '#f2e8e5',
       accent200: '#eaddd7',
@@ -289,16 +203,8 @@ export const themes: Record<string, Theme> = {
     description: 'Dunkles Design mit Braun',
     colors: {
       ...darkModeBase,
-      accent50: '#fdf8f6',
-      accent100: '#f2e8e5',
-      accent200: '#eaddd7',
-      accent300: '#e0cec7',
-      accent400: '#d2bab0',
+      iconColor: '#846358',
       accent500: '#846358',
-      accent600: '#a18072',
-      accent700: '#977669',
-      accent800: '#846358',
-      accent900: '#43302b',
     },
   },
   // Growth Beige - Light & Dark
@@ -307,14 +213,7 @@ export const themes: Record<string, Theme> = {
     name: 'Growth Beige',
     description: 'Neutrales Beige',
     colors: {
-      bg: '#faf9f7',
-      surface: '#e7e5df',
-      elevated: '#d3cec4',
-      textarea: '#f0eeea',
-      border: '#b8b2a7',
-      textPrimary: '#3e3b35',
-      textSecondary: '#4e4a42',
-      textMuted: '#5f5a50',
+      iconColor: '#5f5a50',
       accent50: '#faf9f7',
       accent100: '#e7e5df',
       accent200: '#d3cec4',
@@ -333,16 +232,8 @@ export const themes: Record<string, Theme> = {
     description: 'Dunkles Design mit Beige',
     colors: {
       ...darkModeBase,
-      accent50: '#faf9f7',
-      accent100: '#e7e5df',
-      accent200: '#d3cec4',
-      accent300: '#b8b2a7',
-      accent400: '#a39e93',
+      iconColor: '#5f5a50',
       accent500: '#5f5a50',
-      accent600: '#6c665c',
-      accent700: '#5f5a50',
-      accent800: '#4e4a42',
-      accent900: '#3e3b35',
     },
   },
   // Cortex Gray - Light & Dark
@@ -351,14 +242,7 @@ export const themes: Record<string, Theme> = {
     name: 'Cortex Gray',
     description: 'Elegantes Grau',
     colors: {
-      bg: '#f9fafb',
-      surface: '#f3f4f6',
-      elevated: '#e5e7eb',
-      textarea: '#f8f9fa',
-      border: '#d1d5db',
-      textPrimary: '#111827',
-      textSecondary: '#1f2937',
-      textMuted: '#374151',
+      iconColor: '#4b5563',
       accent50: '#f9fafb',
       accent100: '#f3f4f6',
       accent200: '#e5e7eb',
@@ -377,16 +261,8 @@ export const themes: Record<string, Theme> = {
     description: 'Dunkles Design mit Grau',
     colors: {
       ...darkModeBase,
-      accent50: '#f9fafb',
-      accent100: '#f3f4f6',
-      accent200: '#e5e7eb',
-      accent300: '#d1d5db',
-      accent400: '#9ca3af',
+      iconColor: '#4b5563',
       accent500: '#4b5563',
-      accent600: '#4b5563',
-      accent700: '#374151',
-      accent800: '#1f2937',
-      accent900: '#111827',
     },
   },
 };

@@ -18,14 +18,7 @@ const ThemeProvider = ({ children }: ThemeProviderProps) => {
     const root = document.documentElement;
 
     // Apply theme colors as CSS custom properties
-    root.style.setProperty('--color-bg', theme.colors.bg);
-    root.style.setProperty('--color-surface', theme.colors.surface);
-    root.style.setProperty('--color-elevated', theme.colors.elevated);
-    root.style.setProperty('--color-textarea', theme.colors.textarea);
-    root.style.setProperty('--color-border', theme.colors.border);
-    root.style.setProperty('--color-text-primary', theme.colors.textPrimary);
-    root.style.setProperty('--color-text-secondary', theme.colors.textSecondary);
-    root.style.setProperty('--color-text-muted', theme.colors.textMuted);
+    root.style.setProperty('--color-icon', theme.colors.iconColor);
     root.style.setProperty('--color-accent-50', theme.colors.accent50);
     root.style.setProperty('--color-accent-100', theme.colors.accent100);
     root.style.setProperty('--color-accent-200', theme.colors.accent200);

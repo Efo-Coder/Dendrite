@@ -287,10 +287,10 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
   ];
 
   return (
-    <div className="p-4 h-8 border-b bg-theme-surface px-6 md:px-12 flex items-center space-x-1">
+    <div className="p-4 h-8 border-b bg-accent-100 px-6 md:px-12 flex items-center space-x-1">
       {toolbarButtons.map((button, index) => {
         if (button.separator) {
-          return <div key={index} className="h-6 w-px bg-theme-divider mx-1" />;
+          return <div key={index} className="h-6 w-px bg-accent-300 mx-1" />;
         }
 
         const Icon = button.icon!;
@@ -309,7 +309,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
               'p-2 rounded-lg transition-colors',
               button.isActive
                 ? 'bg-accent-500/20 text-accent-500'
-                : 'text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary',
+                : 'text-accent-700 hover:bg-accent-200 hover:text-accent-900',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
             title={button.title}
@@ -323,18 +323,18 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
       {showLinkModal && (
         <>
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={() => setShowLinkModal(false)} />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-theme-surface/95 backdrop-blur-md border border-theme rounded-xl shadow-2xl p-6 z-50 w-96">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-accent-100/95 backdrop-blur-md border border-accent-300 rounded-xl shadow-2xl p-6 z-50 w-96">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-semibold text-theme-text-primary">Link hinzufügen</h3>
+              <h3 className="text-base font-semibold text-accent-900">Link hinzufügen</h3>
               <button
                 onClick={() => setShowLinkModal(false)}
-                className="p-1.5 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-all"
+                className="p-1.5 rounded-lg text-accent-700 hover:bg-accent-200 hover:text-accent-900 transition-all"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="mb-5">
-              <label className="block text-xs font-medium text-theme-text-primary mb-2 uppercase tracking-wide">
+              <label className="block text-xs font-medium text-accent-900 mb-2 uppercase tracking-wide">
                 URL
               </label>
               <input
@@ -342,7 +342,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
                 placeholder="https://example.com"
-                className="w-full px-3 py-2.5 bg-theme-elevated border border-theme rounded-lg text-theme-text-primary text-sm placeholder-theme-text-muted focus:outline-none focus:border-accent-500/50 transition-all"
+                className="w-full px-3 py-2.5 bg-accent-200 border border-accent-300 rounded-lg text-accent-900 text-sm placeholder:text-accent-700 focus:outline-none focus:border-accent-500/50 transition-all"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -378,13 +378,13 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
       {showImageModal && (
         <>
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={() => !isUploading && setShowImageModal(false)} />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-theme-surface/95 backdrop-blur-md border border-theme rounded-xl shadow-2xl p-6 z-50 w-[450px]">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-accent-100/95 backdrop-blur-md border border-accent-300 rounded-xl shadow-2xl p-6 z-50 w-[450px]">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-semibold text-theme-text-primary">Bild hinzufügen</h3>
+              <h3 className="text-base font-semibold text-accent-900">Bild hinzufügen</h3>
               <button
                 onClick={() => !isUploading && setShowImageModal(false)}
                 disabled={isUploading}
-                className="p-1.5 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-all disabled:opacity-50"
+                className="p-1.5 rounded-lg text-accent-700 hover:bg-accent-200 hover:text-accent-900 transition-all disabled:opacity-50"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -433,7 +433,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
             {/* URL Input */}
             {imageMode === 'url' && (
               <div className="mb-5">
-                <label className="block text-xs font-medium text-theme-text-primary mb-2 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-accent-900 mb-2 uppercase tracking-wide">
                   Bild-URL
                 </label>
                 <input
@@ -441,7 +441,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
                   placeholder="https://example.com/image.jpg"
-                  className="w-full px-3 py-2.5 bg-theme-elevated border border-theme rounded-lg text-theme-text-primary text-sm placeholder-theme-text-muted focus:outline-none focus:border-accent-500/50 transition-all"
+                  className="w-full px-3 py-2.5 bg-accent-200 border border-accent-300 rounded-lg text-accent-900 text-sm placeholder:text-accent-700 focus:outline-none focus:border-accent-500/50 transition-all"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -457,14 +457,14 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
             {/* File Upload */}
             {imageMode === 'upload' && (
               <div className="mb-5">
-                <label className="block text-xs font-medium text-theme-text-primary mb-2 uppercase tracking-wide">
+                <label className="block text-xs font-medium text-accent-900 mb-2 uppercase tracking-wide">
                   Datei auswählen
                 </label>
                 <div className="flex flex-col space-y-3">
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="flex items-center justify-center space-x-2 px-4 py-6 border-2 border-dashed border-theme/50 rounded-xl text-white/70 hover:border-accent-500/50 hover:text-accent-500 hover:bg-accent-500/5 transition-all disabled:opacity-50"
+                    className="flex items-center justify-center space-x-2 px-4 py-6 border-2 border-dashed border-accent-300/50 rounded-xl text-white/70 hover:border-accent-500/50 hover:text-accent-500 hover:bg-accent-500/5 transition-all disabled:opacity-50"
                   >
                     <Upload className="w-5 h-5" />
                     <span className="text-sm font-medium">
@@ -479,7 +479,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                     className="hidden"
                   />
                   {selectedFile && (
-                    <div className="flex items-center justify-between px-3 py-2.5 bg-theme-elevated border border-theme rounded-lg">
+                    <div className="flex items-center justify-between px-3 py-2.5 bg-accent-200 border border-accent-300 rounded-lg">
                       <div className="flex items-center space-x-2 flex-1 min-w-0">
                         <Image className="w-4 h-4 text-accent-500 flex-shrink-0" />
                         <span className="text-sm text-white truncate">
@@ -489,7 +489,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                       <button
                         onClick={() => setSelectedFile(null)}
                         disabled={isUploading}
-                        className="ml-2 p-1 rounded-md hover:bg-theme-elevated/50 text-white/70 hover:text-white transition-all disabled:opacity-50"
+                        className="ml-2 p-1 rounded-md hover:bg-accent-200/50 text-white/70 hover:text-white transition-all disabled:opacity-50"
                       >
                         <X className="w-4 h-4" />
                       </button>

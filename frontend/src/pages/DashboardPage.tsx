@@ -5,7 +5,7 @@ import { useToast } from '../components/ToastContainer';
 import Sidebar from '../components/Sidebar';
 import NoteList from '../components/NoteList';
 import NoteEditor from '../components/NoteEditor';
-import Header from '../components/Header';
+import Header from '../components/header';
 import { Plus, FileText, Trash2 } from 'lucide-react';
 import Modal from '../components/modals/Modal';
 

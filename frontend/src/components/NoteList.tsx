@@ -83,7 +83,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={clsx(
-        'w-full border-b border-theme flex relative h-[100px]',
+        'w-full border-b border-accent-300 flex relative h-[100px]',
         isSelected
           ? 'bg-accent-500/10'
           : ''
@@ -94,7 +94,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
         <div
           {...attributes}
           {...listeners}
-          className="flex items-center justify-center w-8 flex-shrink-0 cursor-grab active:cursor-grabbing text-theme-text-muted hover:text-theme-text-primary"
+          className="flex items-center justify-center w-8 flex-shrink-0 cursor-grab active:cursor-grabbing text-accent-700 hover:text-accent-900"
         >
           <GripVertical className="w-4 h-4" />
         </div>
@@ -109,7 +109,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
         {/* Note Header mit Title, Tag und Icons */}
         <div className="flex items-center gap-2 min-w-0 mb-1">
           {/* Title */}
-          <h3 className="text-sm font-semibold text-theme-text-primary truncate flex-shrink min-w-0">
+          <h3 className="text-sm font-semibold text-accent-900 truncate flex-shrink min-w-0">
             {getFirstLine(note.content)}
           </h3>
 
@@ -132,26 +132,26 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
           <div className="flex items-center space-x-1 flex-shrink-0">
             {note.isPinned && <Pin className="w-3 h-3 text-accent-500" />}
             {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
-            {note.isLocked && <Lock className="w-3 h-3 text-theme-text-muted" />}
+            {note.isLocked && <Lock className="w-3 h-3 text-accent-700" />}
           </div>
         </div>
 
         {/* Note Preview - nur eine Zeile */}
-        <p className="text-xs text-theme-text-secondary truncate min-w-0 mb-1">
+        <p className="text-xs text-accent-800 truncate min-w-0 mb-1">
           {getPreview(note.content)}
         </p>
 
         {/* Folder Info */}
         <div className="flex items-center gap-1 min-w-0 mb-1">
-          <Folder className="w-3 h-3 text-theme-text-muted flex-shrink-0" />
-          <span className="text-xs text-theme-text-muted truncate">
+          <Folder className="w-3 h-3 text-accent-700 flex-shrink-0" />
+          <span className="text-xs text-accent-700 truncate">
             {note.folder?.name || 'Alle Notizen'}
           </span>
         </div>
 
         {/* Note Meta */}
         <div className="flex items-center justify-between gap-2 min-w-0">
-          <span className="text-xs text-theme-text-muted flex-shrink-0">
+          <span className="text-xs text-accent-700 flex-shrink-0">
             {formatDistanceToNow(new Date(dateDisplayMode === 'createdAt' ? note.createdAt : note.updatedAt), {
               addSuffix: true,
               locale: de,
@@ -474,7 +474,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   if (notes.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 text-center">
-        <div className="text-theme-text-muted">
+        <div className="text-accent-700">
           <p className="text-sm">Keine Notizen gefunden</p>
         </div>
       </div>
@@ -493,7 +493,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             style={{
               top: `${highlighterStyle.top}px`,
               height: `${highlighterStyle.height}px`,
-              backgroundColor: 'var(--color-elevated)',
+              backgroundColor: 'var(--color-accent-200)',
             }}
           />
         )}
@@ -505,7 +505,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             onMouseEnter={() => handleMouseEnter(index)}
             onMouseLeave={handleMouseLeave}
             className={clsx(
-              'w-full border-b border-theme flex relative h-[100px]',
+              'w-full border-b border-accent-300 flex relative h-[100px]',
               currentNote?.id === note.id
                 ? 'bg-accent-500/10'
                 : ''
@@ -522,7 +522,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               {/* Note Header mit Title, Tag und Icons */}
               <div className="flex items-center gap-2 min-w-0 mb-1">
                 {/* Title */}
-                <h3 className="text-sm font-semibold text-theme-text-primary truncate flex-shrink min-w-0">
+                <h3 className="text-sm font-semibold text-accent-900 truncate flex-shrink min-w-0">
                   {getFirstLine(note.content)}
                 </h3>
 
@@ -545,26 +545,26 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
                 <div className="flex items-center space-x-1 flex-shrink-0">
                   {note.isPinned && <Pin className="w-3 h-3 text-accent-500" />}
                   {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
-                  {note.isLocked && <Lock className="w-3 h-3 text-theme-text-muted" />}
+                  {note.isLocked && <Lock className="w-3 h-3 text-accent-700" />}
                 </div>
               </div>
 
               {/* Note Preview - nur eine Zeile */}
-              <p className="text-xs text-theme-text-secondary truncate min-w-0 mb-1">
+              <p className="text-xs text-accent-800 truncate min-w-0 mb-1">
                 {getPreview(note.content)}
               </p>
 
               {/* Folder Info */}
               <div className="flex items-center gap-1 min-w-0 mb-1">
-                <Folder className="w-3 h-3 text-theme-text-muted flex-shrink-0" />
-                <span className="text-xs text-theme-text-muted truncate">
+                <Folder className="w-3 h-3 text-accent-700 flex-shrink-0" />
+                <span className="text-xs text-accent-700 truncate">
                   {note.folder?.name || 'Alle Notizen'}
                 </span>
               </div>
 
               {/* Note Meta */}
               <div className="flex items-center justify-between gap-2 min-w-0">
-                <span className="text-xs text-theme-text-muted flex-shrink-0">
+                <span className="text-xs text-accent-700 flex-shrink-0">
                   {formatDistanceToNow(new Date(dateDisplayMode === 'createdAt' ? note.createdAt : note.updatedAt), {
                     addSuffix: true,
                     locale: de,
@@ -615,17 +615,17 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     <>
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Sortierung Header */}
-      <div className="px-4 py-2 border-b border-theme bg-theme-surface -mt-[1px]">
+      <div className="px-4 py-2 border-b border-accent-300 bg-accent-50 -mt-[1px]">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-theme-text-primary">Sortierung</span>
+          <span className="text-sm font-medium text-accent-900">Sortierung</span>
           <div className="flex items-center space-x-2">
             <select
               value={sortBy}
               onChange={(e) => updateSorting(e.target.value as SortOption, sortOrder)}
-              className="px-1 pb-[2px] border border-theme rounded text-sm leading-tight"
-              style={{ 
-                backgroundColor: currentTheme.colors.bg,
-                color: currentTheme.colors.textPrimary
+              className="px-1 pb-[2px] border border-accent-300 rounded text-sm leading-tight"
+              style={{
+                backgroundColor: currentTheme.colors.accent50,
+                color: currentTheme.colors.accent900
               }}
             >
               <option value="createdAt">Erstellt</option>
@@ -637,7 +637,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             {sortBy !== 'manual' && (
               <button
                 onClick={() => updateSorting(sortBy, sortOrder === 'desc' ? 'asc' : 'desc')}
-                className="p-1 rounded text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"
+                className="p-1 rounded text-accent-700 hover:bg-accent-200 hover:text-accent-900 transition-colors"
                 title={`Sortierung: ${sortOrder === 'desc' ? 'Absteigend' : 'Aufsteigend'}`}
               >
                 {sortOrder === 'desc' ? <ArrowDown className="w-4 h-4" /> : <ArrowUp className="w-4 h-4" />}
@@ -664,7 +664,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               style={{
                 top: `${highlighterStyle.top}px`,
                 height: `${highlighterStyle.height}px`,
-                backgroundColor: 'var(--color-elevated)',
+                backgroundColor: 'var(--color-accent-200)',
               }}
             />
           )}

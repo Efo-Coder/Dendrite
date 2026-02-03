@@ -164,11 +164,11 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   return (
     <>
       <aside className={clsx(
-        "bg-theme-surface border-r border-theme flex flex-col transition-all duration-300 overflow-hidden",
+        "bg-accent-100 border-r border-accent-300 flex flex-col transition-all duration-300 overflow-hidden",
         isCollapsed ? "w-16" : "w-64"
       )}>
         {/* Logo */}
-        <div className="h-16 border-b flex-shrink-0 flex items-center px-4">
+        <div className="h-16 border-b border-accent-300 flex-shrink-0 flex items-center px-4">
           <Logo size="md" showText={!isCollapsed} />
         </div>
 
@@ -186,7 +186,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                   'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
                   isActive
                     ? 'bg-accent-500/10 text-accent-500'
-                    : 'text-theme-text-secondary hover:bg-theme-elevated hover:text-theme-text-primary'
+                    : 'text-accent-800 hover:bg-accent-200 hover:text-accent-900'
                 )}
                 title={isCollapsed ? item.label : undefined}
               >
@@ -205,19 +205,19 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
 
           {/* Divider */}
           <div className="pt-4 pb-2">
-            <div className="h-px border-t border-theme" />
+            <div className="h-px border-t border-accent-300" />
           </div>
 
           {/* Folders Section */}
           <div className="pt-2">
             {!isCollapsed ? (
               <div className="flex items-center justify-between px-1.5 py-2">
-                <span className="text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
+                <span className="text-xs font-semibold text-accent-700 uppercase tracking-wider">
                   Ordner
                 </span>
                 <button
                   onClick={() => setShowFolderModal(true)}
-                  className="text-theme-text-muted hover:text-accent-500 transition-colors"
+                  className="text-accent-700 hover:text-accent-500 transition-colors"
                   title="Neuer Ordner"
                 >
                   <Plus className="w-4 h-4" />
@@ -227,7 +227,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               <div className="flex justify-center py-2">
                 <button
                   onClick={() => setShowFolderModal(true)}
-                  className="text-theme-text-muted hover:text-accent-500 transition-colors"
+                  className="text-accent-700 hover:text-accent-500 transition-colors"
                   title="Neuer Ordner"
                 >
                   <Plus className="w-4 h-4" />
@@ -236,7 +236,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
             )}
 
             {folders.length === 0 && !isCollapsed ? (
-              <p className="px-3 py-2 text-xs text-theme-text-muted italic">
+              <p className="px-3 py-2 text-xs text-accent-700 italic">
                 Keine Ordner vorhanden
               </p>
             ) : (
@@ -250,7 +250,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                       'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
                       currentView === 'folder' && selectedFolderId === folder.id
                         ? 'bg-accent-500/10 text-accent-500 font-medium'
-                        : 'text-theme-text-secondary hover:bg-theme-elevated hover:text-theme-text-primary'
+                        : 'text-accent-800 hover:bg-accent-200 hover:text-accent-900'
                     )}
                     title={isCollapsed ? folder.name : undefined}
                   >
@@ -270,7 +270,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                         </div>
                         {folder.notes && folder.notes.length > 0 && (
                           <span className={clsx(
-                            "text-xs text-theme-text-muted flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2",
+                            "text-xs text-accent-700 flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2",
                             isCollapsed ? "opacity-0" : "opacity-100 delay-100"
                           )}>
                             {folder.notes.length}
@@ -288,12 +288,12 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
           <div className="pt-4">
             {!isCollapsed ? (
               <div className="flex items-center justify-between px-1.5 py-2">
-                <span className="text-xs font-semibold text-theme-text-muted uppercase tracking-wider">
+                <span className="text-xs font-semibold text-accent-700 uppercase tracking-wider">
                   Tags
                 </span>
                 <button
                   onClick={() => setShowTagModal(true)}
-                  className="text-theme-text-muted hover:text-accent-500 transition-colors"
+                  className="text-accent-700 hover:text-accent-500 transition-colors"
                   title="Neuer Tag"
                 >
                   <Plus className="w-4 h-4" />
@@ -303,7 +303,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               <div className="flex justify-center py-2">
                 <button
                   onClick={() => setShowTagModal(true)}
-                  className="text-theme-text-muted hover:text-accent-500 transition-colors"
+                  className="text-accent-700 hover:text-accent-500 transition-colors"
                   title="Neuer Tag"
                 >
                   <Plus className="w-4 h-4" />
@@ -312,7 +312,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
             )}
 
             {tags.length === 0 && !isCollapsed ? (
-              <p className="px-3 py-2 text-xs text-theme-text-muted italic">
+              <p className="px-3 py-2 text-xs text-accent-700 italic">
                 Keine Tags vorhanden
               </p>
             ) : (
@@ -326,7 +326,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                       'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
                       currentView === 'tag' && selectedTagId === tag.id
                         ? 'bg-accent-500/10 text-accent-500 font-medium'
-                        : 'text-theme-text-secondary hover:bg-theme-elevated hover:text-theme-text-primary'
+                        : 'text-accent-800 hover:bg-accent-200 hover:text-accent-900'
                     )}
                     title={isCollapsed ? tag.name : undefined}
                   >
@@ -346,7 +346,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                         </div>
                         {tag.notes && tag.notes.length > 0 && (
                           <span className={clsx(
-                            "text-xs text-theme-text-muted flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2",
+                            "text-xs text-accent-700 flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2",
                             isCollapsed ? "opacity-0" : "opacity-100 delay-100"
                           )}>
                             {tag.notes.length}
@@ -364,7 +364,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
           <div className="mt-auto pl-9 flex justify-end">
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2 rounded-lg text-theme-text-muted hover:bg-theme-elevated hover:text-theme-text-primary transition-colors"
+              className="p-2 rounded-lg text-accent-700 hover:bg-accent-200 hover:text-accent-900 transition-colors"
               title={isCollapsed ? "Sidebar erweitern" : "Sidebar minimieren"}
             >
               {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}

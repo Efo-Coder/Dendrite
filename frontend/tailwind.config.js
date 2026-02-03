@@ -7,35 +7,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Dynamisches Theme-System für helle und dunkle Designs
-        theme: {
-          bg: 'var(--color-bg)',
-          surface: 'var(--color-surface)',
-          elevated: 'var(--color-elevated)',
-          textarea: 'var(--color-textarea)',
-          divider: 'var(--color-border)',
-          text: {
-            primary: 'var(--color-text-primary)',
-            secondary: 'var(--color-text-secondary)',
-            muted: 'var(--color-text-muted)',
-          }
-        },
+        icon: 'var(--color-icon)',
         accent: {
-          50: 'var(--color-accent-50)',
-          100: 'var(--color-accent-100)',
-          200: 'var(--color-accent-200)',
-          300: 'var(--color-accent-300)',
-          400: 'var(--color-accent-400)',
-          500: 'var(--color-accent-500)',
-          600: 'var(--color-accent-600)',
-          700: 'var(--color-accent-700)',
-          800: 'var(--color-accent-800)',
-          900: 'var(--color-accent-900)',
+          '50': 'var(--color-accent-50)',
+          '100': 'var(--color-accent-100)',
+          '200': 'var(--color-accent-200)',
+          '300': 'var(--color-accent-300)',
+          '400': 'var(--color-accent-400)',
+          '500': 'var(--color-accent-500)',
+          '600': 'var(--color-accent-600)',
+          '700': 'var(--color-accent-700)',
+          '800': 'var(--color-accent-800)',
+          '900': 'var(--color-accent-900)',
         }
-      },
-      borderColor: {
-        DEFAULT: 'var(--color-border)',
-        'theme': 'var(--color-border)',
       },
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'sans-serif'],

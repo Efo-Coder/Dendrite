@@ -27,7 +27,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       <div className="space-y-6">
         {/* Date Display Setting */}
         <div>
-          <label className="block text-xs font-medium text-theme-text-primary mb-3 uppercase tracking-wide">
+          <label className="block text-xs font-medium text-accent-900 mb-3 uppercase tracking-wide">
             Datumsanzeige in Notizliste
           </label>
           <div className="space-y-2">
@@ -42,7 +42,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               } : {
                 backgroundColor: 'rgba(100, 100, 100, 0.3)',
                 border: '1px solid rgba(140, 140, 140, 0.5)',
-                color: 'var(--color-text-secondary)'
+                color: 'var(--color-accent-800)'
               }}
             >
               <span className="text-sm font-medium relative z-10">Bearbeitet am</span>
@@ -64,7 +64,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               } : {
                 backgroundColor: 'rgba(100, 100, 100, 0.3)',
                 border: '1px solid rgba(140, 140, 140, 0.5)',
-                color: 'var(--color-text-secondary)'
+                color: 'var(--color-accent-800)'
               }}
             >
               <span className="text-sm font-medium relative z-10">Erstellt am</span>
@@ -75,14 +75,14 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               )}
             </button>
           </div>
-          <p className="mt-2 text-xs text-theme-text-muted">
+          <p className="mt-2 text-xs text-accent-700">
             Wähle, welches Datum in der Notizliste angezeigt werden soll.
           </p>
         </div>
 
         {/* Theme Selection */}
         <div>
-          <label className="block text-xs font-medium text-theme-text-primary mb-3 uppercase tracking-wide">
+          <label className="block text-xs font-medium text-accent-900 mb-3 uppercase tracking-wide">
             Farbthema
           </label>
           <div className="grid grid-cols-3 gap-3">
@@ -133,7 +133,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               );
             })}
           </div>
-          <p className="mt-2 text-xs text-theme-text-muted">
+          <p className="mt-2 text-xs text-accent-700">
             Wähle ein Farbthema für die gesamte Anwendung.
           </p>
         </div>
