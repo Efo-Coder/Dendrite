@@ -164,11 +164,11 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   return (
     <>
       <aside className={clsx(
-        "bg-accent-100 border-r border-accent-300 flex flex-col transition-all duration-300 overflow-hidden",
+        "glass-panel rounded-2xl flex flex-col transition-all duration-300 overflow-hidden flex-none",
         isCollapsed ? "w-16" : "w-64"
       )}>
         {/* Logo */}
-        <div className="h-16 border-b border-accent-300 flex-shrink-0 flex items-center px-4">
+        <div className="h-16 border-b glass-divider flex-shrink-0 flex items-center px-4">
           <Logo size="md" showText={!isCollapsed} />
         </div>
 
@@ -183,10 +183,10 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                 key={item.label}
                 onClick={item.onClick}
                 className={clsx(
-                  'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
+                  'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5 hover-highlight',
                   isActive
                     ? 'bg-accent-500/10 text-accent-500'
-                    : 'text-accent-800 hover:bg-accent-200 hover:text-accent-900'
+                    : 'text-accent-800 hover:text-accent-900'
                 )}
                 title={isCollapsed ? item.label : undefined}
               >
@@ -205,7 +205,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
 
           {/* Divider */}
           <div className="pt-4 pb-2">
-            <div className="h-px border-t border-accent-300" />
+            <div className="h-px border-t glass-divider" />
           </div>
 
           {/* Folders Section */}
@@ -247,10 +247,10 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     onClick={() => onViewChange('folder', folder.id)}
                     onContextMenu={(e) => handleFolderRightClick(e, folder)}
                     className={clsx(
-                      'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
+                      'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5 hover-highlight',
                       currentView === 'folder' && selectedFolderId === folder.id
                         ? 'bg-accent-500/10 text-accent-500 font-medium'
-                        : 'text-accent-800 hover:bg-accent-200 hover:text-accent-900'
+                        : 'text-accent-800 hover:text-accent-900'
                     )}
                     title={isCollapsed ? folder.name : undefined}
                   >
@@ -323,10 +323,10 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     onClick={() => onViewChange('tag', tag.id)}
                     onContextMenu={(e) => handleTagRightClick(e, tag)}
                     className={clsx(
-                      'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5',
+                      'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5 hover-highlight',
                       currentView === 'tag' && selectedTagId === tag.id
                         ? 'bg-accent-500/10 text-accent-500 font-medium'
-                        : 'text-accent-800 hover:bg-accent-200 hover:text-accent-900'
+                        : 'text-accent-800 hover:text-accent-900'
                     )}
                     title={isCollapsed ? tag.name : undefined}
                   >
@@ -364,7 +364,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
           <div className="mt-auto pl-9 flex justify-end">
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2 rounded-lg text-accent-700 hover:bg-accent-200 hover:text-accent-900 transition-colors"
+              className="p-2 rounded-lg text-accent-700 hover-highlight hover:text-accent-900 transition-colors"
               title={isCollapsed ? "Sidebar erweitern" : "Sidebar minimieren"}
             >
               {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
@@ -414,3 +414,4 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
 };
 
 export default Sidebar;
+

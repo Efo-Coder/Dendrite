@@ -197,28 +197,28 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="flex h-screen bg-theme-bg overflow-hidden">
+    <div className="flex h-screen overflow-hidden p-4 gap-4">
       {/* Sidebar */}
-            <Sidebar
-              currentView={currentView}
-              onViewChange={handleViewChange}
-              selectedFolderId={selectedFolderId}
-              selectedTagId={selectedTagId}
-              refreshTrigger={refreshTrigger}
-              onTagUpdated={refreshCurrentView}
-            />
+      <Sidebar
+        currentView={currentView}
+        onViewChange={handleViewChange}
+        selectedFolderId={selectedFolderId}
+        selectedTagId={selectedTagId}
+        refreshTrigger={refreshTrigger}
+        onTagUpdated={refreshCurrentView}
+      />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col gap-3">
         {/* Header */}
         <Header user={user} />
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex gap-3">
           {/* Note List */}
-          <div className="w-80 border-r border-theme bg-theme-surface flex flex-col">
+          <div className="w-80 glass-panel-strong rounded-2xl overflow-hidden flex flex-col relative z-0">
             {/* Note List Header */}
-            <div className="p-4 border-b border-theme flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-theme-text-primary">
+            <div className="p-4 border-b glass-divider flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-accent-900">
                 {getViewTitle()}
               </h2>
               <div className="w-9 h-9 flex items-center justify-center">
@@ -234,7 +234,7 @@ const DashboardPage = () => {
                 ) : (
                   <button
                     onClick={() => setShowEmptyTrashModal(true)}
-                    className="btn-ghost px-3 py-2 rounded-lg text-red-500 hover:bg-theme-elevated flex items-center gap-2"
+                    className="btn-ghost px-3 py-2 rounded-lg text-red-500 hover-highlight flex items-center gap-2"
                     title="Papierkorb leeren"
                   >
                     <Trash2 className="w-5 h-5" />
@@ -272,14 +272,14 @@ const DashboardPage = () => {
           </div>
 
           {/* Note Editor */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden glass-panel rounded-2xl relative z-0">
             {currentNote ? (
               <NoteEditor
                 note={currentNote}
                 onNoteUpdate={refreshCurrentView}
               />
             ) : (
-              <div className="h-full flex items-center bg-theme-textarea justify-center text-theme-text-muted">
+              <div className="h-full flex items-center justify-center text-accent-700">
                 <div className="text-center">
                   <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="text-lg">Wähle eine Notiz oder erstelle eine neue</p>
@@ -292,13 +292,13 @@ const DashboardPage = () => {
         {/* Empty Trash Modal */}
         <Modal isOpen={showEmptyTrashModal} onClose={() => setShowEmptyTrashModal(false)} title="Papierkorb leeren?">
           <div className="space-y-4">
-            <p className="text-sm text-theme-text-secondary">
+            <p className="text-sm text-accent-800">
               Möchtest du wirklich alle Notizen im Papierkorb endgültig löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.
             </p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowEmptyTrashModal(false)}
-                className="px-3 py-2 rounded-lg bg-theme-elevated text-theme-text-primary hover:bg-theme-divider"
+                className="px-3 py-2 rounded-lg bg-white/30 text-accent-900 hover:bg-white/40"
               >
                 Abbrechen
               </button>
@@ -317,3 +317,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+

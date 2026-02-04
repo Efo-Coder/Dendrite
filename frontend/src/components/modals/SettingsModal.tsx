@@ -40,8 +40,8 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                 border: `1px solid ${currentTheme.colors.accent500}80`,
                 color: currentTheme.colors.accent500
               } : {
-                backgroundColor: 'rgba(100, 100, 100, 0.3)',
-                border: '1px solid rgba(140, 140, 140, 0.5)',
+                backgroundColor: 'var(--glass-bg-soft)',
+                border: '1px solid var(--glass-border)',
                 color: 'var(--color-accent-800)'
               }}
             >
@@ -62,8 +62,8 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                 border: `1px solid ${currentTheme.colors.accent500}80`,
                 color: currentTheme.colors.accent500
               } : {
-                backgroundColor: 'rgba(100, 100, 100, 0.3)',
-                border: '1px solid rgba(140, 140, 140, 0.5)',
+                backgroundColor: 'var(--glass-bg-soft)',
+                border: '1px solid var(--glass-border)',
                 color: 'var(--color-accent-800)'
               }}
             >
@@ -100,8 +100,8 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     backgroundColor: `${themeData.colors.accent500}10`,
                     border: `1px solid ${themeData.colors.accent500}80`
                   } : {
-                    backgroundColor: 'rgba(100, 100, 100, 0.3)',
-                    border: '1px solid rgba(140, 140, 140, 0.5)'
+                    backgroundColor: 'var(--glass-bg-soft)',
+                    border: '1px solid var(--glass-border)'
                   }}
                 >
                   {/* Color Preview Circle */}
@@ -113,7 +113,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   {/* Theme Name */}
                   <span
                     className={`text-xs font-medium text-center`}
-                    style={isSelected ? { color: themeData.colors.accent500 } : { color: 'var(--color-text-secondary)' }}
+                    style={isSelected ? { color: themeData.colors.accent500 } : { color: 'var(--color-accent-700)' }}
                   >
                     {themeData.name}
                   </span>

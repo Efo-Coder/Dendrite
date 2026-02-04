@@ -41,7 +41,7 @@ const ContextMenu = ({ isOpen, position, onClose, onEdit, onDelete }: ContextMen
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 bg-accent-200 border border-accent-300 rounded-lg shadow-lg py-1 min-w-[160px]"
+      className="fixed z-50 glass-panel rounded-xl shadow-lg py-1 min-w-[160px]"
       style={{
         left: position.x,
         top: position.y,
@@ -52,7 +52,7 @@ const ContextMenu = ({ isOpen, position, onClose, onEdit, onDelete }: ContextMen
           onEdit();
           onClose();
         }}
-        className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover:bg-accent-100 transition-colors"
+        className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight transition-colors"
       >
         <Edit className="w-4 h-4" />
         <span>Bearbeiten</span>
@@ -72,3 +72,4 @@ const ContextMenu = ({ isOpen, position, onClose, onEdit, onDelete }: ContextMen
 };
 
 export default ContextMenu;
+

@@ -16,6 +16,8 @@ const ThemeProvider = ({ children }: ThemeProviderProps) => {
     if (!theme) return;
 
     const root = document.documentElement;
+    root.setAttribute('data-theme', themeMode);
+    root.style.colorScheme = themeMode;
 
     // Apply theme colors as CSS custom properties
     root.style.setProperty('--color-icon', theme.colors.iconColor);

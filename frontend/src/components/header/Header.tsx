@@ -34,7 +34,7 @@ const Header = ({ user }: HeaderProps) => {
   };
 
   return (
-    <header className="h-16 bg-accent-100 border-b border-accent-300 px-6 flex items-center justify-between">
+    <header className="h-16 min-h-16 max-h-16 shrink-0 glass-panel rounded-2xl px-6 flex items-center justify-between relative z-[200]">
       {/* Search Bar */}
       <form onSubmit={handleSearch} className="flex-1 max-w-xl">
         <div className="relative">
@@ -44,7 +44,7 @@ const Header = ({ user }: HeaderProps) => {
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Notizen durchsuchen..."
-            className="w-full pl-10 pr-4 py-2 bg-accent-50 border border-accent-300 rounded-lg text-accent-900 placeholder:text-accent-700 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-all"
+            className="input pl-10 pr-4"
           />
         </div>
       </form>

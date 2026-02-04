@@ -53,7 +53,7 @@ const Toast = ({ id, type, message, duration = 3000, onClose }: ToastProps) => {
   return (
     <div
       className={clsx(
-        'relative flex items-start gap-3 p-4 rounded-lg border shadow-lg backdrop-blur-sm',
+        'relative flex items-start gap-3 p-4 rounded-2xl border shadow-xl backdrop-blur-lg',
         'min-w-[320px] max-w-md',
         colors[type],
         isLeaving ? 'animate-slide-out' : 'animate-slide-in'
@@ -68,13 +68,13 @@ const Toast = ({ id, type, message, duration = 3000, onClose }: ToastProps) => {
       {/* Close Button */}
       <button
         onClick={handleClose}
-        className="absolute top-3 right-3 p-1 rounded-lg hover:bg-black/10 transition-colors"
+        className="absolute top-3 right-3 p-1 rounded-lg hover-highlight transition-colors"
       >
         <X className="w-4 h-4" />
       </button>
 
       {/* Progress Bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/10 rounded-b-lg overflow-hidden">
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 rounded-b-lg overflow-hidden">
         <div
           className={clsx('h-full w-full', progressColors[type])}
           style={{
@@ -87,3 +87,4 @@ const Toast = ({ id, type, message, duration = 3000, onClose }: ToastProps) => {
 };
 
 export default Toast;
+

@@ -76,7 +76,7 @@ const CreateFolderModal = ({ isOpen, onClose }: CreateFolderModalProps) => {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2.5 bg-black/10 backdrop-blur-sm border border-accent-300 rounded-lg text-accent-900 text-sm placeholder:text-accent-700 focus:outline-none focus:border-accent-500 transition-all"
+            className="input w-full text-sm"
             placeholder="z.B. Arbeit, Privat, Projekte"
             autoFocus
             required

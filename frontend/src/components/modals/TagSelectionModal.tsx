@@ -72,14 +72,14 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
                     className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative group ${
                       isSelected
                         ? 'bg-accent-500/10 text-accent-500'
-                        : 'hover:bg-accent-200 text-accent-900'
+                        : 'hover-highlight text-accent-900'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => {}}
-                      className="w-4 h-4 rounded border-accent-300 flex-shrink-0"
+                      className="w-4 h-4 rounded border-white/30 flex-shrink-0"
                       style={{ accentColor: tag.color }}
                     />
                     <Tag className="w-4 h-4 flex-shrink-0" style={{ color: tag.color }} />
@@ -95,7 +95,7 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
             {/* Create new tag option */}
             <button
               onClick={handleCreateTag}
-              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover:bg-accent-200 text-accent-900 border-t border-accent-300 pt-3 mt-3 relative group"
+              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover-highlight text-accent-900 border-t glass-divider pt-3 mt-3 relative group"
             >
               <Plus className="w-4 h-4 text-accent-500" />
               <span className="text-sm text-accent-500 relative z-10">Neuen Tag erstellen</span>
@@ -137,3 +137,4 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
 };
 
 export default TagSelectionModal;
+

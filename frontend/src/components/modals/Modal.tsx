@@ -37,15 +37,14 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
 
       {/* Modal */}
       <div
-        className="relative backdrop-blur-md border border-accent-300 rounded-xl shadow-2xl w-full max-w-md mx-4 animate-slide-up"
-        style={{ backgroundColor: 'color-mix(in srgb, var(--color-accent-100) 55%, transparent)' }}
+        className="relative glass-panel rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-slide-up"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-accent-300">
+        <div className="flex items-center justify-between p-6 border-b glass-divider">
           <h2 className="text-base font-semibold text-accent-900">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-accent-700 hover:bg-accent-200 hover:text-accent-900 transition-all"
+            className="p-1.5 rounded-lg text-accent-700 hover-highlight hover:text-accent-900 transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -59,3 +58,4 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
 };
 
 export default Modal;
+

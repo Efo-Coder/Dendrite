@@ -75,7 +75,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
   }
 
   return (
-    <div className="px-6 md:px-12 py-4 border-t border-accent-300">
+    <div className="px-6 md:px-12 py-4 border-t glass-divider">
       <h4 className="text-sm font-medium text-accent-800 mb-3">
         Anhänge ({attachments.length})
       </h4>
@@ -87,7 +87,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
           return (
             <div
               key={attachment.id}
-              className="flex items-start space-x-3 p-3 bg-accent-200 rounded-lg border border-accent-300 hover:border-accent-500/50 transition-colors"
+              className="flex items-start space-x-3 p-3 glass-surface rounded-xl hover:border-white/40 transition-colors"
             >
               {isImage ? (
                 <a
@@ -103,7 +103,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                   />
                 </a>
               ) : (
-                <div className="flex-shrink-0 w-12 h-12 bg-accent-100 rounded flex items-center justify-center">
+                <div className="flex-shrink-0 w-12 h-12 bg-white/30 rounded flex items-center justify-center border border-white/30">
                   <FileText className="w-6 h-6 text-accent-700" />
                 </div>
               )}
@@ -127,7 +127,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 <a
                   href={attachmentUrl}
                   download={attachment.filename}
-                  className="p-1.5 rounded text-accent-700 hover:bg-accent-100 hover:text-accent-500 transition-colors"
+                  className="p-1.5 rounded text-accent-700 hover-highlight hover:text-accent-500 transition-colors"
                   title="Herunterladen"
                 >
                   <Download className="w-4 h-4" />
@@ -135,7 +135,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 <button
                   onClick={() => handleDelete(attachment.id)}
                   disabled={deletingId === attachment.id}
-                  className="p-1.5 rounded text-accent-700 hover:bg-accent-100 hover:text-red-500 transition-colors disabled:opacity-50"
+                  className="p-1.5 rounded text-accent-700 hover-highlight hover:text-red-500 transition-colors disabled:opacity-50"
                   title="Löschen"
                 >
                   {deletingId === attachment.id ? (
@@ -154,3 +154,4 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
 };
 
 export default AttachmentList;
+

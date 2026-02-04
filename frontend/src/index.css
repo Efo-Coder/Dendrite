@@ -1,18 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Sora:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Default theme: Leaf Green */
-    --color-bg: #0f0f0f;
-    --color-surface: #1a1a1a;
-    --color-elevated: #242424;
-    --color-textarea: #242424;
-    --color-border: #2a2a2a;
-    --color-text-primary: #e5e5e5;
-    --color-text-secondary: #a3a3a3;
-    --color-text-muted: #737373;
+    --font-sans: "Sora", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-display: "Fraunces", "Sora", Georgia, serif;
+
+    /* Default theme fallback */
+    --color-icon: #1f2937;
     --color-accent-50: #ecfdf5;
     --color-accent-100: #d1fae5;
     --color-accent-200: #a7f3d0;
@@ -23,13 +21,60 @@
     --color-accent-700: #047857;
     --color-accent-800: #065f46;
     --color-accent-900: #064e3b;
+
+    --glass-bg: rgba(255, 255, 255, 0.62);
+    --glass-bg-strong: rgba(255, 255, 255, 0.8);
+    --glass-bg-soft: rgba(255, 255, 255, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.45);
+    --glass-border-strong: rgba(255, 255, 255, 0.65);
+    --glass-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+    --glass-shadow-strong: 0 28px 70px rgba(15, 23, 42, 0.18);
+    --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    --hover-highlight: color-mix(in srgb, var(--color-accent-200) 55%, transparent);
+  }
+
+  html {
+    font-family: var(--font-sans);
   }
 
   body {
-    background-color: var(--color-accent-50);
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px circle at 10% 5%, color-mix(in srgb, var(--color-accent-200) 40%, transparent), transparent 60%),
+      radial-gradient(900px circle at 90% 0%, color-mix(in srgb, var(--color-accent-300) 32%, transparent), transparent 55%),
+      radial-gradient(1000px circle at 50% 100%, color-mix(in srgb, var(--color-accent-100) 55%, transparent), transparent 60%),
+      linear-gradient(145deg, var(--color-accent-50), var(--color-accent-100));
     color: var(--color-accent-900);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  html[data-theme="dark"] body {
+    background:
+      radial-gradient(1200px circle at 10% 5%, color-mix(in srgb, var(--color-accent-400) 18%, transparent), transparent 55%),
+      radial-gradient(900px circle at 85% 0%, color-mix(in srgb, var(--color-accent-500) 12%, transparent), transparent 55%),
+      linear-gradient(160deg, #0b0f17, #101826 55%, #0b0f17);
+  }
+
+  html[data-theme="dark"] {
+    --glass-bg: rgba(12, 16, 24, 0.62);
+    --glass-bg-strong: rgba(10, 13, 20, 0.82);
+    --glass-bg-soft: rgba(16, 20, 30, 0.48);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-strong: rgba(255, 255, 255, 0.16);
+    --glass-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    --glass-shadow-strong: 0 28px 70px rgba(0, 0, 0, 0.55);
+    --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --hover-highlight: rgba(255, 255, 255, 0.08);
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  #root {
+    min-height: 100vh;
   }
 
   /* Custom Scrollbar */
@@ -39,53 +84,57 @@
   }
 
   ::-webkit-scrollbar-track {
-    background-color: var(--color-accent-100);
+    background-color: color-mix(in srgb, var(--color-accent-100) 60%, transparent);
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: var(--color-accent-200);
+    background-color: color-mix(in srgb, var(--color-accent-300) 55%, transparent);
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-accent-500);
+    background-color: color-mix(in srgb, var(--color-accent-500) 55%, transparent);
   }
 }
 
 @layer components {
   /* Button Styles */
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200 backdrop-blur-lg
            focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed;
-    background-color: var(--color-accent-50);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-inset), var(--glass-shadow);
   }
 
   .btn:focus {
     outline: none;
-    box-shadow: 0 0 0 2px var(--color-accent-50), 0 0 0 4px var(--color-accent-500);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-500) 35%, transparent), var(--glass-shadow);
   }
 
   .btn-primary {
-    background-color: var(--color-accent-500);
+    background: linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600));
     color: white;
+    border: 1px solid color-mix(in srgb, var(--color-accent-500) 45%, transparent);
+    box-shadow: 0 18px 35px color-mix(in srgb, var(--color-accent-500) 25%, transparent);
   }
 
   .btn-primary:hover {
-    background-color: var(--color-accent-600);
+    background: linear-gradient(135deg, var(--color-accent-500), var(--color-accent-700));
   }
 
   .btn-primary:active {
-    background-color: var(--color-accent-700);
+    transform: translateY(0);
   }
 
   .btn-secondary {
-    background-color: var(--color-accent-100);
+    background: var(--glass-bg-soft);
     color: var(--color-accent-900);
-    border: 1px solid var(--color-accent-300);
+    border: 1px solid var(--glass-border);
   }
 
   .btn-secondary:hover {
-    background-color: var(--color-accent-200);
+    background: var(--glass-bg-strong);
   }
 
   .btn-ghost {
@@ -93,14 +142,14 @@
   }
 
   .btn-ghost:hover {
-    background-color: var(--color-accent-200);
+    background: var(--glass-bg-soft);
   }
 
   /* Input Styles */
   .input {
-    @apply w-full px-4 py-2 rounded-lg transition-all duration-200;
-    background-color: var(--color-accent-100);
-    border: 1px solid var(--color-accent-300);
+    @apply w-full px-4 py-2 rounded-xl transition-all duration-200 backdrop-blur-lg;
+    background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
     color: var(--color-accent-900);
   }
 
@@ -110,18 +159,64 @@
 
   .input:focus {
     outline: none;
-    box-shadow: 0 0 0 2px var(--color-accent-500);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-500) 35%, transparent), var(--glass-shadow);
   }
 
   /* Card Styles */
   .card {
-    @apply rounded-lg p-4 transition-all duration-200;
-    background-color: var(--color-accent-100);
-    border: 1px solid var(--color-accent-300);
+    @apply rounded-2xl p-4 transition-all duration-200 backdrop-blur-xl;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
   }
 
   .card:hover {
-    background-color: var(--color-accent-200);
+    background: var(--glass-bg-strong);
+    transform: translateY(-2px);
+  }
+
+  .glass-panel {
+    @apply backdrop-blur-xl;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-panel-strong {
+    @apply backdrop-blur-xl;
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border-strong);
+    box-shadow: var(--glass-shadow-strong);
+  }
+
+  .glass-surface {
+    @apply backdrop-blur-lg;
+    background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-divider {
+    border-color: var(--glass-border);
+  }
+
+  /* Hover highlight (theme-aware) */
+  .hover-highlight {
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+  .hover-highlight:hover {
+    background: var(--hover-highlight);
+  }
+
+  /* Group hover utility (e.g. user button icon background) */
+  .group:hover .group-hover-highlight {
+    background: var(--hover-highlight);
+  }
+
+  /* Hover overlay for NoteList */
+  .note-hover-overlay {
+    background: var(--hover-highlight);
+    transition: background-color 0.25s ease, top 0.25s ease, height 0.25s ease;
   }
 
   /* Badge Styles */

@@ -20,18 +20,18 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-theme-bg px-4">
+    <div className="min-h-screen flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Logo size="lg" showText={true} />
           </div>
-          <p className="text-theme-text-secondary">Melde dich an, um fortzufahren</p>
+          <p className="text-accent-800">Melde dich an, um fortzufahren</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-theme-surface border border-theme rounded-2xl p-8 shadow-2xl">
+        <div className="glass-panel rounded-3xl p-8 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg text-sm">
@@ -40,7 +40,7 @@ const LoginPage = () => {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-theme-text-primary mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-accent-900 mb-2">
                 E-Mail
               </label>
               <input
@@ -55,7 +55,7 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-theme-text-primary mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-accent-900 mb-2">
                 Passwort
               </label>
               <input
@@ -79,7 +79,7 @@ const LoginPage = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-theme-text-secondary text-sm">
+            <p className="text-accent-800 text-sm">
               Noch kein Konto?{' '}
               <Link to="/register" className="text-accent-500 hover:text-accent-400 font-medium">
                 Registrieren

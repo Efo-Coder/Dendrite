@@ -186,7 +186,7 @@ const ResizableImage = ({
           onMouseLeave={handleMouseLeave}
         >
           <div
-            className="bg-accent-100/95 backdrop-blur-sm border border-accent-300 rounded-lg shadow-xl flex items-center gap-0.5 px-1.5 py-1"
+            className="glass-panel rounded-lg shadow-xl flex items-center gap-0.5 px-1.5 py-1"
             onMouseEnter={handleMouseEnter}
           >
             <button
@@ -194,7 +194,7 @@ const ResizableImage = ({
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'left'
                   ? 'bg-accent-500/20 text-accent-500'
-                  : 'text-accent-700 hover:bg-accent-200 hover:text-accent-900'
+                  : 'text-accent-700 hover-highlight hover:text-accent-900'
               }`}
               title="Links ausrichten"
             >
@@ -205,7 +205,7 @@ const ResizableImage = ({
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'center'
                   ? 'bg-accent-500/20 text-accent-500'
-                  : 'text-accent-700 hover:bg-accent-200 hover:text-accent-900'
+                  : 'text-accent-700 hover-highlight hover:text-accent-900'
               }`}
               title="Zentrieren"
             >
@@ -216,19 +216,19 @@ const ResizableImage = ({
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'right'
                   ? 'bg-accent-500/20 text-accent-500'
-                  : 'text-accent-700 hover:bg-accent-200 hover:text-accent-900'
+                  : 'text-accent-700 hover-highlight hover:text-accent-900'
               }`}
               title="Rechts ausrichten"
             >
               <AlignRight className="w-3.5 h-3.5" />
             </button>
-            <div className="w-px h-4 bg-accent-300/50 mx-1" />
+            <div className="w-px h-4 bg-white/30 mx-1" />
             <button
               onClick={() => setMaintainAspectRatio(!maintainAspectRatio)}
               className={`p-1.5 rounded-md transition-all ${
                 maintainAspectRatio
                   ? 'bg-accent-500/20 text-accent-500'
-                  : 'text-accent-700 hover:bg-accent-200 hover:text-accent-900'
+                  : 'text-accent-700 hover-highlight hover:text-accent-900'
               }`}
               title={maintainAspectRatio ? 'Seitenverhältnis gesperrt' : 'Seitenverhältnis entsperrt'}
             >
@@ -238,7 +238,7 @@ const ResizableImage = ({
                 <Unlock className="w-3.5 h-3.5" />
               )}
             </button>
-            <div className="w-px h-4 bg-accent-300/50 mx-1" />
+            <div className="w-px h-4 bg-white/30 mx-1" />
             {onDelete && (
               <button
                 onClick={onDelete}
@@ -261,7 +261,7 @@ const ResizableImage = ({
         <img
           src={src}
           alt={altText}
-          className="w-full h-full object-contain rounded-lg border border-accent-300"
+          className="w-full h-full object-contain rounded-lg border border-white/30"
           draggable={false}
         />
 
@@ -333,7 +333,7 @@ const ResizableImage = ({
 
       {/* Size Indicator */}
       {isResizing && (
-        <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 bg-accent-100/95 backdrop-blur-sm border border-accent-300 rounded-lg px-3 py-1.5 text-xs text-accent-900 shadow-xl font-mono">
+        <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 glass-panel rounded-lg px-3 py-1.5 text-xs text-accent-900 shadow-xl font-mono">
           <span className="text-accent-500 font-semibold">{Math.round(width)}%</span>
           <span className="text-accent-700 mx-1">×</span>
           <span className="text-accent-500 font-semibold">{Math.round(height)}px</span>
@@ -349,3 +349,4 @@ const ResizableImage = ({
 };
 
 export default ResizableImage;
+

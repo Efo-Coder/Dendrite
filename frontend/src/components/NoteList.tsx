@@ -83,10 +83,8 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={clsx(
-        'w-full border-b border-accent-300 flex relative h-[100px]',
-        isSelected
-          ? 'bg-accent-500/10'
-          : ''
+        'w-full border-b glass-divider flex relative h-[100px] transition-colors',
+        isSelected ? 'bg-accent-500/10' : ''
       )}
     >
       {/* Drag Handle - nur anzeigen wenn nicht im Papierkorb */}
@@ -489,11 +487,10 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
         {/* Highlighter */}
         {hoveredIndex !== null && (
           <div
-            className="absolute left-0 w-full backdrop-blur-sm pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
+            className="absolute left-0 w-full backdrop-blur-sm pointer-events-none note-hover-overlay transition-all duration-300 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
             style={{
               top: `${highlighterStyle.top}px`,
               height: `${highlighterStyle.height}px`,
-              backgroundColor: 'var(--color-accent-200)',
             }}
           />
         )}
@@ -505,10 +502,8 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             onMouseEnter={() => handleMouseEnter(index)}
             onMouseLeave={handleMouseLeave}
             className={clsx(
-              'w-full border-b border-accent-300 flex relative h-[100px]',
-              currentNote?.id === note.id
-                ? 'bg-accent-500/10'
-                : ''
+              'w-full border-b glass-divider flex relative h-[100px] transition-colors',
+              currentNote?.id === note.id ? 'bg-accent-500/10' : ''
             )}
           >
             {/* Platzhalter für Drag Handle - damit Layout konsistent bleibt */}
@@ -615,14 +610,14 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     <>
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Sortierung Header */}
-      <div className="px-4 py-2 border-b border-accent-300 bg-accent-50 -mt-[1px]">
+      <div className="px-4 py-2 border-b glass-divider glass-surface -mt-[1px]">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-accent-900">Sortierung</span>
           <div className="flex items-center space-x-2">
             <select
               value={sortBy}
               onChange={(e) => updateSorting(e.target.value as SortOption, sortOrder)}
-              className="px-1 pb-[2px] border border-accent-300 rounded text-sm leading-tight"
+              className="px-1 pb-[2px] border glass-divider rounded text-sm leading-tight"
               style={{
                 backgroundColor: currentTheme.colors.accent50,
                 color: currentTheme.colors.accent900
@@ -637,7 +632,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             {sortBy !== 'manual' && (
               <button
                 onClick={() => updateSorting(sortBy, sortOrder === 'desc' ? 'asc' : 'desc')}
-                className="p-1 rounded text-accent-700 hover:bg-accent-200 hover:text-accent-900 transition-colors"
+                className="p-1 rounded text-accent-700 hover-highlight hover:text-accent-900 transition-colors"
                 title={`Sortierung: ${sortOrder === 'desc' ? 'Absteigend' : 'Aufsteigend'}`}
               >
                 {sortOrder === 'desc' ? <ArrowDown className="w-4 h-4" /> : <ArrowUp className="w-4 h-4" />}
@@ -660,11 +655,10 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
           {/* Highlighter */}
           {hoveredIndex !== null && (
             <div
-              className="absolute left-0 w-full backdrop-blur-sm pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
+              className="absolute left-0 w-full backdrop-blur-sm pointer-events-none note-hover-overlay transition-all duration-300 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
               style={{
                 top: `${highlighterStyle.top}px`,
                 height: `${highlighterStyle.height}px`,
-                backgroundColor: 'var(--color-accent-200)',
               }}
             />
           )}
