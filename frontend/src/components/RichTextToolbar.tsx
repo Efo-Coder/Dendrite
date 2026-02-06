@@ -287,7 +287,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
   ];
 
   return (
-    <div className="p-4 h-8 border-b glass-divider glass-surface px-6 md:px-12 flex items-center space-x-1">
+    <div className="p-4 h-8 glass-surface px-6 md:px-12 flex items-center space-x-1">
       {toolbarButtons.map((button, index) => {
         if (button.separator) {
           return <div key={index} className="h-6 w-px bg-white/30 mx-1" />;
@@ -322,8 +322,8 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
       {/* Link Modal */}
       {showLinkModal && (
         <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={() => setShowLinkModal(false)} />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-xl shadow-2xl p-6 z-50 w-96">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowLinkModal(false)} />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-xl shadow-2xl p-6 w-96">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-accent-900">Link hinzufügen</h3>
               <button
@@ -358,7 +358,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                 onClick={() => setShowLinkModal(false)}
                 className="px-4 py-2 text-sm text-accent-700 hover:text-accent-900 transition-all relative group"
               >
-                <span className="relative z-10">Abbrechen</span>
+                <span className="relative">Abbrechen</span>
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
               </button>
               <button
@@ -366,7 +366,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                 disabled={!linkUrl.trim()}
                 className="px-4 py-2 text-sm text-accent-700 hover:text-accent-900 transition-all relative group disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <span className="relative z-10">Hinzufügen</span>
+                <span className="relative">Hinzufügen</span>
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 group-disabled:opacity-0 transition-opacity"></span>
               </button>
             </div>
@@ -377,8 +377,8 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
       {/* Image Modal */}
       {showImageModal && (
         <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={() => !isUploading && setShowImageModal(false)} />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-xl shadow-2xl p-6 z-50 w-[450px]">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !isUploading && setShowImageModal(false)} />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-xl shadow-2xl p-6 w-[450px]">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-accent-900">Bild hinzufügen</h3>
               <button
@@ -402,7 +402,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                     : 'text-accent-700 hover:text-accent-900'
                 )}
               >
-                <span className="relative z-10">URL</span>
+                <span className="relative">URL</span>
                 <span className={clsx(
                   'absolute bottom-0 left-0 right-0 h-0.5 transition-opacity',
                   imageMode === 'url'
@@ -420,7 +420,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                     : 'text-accent-700 hover:text-accent-900'
                 )}
               >
-                <span className="relative z-10">Hochladen</span>
+                <span className="relative">Hochladen</span>
                 <span className={clsx(
                   'absolute bottom-0 left-0 right-0 h-0.5 transition-opacity',
                   imageMode === 'upload'
@@ -509,7 +509,7 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                 disabled={isUploading}
                 className="px-4 py-2 text-sm text-accent-700 hover:text-accent-900 transition-all relative group disabled:opacity-50"
               >
-                <span className="relative z-10">Abbrechen</span>
+                <span className="relative">Abbrechen</span>
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
               </button>
               <button
@@ -521,8 +521,8 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
                 }
                 className="flex items-center space-x-2 px-4 py-2 text-sm text-accent-700 hover:text-accent-900 transition-all relative group disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {isUploading && <Loader2 className="w-4 h-4 animate-spin relative z-10" />}
-                <span className="relative z-10">{isUploading ? 'Wird hochgeladen...' : 'Hinzufügen'}</span>
+                {isUploading && <Loader2 className="w-4 h-4 animate-spin relative" />}
+                <span className="relative">{isUploading ? 'Wird hochgeladen...' : 'Hinzufügen'}</span>
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 group-disabled:opacity-0 transition-opacity"></span>
               </button>
             </div>
@@ -534,4 +534,3 @@ const RichTextToolbar = ({ disabled = false, noteId }: RichTextToolbarProps) => 
 };
 
 export default RichTextToolbar;
-

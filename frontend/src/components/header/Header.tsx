@@ -34,11 +34,11 @@ const Header = ({ user }: HeaderProps) => {
   };
 
   return (
-    <header className="h-16 min-h-16 max-h-16 shrink-0 glass-panel rounded-2xl px-6 flex items-center justify-between relative z-[200]">
+    <header className="h-16 min-h-16 max-h-16 glass-surface rounded-2xl px-6 flex items-center justify-between relative">
       {/* Search Bar */}
       <form onSubmit={handleSearch} className="flex-1 max-w-xl">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-accent-700" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-accent-900" />
           <input
             type="text"
             value={searchQuery}

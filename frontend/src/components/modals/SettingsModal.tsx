@@ -45,9 +45,9 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                 color: 'var(--color-accent-800)'
               }}
             >
-              <span className="text-sm font-medium relative z-10">Bearbeitet am</span>
+              <span className="text-sm font-medium relative">Bearbeitet am</span>
               {dateDisplayMode === 'updatedAt' ? (
-                <div className="w-2 h-2 rounded-full relative z-10" style={{ backgroundColor: currentTheme.colors.accent500 }} />
+                <div className="w-2 h-2 rounded-full relative" style={{ backgroundColor: currentTheme.colors.accent500 }} />
               ) : (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
               )}
@@ -67,9 +67,9 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                 color: 'var(--color-accent-800)'
               }}
             >
-              <span className="text-sm font-medium relative z-10">Erstellt am</span>
+              <span className="text-sm font-medium relative">Erstellt am</span>
               {dateDisplayMode === 'createdAt' ? (
-                <div className="w-2 h-2 rounded-full relative z-10" style={{ backgroundColor: currentTheme.colors.accent500 }} />
+                <div className="w-2 h-2 rounded-full relative" style={{ backgroundColor: currentTheme.colors.accent500 }} />
               ) : (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
               )}

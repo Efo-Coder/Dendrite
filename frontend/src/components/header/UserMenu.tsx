@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { LogOut, Settings, User } from 'lucide-react';
 import { User as UserType } from '../../types';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 interface UserMenuProps {
   user: UserType | null;
@@ -10,6 +12,9 @@ interface UserMenuProps {
 
 const UserMenu = ({ user, onLogout, onOpenSettings }: UserMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const { themeMode } = useSettingsStore();
 
   const closeMenu = () => setIsOpen(false);
 
@@ -23,9 +28,33 @@ const UserMenu = ({ user, onLogout, onOpenSettings }: UserMenuProps) => {
     onLogout();
   };
 
+  useLayoutEffect(() => {
+    const updatePosition = () => {
+      if (!triggerRef.current) return;
+      const rect = triggerRef.current.getBoundingClientRect();
+      const width = 224; // w-56
+      const gap = 8;
+      const left = Math.max(12, rect.right - width);
+      const top = rect.bottom + gap;
+      setMenuPosition({ top, left });
+    };
+
+    if (isOpen) {
+      updatePosition();
+      window.addEventListener('resize', updatePosition);
+      window.addEventListener('scroll', updatePosition, true);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen]);
+
   return (
-    <div className="relative z-[90]">
+    <div className="relative">
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen((prev) => !prev)}
         className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors"
         
@@ -41,33 +70,43 @@ const UserMenu = ({ user, onLogout, onOpenSettings }: UserMenuProps) => {
       </button>
 
       {isOpen && (
-        <>
-          <div className="fixed inset-0 z-[90]" onClick={closeMenu} />
-          <div className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl z-[100] overflow-hidden animate-fade-in">
-            <div className="p-3 border-b glass-divider">
-              <p className="text-sm font-medium text-accent-900">
-                {user?.name || 'Benutzer'}
-              </p>
-              <p className="text-xs text-accent-800">{user?.email}</p>
+        createPortal(
+          <>
+            <div className="fixed inset-0" onClick={closeMenu} />
+            <div
+              className={`fixed w-56 rounded-xl shadow-2xl overflow-hidden animate-fade-in ${
+                themeMode === 'dark'
+                  ? 'bg-slate-900 border border-white/10'
+                  : 'bg-white border border-black/5'
+              }`}
+              style={{ top: menuPosition.top, left: menuPosition.left }}
+            >
+              <div className="p-3 border-b glass-divider">
+                <p className="text-sm font-medium text-accent-900">
+                  {user?.name || 'Benutzer'}
+                </p>
+                <p className="text-xs text-accent-800">{user?.email}</p>
+              </div>
+              <div className="p-1">
+                <button
+                  onClick={handleSettings}
+                  className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight rounded-md transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Einstellungen</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-red-500 hover-highlight rounded-md transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Abmelden</span>
+                </button>
+              </div>
             </div>
-            <div className="p-1">
-              <button
-                onClick={handleSettings}
-                className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight rounded-md transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                <span>Einstellungen</span>
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-red-500 hover-highlight rounded-md transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Abmelden</span>
-              </button>
-            </div>
-          </div>
-        </>
+          </>,
+          document.body
+        )
       )}
     </div>
   );

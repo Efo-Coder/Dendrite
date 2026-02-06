@@ -181,7 +181,7 @@ const ResizableImage = ({
       {/* Image Controls */}
       {showControls && (
         <div
-          className="absolute -top-11 left-0 right-0 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          className="absolute -top-11 left-0 right-0 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >

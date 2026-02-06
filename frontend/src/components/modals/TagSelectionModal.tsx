@@ -83,7 +83,7 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
                       style={{ accentColor: tag.color }}
                     />
                     <Tag className="w-4 h-4 flex-shrink-0" style={{ color: tag.color }} />
-                    <span className="text-sm relative z-10">{tag.name}</span>
+                    <span className="text-sm relative">{tag.name}</span>
                     {!isSelected && (
                       <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
                     )}
@@ -98,7 +98,7 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
               className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover-highlight text-accent-900 border-t glass-divider pt-3 mt-3 relative group"
             >
               <Plus className="w-4 h-4 text-accent-500" />
-              <span className="text-sm text-accent-500 relative z-10">Neuen Tag erstellen</span>
+              <span className="text-sm text-accent-500 relative">Neuen Tag erstellen</span>
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </button>
           </div>
@@ -112,14 +112,14 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
                 onClick={onClose}
                 className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group"
               >
-                <span className="relative z-10">Abbrechen</span>
+                <span className="relative">Abbrechen</span>
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
               </button>
               <button
                 onClick={handleSave}
                 className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group"
               >
-                <span className="relative z-10">Speichern</span>
+                <span className="relative">Speichern</span>
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
               </button>
             </div>

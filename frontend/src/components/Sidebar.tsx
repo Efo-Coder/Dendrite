@@ -168,7 +168,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
         isCollapsed ? "w-16" : "w-64"
       )}>
         {/* Logo */}
-        <div className="h-16 border-b glass-divider flex-shrink-0 flex items-center px-4">
+        <div className="h-16 glass-surface flex-shrink-0 flex items-center px-4">
           <Logo size="md" showText={!isCollapsed} />
         </div>
 
@@ -414,4 +414,3 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
 };
 
 export default Sidebar;
-

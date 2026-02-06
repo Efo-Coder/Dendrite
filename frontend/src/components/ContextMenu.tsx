@@ -41,7 +41,7 @@ const ContextMenu = ({ isOpen, position, onClose, onEdit, onDelete }: ContextMen
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 glass-panel rounded-xl shadow-lg py-1 min-w-[160px]"
+      className="fixed glass-panel rounded-xl shadow-lg py-1 min-w-[160px]"
       style={{
         left: position.x,
         top: position.y,

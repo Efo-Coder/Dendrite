@@ -150,9 +150,9 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const isArchived = note.isArchived && !note.isDeleted;
 
   return (
-    <div className="h-full flex flex-col bg-transparent relative z-0">
+    <div className="h-full flex flex-col bg-transparent relative">
       {/* Toolbar */}
-      <div className="p-4 h-9 border-b glass-divider glass-surface px-6 md:px-12 flex items-center justify-between">
+      <div className="p-4 h-9 glass-surface px-6 md:px-12 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           {!isInTrash && !isArchived && (
             <>
@@ -202,8 +202,8 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
                 {showFolderDropdown && (
                   <>
-                    <div className="fixed inset-0 z-10" onClick={() => setShowFolderDropdown(false)} />
-                    <div className="absolute left-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl z-20 max-h-64 overflow-y-auto">
+                    <div className="fixed inset-0" onClick={() => setShowFolderDropdown(false)} />
+                    <div className="absolute left-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl max-h-64 overflow-y-auto">
                       <button
                         onClick={() => handleMoveToFolder(null)}
                         className="w-full px-4 py-2 text-left text-sm hover-highlight transition-colors"
@@ -240,8 +240,8 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
                 {showTagDropdown && (
                   <>
-                    <div className="fixed inset-0 z-10" onClick={() => setShowTagDropdown(false)} />
-                    <div className="absolute left-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl z-20 max-h-64 overflow-y-auto">
+                    <div className="fixed inset-0" onClick={() => setShowTagDropdown(false)} />
+                    <div className="absolute left-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl max-h-64 overflow-y-auto">
                       {tags.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-accent-700 italic">
                           Keine Tags verfügbar
@@ -371,4 +371,3 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 };
 
 export default NoteEditor;
-

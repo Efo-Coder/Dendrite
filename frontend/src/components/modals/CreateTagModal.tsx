@@ -147,7 +147,7 @@ const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) 
             className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group"
             disabled={isSubmitting}
           >
-            <span className="relative z-10">Abbrechen</span>
+            <span className="relative">Abbrechen</span>
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
           </button>
           <button
@@ -155,7 +155,7 @@ const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) 
             className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={isSubmitting}
           >
-            <span className="relative z-10">{isSubmitting ? 'Erstelle...' : 'Erstellen'}</span>
+            <span className="relative">{isSubmitting ? 'Erstelle...' : 'Erstellen'}</span>
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 group-disabled:opacity-0 transition-opacity"></span>
           </button>
         </div>

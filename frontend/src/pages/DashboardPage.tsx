@@ -215,7 +215,7 @@ const DashboardPage = () => {
 
         <div className="flex-1 flex gap-3">
           {/* Note List */}
-          <div className="w-80 glass-panel-strong rounded-2xl overflow-hidden flex flex-col relative z-0">
+          <div className="w-80 glass-panel-strong rounded-2xl overflow-hidden flex flex-col relative">
             {/* Note List Header */}
             <div className="p-4 border-b glass-divider flex items-center justify-between">
               <h2 className="text-lg font-semibold text-accent-900">
@@ -272,7 +272,7 @@ const DashboardPage = () => {
           </div>
 
           {/* Note Editor */}
-          <div className="flex-1 overflow-hidden glass-panel rounded-2xl relative z-0">
+          <div className="flex-1 overflow-hidden glass-panel rounded-2xl relative">
             {currentNote ? (
               <NoteEditor
                 note={currentNote}
