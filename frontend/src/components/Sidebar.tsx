@@ -209,11 +209,12 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                   <span className="-ml-px w-16 flex-shrink-0 flex items-center justify-center">
                     <Icon className="w-5 h-5" />
                   </span>
-                  {!isCollapsed && (
-                    <span className="-ml-3 text-sm whitespace-nowrap transition-opacity duration-200 opacity-100 delay-100">
-                      {item.label}
-                    </span>
-                  )}
+                  <span className={clsx(
+                    "-ml-3 text-sm whitespace-nowrap transition-opacity duration-200",
+                    isCollapsed ? "opacity-0" : "opacity-100 delay-[50ms]"
+                  )}>
+                    {item.label}
+                  </span>
                 </button>
               );
             })}
@@ -230,11 +231,12 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               className="flex items-center py-2 pl-[21px] transition-all duration-300"
               style={{ paddingRight: isCollapsed ? '24px' : '12px' }}
             >
-              {!isCollapsed && (
-                <span className="text-xs font-semibold text-accent-subtle uppercase tracking-wider flex-1">
-                  Ordner
-                </span>
-              )}
+              <span
+                className="text-xs font-semibold text-accent-subtle uppercase tracking-wider flex-1 transition-all duration-300 overflow-hidden whitespace-nowrap"
+                style={{ maxWidth: isCollapsed ? 0 : '200px', opacity: isCollapsed ? 0 : 1 }}
+              >
+                Ordner
+              </span>
               <button
                 onClick={() => setShowFolderModal(true)}
                 className="ml-auto text-accent-subtle hover:text-accent-brand transition-colors"
@@ -273,30 +275,36 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     title={isCollapsed ? folder.name : undefined}
                   >
                     <span className="-ml-px w-16 flex-shrink-0 flex items-center justify-center">
-                      <Folder
-                        className="w-5 h-5 flex-shrink-0"
-                        style={{ color: folder.color || '#10b981' }}
-                      />
-                    </span>
-                    {!isCollapsed && (
-                      <>
-                        <div className="-ml-3 flex items-center space-x-2 flex-1 min-w-0">
+                      <span className="relative">
+                        <Folder
+                          className="w-5 h-5 flex-shrink-0"
+                          style={{ color: folder.color || '#10b981' }}
+                        />
+                        {(folder.notes?.length ?? 0) > 0 && (
                           <span className={clsx(
-                            "text-sm truncate whitespace-nowrap transition-opacity duration-200",
-                            isCollapsed ? "opacity-0" : "opacity-100 delay-100"
+                            "absolute -bottom-0.5 left-[calc(100%-5px)] text-[9px] leading-none font-semibold text-accent-subtle bg-[var(--glass-bg)] rounded-full px-[2px] shadow-[0_0_0_1.5px_color-mix(in_srgb,var(--color-accent-brand)_25%,transparent)] transition-opacity duration-200",
+                            isCollapsed ? "opacity-100 delay-[50ms]" : "opacity-0"
                           )}>
-                            {folder.name}
-                          </span>
-                        </div>
-                        {folder.notes && folder.notes.length > 0 && (
-                          <span className={clsx(
-                            "text-xs text-accent-subtle flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2 mr-3",
-                            isCollapsed ? "opacity-0" : "opacity-100 delay-100"
-                          )}>
-                            {folder.notes.length}
+                            {folder.notes?.length}
                           </span>
                         )}
-                      </>
+                      </span>
+                    </span>
+                    <div className={clsx(
+                      "-ml-3 flex items-center space-x-2 flex-1 min-w-0 transition-opacity duration-200",
+                      isCollapsed ? "opacity-0" : "opacity-100 delay-[50ms]"
+                    )}>
+                      <span className="text-sm truncate whitespace-nowrap">
+                        {folder.name}
+                      </span>
+                    </div>
+                    {folder.notes && folder.notes.length > 0 && (
+                      <span className={clsx(
+                        "text-xs text-accent-subtle flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2 mr-3",
+                        isCollapsed ? "opacity-0" : "opacity-100 delay-[50ms]"
+                      )}>
+                        {folder.notes.length}
+                      </span>
                     )}
                   </button>
                   );
@@ -311,11 +319,12 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               className="flex items-center py-2 pl-[21px] transition-all duration-300"
               style={{ paddingRight: isCollapsed ? '24px' : '12px' }}
             >
-              {!isCollapsed && (
-                <span className="text-xs font-semibold text-accent-subtle uppercase tracking-wider flex-1">
-                  Tags
-                </span>
-              )}
+              <span
+                className="text-xs font-semibold text-accent-subtle uppercase tracking-wider flex-1 transition-all duration-300 overflow-hidden whitespace-nowrap"
+                style={{ maxWidth: isCollapsed ? 0 : '200px', opacity: isCollapsed ? 0 : 1 }}
+              >
+                Tags
+              </span>
               <button
                 onClick={() => setShowTagModal(true)}
                 className="ml-auto text-accent-subtle hover:text-accent-brand transition-colors"
@@ -354,30 +363,36 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     title={isCollapsed ? tag.name : undefined}
                   >
                     <span className="-ml-px w-16 flex-shrink-0 flex items-center justify-center">
-                      <Tag
-                        className="w-5 h-5 flex-shrink-0"
-                        style={{ color: tag.color }}
-                      />
-                    </span>
-                    {!isCollapsed && (
-                      <>
-                        <div className="-ml-3 flex items-center space-x-2 flex-1 min-w-0">
+                      <span className="relative">
+                        <Tag
+                          className="w-5 h-5 flex-shrink-0"
+                          style={{ color: tag.color }}
+                        />
+                        {(tag.notes?.length ?? 0) > 0 && (
                           <span className={clsx(
-                            "text-sm truncate whitespace-nowrap transition-opacity duration-200",
-                            isCollapsed ? "opacity-0" : "opacity-100 delay-100"
+                            "absolute -bottom-0.5 left-[calc(100%-5px)] text-[9px] leading-none font-semibold text-accent-subtle bg-[var(--glass-bg)] rounded-full px-[2px] shadow-[0_0_0_1.5px_color-mix(in_srgb,var(--color-accent-brand)_25%,transparent)] transition-opacity duration-200",
+                            isCollapsed ? "opacity-100 delay-[50ms]" : "opacity-0"
                           )}>
-                            {tag.name}
-                          </span>
-                        </div>
-                        {tag.notes && tag.notes.length > 0 && (
-                          <span className={clsx(
-                            "text-xs text-accent-subtle flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2 mr-3",
-                            isCollapsed ? "opacity-0" : "opacity-100 delay-100"
-                          )}>
-                            {tag.notes.length}
+                            {tag.notes?.length}
                           </span>
                         )}
-                      </>
+                      </span>
+                    </span>
+                    <div className={clsx(
+                      "-ml-3 flex items-center space-x-2 flex-1 min-w-0 transition-opacity duration-200",
+                      isCollapsed ? "opacity-0" : "opacity-100 delay-[50ms]"
+                    )}>
+                      <span className="text-sm truncate whitespace-nowrap">
+                        {tag.name}
+                      </span>
+                    </div>
+                    {tag.notes && tag.notes.length > 0 && (
+                      <span className={clsx(
+                        "text-xs text-accent-subtle flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2 mr-3",
+                        isCollapsed ? "opacity-0" : "opacity-100 delay-[50ms]"
+                      )}>
+                        {tag.notes.length}
+                      </span>
                     )}
                   </button>
                   );

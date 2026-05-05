@@ -1,24 +1,15 @@
-feat: Sidebar Glass-Pill System, Animationen & Theme-Verbesserungen
+feat: Sidebar Animations & Collapsed Count-Badge
 
-## Sidebar
-- Glass-Pill Hover-System (useGlassPill) für Hauptmenü, Ordner und Tags integriert
-- Collapse-Button ans Ende der Sidebar verschoben (außerhalb nav, immer sichtbar)
-- Smooth Slide-Animation für Collapse-Button und "+" Buttons beim Kollabieren/Expandieren
-  (dynamisches paddingRight statt zwei unterschiedliche DOM-Strukturen)
-- Collapse-Button: gleiches Hover-Verhalten wie "+" Buttons (hover:text-accent-brand)
+## Smooth Fade-Animationen beim Kollabieren/Expandieren
+- Alle Labels (Nav, Ordner-/Tag-Namen, Abschnittsüberschriften) bleiben im DOM
+  und werden per opacity-Transition ein-/ausgeblendet statt hart gemountet/unmountet
+- Überschriften "Ordner" / "Tags": max-width-Transition (0 → 200px) verhindert
+  Layout-Verschiebung des "+" Buttons beim Kollabieren
+- Einheitlicher delay-[50ms] für alle Labels (Nav, Ordner, Tags)
 
-## CSS (index.css)
-- Glass-Pill Basis-Style überarbeitet: accent-getönt, backdrop-filter blur, border-Effekt
-- glass-pill-active bleibt intensiver als regulärer Hover-Zustand
-- Hover-Highlight und glass-pill Übergänge verfeinert
-
-## Themes (themes.ts)
-- Branch Brown, Growth Beige, Cortex Gray: accentBrand und accentElevated aufgehellt
-  für bessere Sichtbarkeit bei Hover- und Auswahl-Effekten (Light & Dark)
-
-## Weitere Komponenten (vor dieser Session)
-- index.html: Theme-Initialisierungs-Script hinzugefügt (verhindert Flash of Unstyled Content)
-- RichTextToolbar: Glass-Pill, responsive Breakpoints, Overflow-Menü für schmale Ansichten
-- NoteList, NoteEditor: Glass-Pill Hover-System, diverse Styling-Anpassungen
-- Header, UserMenu, Modals: Theme-Farben auf neue CSS-Variablen migriert
-- tailwind.config.js: Farbkonfiguration auf neues Variablen-System aktualisiert
+## Count-Badge im collapsed Zustand
+- Ordner- und Tag-Zähler erscheinen im collapsed Zustand als Badge
+  unten rechts am Icon (absolut positioniert relativ zum Icon-Wrapper)
+- Badge-Styling: abgerundet, Sidebar-Hintergrundfarbe, accent-getönter
+  Outline-Ring (shadow, 25% accent-brand) analog zum glass-pill Border
+- Badge faded synchron mit delay-[50ms] ein wenn Sidebar kollabiert
