@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import Modal from './Modal';
 import { useFolderStore } from '../../store/useFolderStore';
 
@@ -68,7 +68,7 @@ const CreateFolderModal = ({ isOpen, onClose }: CreateFolderModalProps) => {
 
         {/* Name Input */}
         <div>
-          <label htmlFor="folder-name" className="block text-xs font-medium text-accent-900 mb-2 uppercase tracking-wide">
+          <label htmlFor="folder-name" className="block text-xs font-medium text-accent-fg mb-2 uppercase tracking-wide">
             Name
           </label>
           <input
@@ -85,7 +85,7 @@ const CreateFolderModal = ({ isOpen, onClose }: CreateFolderModalProps) => {
 
         {/* Color Picker */}
         <div>
-          <label className="block text-xs font-medium text-accent-900 mb-2 uppercase tracking-wide">
+          <label className="block text-xs font-medium text-accent-fg mb-2 uppercase tracking-wide">
             Farbe
           </label>
           <div className="grid grid-cols-8 gap-2 mb-3">
@@ -96,7 +96,7 @@ const CreateFolderModal = ({ isOpen, onClose }: CreateFolderModalProps) => {
                 onClick={() => setSelectedColor(color)}
                 className={`w-8 h-8 rounded-lg transition-all relative group ${
                   selectedColor === color
-                    ? 'ring-1 ring-accent-500 scale-110'
+                    ? 'ring-1 ring-accent-brand scale-110'
                     : 'hover:scale-105'
                 }`}
                 style={{ backgroundColor: color }}
@@ -107,7 +107,7 @@ const CreateFolderModal = ({ isOpen, onClose }: CreateFolderModalProps) => {
 
           {/* Custom Color Picker */}
           <div className="flex items-center gap-3">
-            <label htmlFor="custom-color" className="text-sm text-accent-800">
+            <label htmlFor="custom-color" className="text-sm text-accent-secondary">
               Oder eigene Farbe:
             </label>
             <div className="flex items-center gap-2">
@@ -118,19 +118,19 @@ const CreateFolderModal = ({ isOpen, onClose }: CreateFolderModalProps) => {
                   value={selectedColor}
                   onChange={(e) => setSelectedColor(e.target.value)}
                   className="absolute inset-0 opacity-0 cursor-pointer w-8 h-8"
-                  title="Eigene Farbe wählen"
+                  title="Eigene Farbe wÃ¤hlen"
                 />
                 <div
                   className={`w-8 h-8 rounded-lg cursor-pointer transition-all relative group ${
                     !colors.includes(selectedColor)
-                      ? 'ring-1 ring-accent-500 scale-110'
+                      ? 'ring-1 ring-accent-brand scale-110'
                       : 'hover:scale-105'
                   }`}
                   style={{ backgroundColor: selectedColor }}
                   onClick={() => document.getElementById('custom-color')?.click()}
                 />
               </div>
-              <span className="text-xs text-accent-700 font-mono">
+              <span className="text-xs text-accent-subtle font-mono">
                 {selectedColor}
               </span>
             </div>

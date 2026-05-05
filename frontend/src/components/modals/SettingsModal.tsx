@@ -27,7 +27,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       <div className="space-y-6">
         {/* Date Display Setting */}
         <div>
-          <label className="block text-xs font-medium text-accent-900 mb-3 uppercase tracking-wide">
+          <label className="block text-xs font-medium text-accent-fg mb-3 uppercase tracking-wide">
             Datumsanzeige in Notizliste
           </label>
           <div className="space-y-2">
@@ -36,18 +36,18 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               onClick={() => handleDateModeChange('updatedAt')}
               className="w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative group"
               style={dateDisplayMode === 'updatedAt' ? {
-                backgroundColor: `${currentTheme.colors.accent500}10`,
-                border: `1px solid ${currentTheme.colors.accent500}80`,
-                color: currentTheme.colors.accent500
+                backgroundColor: `${currentTheme.colors.accentBrand}10`,
+                border: `1px solid ${currentTheme.colors.accentBrand}80`,
+                color: currentTheme.colors.accentBrand
               } : {
                 backgroundColor: 'var(--glass-bg-soft)',
                 border: '1px solid var(--glass-border)',
-                color: 'var(--color-accent-800)'
+                color: 'var(--color-accent-secondary)'
               }}
             >
               <span className="text-sm font-medium relative">Bearbeitet am</span>
               {dateDisplayMode === 'updatedAt' ? (
-                <div className="w-2 h-2 rounded-full relative" style={{ backgroundColor: currentTheme.colors.accent500 }} />
+                <div className="w-2 h-2 rounded-full relative" style={{ backgroundColor: currentTheme.colors.accentBrand }} />
               ) : (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
               )}
@@ -58,31 +58,31 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               onClick={() => handleDateModeChange('createdAt')}
               className="w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative group"
               style={dateDisplayMode === 'createdAt' ? {
-                backgroundColor: `${currentTheme.colors.accent500}10`,
-                border: `1px solid ${currentTheme.colors.accent500}80`,
-                color: currentTheme.colors.accent500
+                backgroundColor: `${currentTheme.colors.accentBrand}10`,
+                border: `1px solid ${currentTheme.colors.accentBrand}80`,
+                color: currentTheme.colors.accentBrand
               } : {
                 backgroundColor: 'var(--glass-bg-soft)',
                 border: '1px solid var(--glass-border)',
-                color: 'var(--color-accent-800)'
+                color: 'var(--color-accent-secondary)'
               }}
             >
               <span className="text-sm font-medium relative">Erstellt am</span>
               {dateDisplayMode === 'createdAt' ? (
-                <div className="w-2 h-2 rounded-full relative" style={{ backgroundColor: currentTheme.colors.accent500 }} />
+                <div className="w-2 h-2 rounded-full relative" style={{ backgroundColor: currentTheme.colors.accentBrand }} />
               ) : (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
               )}
             </button>
           </div>
-          <p className="mt-2 text-xs text-accent-700">
+          <p className="mt-2 text-xs text-accent-subtle">
             Wähle, welches Datum in der Notizliste angezeigt werden soll.
           </p>
         </div>
 
         {/* Theme Selection */}
         <div>
-          <label className="block text-xs font-medium text-accent-900 mb-3 uppercase tracking-wide">
+          <label className="block text-xs font-medium text-accent-fg mb-3 uppercase tracking-wide">
             Farbthema
           </label>
           <div className="grid grid-cols-3 gap-3">
@@ -97,8 +97,8 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   onClick={() => handleThemeChange(themeId as ThemeId)}
                   className="relative flex flex-col items-center p-3 rounded-lg backdrop-blur-md transition-all group"
                   style={isSelected ? {
-                    backgroundColor: `${themeData.colors.accent500}10`,
-                    border: `1px solid ${themeData.colors.accent500}80`
+                    backgroundColor: `${themeData.colors.accentBrand}10`,
+                    border: `1px solid ${themeData.colors.accentBrand}80`
                   } : {
                     backgroundColor: 'var(--glass-bg-soft)',
                     border: '1px solid var(--glass-border)'
@@ -107,13 +107,13 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   {/* Color Preview Circle */}
                   <div
                     className="w-10 h-10 rounded-full mb-2 border-2"
-                    style={{ backgroundColor: themeData.colors.accent200 }}
+                    style={{ backgroundColor: themeData.colors.accentElevated }}
                   />
 
                   {/* Theme Name */}
                   <span
                     className={`text-xs font-medium text-center`}
-                    style={isSelected ? { color: themeData.colors.accent500 } : { color: 'var(--color-accent-700)' }}
+                    style={isSelected ? { color: themeData.colors.accentBrand } : { color: 'var(--color-accent-subtle)' }}
                   >
                     {themeData.name}
                   </span>
@@ -121,7 +121,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   {/* Check Icon */}
                   {isSelected && (
                     <div className="absolute top-2 right-2">
-                      <Check className="w-4 h-4" style={{ color: themeData.colors.accent500 }} />
+                      <Check className="w-4 h-4" style={{ color: themeData.colors.accentBrand }} />
                     </div>
                   )}
 
@@ -133,7 +133,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               );
             })}
           </div>
-          <p className="mt-2 text-xs text-accent-700">
+          <p className="mt-2 text-xs text-accent-subtle">
             Wähle ein Farbthema für die gesamte Anwendung.
           </p>
         </div>

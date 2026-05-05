@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import Logo from '../components/Logo';
@@ -27,7 +27,7 @@ const LoginPage = () => {
           <div className="flex justify-center mb-4">
             <Logo size="lg" showText={true} />
           </div>
-          <p className="text-accent-800">Melde dich an, um fortzufahren</p>
+          <p className="text-accent-secondary">Melde dich an, um fortzufahren</p>
         </div>
 
         {/* Login Form */}
@@ -40,7 +40,7 @@ const LoginPage = () => {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-accent-900 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-accent-fg mb-2">
                 E-Mail
               </label>
               <input
@@ -55,7 +55,7 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-accent-900 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-accent-fg mb-2">
                 Passwort
               </label>
               <input
@@ -64,7 +64,7 @@ const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input"
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 required
               />
             </div>
@@ -79,9 +79,9 @@ const LoginPage = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-accent-800 text-sm">
+            <p className="text-accent-secondary text-sm">
               Noch kein Konto?{' '}
-              <Link to="/register" className="text-accent-500 hover:text-accent-400 font-medium">
+              <Link to="/register" className="text-accent-brand hover:text-accent-muted font-medium">
                 Registrieren
               </Link>
             </p>

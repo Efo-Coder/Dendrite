@@ -1,0 +1,24 @@
+feat: Sidebar Glass-Pill System, Animationen & Theme-Verbesserungen
+
+## Sidebar
+- Glass-Pill Hover-System (useGlassPill) für Hauptmenü, Ordner und Tags integriert
+- Collapse-Button ans Ende der Sidebar verschoben (außerhalb nav, immer sichtbar)
+- Smooth Slide-Animation für Collapse-Button und "+" Buttons beim Kollabieren/Expandieren
+  (dynamisches paddingRight statt zwei unterschiedliche DOM-Strukturen)
+- Collapse-Button: gleiches Hover-Verhalten wie "+" Buttons (hover:text-accent-brand)
+
+## CSS (index.css)
+- Glass-Pill Basis-Style überarbeitet: accent-getönt, backdrop-filter blur, border-Effekt
+- glass-pill-active bleibt intensiver als regulärer Hover-Zustand
+- Hover-Highlight und glass-pill Übergänge verfeinert
+
+## Themes (themes.ts)
+- Branch Brown, Growth Beige, Cortex Gray: accentBrand und accentElevated aufgehellt
+  für bessere Sichtbarkeit bei Hover- und Auswahl-Effekten (Light & Dark)
+
+## Weitere Komponenten (vor dieser Session)
+- index.html: Theme-Initialisierungs-Script hinzugefügt (verhindert Flash of Unstyled Content)
+- RichTextToolbar: Glass-Pill, responsive Breakpoints, Overflow-Menü für schmale Ansichten
+- NoteList, NoteEditor: Glass-Pill Hover-System, diverse Styling-Anpassungen
+- Header, UserMenu, Modals: Theme-Farben auf neue CSS-Variablen migriert
+- tailwind.config.js: Farbkonfiguration auf neues Variablen-System aktualisiert

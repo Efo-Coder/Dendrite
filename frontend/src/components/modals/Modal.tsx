@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+﻿import { X } from 'lucide-react';
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -37,10 +37,10 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
 
       <div className="relative glass-panel rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-slide-up">
         <div className="flex items-center justify-between p-6 border-b glass-divider">
-          <h2 className="text-base font-semibold text-accent-900">{title}</h2>
+          <h2 className="text-base font-semibold text-accent-fg">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-accent-700 hover-highlight hover:text-accent-900 transition-all"
+            className="p-1.5 rounded-lg text-accent-subtle hover-highlight hover:text-accent-fg transition-all"
           >
             <X className="w-4 h-4" />
           </button>

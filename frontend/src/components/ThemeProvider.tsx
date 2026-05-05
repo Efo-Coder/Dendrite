@@ -21,16 +21,16 @@ const ThemeProvider = ({ children }: ThemeProviderProps) => {
 
     // Apply theme colors as CSS custom properties
     root.style.setProperty('--color-icon', theme.colors.iconColor);
-    root.style.setProperty('--color-accent-50', theme.colors.accent50);
-    root.style.setProperty('--color-accent-100', theme.colors.accent100);
-    root.style.setProperty('--color-accent-200', theme.colors.accent200);
-    root.style.setProperty('--color-accent-300', theme.colors.accent300);
-    root.style.setProperty('--color-accent-400', theme.colors.accent400);
-    root.style.setProperty('--color-accent-500', theme.colors.accent500);
-    root.style.setProperty('--color-accent-600', theme.colors.accent600);
-    root.style.setProperty('--color-accent-700', theme.colors.accent700);
-    root.style.setProperty('--color-accent-800', theme.colors.accent800);
-    root.style.setProperty('--color-accent-900', theme.colors.accent900);
+    root.style.setProperty('--color-accent-bg', theme.colors.accentBg);
+    root.style.setProperty('--color-accent-surface', theme.colors.accentSurface);
+    root.style.setProperty('--color-accent-elevated', theme.colors.accentElevated);
+    root.style.setProperty('--color-accent-border', theme.colors.accentBorder);
+    root.style.setProperty('--color-accent-muted', theme.colors.accentMuted);
+    root.style.setProperty('--color-accent-brand', theme.colors.accentBrand);
+    root.style.setProperty('--color-accent-brand-dim', theme.colors.accentBrandDim);
+    root.style.setProperty('--color-accent-subtle', theme.colors.accentSubtle);
+    root.style.setProperty('--color-accent-secondary', theme.colors.accentSecondary);
+    root.style.setProperty('--color-accent-fg', theme.colors.accentFg);
   }, [themeId, themeMode]);
 
   return <>{children}</>;

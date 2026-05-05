@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNoteStore } from '../store/useNoteStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useToast } from '../components/ToastContainer';
@@ -28,7 +28,7 @@ const DashboardPage = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
-    // Initial load - nur Notizen die nicht archiviert/gelöscht sind
+    // Initial load - nur Notizen die nicht archiviert/gelÃ¶scht sind
     fetchNotes({ archived: false, deleted: false });
   }, []);
 
@@ -213,12 +213,12 @@ const DashboardPage = () => {
         {/* Header */}
         <Header user={user} />
 
-        <div className="flex-1 flex gap-3">
+        <div className="flex-1 flex gap-3 min-h-0">
           {/* Note List */}
           <div className="w-80 glass-panel-strong rounded-2xl overflow-hidden flex flex-col relative">
             {/* Note List Header */}
             <div className="p-4 border-b glass-divider flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-accent-900">
+              <h2 className="text-lg font-semibold text-accent-fg">
                 {getViewTitle()}
               </h2>
               <div className="w-9 h-9 flex items-center justify-center">
@@ -279,7 +279,7 @@ const DashboardPage = () => {
                 onNoteUpdate={refreshCurrentView}
               />
             ) : (
-              <div className="h-full flex items-center justify-center text-accent-700">
+              <div className="h-full flex items-center justify-center text-accent-subtle">
                 <div className="text-center">
                   <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="text-lg">Wähle eine Notiz oder erstelle eine neue</p>
@@ -292,13 +292,13 @@ const DashboardPage = () => {
         {/* Empty Trash Modal */}
         <Modal isOpen={showEmptyTrashModal} onClose={() => setShowEmptyTrashModal(false)} title="Papierkorb leeren?">
           <div className="space-y-4">
-            <p className="text-sm text-accent-800">
+            <p className="text-sm text-accent-secondary">
               Möchtest du wirklich alle Notizen im Papierkorb endgültig löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.
             </p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowEmptyTrashModal(false)}
-                className="px-3 py-2 rounded-lg bg-white/30 text-accent-900 hover:bg-white/40"
+                className="px-3 py-2 rounded-lg bg-white/30 text-accent-fg hover:bg-white/40"
               >
                 Abbrechen
               </button>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 
 interface ContextMenuProps {
@@ -52,7 +52,7 @@ const ContextMenu = ({ isOpen, position, onClose, onEdit, onDelete }: ContextMen
           onEdit();
           onClose();
         }}
-        className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight transition-colors"
+        className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-fg hover-highlight transition-colors"
       >
         <Edit className="w-4 h-4" />
         <span>Bearbeiten</span>

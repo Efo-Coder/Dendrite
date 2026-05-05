@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import Logo from '../components/Logo';
@@ -44,7 +44,7 @@ const RegisterPage = () => {
           <div className="flex justify-center mb-4">
             <Logo size="lg" showText={true} />
           </div>
-          <p className="text-accent-800">Erstelle dein Konto</p>
+          <p className="text-accent-secondary">Erstelle dein Konto</p>
         </div>
 
         {/* Register Form */}
@@ -57,7 +57,7 @@ const RegisterPage = () => {
             )}
 
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-accent-900 mb-2">
+              <label htmlFor="name" className="block text-sm font-medium text-accent-fg mb-2">
                 Name (optional)
               </label>
               <input
@@ -71,7 +71,7 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-accent-900 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-accent-fg mb-2">
                 E-Mail
               </label>
               <input
@@ -86,7 +86,7 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-accent-900 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-accent-fg mb-2">
                 Passwort
               </label>
               <input
@@ -95,13 +95,13 @@ const RegisterPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input"
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-accent-900 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-accent-fg mb-2">
                 Passwort bestätigen
               </label>
               <input
@@ -110,7 +110,7 @@ const RegisterPage = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="input"
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 required
               />
             </div>
@@ -125,9 +125,9 @@ const RegisterPage = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-accent-800 text-sm">
+            <p className="text-accent-secondary text-sm">
               Bereits ein Konto?{' '}
-              <Link to="/login" className="text-accent-500 hover:text-accent-400 font-medium">
+              <Link to="/login" className="text-accent-brand hover:text-accent-muted font-medium">
                 Anmelden
               </Link>
             </p>

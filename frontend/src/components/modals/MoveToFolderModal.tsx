@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { FolderOpen, Plus } from 'lucide-react';
 import { useFolderStore } from '../../store/useFolderStore';
 import { useToast } from '../ToastContainer';
@@ -42,8 +42,8 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
     <>
       <Modal isOpen={isOpen} onClose={onClose} title="Notiz verschieben">
         <div className="space-y-4">
-          <p className="text-sm text-accent-800">
-            Wähle einen Ordner aus, in den die Notiz verschoben werden soll:
+          <p className="text-sm text-accent-secondary">
+            WÃ¤hle einen Ordner aus, in den die Notiz verschoben werden soll:
           </p>
 
           <div className="max-h-64 overflow-y-auto space-y-1">
@@ -52,11 +52,11 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
               onClick={() => handleMove(null)}
               className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative group ${
                 currentFolderId === null
-                  ? 'bg-accent-500/10 text-accent-500'
-                  : 'hover-highlight text-accent-900'
+                  ? 'bg-accent-brand/10 text-accent-brand'
+                  : 'hover-highlight text-accent-fg'
               }`}
             >
-              <FolderOpen className="w-4 h-4 text-accent-700" />
+              <FolderOpen className="w-4 h-4 text-accent-subtle" />
               <span className="text-sm relative">Kein Ordner</span>
               {currentFolderId !== null && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
@@ -70,8 +70,8 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
                 onClick={() => handleMove(folder.id)}
                 className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative group ${
                   currentFolderId === folder.id
-                    ? 'bg-accent-500/10 text-accent-500'
-                    : 'hover-highlight text-accent-900'
+                    ? 'bg-accent-brand/10 text-accent-brand'
+                    : 'hover-highlight text-accent-fg'
                 }`}
               >
                 <FolderOpen
@@ -88,10 +88,10 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
             {/* Create new folder option */}
             <button
               onClick={handleCreateFolder}
-              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover-highlight text-accent-900 border-t glass-divider pt-3 mt-3 relative group"
+              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover-highlight text-accent-fg border-t glass-divider pt-3 mt-3 relative group"
             >
-              <Plus className="w-4 h-4 text-accent-500" />
-              <span className="text-sm text-accent-500 relative">Neuen Ordner erstellen</span>
+              <Plus className="w-4 h-4 text-accent-brand" />
+              <span className="text-sm text-accent-brand relative">Neuen Ordner erstellen</span>
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
             </button>
           </div>

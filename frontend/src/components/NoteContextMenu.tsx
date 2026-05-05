@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { Edit, Trash2, Pin, Star, Archive, Tag, FolderOpen } from 'lucide-react';
 
 interface NoteContextMenuProps {
@@ -62,7 +62,6 @@ const NoteContextMenu = ({
   if (!isOpen) return null;
 
   const isInTrash = note.isDeleted;
-  const isArchived = note.isArchived && !note.isDeleted;
 
   return (
     <div
@@ -80,7 +79,7 @@ const NoteContextMenu = ({
             onEdit();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-fg hover-highlight transition-colors"
         >
           <Edit className="w-4 h-4" />
           <span>Bearbeiten</span>
@@ -94,7 +93,7 @@ const NoteContextMenu = ({
             onMove();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-fg hover-highlight transition-colors"
         >
           <FolderOpen className="w-4 h-4" />
           <span>Verschieben</span>
@@ -108,7 +107,7 @@ const NoteContextMenu = ({
             onPin();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-fg hover-highlight transition-colors"
         >
           <Pin className="w-4 h-4" />
           <span>{note.isPinned ? 'Anheften entfernen' : 'Anpinnen'}</span>
@@ -122,7 +121,7 @@ const NoteContextMenu = ({
             onFavorite();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-fg hover-highlight transition-colors"
         >
           <Star className="w-4 h-4" />
           <span>{note.isFavorite ? 'Aus Favoriten entfernen' : 'Favorisieren'}</span>
@@ -136,7 +135,7 @@ const NoteContextMenu = ({
             onArchive();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-fg hover-highlight transition-colors"
         >
           <Archive className="w-4 h-4" />
           <span>{note.isArchived ? 'Aus Archiv holen' : 'Archivieren'}</span>
@@ -150,7 +149,7 @@ const NoteContextMenu = ({
             onTag();
             onClose();
           }}
-          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight transition-colors"
+          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-fg hover-highlight transition-colors"
         >
           <Tag className="w-4 h-4" />
           <span>Tag</span>

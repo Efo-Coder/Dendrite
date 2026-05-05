@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, useRef } from 'react';
+﻿import { useLayoutEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { LogOut, Settings, User } from 'lucide-react';
 import { User as UserType } from '../../types';
@@ -8,9 +8,10 @@ interface UserMenuProps {
   user: UserType | null;
   onLogout: () => void;
   onOpenSettings: () => void;
+  onMouseEnter?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-const UserMenu = ({ user, onLogout, onOpenSettings }: UserMenuProps) => {
+const UserMenu = ({ user, onLogout, onOpenSettings, onMouseEnter }: UserMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -56,15 +57,15 @@ const UserMenu = ({ user, onLogout, onOpenSettings }: UserMenuProps) => {
       <button
         ref={triggerRef}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors"
-        
+        onMouseEnter={onMouseEnter}
+        className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors hover-text-themed relative z-10"
         aria-pressed={isOpen}
         type="button"
       >
-        <div className="w-8 h-8 glass-surface rounded-full flex items-center justify-center transition-colors hover-highlight">
-          <User className="w-4 h-4 text-icon" />
+        <div className="w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+          <User className="w-4 h-4 text-accent-subtle transition-colors" />
         </div>
-        <span className="text-sm text-accent-900 font-medium hover:underline">
+        <span className="text-sm text-accent-fg font-medium">
           {user?.name || user?.email}
         </span>
       </button>
@@ -82,15 +83,15 @@ const UserMenu = ({ user, onLogout, onOpenSettings }: UserMenuProps) => {
               style={{ top: menuPosition.top, left: menuPosition.left }}
             >
               <div className="p-3 border-b glass-divider">
-                <p className="text-sm font-medium text-accent-900">
+                <p className="text-sm font-medium text-accent-fg">
                   {user?.name || 'Benutzer'}
                 </p>
-                <p className="text-xs text-accent-800">{user?.email}</p>
+                <p className="text-xs text-accent-secondary">{user?.email}</p>
               </div>
               <div className="p-1">
                 <button
                   onClick={handleSettings}
-                  className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-900 hover-highlight rounded-md transition-colors"
+                  className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-accent-fg hover-highlight rounded-md transition-colors"
                 >
                   <Settings className="w-4 h-4" />
                   <span>Einstellungen</span>

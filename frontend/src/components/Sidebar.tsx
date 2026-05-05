@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useGlassPill } from '../hooks/useGlassPill';
 import { FileText, Star, Folder, Tag, Trash2, Archive, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useFolderStore } from '../store/useFolderStore';
 import { useTagStore } from '../store/useTagStore';
@@ -32,6 +33,13 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   const [showEditFolderModal, setShowEditFolderModal] = useState(false);
   const [selectedTag, setSelectedTag] = useState<TagType | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<FolderType | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+  const folderListRef = useRef<HTMLDivElement>(null);
+  const tagListRef = useRef<HTMLDivElement>(null);
+  const { pill: navPill, onEnter: onNavEnter, onLeave: onNavLeave } = useGlassPill(navRef);
+  const { pill: folderPill, onEnter: onFolderEnter, onLeave: onFolderLeave } = useGlassPill(folderListRef);
+  const { pill: tagPill, onEnter: onTagEnter, onLeave: onTagLeave } = useGlassPill(tagListRef);
+
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
     position: { x: number; y: number };
@@ -168,40 +176,48 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
         isCollapsed ? "w-16" : "w-64"
       )}>
         {/* Logo */}
-        <div className="h-16 glass-surface flex-shrink-0 flex items-center px-4">
+        <div className="h-16 glass-surface flex items-center px-4">
           <Logo size="md" showText={!isCollapsed} />
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
+        <nav className="py-3 space-y-1 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {/* Main Menu */}
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentView === item.view;
-            return (
-              <button
-                key={item.label}
-                onClick={item.onClick}
-                className={clsx(
-                  'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5 hover-highlight',
-                  isActive
-                    ? 'bg-accent-500/10 text-accent-500'
-                    : 'text-accent-800 hover:text-accent-900'
-                )}
-                title={isCollapsed ? item.label : undefined}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                {!isCollapsed && (
-                  <span className={clsx(
-                    "text-sm whitespace-nowrap transition-opacity duration-200 ml-3",
-                    isCollapsed ? "opacity-0" : "opacity-100 delay-100"
-                  )}>
-                    {item.label}
+          <div ref={navRef} className="relative flex flex-col gap-1" onMouseLeave={onNavLeave}>
+            {navPill && (
+              <div
+                className={clsx('glass-pill', navPill.isActive && 'glass-pill-active')}
+                style={{ left: navPill.left, top: navPill.top, width: navPill.width, height: navPill.height }}
+              />
+            )}
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentView === item.view;
+              return (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  onMouseEnter={(e) => onNavEnter(e, isActive)}
+                  className={clsx(
+                    'w-full flex items-center rounded-lg transition-all duration-200 py-2.5 relative z-10',
+                    isActive
+                      ? 'text-accent-brand'
+                      : 'text-accent-secondary hover-text-themed'
+                  )}
+                  title={isCollapsed ? item.label : undefined}
+                >
+                  <span className="-ml-px w-16 flex-shrink-0 flex items-center justify-center">
+                    <Icon className="w-5 h-5" />
                   </span>
-                )}
-              </button>
-            );
-          })}
+                  {!isCollapsed && (
+                    <span className="-ml-3 text-sm whitespace-nowrap transition-opacity duration-200 opacity-100 delay-100">
+                      {item.label}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
           {/* Divider */}
           <div className="pt-4 pb-2">
@@ -210,57 +226,61 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
 
           {/* Folders Section */}
           <div className="pt-2">
-            {!isCollapsed ? (
-              <div className="flex items-center justify-between px-1.5 py-2">
-                <span className="text-xs font-semibold text-accent-700 uppercase tracking-wider">
+            <div
+              className="flex items-center py-2 pl-[21px] transition-all duration-300"
+              style={{ paddingRight: isCollapsed ? '24px' : '12px' }}
+            >
+              {!isCollapsed && (
+                <span className="text-xs font-semibold text-accent-subtle uppercase tracking-wider flex-1">
                   Ordner
                 </span>
-                <button
-                  onClick={() => setShowFolderModal(true)}
-                  className="text-accent-700 hover:text-accent-500 transition-colors"
-                  title="Neuer Ordner"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex justify-center py-2">
-                <button
-                  onClick={() => setShowFolderModal(true)}
-                  className="text-accent-700 hover:text-accent-500 transition-colors"
-                  title="Neuer Ordner"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+              )}
+              <button
+                onClick={() => setShowFolderModal(true)}
+                className="ml-auto text-accent-subtle hover:text-accent-brand transition-colors"
+                title="Neuer Ordner"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
 
             {folders.length === 0 && !isCollapsed ? (
-              <p className="px-3 py-2 text-xs text-accent-700 italic">
+              <p className="px-3 py-2 text-xs text-accent-subtle italic">
                 Keine Ordner vorhanden
               </p>
             ) : (
-              <div className="space-y-0.5">
-                {folders.map((folder) => (
+              <div ref={folderListRef} className="relative flex flex-col gap-0.5" onMouseLeave={onFolderLeave}>
+                {folderPill && (
+                  <div
+                    className={clsx('glass-pill', folderPill.isActive && 'glass-pill-active')}
+                    style={{ left: folderPill.left, top: folderPill.top, width: folderPill.width, height: folderPill.height }}
+                  />
+                )}
+                {folders.map((folder) => {
+                  const isFolderActive = currentView === 'folder' && selectedFolderId === folder.id;
+                  return (
                   <button
                     key={folder.id}
                     onClick={() => onViewChange('folder', folder.id)}
                     onContextMenu={(e) => handleFolderRightClick(e, folder)}
+                    onMouseEnter={(e) => onFolderEnter(e, isFolderActive)}
                     className={clsx(
-                      'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5 hover-highlight',
-                      currentView === 'folder' && selectedFolderId === folder.id
-                        ? 'bg-accent-500/10 text-accent-500 font-medium'
-                        : 'text-accent-800 hover:text-accent-900'
+                      'w-full flex items-center rounded-lg transition-all duration-200 py-2.5 relative z-10',
+                      isFolderActive
+                        ? 'text-accent-brand'
+                        : 'text-accent-secondary hover-text-themed'
                     )}
                     title={isCollapsed ? folder.name : undefined}
                   >
-                    <Folder
-                      className="w-5 h-5 flex-shrink-0"
-                      style={{ color: folder.color || '#10b981' }}
-                    />
+                    <span className="-ml-px w-16 flex-shrink-0 flex items-center justify-center">
+                      <Folder
+                        className="w-5 h-5 flex-shrink-0"
+                        style={{ color: folder.color || '#10b981' }}
+                      />
+                    </span>
                     {!isCollapsed && (
                       <>
-                        <div className="flex items-center space-x-2 flex-1 min-w-0 ml-3">
+                        <div className="-ml-3 flex items-center space-x-2 flex-1 min-w-0">
                           <span className={clsx(
                             "text-sm truncate whitespace-nowrap transition-opacity duration-200",
                             isCollapsed ? "opacity-0" : "opacity-100 delay-100"
@@ -270,7 +290,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                         </div>
                         {folder.notes && folder.notes.length > 0 && (
                           <span className={clsx(
-                            "text-xs text-accent-700 flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2",
+                            "text-xs text-accent-subtle flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2 mr-3",
                             isCollapsed ? "opacity-0" : "opacity-100 delay-100"
                           )}>
                             {folder.notes.length}
@@ -279,64 +299,69 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                       </>
                     )}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* Tags Section */}
           <div className="pt-4">
-            {!isCollapsed ? (
-              <div className="flex items-center justify-between px-1.5 py-2">
-                <span className="text-xs font-semibold text-accent-700 uppercase tracking-wider">
+            <div
+              className="flex items-center py-2 pl-[21px] transition-all duration-300"
+              style={{ paddingRight: isCollapsed ? '24px' : '12px' }}
+            >
+              {!isCollapsed && (
+                <span className="text-xs font-semibold text-accent-subtle uppercase tracking-wider flex-1">
                   Tags
                 </span>
-                <button
-                  onClick={() => setShowTagModal(true)}
-                  className="text-accent-700 hover:text-accent-500 transition-colors"
-                  title="Neuer Tag"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex justify-center py-2">
-                <button
-                  onClick={() => setShowTagModal(true)}
-                  className="text-accent-700 hover:text-accent-500 transition-colors"
-                  title="Neuer Tag"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+              )}
+              <button
+                onClick={() => setShowTagModal(true)}
+                className="ml-auto text-accent-subtle hover:text-accent-brand transition-colors"
+                title="Neuer Tag"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
 
             {tags.length === 0 && !isCollapsed ? (
-              <p className="px-3 py-2 text-xs text-accent-700 italic">
+              <p className="px-3 py-2 text-xs text-accent-subtle italic">
                 Keine Tags vorhanden
               </p>
             ) : (
-              <div className="space-y-0.5">
-                {tags.map((tag) => (
+              <div ref={tagListRef} className="relative flex flex-col gap-0.5" onMouseLeave={onTagLeave}>
+                {tagPill && (
+                  <div
+                    className={clsx('glass-pill', tagPill.isActive && 'glass-pill-active')}
+                    style={{ left: tagPill.left, top: tagPill.top, width: tagPill.width, height: tagPill.height }}
+                  />
+                )}
+                {tags.map((tag) => {
+                  const isTagActive = currentView === 'tag' && selectedTagId === tag.id;
+                  return (
                   <button
                     key={tag.id}
                     onClick={() => onViewChange('tag', tag.id)}
                     onContextMenu={(e) => handleTagRightClick(e, tag)}
+                    onMouseEnter={(e) => onTagEnter(e, isTagActive)}
                     className={clsx(
-                      'w-full flex items-center rounded-lg transition-all duration-200 px-1.5 py-2.5 hover-highlight',
-                      currentView === 'tag' && selectedTagId === tag.id
-                        ? 'bg-accent-500/10 text-accent-500 font-medium'
-                        : 'text-accent-800 hover:text-accent-900'
+                      'w-full flex items-center rounded-lg transition-all duration-200 py-2.5 relative z-10',
+                      isTagActive
+                        ? 'text-accent-brand'
+                        : 'text-accent-secondary hover-text-themed'
                     )}
                     title={isCollapsed ? tag.name : undefined}
                   >
-                    <Tag
-                      className="w-5 h-5 flex-shrink-0"
-                      style={{ color: tag.color }}
-                    />
+                    <span className="-ml-px w-16 flex-shrink-0 flex items-center justify-center">
+                      <Tag
+                        className="w-5 h-5 flex-shrink-0"
+                        style={{ color: tag.color }}
+                      />
+                    </span>
                     {!isCollapsed && (
                       <>
-                        <div className="flex items-center space-x-2 flex-1 min-w-0 ml-3">
+                        <div className="-ml-3 flex items-center space-x-2 flex-1 min-w-0">
                           <span className={clsx(
                             "text-sm truncate whitespace-nowrap transition-opacity duration-200",
                             isCollapsed ? "opacity-0" : "opacity-100 delay-100"
@@ -346,7 +371,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                         </div>
                         {tag.notes && tag.notes.length > 0 && (
                           <span className={clsx(
-                            "text-xs text-accent-700 flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2",
+                            "text-xs text-accent-subtle flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2 mr-3",
                             isCollapsed ? "opacity-0" : "opacity-100 delay-100"
                           )}>
                             {tag.notes.length}
@@ -355,22 +380,27 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                       </>
                     )}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
-          {/* Toggle Button at bottom */}
-          <div className="mt-auto pl-9 flex justify-end">
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2 rounded-lg text-accent-700 hover-highlight hover:text-accent-900 transition-colors"
-              title={isCollapsed ? "Sidebar erweitern" : "Sidebar minimieren"}
-            >
-              {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-            </button>
-          </div>
         </nav>
+
+        {/* Collapse Toggle — bottom of sidebar, aligned with "+" buttons */}
+        <div
+          className="flex items-center justify-end py-2 mb-1 transition-all duration-300"
+          style={{ paddingRight: isCollapsed ? '22px' : '12px' }}
+        >
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="text-accent-subtle hover:text-accent-brand transition-colors"
+            title={isCollapsed ? "Sidebar erweitern" : "Sidebar minimieren"}
+          >
+            {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          </button>
+        </div>
       </aside>
 
       {/* Modals */}

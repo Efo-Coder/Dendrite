@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { AlignLeft, AlignCenter, AlignRight, Trash2, Lock, Unlock } from 'lucide-react';
 
 interface ResizableImageProps {
@@ -193,8 +193,8 @@ const ResizableImage = ({
               onClick={() => handleAlignmentChange('left')}
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'left'
-                  ? 'bg-accent-500/20 text-accent-500'
-                  : 'text-accent-700 hover-highlight hover:text-accent-900'
+                  ? 'bg-accent-brand/20 text-accent-brand'
+                  : 'text-accent-subtle hover-highlight hover:text-accent-fg'
               }`}
               title="Links ausrichten"
             >
@@ -204,8 +204,8 @@ const ResizableImage = ({
               onClick={() => handleAlignmentChange('center')}
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'center'
-                  ? 'bg-accent-500/20 text-accent-500'
-                  : 'text-accent-700 hover-highlight hover:text-accent-900'
+                  ? 'bg-accent-brand/20 text-accent-brand'
+                  : 'text-accent-subtle hover-highlight hover:text-accent-fg'
               }`}
               title="Zentrieren"
             >
@@ -215,8 +215,8 @@ const ResizableImage = ({
               onClick={() => handleAlignmentChange('right')}
               className={`p-1.5 rounded-md transition-all ${
                 alignment === 'right'
-                  ? 'bg-accent-500/20 text-accent-500'
-                  : 'text-accent-700 hover-highlight hover:text-accent-900'
+                  ? 'bg-accent-brand/20 text-accent-brand'
+                  : 'text-accent-subtle hover-highlight hover:text-accent-fg'
               }`}
               title="Rechts ausrichten"
             >
@@ -227,8 +227,8 @@ const ResizableImage = ({
               onClick={() => setMaintainAspectRatio(!maintainAspectRatio)}
               className={`p-1.5 rounded-md transition-all ${
                 maintainAspectRatio
-                  ? 'bg-accent-500/20 text-accent-500'
-                  : 'text-accent-700 hover-highlight hover:text-accent-900'
+                  ? 'bg-accent-brand/20 text-accent-brand'
+                  : 'text-accent-subtle hover-highlight hover:text-accent-fg'
               }`}
               title={maintainAspectRatio ? 'Seitenverhältnis gesperrt' : 'Seitenverhältnis entsperrt'}
             >
@@ -242,7 +242,7 @@ const ResizableImage = ({
             {onDelete && (
               <button
                 onClick={onDelete}
-                className="p-1.5 rounded-md text-accent-700 hover:bg-red-500/10 hover:text-red-500 transition-all"
+                className="p-1.5 rounded-md text-accent-subtle hover:bg-red-500/10 hover:text-red-500 transition-all"
                 title="Bild löschen"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -274,7 +274,7 @@ const ResizableImage = ({
               className="absolute top-0 right-0 bottom-0 w-1 cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all"
               style={{
                 touchAction: 'none',
-                background: 'var(--color-accent-500)',
+                background: 'var(--color-accent-brand)',
               }}
             />
             <div
@@ -282,8 +282,8 @@ const ResizableImage = ({
               className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all border-2"
               style={{
                 touchAction: 'none',
-                background: 'var(--color-accent-50)',
-                borderColor: 'var(--color-accent-500)',
+                background: 'var(--color-accent-bg)',
+                borderColor: 'var(--color-accent-brand)',
               }}
             />
 
@@ -293,7 +293,7 @@ const ResizableImage = ({
               className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-all"
               style={{
                 touchAction: 'none',
-                background: 'var(--color-accent-500)',
+                background: 'var(--color-accent-brand)',
               }}
             />
             <div
@@ -301,8 +301,8 @@ const ResizableImage = ({
               className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rounded-full cursor-ns-resize opacity-0 group-hover:opacity-100 transition-all border-2"
               style={{
                 touchAction: 'none',
-                background: 'var(--color-accent-50)',
-                borderColor: 'var(--color-accent-500)',
+                background: 'var(--color-accent-bg)',
+                borderColor: 'var(--color-accent-brand)',
               }}
             />
 
@@ -312,8 +312,8 @@ const ResizableImage = ({
               className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-all border-2"
               style={{
                 touchAction: 'none',
-                background: 'var(--color-accent-50)',
-                borderColor: 'var(--color-accent-500)',
+                background: 'var(--color-accent-bg)',
+                borderColor: 'var(--color-accent-brand)',
               }}
             />
           </>
@@ -324,8 +324,8 @@ const ResizableImage = ({
           <div
             className="absolute inset-0 rounded-lg pointer-events-none border-2"
             style={{
-              borderColor: 'var(--color-accent-500)',
-              backgroundColor: 'color-mix(in srgb, var(--color-accent-500) 5%, transparent)',
+              borderColor: 'var(--color-accent-brand)',
+              backgroundColor: 'color-mix(in srgb, var(--color-accent-brand) 5%, transparent)',
             }}
           />
         )}
@@ -333,12 +333,12 @@ const ResizableImage = ({
 
       {/* Size Indicator */}
       {isResizing && (
-        <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 glass-panel rounded-lg px-3 py-1.5 text-xs text-accent-900 shadow-xl font-mono">
-          <span className="text-accent-500 font-semibold">{Math.round(width)}%</span>
-          <span className="text-accent-700 mx-1">×</span>
-          <span className="text-accent-500 font-semibold">{Math.round(height)}px</span>
+        <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 glass-panel rounded-lg px-3 py-1.5 text-xs text-accent-fg shadow-xl font-mono">
+          <span className="text-accent-brand font-semibold">{Math.round(width)}%</span>
+          <span className="text-accent-subtle mx-1">Ã—</span>
+          <span className="text-accent-brand font-semibold">{Math.round(height)}px</span>
           {maintainAspectRatio && (
-            <span className="ml-2 text-accent-700">
+            <span className="ml-2 text-accent-subtle">
               <Lock className="w-3 h-3 inline" />
             </span>
           )}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Attachment } from '../types';
 import { attachmentService } from '../services/attachment.service';
 import { FileText, X, Download, Loader2 } from 'lucide-react';
@@ -40,7 +40,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
     try {
       await attachmentService.deleteAttachment(id);
       setAttachments(attachments.filter((a) => a.id !== id));
-      toast.success('Attachment gelöscht');
+      toast.success('Attachment gelÃ¶scht');
       if (onAttachmentsChange) onAttachmentsChange();
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
@@ -65,7 +65,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4">
-        <Loader2 className="w-5 h-5 text-accent-700 animate-spin" />
+        <Loader2 className="w-5 h-5 text-accent-subtle animate-spin" />
       </div>
     );
   }
@@ -76,8 +76,8 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
 
   return (
     <div className="px-6 md:px-12 py-4 border-t glass-divider">
-      <h4 className="text-sm font-medium text-accent-800 mb-3">
-        Anhänge ({attachments.length})
+      <h4 className="text-sm font-medium text-accent-secondary mb-3">
+        AnhÃ¤nge ({attachments.length})
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {attachments.map((attachment) => {
@@ -104,7 +104,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 </a>
               ) : (
                 <div className="flex-shrink-0 w-12 h-12 bg-white/30 rounded flex items-center justify-center border border-white/30">
-                  <FileText className="w-6 h-6 text-accent-700" />
+                  <FileText className="w-6 h-6 text-accent-subtle" />
                 </div>
               )}
 
@@ -113,12 +113,12 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                   href={attachmentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-accent-900 hover:text-accent-500 transition-colors truncate block font-medium"
+                  className="text-sm text-accent-fg hover:text-accent-brand transition-colors truncate block font-medium"
                   title={attachment.filename}
                 >
                   {attachment.filename}
                 </a>
-                <p className="text-xs text-accent-700 mt-0.5">
+                <p className="text-xs text-accent-subtle mt-0.5">
                   {formatFileSize(attachment.fileSize)}
                 </p>
               </div>
@@ -127,7 +127,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 <a
                   href={attachmentUrl}
                   download={attachment.filename}
-                  className="p-1.5 rounded text-accent-700 hover-highlight hover:text-accent-500 transition-colors"
+                  className="p-1.5 rounded text-accent-subtle hover-highlight hover:text-accent-brand transition-colors"
                   title="Herunterladen"
                 >
                   <Download className="w-4 h-4" />
@@ -135,7 +135,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 <button
                   onClick={() => handleDelete(attachment.id)}
                   disabled={deletingId === attachment.id}
-                  className="p-1.5 rounded text-accent-700 hover-highlight hover:text-red-500 transition-colors disabled:opacity-50"
+                  className="p-1.5 rounded text-accent-subtle hover-highlight hover:text-red-500 transition-colors disabled:opacity-50"
                   title="Löschen"
                 >
                   {deletingId === attachment.id ? (
