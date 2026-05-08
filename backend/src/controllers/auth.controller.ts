@@ -99,6 +99,57 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name } = req.body;
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data: { name: name ?? null },
+      select: { id: true, email: true, name: true, createdAt: true, updatedAt: true },
+    });
+    res.json({ user });
+  } catch (error) {
+    console.error('UpdateProfile error:', error);
+    res.status(500).json({ error: 'Profil konnte nicht aktualisiert werden' });
+  }
+};
+
+export const changePassword = async (req: AuthRequest, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Aktuelles und neues Passwort sind erforderlich' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Das neue Passwort muss mindestens 6 Zeichen lang sein' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!user) return res.status(404).json({ error: 'User nicht gefunden' });
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) return res.status(401).json({ error: 'Aktuelles Passwort ist falsch' });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { id: req.userId }, data: { password: hashed } });
+
+    res.json({ message: 'Passwort erfolgreich geändert' });
+  } catch (error) {
+    console.error('ChangePassword error:', error);
+    res.status(500).json({ error: 'Passwort konnte nicht geändert werden' });
+  }
+};
+
+export const deleteAccount = async (req: AuthRequest, res: Response) => {
+  try {
+    await prisma.user.delete({ where: { id: req.userId } });
+    res.json({ message: 'Konto erfolgreich gelöscht' });
+  } catch (error) {
+    console.error('DeleteAccount error:', error);
+    res.status(500).json({ error: 'Konto konnte nicht gelöscht werden' });
+  }
+};
+
 export const getMe = async (req: AuthRequest, res: Response) => {
   try {
     const user = await prisma.user.findUnique({

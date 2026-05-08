@@ -1,7 +1,8 @@
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Note } from '../types';
-import { Pin, Star, Lock, GripVertical, ArrowUp, ArrowDown, Folder } from 'lucide-react';
+import { Pin, Star, Lock, GripVertical, ArrowUp, ArrowDown, Folder, ChevronDown } from 'lucide-react';
+import { useGlassPill } from '../hooks/useGlassPill';
 import clsx from 'clsx';
 import {
   DndContext,
@@ -21,6 +22,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { noteService } from '../services/note.service';
 import { useNoteStore } from '../store/useNoteStore';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -81,9 +83,10 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
       style={style}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onContextMenu={(e) => onRightClick?.(e, note)}
       className={clsx(
-        'w-full border-b glass-divider flex relative h-[100px] transition-colors',
-        isSelected ? 'bg-accent-brand/10' : ''
+        'flex relative h-[100px] transition-colors',
+        isSelected ? 'note-item-selected mx-[3px] w-[calc(100%-6px)]' : 'w-full'
       )}
     >
       {/* Drag Handle - nur anzeigen wenn nicht im Papierkorb */}
@@ -100,11 +103,10 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
       {/* Note Content */}
       <button
         onClick={() => onSelectNote(note)}
-        onContextMenu={(e) => onRightClick?.(e, note)}
-        className="flex-1 px-4 py-2 text-left flex flex-col min-w-0"
+        className="flex-1 px-4 py-2 text-left flex flex-col justify-between min-w-0"
       >
         {/* Note Header mit Title, Tag und Icons */}
-        <div className="flex items-center gap-2 min-w-0 mb-1">
+        <div className="flex items-center gap-2 min-w-0">
           {/* Title */}
           <h3 className="text-sm font-semibold text-accent-fg truncate flex-shrink min-w-0">
             {getFirstLine(note.content)}
@@ -113,7 +115,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
           {/* Tag - nur der erste, weiter rechts positioniert */}
           {note.tags && note.tags.length > 0 && (
             <span
-              className="px-1.5 py-0.5 text-xs rounded border whitespace-nowrap flex-shrink-0 max-w-[80px] truncate ml-auto"
+              className="px-1.5 py-px text-xs rounded border whitespace-nowrap flex-shrink-0 max-w-[80px] truncate ml-auto"
               style={{
                 backgroundColor: `${note.tags[0].color || '#10b981'}20`,
                 color: note.tags[0].color || '#10b981',
@@ -134,12 +136,12 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
         </div>
 
         {/* Note Preview - nur eine Zeile */}
-        <p className="text-xs text-accent-secondary truncate min-w-0 mb-1">
+        <p className="text-xs text-accent-secondary truncate min-w-0">
           {getPreview(note.content)}
         </p>
 
         {/* Folder Info */}
-        <div className="flex items-center gap-1 min-w-0 mb-1">
+        <div className="flex items-center gap-1 min-w-0">
           <Folder className="w-3 h-3 text-accent-subtle flex-shrink-0" />
           <span className="text-xs text-accent-subtle truncate">
             {note.folder?.name || 'Alle Notizen'}
@@ -156,6 +158,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
           </span>
         </div>
       </button>
+      {!isSelected && <div className="absolute bottom-0 inset-x-5 h-px bg-[var(--glass-border)]" />}
     </div>
   );
 };
@@ -168,11 +171,36 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   const toast = useToast();
   
   const [localNotes, setLocalNotes] = useState(notes);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hoveredNoteId, setHoveredNoteId] = useState<string | null>(null);
   const [highlighterStyle, setHighlighterStyle] = useState({ top: 0, height: 0 });
   const [sortBy, setSortBy] = useState<SortOption>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [sortDropdownPos, setSortDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const noteRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+  const sortTriggerRef = useRef<HTMLButtonElement>(null);
+  const { pill: sortPill, onEnter: onSortEnter, onLeave: onSortLeave } = useGlassPill(sortDropdownRef);
+
+  const sortLabels: Partial<Record<SortOption, string>> = {
+    createdAt: 'Erstellt',
+    updatedAt: 'Aktualisiert',
+    title: 'Titel',
+    manual: 'Manuell',
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        sortDropdownRef.current && !sortDropdownRef.current.contains(e.target as Node) &&
+        sortTriggerRef.current && !sortTriggerRef.current.contains(e.target as Node)
+      ) {
+        setShowSortDropdown(false);
+      }
+    };
+    if (showSortDropdown) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSortDropdown]);
 
   // Context-specific sorting state
   const getContextKey = () => `${contextType}-${contextId || '_none'}`;
@@ -194,7 +222,9 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   const [showTagModal, setShowTagModal] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -243,15 +273,16 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   };
 
   const closeContextMenu = () => {
-    setContextMenu({
+    setContextMenu(prev => ({
+      ...prev,
       isOpen: false,
       position: { x: 0, y: 0 },
-      note: null,
-    });
+    }));
   };
 
   const handleEdit = () => {
     if (contextMenu.note) {
+      setHoveredNoteId(null);
       onSelectNote(contextMenu.note);
     }
   };
@@ -383,8 +414,23 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     setLocalNotes(sortedNotes);
   }, [notes, sortBy, sortOrder]);
 
-  const handleMouseEnter = (index: number) => {
-    setHoveredIndex(index);
+  // Pill-Position nach Re-Sortierung aktualisieren
+  useEffect(() => {
+    if (hoveredNoteId === null) return;
+    const newIndex = localNotes.findIndex(n => n.id === hoveredNoteId);
+    if (newIndex < 0) {
+      setHoveredNoteId(null);
+      return;
+    }
+    const noteElement = noteRefs.current[newIndex];
+    if (noteElement) {
+      const { offsetTop, offsetHeight } = noteElement;
+      setHighlighterStyle({ top: offsetTop, height: offsetHeight });
+    }
+  }, [localNotes]);
+
+  const handleMouseEnter = (index: number, noteId: string) => {
+    setHoveredNoteId(noteId);
     const noteElement = noteRefs.current[index];
     if (noteElement) {
       const { offsetTop, offsetHeight } = noteElement;
@@ -393,7 +439,12 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   };
 
   const handleMouseLeave = () => {
-    setHoveredIndex(null);
+    setHoveredNoteId(null);
+  };
+
+  const handleSelectNote = (note: Note) => {
+    setHoveredNoteId(null);
+    onSelectNote(note);
   };
 
   const stripHtml = (html: string) => {
@@ -482,13 +533,15 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     return (
       <>
       <div className="flex-1 relative scrollbar-overlay">
-        {/* Highlighter */}
-        {hoveredIndex !== null && (
+        {/* Glass Pill Hover */}
+        {hoveredNoteId !== null && (
           <div
-            className="absolute left-0 w-full backdrop-blur-sm pointer-events-none note-hover-overlay transition-all duration-300 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
+            className="glass-pill pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
             style={{
-              top: `${highlighterStyle.top}px`,
-              height: `${highlighterStyle.height}px`,
+              left: 4,
+              top: highlighterStyle.top,
+              width: 'calc(100% - 8px)',
+              height: highlighterStyle.height,
             }}
           />
         )}
@@ -497,23 +550,23 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
           <div
             key={note.id}
             ref={(el) => (noteRefs.current[index] = el)}
-            onMouseEnter={() => handleMouseEnter(index)}
+            onMouseEnter={() => handleMouseEnter(index, note.id)}
             onMouseLeave={handleMouseLeave}
+            onContextMenu={(e) => handleNoteRightClick(e, note)}
             className={clsx(
-              'w-full border-b glass-divider flex relative h-[100px] transition-colors',
-              currentNote?.id === note.id ? 'bg-accent-brand/10' : ''
+              'w-full flex relative h-[100px] transition-colors',
+              currentNote?.id === note.id ? 'bg-accent-brand/10 ring-1 ring-inset ring-[color-mix(in_srgb,var(--color-accent-brand)_55%,transparent)] rounded-lg' : ''
             )}
           >
             {/* Platzhalter für Drag Handle - damit Layout konsistent bleibt */}
             <div className="w-8 flex-shrink-0" />
 
             <button
-              onClick={() => onSelectNote(note)}
-              onContextMenu={(e) => handleNoteRightClick(e, note)}
-              className="flex-1 px-4 py-2 text-left flex flex-col min-w-0"
+              onClick={() => handleSelectNote(note)}
+              className="flex-1 px-4 py-2 text-left flex flex-col justify-between min-w-0"
             >
               {/* Note Header mit Title, Tag und Icons */}
-              <div className="flex items-center gap-2 min-w-0 mb-1">
+              <div className="flex items-center gap-2 min-w-0">
                 {/* Title */}
                 <h3 className="text-sm font-semibold text-accent-fg truncate flex-shrink min-w-0">
                   {getFirstLine(note.content)}
@@ -522,7 +575,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
                 {/* Tag - nur der erste, weiter rechts positioniert */}
                 {note.tags && note.tags.length > 0 && (
                   <span
-                    className="px-1.5 py-0.5 text-xs rounded border whitespace-nowrap flex-shrink-0 max-w-[80px] truncate ml-auto"
+                    className="px-1.5 py-px text-xs rounded border whitespace-nowrap flex-shrink-0 max-w-[80px] truncate ml-auto"
                     style={{
                       backgroundColor: `${note.tags[0].color || '#10b981'}20`,
                       color: note.tags[0].color || '#10b981',
@@ -543,12 +596,12 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               </div>
 
               {/* Note Preview - nur eine Zeile */}
-              <p className="text-xs text-accent-secondary truncate min-w-0 mb-1">
+              <p className="text-xs text-accent-secondary truncate min-w-0">
                 {getPreview(note.content)}
               </p>
 
               {/* Folder Info */}
-              <div className="flex items-center gap-1 min-w-0 mb-1">
+              <div className="flex items-center gap-1 min-w-0">
                 <Folder className="w-3 h-3 text-accent-subtle flex-shrink-0" />
                 <span className="text-xs text-accent-subtle truncate">
                   {note.folder?.name || 'Alle Notizen'}
@@ -565,6 +618,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
                 </span>
               </div>
             </button>
+            {currentNote?.id !== note.id && <div className="absolute bottom-0 inset-x-5 h-px bg-[var(--glass-border)]" />}
           </div>
         ))}
       </div>
@@ -608,30 +662,62 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     <>
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Sortierung Header */}
-      <div className="px-4 py-2 border-b glass-divider glass-surface -mt-[1px]">
+      <div className="px-4 py-2 border-y glass-divider glass-header border-l-0 border-r-0 -mt-[1px]">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-accent-fg">Sortierung</span>
-          <div className="flex items-center space-x-2">
-            <select
-              value={sortBy}
-              onChange={(e) => updateSorting(e.target.value as SortOption, sortOrder)}
-              className="px-1 pb-[2px] border glass-divider rounded text-sm leading-tight bg-accent-bg text-accent-fg"
+          <div className="flex items-center space-x-2 pr-[6px]">
+            {/* Custom sort dropdown */}
+            <button
+              ref={sortTriggerRef}
+              onClick={() => {
+                const rect = sortTriggerRef.current?.getBoundingClientRect();
+                if (rect) setSortDropdownPos({ top: rect.bottom + 4, left: rect.right, width: rect.width });
+                setShowSortDropdown(v => !v);
+              }}
+              className="flex items-center gap-1 px-2 py-1 border glass-divider rounded text-sm bg-accent-bg text-accent-fg hover:text-accent-brand transition-colors"
             >
-              <option value="createdAt">Erstellt</option>
-              <option value="updatedAt">Aktualisiert</option>
-              <option value="title">Titel</option>
-              <option value="pinned">Angeheftet</option>
-              <option value="manual">Manuell</option>
-            </select>
-            {sortBy !== 'manual' && (
-              <button
-                onClick={() => updateSorting(sortBy, sortOrder === 'desc' ? 'asc' : 'desc')}
-                className="p-1 rounded text-accent-subtle hover-highlight hover:text-accent-fg transition-colors"
-                title={`Sortierung: ${sortOrder === 'desc' ? 'Absteigend' : 'Aufsteigend'}`}
+              <span>{sortLabels[sortBy] ?? 'Erstellt'}</span>
+              <ChevronDown className={`w-3 h-3 text-accent-subtle transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showSortDropdown && createPortal(
+              <div
+                className="fixed z-[9999] glass-panel rounded-xl shadow-lg py-1 w-36"
+                style={{ top: sortDropdownPos.top, left: sortDropdownPos.left, transform: 'translateX(-100%)' }}
               >
-                {sortOrder === 'desc' ? <ArrowDown className="w-4 h-4" /> : <ArrowUp className="w-4 h-4" />}
-              </button>
+                <div ref={sortDropdownRef} className="relative" onMouseLeave={onSortLeave}>
+                  {sortPill && (
+                    <div
+                      className="glass-pill pointer-events-none"
+                      style={{ left: sortPill.left, top: sortPill.top, width: sortPill.width, height: sortPill.height }}
+                    />
+                  )}
+                  {(Object.entries(sortLabels) as [SortOption, string][]).map(([value, label]) => (
+                    <button
+                      key={value}
+                      onMouseEnter={onSortEnter}
+                      onClick={() => { updateSorting(value, sortOrder); setShowSortDropdown(false); }}
+                      className={clsx(
+                        'relative z-10 w-full text-left px-3 py-2 text-sm transition-colors',
+                        sortBy === value ? 'text-accent-brand' : 'text-accent-fg'
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>,
+              document.body
             )}
+
+            <button
+              onClick={() => updateSorting(sortBy, sortOrder === 'desc' ? 'asc' : 'desc')}
+              className={`p-1 text-accent-subtle hover:text-accent-brand transition-colors ${sortBy === 'manual' ? 'invisible' : ''}`}
+              title={`Sortierung: ${sortOrder === 'desc' ? 'Absteigend' : 'Aufsteigend'}`}
+              tabIndex={sortBy === 'manual' ? -1 : 0}
+            >
+              {sortOrder === 'desc' ? <ArrowDown className="w-4 h-4" /> : <ArrowUp className="w-4 h-4" />}
+            </button>
           </div>
         </div>
       </div>
@@ -646,13 +732,15 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
           strategy={verticalListSortingStrategy}
         >
           <div className="flex-1 relative scrollbar-overlay">
-          {/* Highlighter */}
-          {hoveredIndex !== null && (
+          {/* Glass Pill Hover */}
+          {hoveredNoteId !== null && (
             <div
-              className="absolute left-0 w-full backdrop-blur-sm pointer-events-none note-hover-overlay transition-all duration-300 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
+              className="glass-pill pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
               style={{
-                top: `${highlighterStyle.top}px`,
-                height: `${highlighterStyle.height}px`,
+                left: hoveredNoteId === currentNote?.id ? 3 : 0,
+                top: highlighterStyle.top,
+                width: hoveredNoteId === currentNote?.id ? 'calc(100% - 6px)' : '100%',
+                height: highlighterStyle.height,
               }}
             />
           )}
@@ -662,12 +750,12 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               key={note.id}
               note={note}
               isSelected={currentNote?.id === note.id}
-              onSelectNote={onSelectNote}
+              onSelectNote={handleSelectNote}
               getPreview={getPreview}
               getFirstLine={getFirstLine}
               showDragHandle={!isTrash}
               dateDisplayMode={dateDisplayMode}
-              onMouseEnter={() => handleMouseEnter(index)}
+              onMouseEnter={() => handleMouseEnter(index, note.id)}
               onMouseLeave={handleMouseLeave}
               noteRef={(el) => (noteRefs.current[index] = el)}
               onRightClick={handleNoteRightClick}

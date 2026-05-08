@@ -2,7 +2,8 @@ import Modal from './Modal';
 import { useSettingsStore, DateDisplayMode, ThemeId } from '../../store/useSettingsStore';
 import { themes, themeOrder } from '../../themes/themes';
 import { Check } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { useGlassPill } from '../../hooks/useGlassPill';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -13,6 +14,11 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const { dateDisplayMode, setDateDisplayMode, theme, setTheme } = useSettingsStore();
 
   const currentTheme = useMemo(() => themes[theme] || themes.sproutGreen, [theme]);
+
+  const dateSectionRef = useRef<HTMLDivElement>(null);
+  const themeSectionRef = useRef<HTMLDivElement>(null);
+  const { pill: datePill, onEnter: onDateEnter, onLeave: onDateLeave } = useGlassPill(dateSectionRef);
+  const { pill: themePill, onEnter: onThemeEnter, onLeave: onThemeLeave } = useGlassPill(themeSectionRef);
 
   const handleDateModeChange = (mode: DateDisplayMode) => {
     setDateDisplayMode(mode);
@@ -30,48 +36,52 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
           <label className="block text-xs font-medium text-accent-fg mb-3 uppercase tracking-wide">
             Datumsanzeige in Notizliste
           </label>
-          <div className="space-y-2">
+          <div ref={dateSectionRef} className="space-y-2 relative" onMouseLeave={onDateLeave}>
+            {datePill && (
+              <div
+                className="glass-pill"
+                style={{ left: datePill.left, top: datePill.top, width: datePill.width, height: datePill.height }}
+              />
+            )}
             <button
               type="button"
               onClick={() => handleDateModeChange('updatedAt')}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative group"
+              onMouseEnter={(e) => onDateEnter(e, dateDisplayMode === 'updatedAt')}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative z-10"
               style={dateDisplayMode === 'updatedAt' ? {
                 backgroundColor: `${currentTheme.colors.accentBrand}10`,
                 border: `1px solid ${currentTheme.colors.accentBrand}80`,
                 color: currentTheme.colors.accentBrand
               } : {
-                backgroundColor: 'var(--glass-bg-soft)',
+                background: 'transparent',
                 border: '1px solid var(--glass-border)',
                 color: 'var(--color-accent-secondary)'
               }}
             >
-              <span className="text-sm font-medium relative">Bearbeitet am</span>
-              {dateDisplayMode === 'updatedAt' ? (
-                <div className="w-2 h-2 rounded-full relative" style={{ backgroundColor: currentTheme.colors.accentBrand }} />
-              ) : (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
+              <span className="text-sm font-medium">Bearbeitet am</span>
+              {dateDisplayMode === 'updatedAt' && (
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: currentTheme.colors.accentBrand }} />
               )}
             </button>
 
             <button
               type="button"
               onClick={() => handleDateModeChange('createdAt')}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative group"
+              onMouseEnter={(e) => onDateEnter(e, dateDisplayMode === 'createdAt')}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative z-10"
               style={dateDisplayMode === 'createdAt' ? {
                 backgroundColor: `${currentTheme.colors.accentBrand}10`,
                 border: `1px solid ${currentTheme.colors.accentBrand}80`,
                 color: currentTheme.colors.accentBrand
               } : {
-                backgroundColor: 'var(--glass-bg-soft)',
+                background: 'transparent',
                 border: '1px solid var(--glass-border)',
                 color: 'var(--color-accent-secondary)'
               }}
             >
-              <span className="text-sm font-medium relative">Erstellt am</span>
-              {dateDisplayMode === 'createdAt' ? (
-                <div className="w-2 h-2 rounded-full relative" style={{ backgroundColor: currentTheme.colors.accentBrand }} />
-              ) : (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
+              <span className="text-sm font-medium">Erstellt am</span>
+              {dateDisplayMode === 'createdAt' && (
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: currentTheme.colors.accentBrand }} />
               )}
             </button>
           </div>
@@ -85,7 +95,13 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
           <label className="block text-xs font-medium text-accent-fg mb-3 uppercase tracking-wide">
             Farbthema
           </label>
-          <div className="grid grid-cols-3 gap-3">
+          <div ref={themeSectionRef} className="grid grid-cols-3 gap-3 relative" onMouseLeave={onThemeLeave}>
+            {themePill && (
+              <div
+                className="glass-pill"
+                style={{ left: themePill.left, top: themePill.top, width: themePill.width, height: themePill.height }}
+              />
+            )}
             {themeOrder.map((themeId) => {
               const themeData = themes[themeId];
               const isSelected = theme === themeId;
@@ -95,39 +111,30 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   key={themeId}
                   type="button"
                   onClick={() => handleThemeChange(themeId as ThemeId)}
-                  className="relative flex flex-col items-center p-3 rounded-lg backdrop-blur-md transition-all group"
+                  onMouseEnter={(e) => onThemeEnter(e, isSelected)}
+                  className="relative z-10 flex flex-col items-center p-3 rounded-lg backdrop-blur-md transition-all"
                   style={isSelected ? {
                     backgroundColor: `${themeData.colors.accentBrand}10`,
                     border: `1px solid ${themeData.colors.accentBrand}80`
                   } : {
-                    backgroundColor: 'var(--glass-bg-soft)',
+                    background: 'transparent',
                     border: '1px solid var(--glass-border)'
                   }}
                 >
-                  {/* Color Preview Circle */}
                   <div
                     className="w-10 h-10 rounded-full mb-2 border-2"
                     style={{ backgroundColor: themeData.colors.accentElevated }}
                   />
-
-                  {/* Theme Name */}
                   <span
-                    className={`text-xs font-medium text-center`}
+                    className="text-xs font-medium text-center"
                     style={isSelected ? { color: themeData.colors.accentBrand } : { color: 'var(--color-accent-subtle)' }}
                   >
                     {themeData.name}
                   </span>
-
-                  {/* Check Icon */}
                   {isSelected && (
                     <div className="absolute top-2 right-2">
                       <Check className="w-4 h-4" style={{ color: themeData.colors.accentBrand }} />
                     </div>
-                  )}
-
-                  {/* Hover Glow Effect */}
-                  {!isSelected && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   )}
                 </button>
               );

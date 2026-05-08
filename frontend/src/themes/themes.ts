@@ -20,16 +20,16 @@ export interface Theme {
 // Dark Mode Basis-Farben (verwendet für alle Dark Themes)
 const darkModeBase = {
   iconColor: '#a3a3a3',       // Icon-Füllung (textSecondary)
-  accentBg: '#0f0f0f',        // bg
-  accentSurface: '#1a1a1a',   // surface
+  accentBg: '#141414',        // bg
+  accentSurface: '#222222',   // surface
   accentElevated: '#242424',  // elevated
   accentBorder: '#2a2a2a',    // border
   accentMuted: '#737373',     // (muted als Platzhalter)
-  accentBrand: '#a3a3a3',     // textSecondary als Hauptakzent
-  accentBrandDim: '#a3a3a3',  // textSecondary
-  accentSubtle: '#737373',    // textMuted
+  accentBrand: '#a3a3a3',     // textSecondary als Hauptakzent DOPPELT
+  accentBrandDim: '#8b8b8b',  // textSecondary DOPPELT
+  accentSubtle: '#737373',    // textMuted DOPPELT
   accentSecondary: '#a3a3a3', // textSecondary
-  accentFg: '#e5e5e5',        // textPrimary
+  accentFg: '#e5e5e5',        // textPrimary UMBENENNEN
 };
 
 export const themes: Record<string, Theme> = {
@@ -46,7 +46,7 @@ export const themes: Record<string, Theme> = {
       accentBorder: '#86efac',
       accentMuted: '#4ade80',
       accentBrand: '#4ade80',
-      accentBrandDim: '#16a34a',
+      accentBrandDim: '#138a3f',
       accentSubtle: '#15803d',
       accentSecondary: '#166534',
       accentFg: '#14532d',
@@ -75,7 +75,7 @@ export const themes: Record<string, Theme> = {
       accentBorder: '#f9a8d4',
       accentMuted: '#f472b6',
       accentBrand: '#f472b6',
-      accentBrandDim: '#db2777',
+      accentBrandDim: '#ba2165',
       accentSubtle: '#be185d',
       accentSecondary: '#9d174d',
       accentFg: '#831843',
@@ -104,7 +104,7 @@ export const themes: Record<string, Theme> = {
       accentBorder: '#93c5fd',
       accentMuted: '#60a5fa',
       accentBrand: '#93c5fd',
-      accentBrandDim: '#2563eb',
+      accentBrandDim: '#1f54c8',
       accentSubtle: '#1d4ed8',
       accentSecondary: '#1e40af',
       accentFg: '#1e3a8a',
@@ -133,7 +133,7 @@ export const themes: Record<string, Theme> = {
       accentBorder: '#fde047',
       accentMuted: '#facc15',
       accentBrand: '#eab308',
-      accentBrandDim: '#ca8a04',
+      accentBrandDim: '#ac7503',
       accentSubtle: '#a16207',
       accentSecondary: '#854d0e',
       accentFg: '#713f12',
@@ -162,7 +162,7 @@ export const themes: Record<string, Theme> = {
       accentBorder: '#fdba74',
       accentMuted: '#fb923c',
       accentBrand: '#fb923c',
-      accentBrandDim: '#ea580c',
+      accentBrandDim: '#c74b0a',
       accentSubtle: '#c2410c',
       accentSecondary: '#9a3412',
       accentFg: '#7c2d12',
@@ -191,7 +191,7 @@ export const themes: Record<string, Theme> = {
       accentBorder: '#d4b8ac',
       accentMuted: '#d2bab0',
       accentBrand: '#c8957f',
-      accentBrandDim: '#d4a892',
+      accentBrandDim: '#ae826e',
       accentSubtle: '#977669',
       accentSecondary: '#846358',
       accentFg: '#43302b',
@@ -213,14 +213,14 @@ export const themes: Record<string, Theme> = {
     name: 'Growth Beige',
     description: 'Neutrales Beige',
     colors: {
-      iconColor: '#a89888',
+      iconColor: '#4d3823',
       accentBg: '#faf9f7',
       accentSurface: '#e7e5df',
       accentElevated: '#ccc4b5',
       accentBorder: '#bab4a6',
       accentMuted: '#a39e93',
       accentBrand: '#a89888',
-      accentBrandDim: '#b8a898',
+      accentBrandDim: '#928476',
       accentSubtle: '#5f5a50',
       accentSecondary: '#4e4a42',
       accentFg: '#3e3b35',
@@ -249,7 +249,7 @@ export const themes: Record<string, Theme> = {
       accentBorder: '#bec5d1',
       accentMuted: '#9ca3af',
       accentBrand: '#8892a2',
-      accentBrandDim: '#98a2b2',
+      accentBrandDim: '#767f8d',
       accentSubtle: '#374151',
       accentSecondary: '#1f2937',
       accentFg: '#111827',

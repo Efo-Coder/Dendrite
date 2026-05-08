@@ -42,7 +42,7 @@ export const noteService = {
     data: {
       title?: string;
       content?: string;
-      folderId?: string;
+      folderId?: string | null;
       tags?: string[];
     }
   ): Promise<Note> {

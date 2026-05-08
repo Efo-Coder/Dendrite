@@ -17,9 +17,12 @@ export function useGlassPill(containerRef: RefObject<HTMLElement | null>) {
       if (!container) return;
       const cRect = container.getBoundingClientRect();
       const bRect = e.currentTarget.getBoundingClientRect();
+      const style = getComputedStyle(container);
+      const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+      const borderTop = parseFloat(style.borderTopWidth) || 0;
       setPill({
-        left: bRect.left - cRect.left,
-        top: bRect.top - cRect.top,
+        left: bRect.left - cRect.left - borderLeft,
+        top: bRect.top - cRect.top - borderTop,
         width: bRect.width,
         height: bRect.height,
         isActive,

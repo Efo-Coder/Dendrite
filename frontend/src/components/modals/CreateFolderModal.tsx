@@ -5,6 +5,7 @@ import { useFolderStore } from '../../store/useFolderStore';
 interface CreateFolderModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onFolderCreated?: () => void;
 }
 
 const colors = [
@@ -18,7 +19,7 @@ const colors = [
   '#84cc16', // lime
 ];
 
-const CreateFolderModal = ({ isOpen, onClose }: CreateFolderModalProps) => {
+const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderModalProps) => {
   const { createFolder } = useFolderStore();
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#10b981');
@@ -42,6 +43,7 @@ const CreateFolderModal = ({ isOpen, onClose }: CreateFolderModalProps) => {
       });
       setName('');
       setSelectedColor('#10b981');
+      onFolderCreated?.();
       onClose();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Fehler beim Erstellen des Ordners');
@@ -142,7 +144,7 @@ const CreateFolderModal = ({ isOpen, onClose }: CreateFolderModalProps) => {
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group"
+            className="px-4 py-2 text-sm text-accent-fg hover:text-accent-brand transition-all relative group"
             disabled={isSubmitting}
           >
             <span className="relative">Abbrechen</span>
@@ -150,7 +152,7 @@ const CreateFolderModal = ({ isOpen, onClose }: CreateFolderModalProps) => {
           </button>
           <button
             type="submit"
-            className="px-4 py-2 text-sm text-white/70 hover:text-white transition-all relative group disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm text-accent-fg hover:text-accent-brand transition-all relative group disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={isSubmitting}
           >
             <span className="relative">{isSubmitting ? 'Erstelle...' : 'Erstellen'}</span>

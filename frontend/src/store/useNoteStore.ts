@@ -29,7 +29,7 @@ interface NoteState {
     data: {
       title?: string;
       content?: string;
-      folderId?: string;
+      folderId?: string | null;
       tags?: string[];
     }
   ) => Promise<void>;
@@ -148,6 +148,7 @@ export const useNoteStore = create<NoteState>((set, get) => ({
       const updatedNote = await noteService.togglePin(id);
       set((state) => ({
         notes: state.notes.map((note) => (note.id === id ? updatedNote : note)),
+        currentNote: state.currentNote?.id === id ? updatedNote : state.currentNote,
       }));
     } catch (error: any) {
       set({
@@ -161,6 +162,7 @@ export const useNoteStore = create<NoteState>((set, get) => ({
       const updatedNote = await noteService.toggleFavorite(id);
       set((state) => ({
         notes: state.notes.map((note) => (note.id === id ? updatedNote : note)),
+        currentNote: state.currentNote?.id === id ? updatedNote : state.currentNote,
       }));
     } catch (error: any) {
       set({

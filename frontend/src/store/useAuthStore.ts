@@ -14,6 +14,9 @@ interface AuthState {
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
   loadUser: () => Promise<void>;
+  updateProfile: (name: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -98,6 +101,20 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
       authService.logout();
     }
+  },
+
+  updateProfile: async (name: string) => {
+    const user = await authService.updateProfile(name);
+    set({ user });
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    await authService.changePassword(currentPassword, newPassword);
+  },
+
+  deleteAccount: async () => {
+    await authService.deleteAccount();
+    authService.logout();
   },
 
   clearError: () => set({ error: null }),

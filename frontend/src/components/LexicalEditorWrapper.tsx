@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useRef, useEffect } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { HeadingNode, QuoteNode, $isQuoteNode } from '@lexical/rich-text';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
@@ -30,7 +30,6 @@ import {
   KEY_ESCAPE_COMMAND,
   COMMAND_PRIORITY_HIGH,
 } from 'lexical';
-import { useEffect } from 'react';
 
 interface LexicalEditorWrapperProps {
   content: string;
@@ -277,6 +276,14 @@ const LexicalEditorWrapper = ({
   disabled = false,
   toolbar,
 }: LexicalEditorWrapperProps) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const initialConfig = {
     namespace: 'DendriteEditor',
     theme: editorTheme,
@@ -306,6 +313,8 @@ const LexicalEditorWrapper = ({
           color: var(--color-accent-900);
           font-size: 16px;
           line-height: 1.6;
+          isolation: isolate;
+          transform: translateZ(0);
         }
 
         .editor-input {
@@ -322,7 +331,7 @@ const LexicalEditorWrapper = ({
         }
 
         .editor-placeholder {
-          color: var(--color-accent-700);
+          color: color-mix(in srgb, var(--color-accent-brand) 45%, transparent);
           overflow: hidden;
           position: absolute;
           text-overflow: ellipsis;
@@ -336,12 +345,7 @@ const LexicalEditorWrapper = ({
 
         .editor-paragraph {
           margin: 0;
-          margin-bottom: 8px;
           position: relative;
-        }
-
-        .editor-paragraph:last-child {
-          margin-bottom: 0;
         }
 
         .editor-quote {
@@ -378,21 +382,21 @@ const LexicalEditorWrapper = ({
         .editor-list-ol {
           list-style-type: decimal;
           margin-left: 20px;
-          margin-top: 10px;
-          margin-bottom: 10px;
+          margin-top: 0;
+          margin-bottom: 0;
           padding: 0;
         }
 
         .editor-list-ul {
           list-style-type: disc;
           margin-left: 20px;
-          margin-top: 10px;
-          margin-bottom: 10px;
+          margin-top: 0;
+          margin-bottom: 0;
           padding: 0;
         }
 
         .editor-listitem {
-          margin-bottom: 5px;
+          margin-bottom: 0;
           color: var(--color-accent-900);
         }
 
@@ -448,6 +452,7 @@ const LexicalEditorWrapper = ({
 
         .editor-code {
           background-color: rgba(17, 24, 39, 0.8);
+          color: #ffffff;
           font-family: Menlo, Consolas, Monaco, monospace;
           display: block;
           padding: 12px;
@@ -510,7 +515,7 @@ const LexicalEditorWrapper = ({
         {toolbar}
 
         {/* Editor */}
-        <div className="flex-1 scrollbar-overlay px-12 pt-8 pb-8 bg-transparent">
+        <div ref={scrollRef} className="flex-1 scrollbar-overlay px-12 pt-8 pb-8 bg-transparent overflow-y-auto" style={{ isolation: 'isolate' }}>
           <div className="editor-container">
             <RichTextPlugin
               contentEditable={<ContentEditable className="editor-input" />}

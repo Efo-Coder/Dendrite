@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Sora:wght@300;400;500;600;700&display=swap');
 
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,7 +12,7 @@
 
     /* Light mode glass effect */
     --glass-bg: rgba(255, 255, 255, 0.62);
-    --glass-bg-strong: rgba(255, 255, 255, 0.8);
+    --glass-bg-strong: rgba(255, 255, 255, 1);
     --glass-bg-soft: rgba(255, 255, 255, 0.62);
     --glass-border: rgba(0, 0, 0, 0.08);
     --glass-border-strong: rgba(0, 0, 0, 0.13);
@@ -42,13 +43,13 @@
     background:
       radial-gradient(1200px circle at 10% 5%, color-mix(in srgb, var(--color-accent-muted) 18%, transparent), transparent 55%),
       radial-gradient(900px circle at 85% 0%, color-mix(in srgb, var(--color-accent-brand) 12%, transparent), transparent 55%),
-      linear-gradient(160deg, #0b0f17, #101826 55%, #0b0f17);
+      linear-gradient(160deg, var(--color-accent-bg), var(--color-accent-surface) 55%, var(--color-accent-bg));
   }
 
   html[data-theme="dark"] {
-    --glass-bg: rgba(12, 16, 24, 0.62);
-    --glass-bg-strong: rgba(10, 13, 20, 0.82);
-    --glass-bg-soft: rgba(16, 20, 30, 0.62);
+    --glass-bg: color-mix(in srgb, var(--color-accent-bg) 62%, transparent);
+    --glass-bg-strong: color-mix(in srgb, var(--color-accent-bg) 82%, transparent);
+    --glass-bg-soft: color-mix(in srgb, var(--color-accent-surface) 62%, transparent);
     --glass-border: rgba(255, 255, 255, 0.12);
     --glass-border-strong: rgba(255, 255, 255, 0.16);
     --glass-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
@@ -90,8 +91,13 @@
 @layer components {
   /* Button Styles */
   .btn {
-    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200 backdrop-blur-lg
-           focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    transition-property: all;
+    transition-duration: 200ms;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-inset), var(--glass-shadow);
@@ -100,6 +106,11 @@
   .btn:focus {
     outline: none;
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-brand) 35%, transparent), var(--glass-shadow);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .btn-primary {
@@ -115,6 +126,43 @@
 
   .btn-primary:active {
     transform: translateY(0);
+  }
+
+  .btn-subtle {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--color-accent-fg);
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .btn-subtle::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn-subtle:hover {
+    color: var(--color-accent-brand-dim);
+  }
+
+  .btn-subtle:hover::after {
+    opacity: 1;
+  }
+
+  .btn-subtle:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-subtle:disabled::after {
+    opacity: 0;
   }
 
   .btn-secondary {
@@ -135,16 +183,30 @@
     background: var(--glass-bg-soft);
   }
 
+  /* Hide native browser password reveal button */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
   /* Input Styles */
   .input {
-    @apply w-full px-4 py-2 rounded-xl transition-all duration-200 backdrop-blur-lg;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    transition-property: all;
+    transition-duration: 200ms;
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     color: var(--color-accent-fg);
   }
 
+  ::placeholder {
+    color: color-mix(in srgb, var(--color-accent-muted) 45%, transparent);
+  }
+
   .input::placeholder {
-    color: var(--color-accent-subtle);
+    color: color-mix(in srgb, var(--color-accent-muted) 45%, transparent);
   }
 
   .input:focus {
@@ -152,9 +214,33 @@
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-brand) 35%, transparent), var(--glass-shadow);
   }
 
+  /* Neutral inputs for pages with background image (login/register) */
+  .auth-inputs .input {
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    color: white;
+  }
+
+  .auth-inputs .input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.30);
+  }
+
+  .auth-inputs .input:-webkit-autofill,
+  .auth-inputs .input:-webkit-autofill:hover,
+  .auth-inputs .input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px rgba(30, 40, 35, 0.85) inset;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.90);
+    transition: background-color 5000s ease-in-out 0s;
+    font-size: 1rem;
+  }
+
   /* Card Styles */
   .card {
-    @apply rounded-2xl p-4 transition-all duration-200 backdrop-blur-xl;
+    border-radius: 1rem;
+    padding: 1rem;
+    transition: all 200ms ease;
+    backdrop-filter: blur(20px);
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
@@ -166,21 +252,28 @@
   }
 
   .glass-panel {
-    @apply backdrop-blur-xl;
+    backdrop-filter: blur(5px);
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
   }
 
   .glass-panel-strong {
-    @apply backdrop-blur-xl;
+    backdrop-filter: blur(20px);
     background: var(--glass-bg-strong);
     border: 1px solid var(--glass-border-strong);
     box-shadow: var(--glass-shadow-strong);
   }
 
+  .glass-header {
+    backdrop-filter: blur(20px);
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border-strong);
+    box-shadow: var(--glass-shadow);
+  }
+
   .glass-surface {
-    @apply backdrop-blur-lg;
+    backdrop-filter: blur(20px);
     background: var(--glass-bg-soft);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
@@ -227,12 +320,6 @@
       0 4px 16px rgba(0, 0, 0, 0.14),
       0 1px 4px rgba(0, 0, 0, 0.10),
       inset 0 1px 0 rgba(255, 255, 255, 0.85);
-    /* backdrop-filter: blur(1px);
-    padding: 2px;
-    mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    mask-composite: exclude; */
   }
 
   html[data-theme="dark"] .glass-pill {
@@ -245,14 +332,28 @@
       0 2px 8px rgba(0, 0, 0, 0.35);
   }
 
-  .glass-pill-active {
-    /* background: color-mix(in srgb, var(--color-accent-brand) 22%, rgba(255, 255, 255, 0.70)); */
-    /* border-color: color-mix(in srgb, var(--color-accent-brand) 45%, transparent); */
+  .glass-pill-circle {
+    border-radius: 9999px;
   }
 
-  html[data-theme="dark"] .glass-pill-active {
-    background: color-mix(in srgb, var(--color-accent-brand) 22%, rgba(255, 255, 255, 0.04));
-    border-color: color-mix(in srgb, var(--color-accent-brand) 40%, rgba(255, 255, 255, 0.12));
+  .note-item-selected {
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--color-accent-brand) 10%, rgba(255, 255, 255, 0.1));
+    border: 1px solid color-mix(in srgb, var(--color-accent-brand) 28%, transparent);
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.14),
+      0 1px 4px rgba(0, 0, 0, 0.10),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  }
+
+  html[data-theme="dark"] .note-item-selected {
+    background: color-mix(in srgb, var(--color-accent-brand) 12%, rgba(255, 255, 255, 0.08));
+    border: 1px solid color-mix(in srgb, var(--color-accent-brand) 30%, rgba(255, 255, 255, 0.14));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      0 2px 8px rgba(0, 0, 0, 0.35);
   }
 
   /* Hover overlay for NoteList */
@@ -263,7 +364,12 @@
 
   /* Badge Styles */
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
   }
 
   .badge-green {

@@ -40,7 +40,7 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
           <h2 className="text-base font-semibold text-accent-fg">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-accent-subtle hover-highlight hover:text-accent-fg transition-all"
+            className="text-accent-subtle hover:text-accent-brand transition-colors"
           >
             <X className="w-4 h-4" />
           </button>

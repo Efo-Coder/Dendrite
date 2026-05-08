@@ -1,13 +1,16 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import Logo from '../components/Logo';
+import { Eye, EyeOff } from 'lucide-react';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localError, setLocalError] = useState('');
   const { register, error, isLoading } = useAuthStore();
   const navigate = useNavigate();
@@ -37,19 +40,32 @@ const RegisterPage = () => {
   const displayError = localError || error;
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-12">
-      <div className="w-full max-w-md">
+    <div
+      className="min-h-screen flex items-center justify-center px-6 py-12 relative"
+      style={{ backgroundImage: "url('/dendrite-forest.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}
+    >
+      <div className="absolute inset-0" />
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo & Title */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <Logo size="lg" showText={true} />
+        <div className="text-center mb-6">
+          <div className="flex justify-center -mb-1">
+            <Logo size="xl" showText={false} style={{ '--color-icon': '#26ad53', '--color-accent-brand': '#1ee85a' } as React.CSSProperties} />
           </div>
-          <p className="text-accent-secondary">Erstelle dein Konto</p>
+          <h1 className="text-2xl font-bold text-white mb-1">Dendrite</h1>
+          <p className="text-white/80">Erstelle dein Konto</p>
         </div>
 
         {/* Register Form */}
-        <div className="glass-panel rounded-3xl p-8 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div
+          className="rounded-3xl p-8 shadow-2xl backdrop-blur-xl"
+          style={{
+            background: 'rgba(255, 255, 255, 0.10)',
+            border: '1px solid rgba(255, 255, 255, 0.18)',
+            boxShadow: '0 24px 60px rgba(0, 0, 0, 0.35)',
+          }}
+        >
+          <form onSubmit={handleSubmit} className="space-y-6 auth-inputs">
             {displayError && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg text-sm">
                 {displayError}
@@ -57,7 +73,7 @@ const RegisterPage = () => {
             )}
 
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-accent-fg mb-2">
+              <label htmlFor="name" className="block text-sm font-medium text-white/90 mb-2">
                 Name (optional)
               </label>
               <input
@@ -65,13 +81,13 @@ const RegisterPage = () => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input"
+                className="input placeholder-white/40"
                 placeholder="Dein Name"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-accent-fg mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-2">
                 E-Mail
               </label>
               <input
@@ -79,55 +95,73 @@ const RegisterPage = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input"
+                className="input placeholder-white/40"
                 placeholder="deine@email.com"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-accent-fg mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-white/90 mb-2">
                 Passwort
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                required
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input placeholder-white/40 pr-10"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-accent-fg mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/90 mb-2">
                 Passwort bestätigen
               </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="input"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                required
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="input placeholder-white/40 pr-10"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="btn btn-primary w-full"
+              className="btn-subtle w-full text-white/70 hover:text-white font-medium transition-colors"
             >
               {isLoading ? 'Wird registriert...' : 'Registrieren'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-accent-secondary text-sm">
+            <p className="text-white/90 text-sm">
               Bereits ein Konto?{' '}
-              <Link to="/login" className="text-accent-brand hover:text-accent-muted font-medium">
+              <Link to="/login" className="text-white/70 hover:text-white font-medium transition-colors">
                 Anmelden
               </Link>
             </p>

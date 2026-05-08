@@ -1,6 +1,8 @@
 ﻿import { useEffect, useState } from 'react';
 import { useNoteStore } from '../store/useNoteStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useFolderStore } from '../store/useFolderStore';
+import { useTagStore } from '../store/useTagStore';
 import { useToast } from '../components/ToastContainer';
 import Sidebar from '../components/Sidebar';
 import NoteList from '../components/NoteList';
@@ -13,6 +15,8 @@ type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag';
 
 const DashboardPage = () => {
   const { notes, fetchNotes, createNote, currentNote, setCurrentNote, deleteNote } = useNoteStore();
+  const { folders } = useFolderStore();
+  const { tags } = useTagStore();
   const { user } = useAuthStore();
   const toast = useToast();
   const [isCreating, setIsCreating] = useState(false);
@@ -188,9 +192,9 @@ const DashboardPage = () => {
       case 'trash':
         return 'Papierkorb';
       case 'folder':
-        return 'Ordner';
+        return folders.find(f => f.id === selectedFolderId)?.name ?? 'Ordner';
       case 'tag':
-        return 'Tag';
+        return tags.find(t => t.id === selectedTagId)?.name ?? 'Tag';
       default:
         return 'Notizen';
     }
@@ -215,9 +219,9 @@ const DashboardPage = () => {
 
         <div className="flex-1 flex gap-3 min-h-0">
           {/* Note List */}
-          <div className="w-80 glass-panel-strong rounded-2xl overflow-hidden flex flex-col relative">
+          <div className="w-80 glass-surface rounded-2xl overflow-hidden flex flex-col relative">
             {/* Note List Header */}
-            <div className="p-4 border-b glass-divider flex items-center justify-between">
+            <div className="p-4 border-b glass-header flex items-center justify-between">
               <h2 className="text-lg font-semibold text-accent-fg">
                 {getViewTitle()}
               </h2>
@@ -226,7 +230,7 @@ const DashboardPage = () => {
                   <button
                     onClick={handleCreateNote}
                     disabled={isCreating}
-                    className="btn-ghost p-2 rounded-lg"
+                    className="p-2 text-accent-subtle hover:text-accent-brand transition-colors"
                     title="Neue Notiz"
                   >
                     <Plus className="w-5 h-5" />
@@ -272,7 +276,7 @@ const DashboardPage = () => {
           </div>
 
           {/* Note Editor */}
-          <div className="flex-1 overflow-hidden glass-panel rounded-2xl relative">
+          <div className="flex-1 overflow-hidden glass-surface rounded-2xl relative isolate">
             {currentNote ? (
               <NoteEditor
                 note={currentNote}

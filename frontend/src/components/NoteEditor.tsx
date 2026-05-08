@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useGlassPill } from '../hooks/useGlassPill';
 import { Note } from '../types';
 import { useNoteStore } from '../store/useNoteStore';
@@ -20,6 +21,7 @@ import {
   RotateCcw,
   X,
   MoreHorizontal,
+  Check,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -38,20 +40,24 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
   const [content, setContent] = useState(note.content);
   const [isSaving, setIsSaving] = useState(false);
-  const [showFolderDropdown, setShowFolderDropdown] = useState(false);
-  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [folderMenuPos, setFolderMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [tagMenuPos, setTagMenuPos] = useState<{ x: number; y: number } | null>(null);
 
-  // Left overflow (Folder/Tag)
+  // Toolbar overflow
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [isCompact, setIsCompact] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
-
-  // Hide save text when toolbar is narrow
   const [isNarrow, setIsNarrow] = useState(false);
 
   const { pill: toolbarPill, onEnter: onToolbarEnter, onLeave: onToolbarLeave } = useGlassPill(toolbarRef);
   const overflowPopupRef = useRef<HTMLDivElement>(null);
   const { pill: overflowPill, onEnter: onOverflowEnter, onLeave: onOverflowLeave } = useGlassPill(overflowPopupRef);
+
+  // Folder/Tag context menu refs + pills
+  const folderMenuRef = useRef<HTMLDivElement>(null);
+  const tagMenuRef = useRef<HTMLDivElement>(null);
+  const { pill: folderPill, onEnter: onFolderEnter, onLeave: onFolderLeave } = useGlassPill(folderMenuRef);
+  const { pill: tagPill, onEnter: onTagEnter, onLeave: onTagLeave } = useGlassPill(tagMenuRef);
 
   useEffect(() => {
     setContent(note.content);
@@ -68,6 +74,18 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
     });
     observer.observe(el);
     return () => observer.disconnect();
+  }, []);
+
+  // Close menus on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setFolderMenuPos(null);
+        setTagMenuPos(null);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, []);
 
   // Auto-save
@@ -96,8 +114,8 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
   const handleMoveToFolder = async (folderId: string | null) => {
     try {
-      await updateNote(note.id, { folderId: folderId || undefined });
-      setShowFolderDropdown(false);
+      await updateNote(note.id, { folderId });
+      setFolderMenuPos(null);
       toast.info('Notiz verschoben');
       if (onNoteUpdate) onNoteUpdate();
     } catch (error) {
@@ -122,7 +140,6 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
   const handleDelete = async () => {
     if (note.isDeleted) {
-      // Permanent delete - keine Bestätigung nötig, direkt löschen
       try {
         await deleteNote(note.id);
         setCurrentNote(null);
@@ -132,10 +149,9 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
         toast.error('Fehler beim Löschen');
       }
     } else {
-      // Move to trash
       try {
         await toggleTrash(note.id);
-        setCurrentNote(null); // Close editor after moving to trash
+        setCurrentNote(null);
         toast.error('Notiz gelöscht');
         if (onNoteUpdate) onNoteUpdate();
       } catch (error) {
@@ -173,106 +189,58 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
     setCurrentNote(null);
   };
 
+  const openFolderMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTagMenuPos(null);
+    setFolderMenuPos(prev => prev ? null : { x: rect.left, y: rect.bottom + 4 });
+  };
+
+  const openTagMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setFolderMenuPos(null);
+    setTagMenuPos(prev => prev ? null : { x: rect.left, y: rect.bottom + 4 });
+  };
+
   const isInTrash = note.isDeleted;
   const isArchived = note.isArchived && !note.isDeleted;
 
-  // Folder/Tag dropdown JSX — reused in both inline and overflow contexts
-  const folderDropdown = (enterFn?: (e: React.MouseEvent<HTMLButtonElement>) => void) => (
-    <div className="relative">
-      <button
-        onClick={() => setShowFolderDropdown(!showFolderDropdown)}
-        onMouseEnter={enterFn}
-        className="p-2 rounded-lg text-accent-subtle hover-text-themed transition-colors relative z-10"
-        title="Ordner wählen"
-      >
-        <FolderOpen className="w-4 h-4" />
-      </button>
-      {showFolderDropdown && (
-        <>
-          <div className="fixed inset-0" onClick={() => setShowFolderDropdown(false)} />
-          <div className="absolute left-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl max-h-64 overflow-y-auto z-50">
-            <button
-              onClick={() => handleMoveToFolder(null)}
-              className="w-full px-4 py-2 text-left text-sm hover-highlight transition-colors"
-            >
-              <span className="text-accent-secondary">Kein Ordner</span>
-            </button>
-            {folders.map((folder) => (
-              <button
-                key={folder.id}
-                onClick={() => handleMoveToFolder(folder.id)}
-                className={clsx(
-                  'w-full px-4 py-2 text-left text-sm hover-highlight transition-colors flex items-center space-x-2',
-                  note.folderId === folder.id && 'bg-accent-brand/10 text-accent-brand'
-                )}
-              >
-                <FolderOpen className="w-4 h-4" style={{ color: folder.color || '#10b981' }} />
-                <span>{folder.name}</span>
-              </button>
-            ))}
-          </div>
-        </>
+  // Reusable button renderers (just the trigger, menu rendered via portal)
+  const folderButton = (enterFn?: (e: React.MouseEvent<HTMLButtonElement>) => void) => (
+    <button
+      onClick={openFolderMenu}
+      onMouseEnter={enterFn}
+      className={clsx(
+        'p-2 rounded-lg transition-colors relative z-10',
+        folderMenuPos ? 'text-accent-brand' : 'text-accent-fg'
       )}
-    </div>
+      title="Ordner wählen"
+    >
+      <FolderOpen className="w-4 h-4" />
+    </button>
   );
 
-  const tagDropdown = (enterFn?: (e: React.MouseEvent<HTMLButtonElement>) => void) => (
-    <div className="relative">
-      <button
-        onClick={() => setShowTagDropdown(!showTagDropdown)}
-        onMouseEnter={enterFn}
-        className="p-2 rounded-lg text-accent-subtle hover-text-themed transition-colors relative z-10"
-        title="Tags verwalten"
-      >
-        <TagIcon className="w-4 h-4" />
-      </button>
-      {showTagDropdown && (
-        <>
-          <div className="fixed inset-0" onClick={() => setShowTagDropdown(false)} />
-          <div className="absolute left-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl max-h-64 overflow-y-auto z-50">
-            {tags.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-accent-subtle italic">Keine Tags verfügbar</div>
-            ) : (
-              tags.map((tag) => {
-                const isSelected = note.tags?.some(t => t.id === tag.id);
-                return (
-                  <button
-                    key={tag.id}
-                    onClick={() => handleToggleTag(tag.id)}
-                    className={clsx(
-                      'w-full px-4 py-2 text-left text-sm hover-highlight transition-colors flex items-center',
-                      isSelected && 'bg-accent-brand/10'
-                    )}
-                  >
-                    <div className="flex items-center space-x-2 flex-1 min-w-0">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => {}}
-                        className="w-4 h-4 rounded border-white/30 flex-shrink-0"
-                        style={{ accentColor: tag.color }}
-                      />
-                      <TagIcon className="w-4 h-4 flex-shrink-0" style={{ color: tag.color }} />
-                      <span className="truncate">{tag.name}</span>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </>
+  const tagButton = (enterFn?: (e: React.MouseEvent<HTMLButtonElement>) => void) => (
+    <button
+      onClick={openTagMenu}
+      onMouseEnter={enterFn}
+      className={clsx(
+        'p-2 rounded-lg transition-colors relative z-10',
+        tagMenuPos ? 'text-accent-brand' : 'text-accent-fg'
       )}
-    </div>
+      title="Tags verwalten"
+    >
+      <TagIcon className="w-4 h-4" />
+    </button>
   );
 
   return (
     <div className="h-full flex flex-col bg-transparent relative">
-      {/* Toolbar wrapper — relative but NO backdrop-filter, so dropdowns render on top of editor */}
-      <div className="relative">
-        <div ref={toolbarRef} className="p-4 h-9 glass-surface px-10 flex items-center justify-between relative" onMouseLeave={onToolbarLeave}>
+      {/* Toolbar wrapper — z-10 ensures stacking context above the editor's overflow stacking context */}
+      <div className="relative z-10">
+        <div ref={toolbarRef} className="p-4 h-9 glass-header px-6 flex items-center justify-between relative" style={{ boxShadow: 'none' }} onMouseLeave={onToolbarLeave}>
           {toolbarPill && (
             <div
-              className={clsx('glass-pill', toolbarPill.isActive && 'glass-pill-active')}
+              className="glass-pill"
               style={{ left: toolbarPill.left, top: toolbarPill.top, width: toolbarPill.width, height: toolbarPill.height }}
             />
           )}
@@ -285,7 +253,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                   onMouseEnter={(e) => onToolbarEnter(e, note.isPinned)}
                   className={clsx(
                     'p-2 rounded-lg transition-colors relative z-10',
-                    note.isPinned ? 'text-accent-brand' : 'text-accent-subtle hover-text-themed'
+                    note.isPinned ? 'text-accent-brand' : 'text-accent-fg'
                   )}
                   title="Notiz anheften"
                 >
@@ -296,7 +264,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                   onMouseEnter={(e) => onToolbarEnter(e, false)}
                   className={clsx(
                     'p-2 rounded-lg transition-colors relative z-10',
-                    note.isFavorite ? 'text-yellow-500' : 'text-accent-subtle hover-text-themed'
+                    note.isFavorite ? 'text-yellow-500' : 'text-accent-fg'
                   )}
                   title="Zu Favoriten hinzufügen"
                 >
@@ -305,7 +273,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                 <button
                   onClick={handleArchive}
                   onMouseEnter={(e) => onToolbarEnter(e, false)}
-                  className="p-2 rounded-lg text-accent-subtle  hover-text-themed transition-colors relative z-10"
+                  className="p-2 rounded-lg text-accent-fg transition-colors relative z-10"
                   title="Archivieren"
                 >
                   <Archive className="w-4 h-4" />
@@ -313,8 +281,8 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
                 {!isCompact ? (
                   <>
-                    {folderDropdown((e) => onToolbarEnter(e, false))}
-                    {tagDropdown((e) => onToolbarEnter(e, false))}
+                    {folderButton((e) => onToolbarEnter(e, false))}
+                    {tagButton((e) => onToolbarEnter(e, false))}
                   </>
                 ) : (
                   <button
@@ -322,7 +290,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                     onMouseEnter={(e) => onToolbarEnter(e, showOverflow)}
                     className={clsx(
                       'p-2 rounded-lg transition-colors flex-shrink-0 mr-2 relative z-10',
-                      showOverflow ? 'text-accent-brand' : 'text-accent-subtle hover-text-themed'
+                      showOverflow ? 'text-accent-brand' : 'text-accent-fg'
                     )}
                     title="Weitere Optionen"
                   >
@@ -333,12 +301,12 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             )}
 
             {isArchived && (
-              <button onClick={handleRestore} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-accent-subtle hover-text-themed transition-colors relative z-10" title="Aus Archiv wiederherstellen">
+              <button onClick={handleRestore} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-accent-fg transition-colors relative z-10" title="Aus Archiv wiederherstellen">
                 <ArchiveRestore className="w-4 h-4" />
               </button>
             )}
             {isInTrash && (
-              <button onClick={handleRestore} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-accent-subtle hover-text-themed transition-colors relative z-10" title="Wiederherstellen">
+              <button onClick={handleRestore} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-accent-fg transition-colors relative z-10" title="Wiederherstellen">
                 <RotateCcw className="w-4 h-4" />
               </button>
             )}
@@ -347,8 +315,8 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
           {/* Right side — Trash + Close always visible */}
           <div className="flex items-center gap-1">
             {!isInTrash && (
-              <div className="flex items-center space-x-1 text-xs text-accent-subtle min-w-0 mr-1">
-                <Clock className="w-4 h-4 flex-shrink-0" />
+              <div className="flex items-center space-x-2 text-xs text-accent-secondary min-w-0 mr-1">
+                <Clock className="w-4 h-4 flex-shrink-0 text-accent-fg" />
                 {!isNarrow && (
                   <span className="truncate">
                     {isSaving
@@ -361,30 +329,30 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             <button
               onClick={handleDelete}
               onMouseEnter={(e) => onToolbarEnter(e, false)}
-              className="p-2 rounded-lg text-accent-subtle hover:text-red-500 transition-colors relative z-10"
+              className="p-2 rounded-lg text-accent-fg hover:text-red-500 transition-colors relative z-10"
               title={isInTrash ? 'Endgültig löschen' : 'In Papierkorb'}
             >
               <Trash2 className="w-4 h-4" />
             </button>
-            <button onClick={handleClose} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-accent-subtle hover-text-themed transition-colors relative z-10" title="Notiz schließen">
+            <button onClick={handleClose} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-accent-fg transition-colors relative z-10" title="Notiz schließen">
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Left overflow dropdown — sibling of toolbar, outside backdrop-filter stacking context */}
+        {/* Compact overflow popup */}
         {isCompact && !isInTrash && !isArchived && showOverflow && (
           <>
             <div className="fixed inset-0" onClick={() => setShowOverflow(false)} />
             <div ref={overflowPopupRef} className="absolute top-full left-10 mt-1 glass-panel rounded-xl shadow-xl p-2 z-50 flex gap-1" onMouseLeave={onOverflowLeave}>
               {overflowPill && (
                 <div
-                  className={clsx('glass-pill', overflowPill.isActive && 'glass-pill-active')}
+                  className="glass-pill"
                   style={{ left: overflowPill.left, top: overflowPill.top, width: overflowPill.width, height: overflowPill.height }}
                 />
               )}
-              {folderDropdown((e) => onOverflowEnter(e, false))}
-              {tagDropdown((e) => onOverflowEnter(e, false))}
+              {folderButton((e) => onOverflowEnter(e, false))}
+              {tagButton((e) => onOverflowEnter(e, false))}
             </div>
           </>
         )}
@@ -402,6 +370,89 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
       {/* Attachments */}
       <AttachmentList noteId={note.id} onAttachmentsChange={onNoteUpdate} />
+
+      {/* Folder context menu — portal to document.body */}
+      {folderMenuPos && createPortal(
+        <>
+          <div className="fixed inset-0 z-[9998]" onClick={() => setFolderMenuPos(null)} />
+          <div
+            ref={folderMenuRef}
+            className="fixed glass-panel rounded-xl shadow-lg py-1 overflow-hidden z-[9999]"
+            style={{ left: folderMenuPos.x, top: folderMenuPos.y, minWidth: '200px' }}
+            onMouseLeave={onFolderLeave}
+          >
+            {folderPill && (
+              <div
+                className="glass-pill pointer-events-none"
+                style={{ left: folderPill.left, top: folderPill.top, width: folderPill.width, height: folderPill.height }}
+              />
+            )}
+            <button
+              onClick={() => handleMoveToFolder(null)}
+              onMouseEnter={onFolderEnter}
+              className="relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors text-accent-fg"
+            >
+              <FolderOpen className="w-4 h-4 text-accent-subtle flex-shrink-0" />
+              <span className="flex-1 text-left text-accent-secondary">Kein Ordner</span>
+              {!note.folderId && <Check className="w-3 h-3 text-accent-brand flex-shrink-0" />}
+            </button>
+            {folders.map((folder) => (
+              <button
+                key={folder.id}
+                onClick={() => handleMoveToFolder(folder.id)}
+                onMouseEnter={onFolderEnter}
+                className={clsx(
+                  'relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
+                  note.folderId === folder.id ? 'text-accent-brand' : 'text-accent-fg'
+                )}
+              >
+                <FolderOpen className="w-4 h-4 flex-shrink-0" style={{ color: folder.color || '#10b981' }} />
+                <span className="flex-1 text-left">{folder.name}</span>
+                {note.folderId === folder.id && <Check className="w-3 h-3 text-accent-brand flex-shrink-0" />}
+              </button>
+            ))}
+          </div>
+        </>,
+        document.body
+      )}
+
+      {/* Tag context menu — portal to document.body */}
+      {tagMenuPos && createPortal(
+        <>
+          <div className="fixed inset-0 z-[9998]" onClick={() => setTagMenuPos(null)} />
+          <div
+            ref={tagMenuRef}
+            className="fixed glass-panel rounded-xl shadow-lg py-1 overflow-hidden z-[9999]"
+            style={{ left: tagMenuPos.x, top: tagMenuPos.y, minWidth: '200px' }}
+            onMouseLeave={onTagLeave}
+          >
+            {tagPill && (
+              <div
+                className="glass-pill pointer-events-none"
+                style={{ left: tagPill.left, top: tagPill.top, width: tagPill.width, height: tagPill.height }}
+              />
+            )}
+            {tags.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-accent-subtle italic">Keine Tags verfügbar</div>
+            ) : tags.map((tag) => {
+              const isSelected = note.tags?.some(t => t.id === tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  onClick={() => handleToggleTag(tag.id)}
+                  onMouseEnter={onTagEnter}
+                  className="relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors text-accent-fg"
+                >
+                  <TagIcon className="w-4 h-4 flex-shrink-0" style={{ color: tag.color }} />
+                  <span className="flex-1 text-left">{tag.name}</span>
+                  {isSelected && <Check className="w-3 h-3 text-accent-brand flex-shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, Fragment } from 'react';
+import { createPortal } from 'react-dom';
 import { useGlassPill } from '../hooks/useGlassPill';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
@@ -304,7 +305,7 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
       disabled={disabled}
       className={clsx(
         'p-2 rounded-lg transition-colors flex-shrink-0 relative z-10',
-        btn.isActive ? 'text-accent-brand' : 'text-accent-subtle hover-text-themed',
+        btn.isActive ? 'text-accent-brand' : 'text-accent-fg',
         'disabled:opacity-50 disabled:cursor-not-allowed'
       )}
       title={btn.title}
@@ -316,10 +317,10 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
   return (
     /* Wrapper — relative but NO backdrop-filter, so dropdown renders on top of editor */
     <div className="relative">
-    <div ref={containerRef} className="p-4 h-8  glass-surface px-10 flex items-center gap-1 relative" onMouseLeave={onLeave}>
+    <div ref={containerRef} className="p-4 h-8 glass-header px-6 flex items-center gap-1 relative" style={{ boxShadow: '0 12px 12px rgba(15, 23, 42, 0.08)' }} onMouseLeave={onLeave}>
       {pill && (
         <div
-          className={clsx('glass-pill', pill.isActive && 'glass-pill-active')}
+          className="glass-pill"
           style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height }}
         />
       )}
@@ -339,7 +340,7 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
             onMouseEnter={(e) => onEnter(e, showOverflow)}
             className={clsx(
               'p-2 rounded-lg transition-colors flex-shrink-0 relative z-10',
-              showOverflow ? 'text-accent-brand' : 'text-accent-subtle hover-text-themed'
+              showOverflow ? 'text-accent-brand' : 'text-accent-fg'
             )}
             title="Weitere Optionen"
           >
@@ -356,7 +357,7 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
         <div ref={overflowDropdownRef} className="absolute top-full right-0 mt-1 glass-panel rounded-xl shadow-xl p-2 z-50" onMouseLeave={onOverflowLeave}>
           {overflowPill && (
             <div
-              className={clsx('glass-pill', overflowPill.isActive && 'glass-pill-active')}
+              className="glass-pill"
               style={{ left: overflowPill.left, top: overflowPill.top, width: overflowPill.width, height: overflowPill.height }}
             />
           )}
@@ -373,13 +374,13 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
     )}
 
       {/* Link Modal */}
-      {showLinkModal && (
+      {showLinkModal && createPortal(
         <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowLinkModal(false)} />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-xl shadow-2xl p-6 w-96">
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setShowLinkModal(false)} />
+          <div className="fixed top-1/2 left-1/2 z-50 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-xl shadow-2xl p-6 w-96">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-accent-fg">Link hinzufügen</h3>
-              <button onClick={() => setShowLinkModal(false)} className="p-1.5 rounded-lg text-accent-subtle hover-highlight hover-text-themed transition-all">
+              <button onClick={() => setShowLinkModal(false)} className="p-1.5 text-accent-subtle hover-text-themed transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -409,17 +410,18 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
 
       {/* Image Modal */}
-      {showImageModal && (
+      {showImageModal && createPortal(
         <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !isUploading && setShowImageModal(false)} />
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-xl shadow-2xl p-6 w-[450px]">
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => !isUploading && setShowImageModal(false)} />
+          <div className="fixed top-1/2 left-1/2 z-50 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-xl shadow-2xl p-6 w-[450px]">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-accent-fg">Bild hinzufügen</h3>
-              <button onClick={() => !isUploading && setShowImageModal(false)} disabled={isUploading} className="p-1.5 rounded-lg text-accent-subtle hover-highlight hover-text-themed transition-all disabled:opacity-50">
+              <button onClick={() => !isUploading && setShowImageModal(false)} disabled={isUploading} className="p-1.5 text-accent-subtle hover-text-themed transition-colors disabled:opacity-50">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -509,7 +511,8 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );

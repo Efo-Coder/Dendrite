@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { useGlassPill } from '../hooks/useGlassPill';
+import { useEffect, useState, useRef } from 'react';
 import { FileText, Star, Folder, Tag, Trash2, Archive, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useFolderStore } from '../store/useFolderStore';
 import { useTagStore } from '../store/useTagStore';
@@ -11,6 +10,7 @@ import EditFolderModal from './modals/EditFolderModal';
 import ContextMenu from './ContextMenu';
 import Logo from './Logo';
 import { Tag as TagType, Folder as FolderType } from '../types';
+import { useGlassPill } from '../hooks/useGlassPill';
 
 type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag';
 
@@ -33,6 +33,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   const [showEditFolderModal, setShowEditFolderModal] = useState(false);
   const [selectedTag, setSelectedTag] = useState<TagType | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<FolderType | null>(null);
+
   const navRef = useRef<HTMLDivElement>(null);
   const folderListRef = useRef<HTMLDivElement>(null);
   const tagListRef = useRef<HTMLDivElement>(null);
@@ -172,11 +173,11 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   return (
     <>
       <aside className={clsx(
-        "glass-panel rounded-2xl flex flex-col transition-all duration-300 overflow-hidden flex-none",
+        "glass-surface rounded-2xl flex flex-col transition-all duration-300 overflow-hidden flex-none",
         isCollapsed ? "w-16" : "w-64"
       )}>
         {/* Logo */}
-        <div className="h-16 glass-surface flex items-center px-4">
+        <div className="h-16 glass-header flex items-center px-4">
           <Logo size="md" showText={!isCollapsed} />
         </div>
 
@@ -186,7 +187,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
           <div ref={navRef} className="relative flex flex-col gap-1" onMouseLeave={onNavLeave}>
             {navPill && (
               <div
-                className={clsx('glass-pill', navPill.isActive && 'glass-pill-active')}
+                className="glass-pill"
                 style={{ left: navPill.left, top: navPill.top, width: navPill.width, height: navPill.height }}
               />
             )}
@@ -202,7 +203,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     'w-full flex items-center rounded-lg transition-all duration-200 py-2.5 relative z-10',
                     isActive
                       ? 'text-accent-brand'
-                      : 'text-accent-secondary hover-text-themed'
+                      : 'text-accent-fg'
                   )}
                   title={isCollapsed ? item.label : undefined}
                 >
@@ -222,7 +223,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
 
           {/* Divider */}
           <div className="pt-4 pb-2">
-            <div className="h-px border-t glass-divider" />
+            <div className="h-px border-t glass-divider mx-5" />
           </div>
 
           {/* Folders Section */}
@@ -254,7 +255,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               <div ref={folderListRef} className="relative flex flex-col gap-0.5" onMouseLeave={onFolderLeave}>
                 {folderPill && (
                   <div
-                    className={clsx('glass-pill', folderPill.isActive && 'glass-pill-active')}
+                    className="glass-pill"
                     style={{ left: folderPill.left, top: folderPill.top, width: folderPill.width, height: folderPill.height }}
                   />
                 )}
@@ -270,7 +271,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                       'w-full flex items-center rounded-lg transition-all duration-200 py-2.5 relative z-10',
                       isFolderActive
                         ? 'text-accent-brand'
-                        : 'text-accent-secondary hover-text-themed'
+                        : 'text-accent-fg'
                     )}
                     title={isCollapsed ? folder.name : undefined}
                   >
@@ -282,10 +283,11 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                         />
                         {(folder.notes?.length ?? 0) > 0 && (
                           <span className={clsx(
-                            "absolute -bottom-0.5 left-[calc(100%-5px)] text-[9px] leading-none font-semibold text-accent-subtle bg-[var(--glass-bg)] rounded-full px-[2px] shadow-[0_0_0_1.5px_color-mix(in_srgb,var(--color-accent-brand)_25%,transparent)] transition-opacity duration-200",
+                            "absolute -bottom-0.5 left-[calc(100%-5px)] text-[9px] leading-none font-semibold text-accent-subtle rounded-full px-[2px] shadow-[0_0_0_1.5px_color-mix(in_srgb,var(--color-accent-secondary)_25%,transparent)] transition-opacity duration-200 overflow-hidden",
                             isCollapsed ? "opacity-100 delay-[50ms]" : "opacity-0"
                           )}>
-                            {folder.notes?.length}
+                            <span className="absolute inset-0 rounded-full backdrop-blur-xl bg-[var(--glass-bg)]" />
+                            <span className="relative z-10 text-accent-secondary">{folder.notes?.length}</span>
                           </span>
                         )}
                       </span>
@@ -342,7 +344,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               <div ref={tagListRef} className="relative flex flex-col gap-0.5" onMouseLeave={onTagLeave}>
                 {tagPill && (
                   <div
-                    className={clsx('glass-pill', tagPill.isActive && 'glass-pill-active')}
+                    className="glass-pill"
                     style={{ left: tagPill.left, top: tagPill.top, width: tagPill.width, height: tagPill.height }}
                   />
                 )}
@@ -358,7 +360,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                       'w-full flex items-center rounded-lg transition-all duration-200 py-2.5 relative z-10',
                       isTagActive
                         ? 'text-accent-brand'
-                        : 'text-accent-secondary hover-text-themed'
+                        : 'text-accent-fg'
                     )}
                     title={isCollapsed ? tag.name : undefined}
                   >
@@ -370,10 +372,11 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                         />
                         {(tag.notes?.length ?? 0) > 0 && (
                           <span className={clsx(
-                            "absolute -bottom-0.5 left-[calc(100%-5px)] text-[9px] leading-none font-semibold text-accent-subtle bg-[var(--glass-bg)] rounded-full px-[2px] shadow-[0_0_0_1.5px_color-mix(in_srgb,var(--color-accent-brand)_25%,transparent)] transition-opacity duration-200",
+                            "absolute bottom-1 left-[calc(100%-5px)] text-[9px] leading-none font-semibold text-accent-subtle rounded-full px-[2px] shadow-[0_0_0_1.5px_color-mix(in_srgb,var(--color-accent-secondary)_25%,transparent)] transition-opacity duration-200 overflow-hidden",
                             isCollapsed ? "opacity-100 delay-[50ms]" : "opacity-0"
                           )}>
-                            {tag.notes?.length}
+                            <span className="absolute inset-0 rounded-full backdrop-blur-xl bg-[var(--glass-bg)]" />
+                            <span className="relative z-10 text-accent-secondary">{tag.notes?.length}</span>
                           </span>
                         )}
                       </span>
