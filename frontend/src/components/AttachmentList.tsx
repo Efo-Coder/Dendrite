@@ -65,7 +65,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4">
-        <Loader2 className="w-5 h-5 text-accent-subtle animate-spin" />
+        <Loader2 className="w-5 h-5 text-text-secondary animate-spin" />
       </div>
     );
   }
@@ -76,7 +76,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
 
   return (
     <div className="px-6 md:px-12 py-4 border-t glass-divider">
-      <h4 className="text-sm font-medium text-accent-secondary mb-3">
+      <h4 className="text-sm font-medium text-text-secondary mb-3">
         AnhÃ¤nge ({attachments.length})
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -87,7 +87,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
           return (
             <div
               key={attachment.id}
-              className="flex items-start space-x-3 p-3 glass-surface rounded-xl hover:border-white/40 transition-colors"
+              className="flex items-start space-x-3 p-3 glass-popup rounded-xl hover:border-white/40 transition-colors"
             >
               {isImage ? (
                 <a
@@ -104,7 +104,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 </a>
               ) : (
                 <div className="flex-shrink-0 w-12 h-12 bg-white/30 rounded flex items-center justify-center border border-white/30">
-                  <FileText className="w-6 h-6 text-accent-subtle" />
+                  <FileText className="w-6 h-6 text-text-secondary" />
                 </div>
               )}
 
@@ -113,12 +113,12 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                   href={attachmentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-accent-fg hover:text-accent-brand transition-colors truncate block font-medium"
+                  className="text-sm text-text-primary hover:text-brand-primary transition-colors truncate block font-medium"
                   title={attachment.filename}
                 >
                   {attachment.filename}
                 </a>
-                <p className="text-xs text-accent-subtle mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5">
                   {formatFileSize(attachment.fileSize)}
                 </p>
               </div>
@@ -127,7 +127,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 <a
                   href={attachmentUrl}
                   download={attachment.filename}
-                  className="p-1.5 rounded text-accent-subtle hover-highlight hover:text-accent-brand transition-colors"
+                  className="p-1.5 rounded text-text-secondary hover-highlight hover:text-brand-primary transition-colors"
                   title="Herunterladen"
                 >
                   <Download className="w-4 h-4" />
@@ -135,7 +135,7 @@ const AttachmentList = ({ noteId, onAttachmentsChange }: AttachmentListProps) =>
                 <button
                   onClick={() => handleDelete(attachment.id)}
                   disabled={deletingId === attachment.id}
-                  className="p-1.5 rounded text-accent-subtle hover-highlight hover:text-red-500 transition-colors disabled:opacity-50"
+                  className="p-1.5 rounded text-text-secondary hover-highlight hover:text-red-500 transition-colors disabled:opacity-50"
                   title="Löschen"
                 >
                   {deletingId === attachment.id ? (

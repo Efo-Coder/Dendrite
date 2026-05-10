@@ -9,6 +9,8 @@ node_modules/
 # Production
 /build
 /dist
+backend/dist/
+frontend/dist/
 
 # Environment
 .env
@@ -48,3 +50,11 @@ postgres_data/
 
 # Assets (lokale Dateien, nicht versionieren)
 assets/
+
+*.txt
+
+# Uploads (user-generated files at runtime)
+backend/uploads/
+
+# Test artifacts
+frontend/test-output.css

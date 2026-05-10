@@ -70,7 +70,7 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
 
         {/* Name Input */}
         <div>
-          <label htmlFor="folder-name" className="block text-xs font-medium text-accent-fg mb-2 uppercase tracking-wide">
+          <label htmlFor="folder-name" className="block text-xs font-medium text-text-primary mb-2 uppercase tracking-wide">
             Name
           </label>
           <input
@@ -87,7 +87,7 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
 
         {/* Color Picker */}
         <div>
-          <label className="block text-xs font-medium text-accent-fg mb-2 uppercase tracking-wide">
+          <label className="block text-xs font-medium text-text-primary mb-2 uppercase tracking-wide">
             Farbe
           </label>
           <div className="grid grid-cols-8 gap-2 mb-3">
@@ -98,7 +98,7 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
                 onClick={() => setSelectedColor(color)}
                 className={`w-8 h-8 rounded-lg transition-all relative group ${
                   selectedColor === color
-                    ? 'ring-1 ring-accent-brand scale-110'
+                    ? 'ring-1 ring-brand-primary scale-110'
                     : 'hover:scale-105'
                 }`}
                 style={{ backgroundColor: color }}
@@ -109,7 +109,7 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
 
           {/* Custom Color Picker */}
           <div className="flex items-center gap-3">
-            <label htmlFor="custom-color" className="text-sm text-accent-secondary">
+            <label htmlFor="custom-color" className="text-sm text-text-secondary">
               Oder eigene Farbe:
             </label>
             <div className="flex items-center gap-2">
@@ -125,14 +125,14 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
                 <div
                   className={`w-8 h-8 rounded-lg cursor-pointer transition-all relative group ${
                     !colors.includes(selectedColor)
-                      ? 'ring-1 ring-accent-brand scale-110'
+                      ? 'ring-1 ring-brand-primary scale-110'
                       : 'hover:scale-105'
                   }`}
                   style={{ backgroundColor: selectedColor }}
                   onClick={() => document.getElementById('custom-color')?.click()}
                 />
               </div>
-              <span className="text-xs text-accent-subtle font-mono">
+              <span className="text-xs text-text-secondary font-mono">
                 {selectedColor}
               </span>
             </div>
@@ -141,22 +141,11 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
 
         {/* Buttons */}
         <div className="flex items-center justify-end space-x-2 pt-2">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="px-4 py-2 text-sm text-accent-fg hover:text-accent-brand transition-all relative group"
-            disabled={isSubmitting}
-          >
-            <span className="relative">Abbrechen</span>
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
+          <button type="button" onClick={handleClose} className="btn" disabled={isSubmitting}>
+            Abbrechen
           </button>
-          <button
-            type="submit"
-            className="px-4 py-2 text-sm text-accent-fg hover:text-accent-brand transition-all relative group disabled:opacity-40 disabled:cursor-not-allowed"
-            disabled={isSubmitting}
-          >
-            <span className="relative">{isSubmitting ? 'Erstelle...' : 'Erstellen'}</span>
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 group-disabled:opacity-0 transition-opacity"></span>
+          <button type="submit" className="btn" disabled={isSubmitting}>
+            {isSubmitting ? 'Erstelle...' : 'Erstellen'}
           </button>
         </div>
       </form>

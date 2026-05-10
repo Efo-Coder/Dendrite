@@ -35,12 +35,12 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
         onClick={onClose}
       />
 
-      <div className="relative glass-panel rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-slide-up">
-        <div className="flex items-center justify-between p-6 border-b glass-divider">
-          <h2 className="text-base font-semibold text-accent-fg">{title}</h2>
+      <div className="relative glass-popup rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-slide-up">
+        <div className="flex items-center justify-between p-6 border-b border-black/15 glass-divider !bg-transparent">
+          <h2 className="text-base font-semibold text-text-primary">{title}</h2>
           <button
             onClick={onClose}
-            className="text-accent-subtle hover:text-accent-brand transition-colors"
+            className="text-text-secondary hover:text-brand-primary transition-colors"
           >
             <X className="w-4 h-4" />
           </button>

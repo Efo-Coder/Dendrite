@@ -59,7 +59,7 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
     <>
       <Modal isOpen={isOpen} onClose={onClose} title="Tags verwalten">
         <div className="space-y-4">
-          <p className="text-sm text-accent-secondary">
+          <p className="text-sm text-text-secondary">
             Wähle die Tags aus, die mit dieser Notiz verknüpft werden sollen:
           </p>
 
@@ -72,7 +72,7 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
             )}
             <div className="max-h-64 overflow-y-auto space-y-1">
               {tags.length === 0 ? (
-                <div className="text-center py-8 text-accent-subtle">
+                <div className="text-center py-8 text-text-secondary">
                   <Tag className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">Keine Tags vorhanden</p>
                 </div>
@@ -86,8 +86,8 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
                       onMouseEnter={onEnter}
                       className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative z-10 ${
                         isSelected
-                          ? 'bg-accent-brand/10 text-accent-brand'
-                          : 'text-accent-fg'
+                          ? 'text-brand-primary'
+                          : 'text-text-primary'
                       }`}
                     >
                       <input
@@ -104,10 +104,12 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
                 })
               )}
 
+              <div className="border-b glass-divider" />
+
               <button
                 onClick={handleCreateTag}
                 onMouseEnter={onEnter}
-                className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors text-accent-fg border-t glass-divider pt-3 mt-3 relative z-10"
+                className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors text-text-primary relative z-10"
               >
                 <Plus className="w-4 h-4" />
                 <span className="text-sm">Neuen Tag erstellen</span>
@@ -116,24 +118,12 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
           </div>
 
           <div className="flex justify-between items-center pt-4">
-            <div className="text-xs text-accent-subtle">
+            <div className="text-xs text-text-secondary">
               {selectedTagIds.length} Tag{selectedTagIds.length !== 1 ? 's' : ''} ausgewählt
             </div>
             <div className="flex space-x-2">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-sm text-accent-fg hover:text-accent-brand transition-all relative group"
-              >
-                <span className="relative">Abbrechen</span>
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 text-sm text-accent-fg hover:text-accent-brand transition-all relative group"
-              >
-                <span className="relative">Speichern</span>
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
-              </button>
+              <button onClick={onClose} className="btn">Abbrechen</button>
+              <button onClick={handleSave} className="btn">Speichern</button>
             </div>
           </div>
         </div>

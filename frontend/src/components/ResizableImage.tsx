@@ -50,7 +50,38 @@ const ResizableImage = ({
   const startWidthRef = useRef(0);
   const startHeightRef = useRef(0);
   const aspectRatioRef = useRef(1);
+  const editorWidthRef = useRef(800);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync float/size/margin to the Lexical createDOM wrapper div (parent of this component).
+  // This is needed because the float must be on a sibling of text paragraphs for text-wrap to work.
+  useLayoutEffect(() => {
+    const parent = imageRef.current?.parentElement as HTMLElement | null;
+    if (!parent) return;
+    if (alignment === 'left' || alignment === 'right') {
+      parent.style.float = alignment;
+      parent.style.width = `${width}%`;
+      parent.style.height = '';       // let content (imageRef) determine height
+      parent.style.marginTop = '4px';
+      parent.style.marginBottom = '4px';
+      parent.style.marginLeft = alignment === 'right' ? '16px' : '0';
+      parent.style.marginRight = alignment === 'left' ? '16px' : '0';
+      parent.style.position = 'relative';
+      parent.style.zIndex = '1';
+      parent.style.display = 'block';
+    } else {
+      parent.style.float = 'none';
+      parent.style.width = '';
+      parent.style.height = '';
+      parent.style.marginLeft = '';
+      parent.style.marginRight = '';
+      parent.style.marginTop = '';
+      parent.style.marginBottom = '';
+      parent.style.position = '';
+      parent.style.zIndex = '';
+      parent.style.display = 'block';
+    }
+  }, [alignment, width, height]);
 
   // Measure popup, set exact position, then trigger enter animation
   useLayoutEffect(() => {
@@ -61,9 +92,18 @@ const ResizableImage = ({
       left: Math.round(imageRect.left + imageRect.width / 2 - popupRect.width / 2),
       top: Math.round(imageRect.top - 4 - popupRect.height),
     });
-    // Trigger animation after position is applied
     requestAnimationFrame(() => setIsVisible(true));
   }, [showControls]);
+
+  // Returns the editor container width (not the image width when floating)
+  const getEditorWidth = () => {
+    if (!imageRef.current) return 800;
+    const parent = imageRef.current.parentElement;
+    if (alignment === 'left' || alignment === 'right') {
+      return parent?.parentElement?.offsetWidth || 800;
+    }
+    return parent?.offsetWidth || 800;
+  };
 
   const handleMouseDown = (e: React.MouseEvent, direction: ResizeDirection) => {
     e.preventDefault();
@@ -73,10 +113,10 @@ const ResizableImage = ({
     startYRef.current = e.clientY;
     startWidthRef.current = width;
     startHeightRef.current = height;
+    editorWidthRef.current = getEditorWidth();
 
-    if (maintainAspectRatio && imageRef.current) {
-      const containerWidth = imageRef.current.parentElement?.offsetWidth || 800;
-      const actualWidth = (width / 100) * containerWidth;
+    if (maintainAspectRatio) {
+      const actualWidth = (width / 100) * editorWidthRef.current;
       aspectRatioRef.current = actualWidth / height;
     }
   };
@@ -85,13 +125,13 @@ const ResizableImage = ({
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing || !imageRef.current) return;
 
-      const containerWidth = imageRef.current.parentElement?.offsetWidth || 800;
+      const containerWidth = editorWidthRef.current;
       const deltaX = e.clientX - startXRef.current;
       const deltaY = e.clientY - startYRef.current;
 
       if (resizeDirection === 'right') {
         const deltaPercent = (deltaX / containerWidth) * 100;
-        const newWidth = Math.min(100, Math.max(20, startWidthRef.current + deltaPercent));
+        const newWidth = Math.min(100, Math.max(10, startWidthRef.current + deltaPercent));
         setWidth(newWidth);
         if (maintainAspectRatio) {
           const actualWidth = (newWidth / 100) * containerWidth;
@@ -102,11 +142,11 @@ const ResizableImage = ({
         setHeight(newHeight);
         if (maintainAspectRatio) {
           const newWidth = (newHeight * aspectRatioRef.current / containerWidth) * 100;
-          setWidth(Math.min(100, Math.max(20, newWidth)));
+          setWidth(Math.min(100, Math.max(10, newWidth)));
         }
       } else if (resizeDirection === 'corner') {
         const deltaPercent = (deltaX / containerWidth) * 100;
-        const newWidth = Math.min(100, Math.max(20, startWidthRef.current + deltaPercent));
+        const newWidth = Math.min(100, Math.max(10, startWidthRef.current + deltaPercent));
         const newHeight = Math.max(50, startHeightRef.current + deltaY);
         if (maintainAspectRatio) {
           const actualWidth = (newWidth / 100) * containerWidth;
@@ -142,7 +182,9 @@ const ResizableImage = ({
     if (onAlignmentChange) onAlignmentChange(newAlignment);
   };
 
-  const handleMouseEnter = () => setShowControls(true);
+  const handleMouseEnter = () => {
+    if (!showControls) setShowControls(true);
+  };
 
   // Single document-level mousemove tracks both image and popup (handles portal gap)
   useEffect(() => {
@@ -182,18 +224,24 @@ const ResizableImage = ({
     return () => document.removeEventListener('mousemove', handleMove);
   }, [showControls, isResizing]);
 
-  const getContainerStyle = (): React.CSSProperties => ({
-    width: `${width}%`,
-    height: `${height}px`,
-    marginTop: '12px',
-    marginBottom: '12px',
-    position: 'relative',
-    marginLeft: alignment === 'right' ? 'auto' : alignment === 'center' ? 'auto' : '0',
-    marginRight: alignment === 'left' ? '0' : alignment === 'center' ? 'auto' : '0',
-  });
+  const getContainerStyle = (): React.CSSProperties => {
+    if (alignment === 'left' || alignment === 'right') {
+      // Parent handles float + width; this div owns the explicit height
+      return { width: '100%', height: `${height}px`, position: 'relative' };
+    }
+    return {
+      width: `${width}%`,
+      height: `${height}px`,
+      marginTop: '4px',
+      marginBottom: '4px',
+      position: 'relative',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+    };
+  };
 
   return (
-    <div ref={imageRef} style={getContainerStyle()} className="group">
+    <div ref={imageRef} style={getContainerStyle()} className="group" onMouseEnter={handleMouseEnter} onMouseMove={handleMouseEnter}>
 
       {/* Controls – portal to document.body, positioned with exact integer pixels (no transform) */}
       {showControls && createPortal(
@@ -216,7 +264,7 @@ const ResizableImage = ({
             onClick={() => handleAlignmentChange('left')}
             onMouseEnter={(e) => onPillEnter(e, alignment === 'left')}
             className={`p-1.5 rounded-md transition-all relative z-10 ${alignment === 'left' ? 'text-brand-primary' : 'text-text-secondary hover:text-text-primary'}`}
-            title="Links ausrichten"
+            title="Links ausrichten (Text fließt rechts)"
           >
             <AlignLeft className="w-3.5 h-3.5" />
           </button>
@@ -224,7 +272,7 @@ const ResizableImage = ({
             onClick={() => handleAlignmentChange('center')}
             onMouseEnter={(e) => onPillEnter(e, alignment === 'center')}
             className={`p-1.5 rounded-md transition-all relative z-10 ${alignment === 'center' ? 'text-brand-primary' : 'text-text-secondary hover:text-text-primary'}`}
-            title="Zentrieren"
+            title="Zentrieren (Block)"
           >
             <AlignCenter className="w-3.5 h-3.5" />
           </button>
@@ -232,7 +280,7 @@ const ResizableImage = ({
             onClick={() => handleAlignmentChange('right')}
             onMouseEnter={(e) => onPillEnter(e, alignment === 'right')}
             className={`p-1.5 rounded-md transition-all relative z-10 ${alignment === 'right' ? 'text-brand-primary' : 'text-text-secondary hover:text-text-primary'}`}
-            title="Rechts ausrichten"
+            title="Rechts ausrichten (Text fließt links)"
           >
             <AlignRight className="w-3.5 h-3.5" />
           </button>
@@ -261,7 +309,7 @@ const ResizableImage = ({
       )}
 
       {/* Image + Resize Handles */}
-      <div className="relative h-full" onMouseEnter={handleMouseEnter}>
+      <div className="relative h-full">
         <img
           src={src}
           alt={altText}
@@ -287,13 +335,12 @@ const ResizableImage = ({
 
       {/* Size Indicator */}
       {isResizing && (
-        <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 glass-popup rounded-lg px-3 py-1.5 text-xs text-text-primary shadow-xl font-mono whitespace-nowrap flex items-center">
+        <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 glass-popup rounded-lg px-3 py-1.5 text-xs text-text-primary shadow-xl font-mono whitespace-nowrap flex items-center" style={{ zIndex: 50 }}>
           {(() => {
-            const containerWidth = imageRef.current?.parentElement?.offsetWidth || 800;
-            const actualWidthPx = Math.round((width / 100) * containerWidth);
+            const actualWidthPx = Math.round((width / 100) * editorWidthRef.current);
             return (
               <>
-                {maintainAspectRatio && <span className="mr-2 text-text-secondary"><Lock className="w-3 h-3" /></span>}
+                {maintainAspectRatio && <span className="mr-2 text-text-secondary relative -top-px"><Lock className="w-3 h-3" /></span>}
                 <span className="text-brand-primary font-semibold">{actualWidthPx}</span>
                 <span className="text-text-secondary mx-1">×</span>
                 <span className="text-brand-primary font-semibold">{Math.round(height)}</span>

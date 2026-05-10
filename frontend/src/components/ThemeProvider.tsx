@@ -20,17 +20,21 @@ const ThemeProvider = ({ children }: ThemeProviderProps) => {
     root.style.colorScheme = themeMode;
 
     // Apply theme colors as CSS custom properties
-    root.style.setProperty('--color-icon', theme.colors.iconColor);
-    root.style.setProperty('--color-accent-bg', theme.colors.accentBg);
-    root.style.setProperty('--color-accent-surface', theme.colors.accentSurface);
-    root.style.setProperty('--color-accent-elevated', theme.colors.accentElevated);
-    root.style.setProperty('--color-accent-border', theme.colors.accentBorder);
-    root.style.setProperty('--color-accent-muted', theme.colors.accentMuted);
-    root.style.setProperty('--color-accent-brand', theme.colors.accentBrand);
-    root.style.setProperty('--color-accent-brand-dim', theme.colors.accentBrandDim);
-    root.style.setProperty('--color-accent-subtle', theme.colors.accentSubtle);
-    root.style.setProperty('--color-accent-secondary', theme.colors.accentSecondary);
-    root.style.setProperty('--color-accent-fg', theme.colors.accentFg);
+    root.style.setProperty('--color-icon-primary', theme.colors.iconPrimary);
+    root.style.setProperty('--color-icon-secondary', theme.colors.iconSecondary);
+    
+    root.style.setProperty('--color-bg-primary', theme.colors.bgPrimary);
+    root.style.setProperty('--color-bg-primary-variant', theme.colors.bgPrimaryVariant);
+    root.style.setProperty('--color-bg-primary-surface', theme.colors.bgPrimarySurface);
+    root.style.setProperty('--color-bg-secondary', theme.colors.bgSecondary);
+    root.style.setProperty('--color-bg-header', theme.colors.bgHeader);
+    root.style.setProperty('--color-bg-input', theme.colors.bgInput);
+
+    root.style.setProperty('--color-text-primary', theme.colors.textPrimary);
+    root.style.setProperty('--color-text-secondary', theme.colors.textSecondary);
+    root.style.setProperty('--color-text-muted', theme.colors.textMuted);
+
+    root.style.setProperty('--color-brand-primary', theme.colors.brandPrimary);
   }, [themeId, themeMode]);
 
   return <>{children}</>;

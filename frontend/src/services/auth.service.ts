@@ -37,6 +37,20 @@ export const authService = {
     await api.delete('/auth/account');
   },
 
+  async deleteAvatar(): Promise<User> {
+    const response = await api.delete<{ user: User }>('/auth/avatar');
+    return response.data.user;
+  },
+
+  async uploadAvatar(file: File): Promise<User> {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const response = await api.post<{ user: User }>('/auth/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.user;
+  },
+
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import Logo from '../components/Logo';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Moon, Sun } from 'lucide-react';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login, error, isLoading } = useAuthStore();
+  const { themeMode, setThemeMode } = useSettingsStore();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,16 +25,33 @@ const LoginPage = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-6 py-12 relative"
-      style={{ backgroundImage: "url('/dendrite-forest.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}
+      className="min-h-screen flex items-center justify-center  relative"
+      style={{
+        backgroundImage: `url('${themeMode === 'dark' ? '/dendrite-forest-dark.png' : '/dendrite-forest.jpg'}')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
     >
-      <div className="absolute inset-0 " />
+      <div className="absolute inset-0" />
+
+      {/* Theme Toggle Button */}
+      <button
+        onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
+        className="absolute top-4 right-6 z-20 w-9 h-9 rounded-full flex items-center justify-center text-white hover:text-white/70 transition-colors backdrop-blur-xl"
+        style={{ 
+          background: themeMode === 'dark' ? 'rgba(87, 87, 87, 0.25)' : 'rgba(255, 255, 255, 0.15)',
+          border: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.18)'
+        }}
+        title={`Zu ${themeMode === 'dark' ? 'hellem' : 'dunklem'} Modus wechseln`}
+      >
+        {themeMode === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      </button>
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo & Title */}
         <div className="text-center mb-6">
           <div className="flex justify-center -mb-1">
-            <Logo size="xl" showText={false} style={{ '--color-icon': '#26ad53', '--color-accent-brand': '#1ee85a' } as React.CSSProperties} />
+            <Logo size="xl" showText={false} style={{ '--color-icon-primary': '#26ad53', '--color-icon-secondary': '#1ee85a' } as React.CSSProperties} />
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">Dendrite</h1>
           <p className="text-white/80">Melde dich an, um fortzufahren</p>
@@ -42,8 +61,8 @@ const LoginPage = () => {
         <div
           className="rounded-3xl p-8 shadow-2xl backdrop-blur-xl"
           style={{
-            background: 'rgba(255, 255, 255, 0.10)',
-            border: '1px solid rgba(255, 255, 255, 0.18)',
+            background: themeMode === 'dark' ? 'rgba(87, 87, 87, 0.25)' : 'rgba(255, 255, 255, 0.10)',
+            border: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.18)',
             boxShadow: '0 24px 60px rgba(0, 0, 0, 0.35)',
           }}
         >
@@ -96,7 +115,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-subtle w-full text-white/70 hover:text-white font-medium transition-colors"
+              className="btn w-full text-white/90 hover:text-white/70 font-medium transition-colors"
             >
               {isLoading ? 'Wird angemeldet...' : 'Anmelden'}
             </button>
@@ -105,7 +124,9 @@ const LoginPage = () => {
           <div className="mt-6 text-center">
             <p className="text-white/90 text-sm">
               Noch kein Konto?{' '}
-              <Link to="/register" className="text-white/70 hover:text-white font-medium transition-colors">
+            </p>
+            <p className="mt-1">
+              <Link to="/register" className="text-blue-500 hover:text-white  text-sm transition-colors">
                 Registrieren
               </Link>
             </p>

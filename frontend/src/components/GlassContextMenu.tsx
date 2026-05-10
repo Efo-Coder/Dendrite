@@ -46,7 +46,7 @@ const GlassContextMenu = ({ isOpen, position, onClose, items, minWidth = '160px'
   return createPortal(
     <div
       ref={menuRef}
-      className="fixed glass-panel rounded-xl shadow-lg py-1 overflow-hidden"
+      className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
       style={{ left: position.x, top: position.y, zIndex: 9999, minWidth }}
       onMouseLeave={onLeave}
     >
@@ -63,7 +63,7 @@ const GlassContextMenu = ({ isOpen, position, onClose, items, minWidth = '160px'
           onMouseEnter={onEnter}
           className={clsx(
             'relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
-            item.variant === 'danger' ? 'text-red-400' : 'text-accent-fg'
+            item.variant === 'danger' ? 'text-red-400' : 'text-text-primary'
           )}
         >
           {item.icon}

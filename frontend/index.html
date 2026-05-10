@@ -8,59 +8,6 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/dendrite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dendrite - Notizen App</title>
-    <script>
-      (function () {
-        var dark = { iconColor: '#a3a3a3', accentBg: '#0f0f0f', accentSurface: '#1a1a1a', accentElevated: '#242424', accentBorder: '#2a2a2a', accentMuted: '#737373', accentBrand: '#a3a3a3', accentBrandDim: '#a3a3a3', accentSubtle: '#737373', accentSecondary: '#a3a3a3', accentFg: '#e5e5e5' };
-        var themes = {
-          sproutGreen:      { iconColor: '#4ade80', accentBg: '#f0fdf4', accentSurface: '#dcfce7', accentElevated: '#bbf7d0', accentBorder: '#86efac', accentMuted: '#4ade80', accentBrand: '#4ade80', accentBrandDim: '#16a34a', accentSubtle: '#15803d', accentSecondary: '#166534', accentFg: '#14532d' },
-          sproutGreenDark:  Object.assign({}, dark, { iconColor: '#10b981', accentBrand: '#10b981' }),
-          blossomPink:      { iconColor: '#f472b6', accentBg: '#fdf2f8', accentSurface: '#fce7f3', accentElevated: '#fbcfe8', accentBorder: '#f9a8d4', accentMuted: '#f472b6', accentBrand: '#f472b6', accentBrandDim: '#db2777', accentSubtle: '#be185d', accentSecondary: '#9d174d', accentFg: '#831843' },
-          blossomPinkDark:  Object.assign({}, dark, { iconColor: '#f472b6', accentBrand: '#f472b6' }),
-          neuralBlue:       { iconColor: '#93c5fd', accentBg: '#eff6ff', accentSurface: '#dbeafe', accentElevated: '#bfdbfe', accentBorder: '#93c5fd', accentMuted: '#60a5fa', accentBrand: '#93c5fd', accentBrandDim: '#2563eb', accentSubtle: '#1d4ed8', accentSecondary: '#1e40af', accentFg: '#1e3a8a' },
-          neuralBlueDark:   Object.assign({}, dark, { iconColor: '#93c5fd', accentBrand: '#93c5fd' }),
-          synapseCream:     { iconColor: '#eab308', accentBg: '#fefce8', accentSurface: '#fef9c3', accentElevated: '#fef08a', accentBorder: '#fde047', accentMuted: '#facc15', accentBrand: '#eab308', accentBrandDim: '#ca8a04', accentSubtle: '#a16207', accentSecondary: '#854d0e', accentFg: '#713f12' },
-          synapseCreamDark: Object.assign({}, dark, { iconColor: '#eab308', accentBrand: '#eab308' }),
-          pulseOrange:      { iconColor: '#fb923c', accentBg: '#fff7ed', accentSurface: '#ffedd5', accentElevated: '#fed7aa', accentBorder: '#fdba74', accentMuted: '#fb923c', accentBrand: '#fb923c', accentBrandDim: '#ea580c', accentSubtle: '#c2410c', accentSecondary: '#9a3412', accentFg: '#7c2d12' },
-          pulseOrangeDark:  Object.assign({}, dark, { iconColor: '#fb923c', accentBrand: '#fb923c' }),
-          branchBrown:      { iconColor: '#846358', accentBg: '#fdf8f6', accentSurface: '#f2e8e5', accentElevated: '#eaddd7', accentBorder: '#e0cec7', accentMuted: '#d2bab0', accentBrand: '#846358', accentBrandDim: '#a18072', accentSubtle: '#977669', accentSecondary: '#846358', accentFg: '#43302b' },
-          branchBrownDark:  Object.assign({}, dark, { iconColor: '#846358', accentBrand: '#846358' }),
-          growthBeige:      { iconColor: '#5f5a50', accentBg: '#faf9f7', accentSurface: '#e7e5df', accentElevated: '#d3cec4', accentBorder: '#b8b2a7', accentMuted: '#a39e93', accentBrand: '#5f5a50', accentBrandDim: '#6c665c', accentSubtle: '#5f5a50', accentSecondary: '#4e4a42', accentFg: '#3e3b35' },
-          growthBeigeDark:  Object.assign({}, dark, { iconColor: '#5f5a50', accentBrand: '#5f5a50' }),
-          cortexGray:       { iconColor: '#4b5563', accentBg: '#f9fafb', accentSurface: '#f3f4f6', accentElevated: '#e5e7eb', accentBorder: '#d1d5db', accentMuted: '#9ca3af', accentBrand: '#4b5563', accentBrandDim: '#4b5563', accentSubtle: '#374151', accentSecondary: '#1f2937', accentFg: '#111827' },
-          cortexGrayDark:   Object.assign({}, dark, { iconColor: '#4b5563', accentBrand: '#4b5563' }),
-        };
-
-        var themeId = 'sproutGreen';
-        var themeMode = 'light';
-        try {
-          var stored = localStorage.getItem('dendrite-settings');
-          if (stored) {
-            var parsed = JSON.parse(stored);
-            var state = parsed.state || {};
-            if (state.theme) themeId = state.theme;
-            if (state.themeMode) themeMode = state.themeMode;
-          }
-        } catch (e) {}
-
-        var key = themeMode === 'dark' ? themeId + 'Dark' : themeId;
-        var t = themes[key] || themes.sproutGreen;
-        var root = document.documentElement;
-
-        root.setAttribute('data-theme', themeMode);
-        root.style.colorScheme = themeMode;
-        root.style.setProperty('--color-icon', t.iconColor);
-        root.style.setProperty('--color-accent-bg', t.accentBg);
-        root.style.setProperty('--color-accent-surface', t.accentSurface);
-        root.style.setProperty('--color-accent-elevated', t.accentElevated);
-        root.style.setProperty('--color-accent-border', t.accentBorder);
-        root.style.setProperty('--color-accent-muted', t.accentMuted);
-        root.style.setProperty('--color-accent-brand', t.accentBrand);
-        root.style.setProperty('--color-accent-brand-dim', t.accentBrandDim);
-        root.style.setProperty('--color-accent-subtle', t.accentSubtle);
-        root.style.setProperty('--color-accent-secondary', t.accentSecondary);
-        root.style.setProperty('--color-accent-fg', t.accentFg);
-      })();
-    </script>
   </head>
   <body>
     <div id="root"></div>

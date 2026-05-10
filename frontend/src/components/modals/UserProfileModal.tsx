@@ -1,9 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Modal from './Modal';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useGlassPill } from '../../hooks/useGlassPill';
-import { LogOut, KeyRound, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import { LogOut, KeyRound, Pencil, Trash2, Eye, EyeOff, Camera, X } from 'lucide-react';
 import { useToast } from '../ToastContainer';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -11,11 +13,13 @@ interface UserProfileModalProps {
 }
 
 const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
-  const { user, logout, updateProfile, changePassword, deleteAccount } = useAuthStore();
+  const { user, logout, updateProfile, changePassword, deleteAccount, uploadAvatar, deleteAvatar } = useAuthStore();
   const toast = useToast();
 
   const [name, setName] = useState(user?.name || '');
   const [nameLoading, setNameLoading] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -26,6 +30,19 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setName(user?.name || '');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowCurrent(false);
+      setShowNew(false);
+      setShowConfirm(false);
+      setDeleteConfirm(false);
+    }
+  }, [isOpen, user?.name]);
 
   const actionGroupRef = useRef<HTMLDivElement>(null);
   const { pill, onEnter, onLeave } = useGlassPill(actionGroupRef);
@@ -63,6 +80,33 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     }
   };
 
+  const handleDeleteAvatar = async () => {
+    setAvatarLoading(true);
+    try {
+      await deleteAvatar();
+      toast.success('Profilbild entfernt');
+    } catch {
+      toast.error('Profilbild konnte nicht entfernt werden');
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarLoading(true);
+    try {
+      await uploadAvatar(file);
+      toast.success('Profilbild aktualisiert');
+    } catch {
+      toast.error('Profilbild konnte nicht hochgeladen werden');
+    } finally {
+      setAvatarLoading(false);
+      e.target.value = '';
+    }
+  };
+
   const handleLogout = () => {
     onClose();
     logout();
@@ -96,24 +140,60 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
 
         {/* Avatar + Info */}
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-semibold text-accent-fg"
-            style={{ background: 'var(--glass-bg-strong)', border: '1px solid var(--glass-border-strong)' }}>
-            {initials}
+          <div className="relative w-14 h-14 flex-shrink-0 group/avatar">
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarLoading}
+              className="relative w-14 h-14 rounded-full group"
+              title="Profilbild ändern"
+            >
+              {user?.avatarUrl ? (
+                <img
+                  src={`${API_URL}${user.avatarUrl}`}
+                  alt="Avatar"
+                  className="w-14 h-14 rounded-full object-cover"
+                />
+              ) : (
+                <div className="profile-avatar w-14 h-14 rounded-full flex items-center justify-center text-lg font-semibold text-text-primary">
+                  {avatarLoading ? '...' : initials}
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-5 h-5 text-white" />
+              </div>
+            </button>
+            {user?.avatarUrl && (
+              <button
+                onClick={handleDeleteAvatar}
+                disabled={avatarLoading}
+                title="Profilbild entfernen"
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 hover:bg-red-400 flex items-center justify-center transition-all opacity-0 group-hover/avatar:opacity-100"
+              >
+                <X className="w-3 h-3 text-white" />
+              </button>
+            )}
           </div>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
           <div>
-            <p className="text-sm font-semibold text-accent-fg">{user?.name || '–'}</p>
-            <p className="text-xs text-accent-subtle">{user?.email}</p>
+            <p className="text-sm font-semibold text-text-primary">{user?.name || '–'}</p>
+            <p className="text-xs text-text-secondary">{user?.email}</p>
             {memberSince && (
-              <p className="text-xs text-accent-subtle mt-0.5">Mitglied seit {memberSince}</p>
+              <p className="text-xs text-text-secondary mt-0.5">Mitglied seit {memberSince}</p>
             )}
           </div>
         </div>
 
-        <div className="h-px border-t glass-divider" />
+        <div className="border-b glass-divider" />
 
         {/* Name ändern */}
         <div>
-          <label className="block text-xs font-medium text-accent-fg mb-3 uppercase tracking-wide flex items-center gap-1.5">
+          <label className="text-xs font-medium text-text-primary mb-3 uppercase tracking-wide flex items-center gap-1.5">
             <Pencil className="w-3 h-3" /> Name ändern
           </label>
           <form onSubmit={handleUpdateName} className="flex gap-2">
@@ -127,7 +207,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             <button
               type="submit"
               disabled={nameLoading || !name.trim()}
-              className="btn-subtle disabled:opacity-50"
+              className="btn disabled:opacity-50"
             >
               {nameLoading ? '...' : 'Speichern'}
             </button>
@@ -136,7 +216,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
 
         {/* Passwort ändern */}
         <div>
-          <label className="block text-xs font-medium text-accent-fg mb-3 uppercase tracking-wide flex items-center gap-1.5">
+          <label className="text-xs font-medium text-text-primary mb-3 uppercase tracking-wide flex items-center gap-1.5">
             <KeyRound className="w-3 h-3" /> Passwort ändern
           </label>
           <form onSubmit={handleChangePassword} className="space-y-2">
@@ -149,7 +229,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 className="input pr-10"
               />
               <button type="button" onClick={() => setShowCurrent(!showCurrent)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-subtle hover:text-accent-fg transition-colors">
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors">
                 {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -162,7 +242,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 className="input pr-10"
               />
               <button type="button" onClick={() => setShowNew(!showNew)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-subtle hover:text-accent-fg transition-colors">
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors">
                 {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -175,21 +255,21 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 className="input pr-10"
               />
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-subtle hover:text-accent-fg transition-colors">
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors">
                 {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
             <button
               type="submit"
               disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
-              className="btn-subtle w-full disabled:opacity-50"
+              className="btn w-full disabled:opacity-50"
             >
               {passwordLoading ? 'Wird geändert...' : 'Passwort ändern'}
             </button>
           </form>
         </div>
 
-        <div className="h-px border-t glass-divider" />
+        <div className="border-b glass-divider" />
 
         {/* Abmelden & Konto löschen */}
         <div ref={actionGroupRef} className="relative space-y-2" onMouseLeave={onLeave}>
@@ -203,7 +283,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
           <button
             onClick={handleLogout}
             onMouseEnter={(e) => onEnter(e, false)}
-            className="btn-subtle w-full flex items-center gap-2 text-red-500 relative z-10"
+            className="btn w-full flex items-center gap-2 text-text-primary hover:text-red-500 relative z-10"
             type="button"
           >
             <LogOut className="w-4 h-4" />
@@ -214,7 +294,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             <button
               onClick={() => setDeleteConfirm(true)}
               onMouseEnter={(e) => onEnter(e, false)}
-              className="btn-subtle w-full flex items-center gap-2 relative z-10"
+              className="btn w-full flex items-center gap-2 relative z-10 text-text-primary hover:text-red-500"
               type="button"
             >
               <Trash2 className="w-4 h-4" />
@@ -225,7 +305,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               <button
                 onClick={() => setDeleteConfirm(false)}
                 onMouseEnter={(e) => onEnter(e, false)}
-                className="btn-subtle flex-1 relative z-10"
+                className="btn flex-1 relative z-10"
                 type="button"
               >
                 Abbrechen
@@ -234,7 +314,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 onClick={handleDeleteAccount}
                 onMouseEnter={(e) => onEnter(e, false)}
                 disabled={deleteLoading}
-                className="btn-subtle flex-1 text-red-500 relative z-10"
+                className="btn flex-1 text-red-500 hover:text-red-500 relative z-10"
                 type="button"
               >
                 {deleteLoading ? 'Wird gelöscht...' : 'Endgültig löschen'}

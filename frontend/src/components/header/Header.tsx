@@ -38,25 +38,24 @@ const Header = ({ user }: HeaderProps) => {
   };
 
   return (
-    <header className="h-16 min-h-16 max-h-16 glass-header rounded-2xl px-6 flex items-center justify-between relative">
+    <header className="h-16 min-h-16 max-h-16 glass glass-border rounded-2xl px-6 flex items-center justify-between relative" style={{ background: 'var(--color-bg-header)' }}>
       {/* Search Bar */}
       <form onSubmit={handleSearch} className="flex-1 max-w-xl">
         <div className="relative">
-          <Search className="absolute left-3 top-5 transform -translate-y-1/2 w-5 h-5 text-accent-fg pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Notizen durchsuchen..."
-            className="input pl-10 pr-4"
-            style={{ background: 'var(--glass-bg-soft)' }}
+            className="input input-inset pl-10 pr-4 glass"
           />
+          <Search className="absolute left-3 top-5 transform -translate-y-1/2 w-5 h-5 text-text-primary pointer-events-none" />
         </div>
       </form>
 
       {/* Right side */}
       <div className="flex items-center gap-3 ml-4">
-        <span className="text-sm text-accent-fg font-medium select-none">
+        <span className="text-sm text-text-primary font-medium select-none">
           {user?.name || user?.email}
         </span>
         <div ref={rightGroupRef} className="flex items-center gap-1 relative" onMouseLeave={onLeave}>
@@ -75,7 +74,7 @@ const Header = ({ user }: HeaderProps) => {
             aria-label="Einstellungen"
             type="button"
           >
-            <Settings className="w-4 h-4 text-accent-fg transition-colors" />
+            <Settings className="w-4 h-4 text-text-primary transition-colors" />
           </button>
           <UserMenu
             onOpenProfile={() => setShowProfileModal(true)}

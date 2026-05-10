@@ -8,6 +8,7 @@ import CreateTagModal from './modals/CreateTagModal';
 import EditTagModal from './modals/EditTagModal';
 import EditFolderModal from './modals/EditFolderModal';
 import ContextMenu from './ContextMenu';
+import Modal from './modals/Modal';
 import Logo from './Logo';
 import { Tag as TagType, Folder as FolderType } from '../types';
 import { useGlassPill } from '../hooks/useGlassPill';
@@ -31,6 +32,10 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   const [showTagModal, setShowTagModal] = useState(false);
   const [showEditTagModal, setShowEditTagModal] = useState(false);
   const [showEditFolderModal, setShowEditFolderModal] = useState(false);
+  const [showDeleteTagModal, setShowDeleteTagModal] = useState(false);
+  const [showDeleteFolderModal, setShowDeleteFolderModal] = useState(false);
+  const [tagToDelete, setTagToDelete] = useState<TagType | null>(null);
+  const [folderToDelete, setFolderToDelete] = useState<FolderType | null>(null);
   const [selectedTag, setSelectedTag] = useState<TagType | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<FolderType | null>(null);
 
@@ -110,26 +115,42 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
     onTagUpdated?.();
   };
 
-  const handleDeleteTag = async () => {
+  const handleDeleteTag = () => {
     if (contextMenu.tag) {
-      if (window.confirm(`Möchtest du den Tag "${contextMenu.tag.name}" wirklich löschen?`)) {
-        try {
-          await deleteTag(contextMenu.tag.id);
-        } catch (error) {
-          console.error('Fehler beim Löschen des Tags:', error);
-        }
+      setTagToDelete(contextMenu.tag);
+      setShowDeleteTagModal(true);
+    }
+  };
+
+  const confirmDeleteTag = async () => {
+    if (tagToDelete) {
+      try {
+        await deleteTag(tagToDelete.id);
+      } catch (error) {
+        console.error('Fehler beim Löschen des Tags:', error);
+      } finally {
+        setShowDeleteTagModal(false);
+        setTagToDelete(null);
       }
     }
   };
 
-  const handleDeleteFolder = async () => {
+  const handleDeleteFolder = () => {
     if (contextMenu.folder) {
-      if (window.confirm(`Möchtest du den Ordner "${contextMenu.folder.name}" wirklich löschen?`)) {
-        try {
-          await deleteFolder(contextMenu.folder.id);
-        } catch (error) {
-          console.error('Fehler beim Löschen des Ordners:', error);
-        }
+      setFolderToDelete(contextMenu.folder);
+      setShowDeleteFolderModal(true);
+    }
+  };
+
+  const confirmDeleteFolder = async () => {
+    if (folderToDelete) {
+      try {
+        await deleteFolder(folderToDelete.id);
+      } catch (error) {
+        console.error('Fehler beim Löschen des Ordners:', error);
+      } finally {
+        setShowDeleteFolderModal(false);
+        setFolderToDelete(null);
       }
     }
   };
@@ -173,11 +194,11 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   return (
     <>
       <aside className={clsx(
-        "glass-surface rounded-2xl flex flex-col transition-all duration-300 overflow-hidden flex-none",
+        "glass glass-border rounded-2xl flex flex-col transition-all duration-300 overflow-hidden flex-none",
         isCollapsed ? "w-16" : "w-64"
-      )}>
+      )} style={{ background: 'var(--color-bg-secondary)' }}>
         {/* Logo */}
-        <div className="h-16 glass-header flex items-center px-4">
+        <div className="h-16 flex items-center px-4" style={{ background: 'var(--color-bg-header)', boxShadow: '0 4px 24px rgba(0,0,0,0.14)' }}>
           <Logo size="md" showText={!isCollapsed} />
         </div>
 
@@ -202,8 +223,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                   className={clsx(
                     'w-full flex items-center rounded-lg transition-all duration-200 py-2.5 relative z-10',
                     isActive
-                      ? 'text-accent-brand'
-                      : 'text-accent-fg'
+                      ? 'text-brand-primary'
+                      : 'text-text-primary'
                   )}
                   title={isCollapsed ? item.label : undefined}
                 >
@@ -233,14 +254,14 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               style={{ paddingRight: isCollapsed ? '24px' : '12px' }}
             >
               <span
-                className="text-xs font-semibold text-accent-subtle uppercase tracking-wider flex-1 transition-all duration-300 overflow-hidden whitespace-nowrap"
+                className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex-1 transition-all duration-300 overflow-hidden whitespace-nowrap"
                 style={{ maxWidth: isCollapsed ? 0 : '200px', opacity: isCollapsed ? 0 : 1 }}
               >
                 Ordner
               </span>
               <button
                 onClick={() => setShowFolderModal(true)}
-                className="ml-auto text-accent-subtle hover:text-accent-brand transition-colors"
+                className="ml-auto text-text-secondary hover:text-brand-primary transition-colors"
                 title="Neuer Ordner"
               >
                 <Plus className="w-4 h-4" />
@@ -248,7 +269,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
             </div>
 
             {folders.length === 0 && !isCollapsed ? (
-              <p className="px-3 py-2 text-xs text-accent-subtle italic">
+              <p className="px-3 py-2 text-xs text-text-secondary italic">
                 Keine Ordner vorhanden
               </p>
             ) : (
@@ -270,8 +291,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     className={clsx(
                       'w-full flex items-center rounded-lg transition-all duration-200 py-2.5 relative z-10',
                       isFolderActive
-                        ? 'text-accent-brand'
-                        : 'text-accent-fg'
+                        ? 'text-brand-primary'
+                        : 'text-text-primary'
                     )}
                     title={isCollapsed ? folder.name : undefined}
                   >
@@ -283,11 +304,11 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                         />
                         {(folder.notes?.length ?? 0) > 0 && (
                           <span className={clsx(
-                            "absolute -bottom-0.5 left-[calc(100%-5px)] text-[9px] leading-none font-semibold text-accent-subtle rounded-full px-[2px] shadow-[0_0_0_1.5px_color-mix(in_srgb,var(--color-accent-secondary)_25%,transparent)] transition-opacity duration-200 overflow-hidden",
+                            "absolute -bottom-0.5 left-[calc(100%-5px)] text-[9px] leading-none font-semibold text-text-secondary rounded-full px-[2px] shadow-[0_0_0_1.5px_color-mix(in_srgb,var(--color-text-secondary)_25%,transparent)] transition-opacity duration-200 overflow-hidden",
                             isCollapsed ? "opacity-100 delay-[50ms]" : "opacity-0"
                           )}>
-                            <span className="absolute inset-0 rounded-full backdrop-blur-xl bg-[var(--glass-bg)]" />
-                            <span className="relative z-10 text-accent-secondary">{folder.notes?.length}</span>
+                            <span className="absolute inset-0 rounded-full backdrop-blur-xl glass-bg" />
+                            <span className="relative z-10 text-text-secondary">{folder.notes?.length}</span>
                           </span>
                         )}
                       </span>
@@ -302,7 +323,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     </div>
                     {folder.notes && folder.notes.length > 0 && (
                       <span className={clsx(
-                        "text-xs text-accent-subtle flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2 mr-3",
+                        "text-xs text-text-secondary flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2 mr-3",
                         isCollapsed ? "opacity-0" : "opacity-100 delay-[50ms]"
                       )}>
                         {folder.notes.length}
@@ -322,14 +343,14 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               style={{ paddingRight: isCollapsed ? '24px' : '12px' }}
             >
               <span
-                className="text-xs font-semibold text-accent-subtle uppercase tracking-wider flex-1 transition-all duration-300 overflow-hidden whitespace-nowrap"
+                className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex-1 transition-all duration-300 overflow-hidden whitespace-nowrap"
                 style={{ maxWidth: isCollapsed ? 0 : '200px', opacity: isCollapsed ? 0 : 1 }}
               >
                 Tags
               </span>
               <button
                 onClick={() => setShowTagModal(true)}
-                className="ml-auto text-accent-subtle hover:text-accent-brand transition-colors"
+                className="ml-auto text-text-secondary hover:text-brand-primary transition-colors"
                 title="Neuer Tag"
               >
                 <Plus className="w-4 h-4" />
@@ -337,7 +358,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
             </div>
 
             {tags.length === 0 && !isCollapsed ? (
-              <p className="px-3 py-2 text-xs text-accent-subtle italic">
+              <p className="px-3 py-2 text-xs text-text-secondary italic">
                 Keine Tags vorhanden
               </p>
             ) : (
@@ -359,8 +380,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     className={clsx(
                       'w-full flex items-center rounded-lg transition-all duration-200 py-2.5 relative z-10',
                       isTagActive
-                        ? 'text-accent-brand'
-                        : 'text-accent-fg'
+                        ? 'text-brand-primary'
+                        : 'text-text-primary'
                     )}
                     title={isCollapsed ? tag.name : undefined}
                   >
@@ -372,11 +393,11 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                         />
                         {(tag.notes?.length ?? 0) > 0 && (
                           <span className={clsx(
-                            "absolute bottom-1 left-[calc(100%-5px)] text-[9px] leading-none font-semibold text-accent-subtle rounded-full px-[2px] shadow-[0_0_0_1.5px_color-mix(in_srgb,var(--color-accent-secondary)_25%,transparent)] transition-opacity duration-200 overflow-hidden",
+                            "absolute bottom-1 left-[calc(100%-5px)] text-[9px] leading-none font-semibold text-text-secondary rounded-full px-[2px] shadow-[0_0_0_1.5px_color-mix(in_srgb,var(--color-text-secondary)_25%,transparent)] transition-opacity duration-200 overflow-hidden",
                             isCollapsed ? "opacity-100 delay-[50ms]" : "opacity-0"
                           )}>
-                            <span className="absolute inset-0 rounded-full backdrop-blur-xl bg-[var(--glass-bg)]" />
-                            <span className="relative z-10 text-accent-secondary">{tag.notes?.length}</span>
+                            <span className="absolute inset-0 rounded-full backdrop-blur-xl glass-bg" />
+                            <span className="relative z-10 text-text-secondary">{tag.notes?.length}</span>
                           </span>
                         )}
                       </span>
@@ -391,7 +412,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     </div>
                     {tag.notes && tag.notes.length > 0 && (
                       <span className={clsx(
-                        "text-xs text-accent-subtle flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2 mr-3",
+                        "text-xs text-text-secondary flex-shrink-0 w-4 text-center transition-opacity duration-200 ml-2 mr-3",
                         isCollapsed ? "opacity-0" : "opacity-100 delay-[50ms]"
                       )}>
                         {tag.notes.length}
@@ -413,7 +434,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
         >
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-accent-subtle hover:text-accent-brand transition-colors"
+            className="text-text-secondary hover:text-brand-primary transition-colors"
             title={isCollapsed ? "Sidebar erweitern" : "Sidebar minimieren"}
           >
             {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
@@ -448,6 +469,52 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
         onFolderUpdated={handleFolderUpdated}
         folder={selectedFolder}
       />
+
+      {/* Delete Tag Modal */}
+      <Modal isOpen={showDeleteTagModal} onClose={() => setShowDeleteTagModal(false)} title="Tag löschen?">
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Möchtest du den Tag „{tagToDelete?.name}" wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setShowDeleteTagModal(false)}
+              className="px-3 py-2 rounded-lg bg-white/30 text-text-primary hover:bg-white/40"
+            >
+              Abbrechen
+            </button>
+            <button
+              onClick={confirmDeleteTag}
+              className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500"
+            >
+              Löschen
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Folder Modal */}
+      <Modal isOpen={showDeleteFolderModal} onClose={() => setShowDeleteFolderModal(false)} title="Ordner löschen?">
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Möchtest du den Ordner „{folderToDelete?.name}" wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setShowDeleteFolderModal(false)}
+              className="px-3 py-2 rounded-lg bg-white/30 text-text-primary hover:bg-white/40"
+            >
+              Abbrechen
+            </button>
+            <button
+              onClick={confirmDeleteFolder}
+              className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500"
+            >
+              Löschen
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Context Menu */}
       <ContextMenu

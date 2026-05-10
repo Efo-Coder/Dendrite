@@ -17,6 +17,8 @@ interface AuthState {
   updateProfile: (name: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
+  deleteAvatar: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -110,6 +112,16 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   changePassword: async (currentPassword: string, newPassword: string) => {
     await authService.changePassword(currentPassword, newPassword);
+  },
+
+  uploadAvatar: async (file: File) => {
+    const user = await authService.uploadAvatar(file);
+    set({ user });
+  },
+
+  deleteAvatar: async () => {
+    const user = await authService.deleteAvatar();
+    set({ user });
   },
 
   deleteAccount: async () => {

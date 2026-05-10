@@ -219,31 +219,31 @@ const DashboardPage = () => {
 
         <div className="flex-1 flex gap-3 min-h-0">
           {/* Note List */}
-          <div className="w-80 glass-surface rounded-2xl overflow-hidden flex flex-col relative">
+          <div className="w-80 glass glass-border rounded-2xl overflow-hidden flex flex-col relative" style={{ background: 'var(--color-bg-secondary)' }}>
             {/* Note List Header */}
-            <div className="p-4 border-b glass-header flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-accent-fg">
+            <div className="p-4 border-b glass-divider flex items-center justify-between" style={{ background: 'var(--color-bg-header)' }}>
+              <h2 className="text-lg font-semibold text-text-primary">
                 {getViewTitle()}
               </h2>
               <div className="w-9 h-9 flex items-center justify-center">
-                {currentView !== 'trash' ? (
+                {(currentView === 'all' || currentView === 'folder' || currentView === 'tag') ? (
                   <button
                     onClick={handleCreateNote}
                     disabled={isCreating}
-                    className="p-2 text-accent-subtle hover:text-accent-brand transition-colors"
+                    className="p-2 text-text-secondary hover:text-brand-primary transition-colors"
                     title="Neue Notiz"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
-                ) : (
+                ) : currentView === 'trash' ? (
                   <button
                     onClick={() => setShowEmptyTrashModal(true)}
-                    className="btn-ghost px-3 py-2 rounded-lg text-red-500 hover-highlight flex items-center gap-2"
+                    className="px-3 py-2 text-text-primary hover:text-red-500 flex items-center gap-2"
                     title="Papierkorb leeren"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
 
@@ -276,14 +276,14 @@ const DashboardPage = () => {
           </div>
 
           {/* Note Editor */}
-          <div className="flex-1 overflow-hidden glass-surface rounded-2xl relative isolate">
+          <div className="flex-1 overflow-hidden glass glass-border rounded-2xl relative isolate" style={{ background: 'var(--color-bg-secondary)' }}>
             {currentNote ? (
               <NoteEditor
                 note={currentNote}
                 onNoteUpdate={refreshCurrentView}
               />
             ) : (
-              <div className="h-full flex items-center justify-center text-accent-subtle">
+              <div className="h-full flex items-center justify-center text-text-secondary">
                 <div className="text-center">
                   <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="text-lg">Wähle eine Notiz oder erstelle eine neue</p>
@@ -296,13 +296,13 @@ const DashboardPage = () => {
         {/* Empty Trash Modal */}
         <Modal isOpen={showEmptyTrashModal} onClose={() => setShowEmptyTrashModal(false)} title="Papierkorb leeren?">
           <div className="space-y-4">
-            <p className="text-sm text-accent-secondary">
+            <p className="text-sm text-text-secondary">
               Möchtest du wirklich alle Notizen im Papierkorb endgültig löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.
             </p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowEmptyTrashModal(false)}
-                className="px-3 py-2 rounded-lg bg-white/30 text-accent-fg hover:bg-white/40"
+                className="px-3 py-2 rounded-lg bg-white/30 text-text-primary hover:bg-white/40"
               >
                 Abbrechen
               </button>

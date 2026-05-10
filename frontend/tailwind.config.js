@@ -7,18 +7,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        icon: 'var(--color-icon)',
-        accent: {
-          'bg': 'var(--color-accent-bg)',
-          'surface': 'var(--color-accent-surface)',
-          'elevated': 'var(--color-accent-elevated)',
-          'border': 'var(--color-accent-border)',
-          'muted': 'var(--color-accent-muted)',
-          'brand': 'var(--color-accent-brand)',
-          'brand-dim': 'var(--color-accent-brand-dim)',
-          'subtle': 'var(--color-accent-subtle)',
-          'secondary': 'var(--color-accent-secondary)',
-          'fg': 'var(--color-accent-fg)',
+        icon: {
+          'primary': 'var(--color-icon-primary)',
+          'secondary': 'var(--color-icon-secondary)',
+        },
+        bg: {
+          'primary': 'var(--color-bg-primary)',
+          'primary-variant': 'var(--color-bg-primary-variant)',
+          'primary-surface': 'var(--color-bg-primary-surface)',
+          'secondary': 'var(--color-bg-secondary)',
+          'header': 'var(--color-bg-header)',
+          'input': 'var(--color-bg-input)'
+        },
+        text: {
+          'primary': 'var(--color-text-primary)',
+          'secondary': 'var(--color-text-secondary)',
+          'muted': 'var(--color-text-muted)'
+        },
+        brand: {
+          'primary': 'var(--color-brand-primary)'
         }
       },
       fontFamily: {

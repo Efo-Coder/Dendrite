@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import Modal from './Modal';
 import { useSettingsStore, DateDisplayMode, ThemeId } from '../../store/useSettingsStore';
 import { themes, themeOrder } from '../../themes/themes';
@@ -33,7 +34,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       <div className="space-y-6">
         {/* Date Display Setting */}
         <div>
-          <label className="block text-xs font-medium text-accent-fg mb-3 uppercase tracking-wide">
+          <label className="block text-xs font-medium text-text-primary mb-3 uppercase tracking-wide">
             Datumsanzeige in Notizliste
           </label>
           <div ref={dateSectionRef} className="space-y-2 relative" onMouseLeave={onDateLeave}>
@@ -47,20 +48,19 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               type="button"
               onClick={() => handleDateModeChange('updatedAt')}
               onMouseEnter={(e) => onDateEnter(e, dateDisplayMode === 'updatedAt')}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative z-10"
+              className={clsx("w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative z-10", dateDisplayMode !== 'updatedAt' && "glass-border-box")}
               style={dateDisplayMode === 'updatedAt' ? {
-                backgroundColor: `${currentTheme.colors.accentBrand}10`,
-                border: `1px solid ${currentTheme.colors.accentBrand}80`,
-                color: currentTheme.colors.accentBrand
+                backgroundColor: `${currentTheme.colors.brandPrimary}10`,
+                border: `1px solid ${currentTheme.colors.brandPrimary}80`,
+                color: currentTheme.colors.brandPrimary
               } : {
                 background: 'transparent',
-                border: '1px solid var(--glass-border)',
-                color: 'var(--color-accent-secondary)'
+                color: 'var(--color-text-secondary)'
               }}
             >
               <span className="text-sm font-medium">Bearbeitet am</span>
               {dateDisplayMode === 'updatedAt' && (
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: currentTheme.colors.accentBrand }} />
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: currentTheme.colors.brandPrimary }} />
               )}
             </button>
 
@@ -68,31 +68,30 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               type="button"
               onClick={() => handleDateModeChange('createdAt')}
               onMouseEnter={(e) => onDateEnter(e, dateDisplayMode === 'createdAt')}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative z-10"
+              className={clsx("w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative z-10", dateDisplayMode !== 'createdAt' && "glass-border-box")}
               style={dateDisplayMode === 'createdAt' ? {
-                backgroundColor: `${currentTheme.colors.accentBrand}10`,
-                border: `1px solid ${currentTheme.colors.accentBrand}80`,
-                color: currentTheme.colors.accentBrand
+                backgroundColor: `${currentTheme.colors.brandPrimary}10`,
+                border: `1px solid ${currentTheme.colors.brandPrimary}80`,
+                color: currentTheme.colors.brandPrimary
               } : {
                 background: 'transparent',
-                border: '1px solid var(--glass-border)',
-                color: 'var(--color-accent-secondary)'
+                color: 'var(--color-text-secondary)'
               }}
             >
               <span className="text-sm font-medium">Erstellt am</span>
               {dateDisplayMode === 'createdAt' && (
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: currentTheme.colors.accentBrand }} />
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: currentTheme.colors.brandPrimary }} />
               )}
             </button>
           </div>
-          <p className="mt-2 text-xs text-accent-subtle">
+          <p className="mt-2 text-xs text-text-secondary">
             Wähle, welches Datum in der Notizliste angezeigt werden soll.
           </p>
         </div>
 
         {/* Theme Selection */}
         <div>
-          <label className="block text-xs font-medium text-accent-fg mb-3 uppercase tracking-wide">
+          <label className="block text-xs font-medium text-text-primary mb-3 uppercase tracking-wide">
             Farbthema
           </label>
           <div ref={themeSectionRef} className="grid grid-cols-3 gap-3 relative" onMouseLeave={onThemeLeave}>
@@ -112,35 +111,34 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   type="button"
                   onClick={() => handleThemeChange(themeId as ThemeId)}
                   onMouseEnter={(e) => onThemeEnter(e, isSelected)}
-                  className="relative z-10 flex flex-col items-center p-3 rounded-lg backdrop-blur-md transition-all"
+                  className={clsx("relative z-10 flex flex-col items-center p-3 rounded-lg backdrop-blur-md transition-all", !isSelected && "glass-border-box")}
                   style={isSelected ? {
-                    backgroundColor: `${themeData.colors.accentBrand}10`,
-                    border: `1px solid ${themeData.colors.accentBrand}80`
+                    backgroundColor: `${themeData.colors.brandPrimary}10`,
+                    border: `1px solid ${themeData.colors.brandPrimary}80`
                   } : {
-                    background: 'transparent',
-                    border: '1px solid var(--glass-border)'
+                    background: 'transparent'
                   }}
                 >
                   <div
                     className="w-10 h-10 rounded-full mb-2 border-2"
-                    style={{ backgroundColor: themeData.colors.accentElevated }}
+                    style={{ backgroundColor: themeData.colors.brandPrimary }}
                   />
                   <span
                     className="text-xs font-medium text-center"
-                    style={isSelected ? { color: themeData.colors.accentBrand } : { color: 'var(--color-accent-subtle)' }}
+                    style={isSelected ? { color: themeData.colors.brandPrimary } : { color: 'var(--color-text-secondary)' }}
                   >
                     {themeData.name}
                   </span>
                   {isSelected && (
                     <div className="absolute top-2 right-2">
-                      <Check className="w-4 h-4" style={{ color: themeData.colors.accentBrand }} />
+                      <Check className="w-4 h-4" style={{ color: themeData.colors.brandPrimary }} />
                     </div>
                   )}
                 </button>
               );
             })}
           </div>
-          <p className="mt-2 text-xs text-accent-subtle">
+          <p className="mt-2 text-xs text-text-secondary">
             Wähle ein Farbthema für die gesamte Anwendung.
           </p>
         </div>

@@ -15,7 +15,7 @@ const UserMenu = ({ onOpenProfile, onMouseEnter }: UserMenuProps) => {
       aria-label="Profil"
       type="button"
     >
-      <User className="w-4 h-4 text-accent-fg transition-colors" />
+      <User className="w-4 h-4 text-text-primary transition-colors" />
     </button>
   );
 };

@@ -451,10 +451,22 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     const tmp = document.createElement('DIV');
     tmp.innerHTML = html;
 
-    // Ersetze Bilder durch ihren Dateinamen (alt-Attribut)
+    // Ersetze Bilder durch Vorschautext:
+    // - links/rechts: Bild entfernen, Begleittext des nächsten Absatzes erscheint automatisch
+    // - zentriert: nächsten Absatz bevorzugen, Dateiname nur als Fallback
     tmp.querySelectorAll('img').forEach((img) => {
-      const name = img.getAttribute('alt') || img.getAttribute('src')?.split('/').pop()?.split('?')[0] || 'Uploaded Image';
-      img.replaceWith(document.createTextNode(name));
+      const alignment = img.getAttribute('data-alignment');
+      if (alignment === 'left' || alignment === 'right') {
+        img.remove();
+      } else {
+        const nextText = (img.nextElementSibling as HTMLElement | null)?.textContent?.trim();
+        if (nextText) {
+          img.remove();
+        } else {
+          const name = img.getAttribute('alt') || img.getAttribute('src')?.split('/').pop()?.split('?')[0] || 'Uploaded Image';
+          img.replaceWith(document.createTextNode(name + ' '));
+        }
+      }
     });
 
     // Ersetze Block-Level-Elemente durch Zeilenumbrüche

@@ -21,9 +21,9 @@ const DarkModeToggle = ({ onMouseEnter }: DarkModeToggleProps) => {
       aria-label={`Zu ${themeMode === 'dark' ? 'hellem' : 'dunklem'} Modus wechseln`}
     >
       {themeMode === 'dark' ? (
-        <Sun className="w-4 h-4 text-accent-fg transition-colors" />
+        <Sun className="w-4 h-4 text-text-primary transition-colors" />
       ) : (
-        <Moon className="w-4 h-4 text-accent-fg transition-colors" />
+        <Moon className="w-4 h-4 text-text-primary transition-colors" />
       )}
     </button>
   );

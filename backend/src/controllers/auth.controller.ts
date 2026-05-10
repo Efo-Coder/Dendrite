@@ -1,8 +1,18 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
 import { prisma } from '../index';
 import { AuthRequest } from '../middleware/auth.middleware';
+
+const USER_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  avatarUrl: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -24,17 +34,8 @@ export const register = async (req: Request, res: Response) => {
 
     // Erstelle User
     const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: name || null,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-      },
+      data: { email, password: hashedPassword, name: name || null },
+      select: USER_SELECT,
     });
 
     // Erstelle JWT Token
@@ -89,6 +90,7 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
       },
       token,
@@ -105,7 +107,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     const user = await prisma.user.update({
       where: { id: req.userId },
       data: { name: name ?? null },
-      select: { id: true, email: true, name: true, createdAt: true, updatedAt: true },
+      select: USER_SELECT,
     });
     res.json({ user });
   } catch (error) {
@@ -150,17 +152,56 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const uploadAvatar = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Kein Bild hochgeladen' });
+
+    const existing = await prisma.user.findUnique({ where: { id: req.userId }, select: { avatarUrl: true } });
+    if (existing?.avatarUrl) {
+      const oldPath = `${__dirname}/../../uploads/${existing.avatarUrl.split('/uploads/')[1]}`;
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+
+    const avatarUrl = `/uploads/${req.file.filename}`;
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data: { avatarUrl },
+      select: USER_SELECT,
+    });
+    res.json({ user });
+  } catch (error) {
+    if (req.file) {
+      try { fs.unlinkSync(req.file.path); } catch {}
+    }
+    console.error('UploadAvatar error:', error);
+    res.status(500).json({ error: 'Avatar konnte nicht hochgeladen werden' });
+  }
+};
+
+export const deleteAvatar = async (req: AuthRequest, res: Response) => {
+  try {
+    const existing = await prisma.user.findUnique({ where: { id: req.userId }, select: { avatarUrl: true } });
+    if (existing?.avatarUrl) {
+      const oldPath = `${__dirname}/../../uploads/${existing.avatarUrl.split('/uploads/')[1]}`;
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data: { avatarUrl: null },
+      select: USER_SELECT,
+    });
+    res.json({ user });
+  } catch (error) {
+    console.error('DeleteAvatar error:', error);
+    res.status(500).json({ error: 'Avatar konnte nicht gelöscht werden' });
+  }
+};
+
 export const getMe = async (req: AuthRequest, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: USER_SELECT,
     });
 
     if (!user) {

@@ -151,18 +151,19 @@ function convertImageElement(domNode: Node): null | DOMConversionOutput {
       }
     }
 
-    // Try to extract alignment from data attribute first, then from style
+    // Try to extract alignment from data attribute first, then from float/margin style
     let alignment: 'left' | 'center' | 'right' = 'left';
     const dataAlignment = domNode.getAttribute('data-alignment');
     if (dataAlignment === 'center' || dataAlignment === 'right' || dataAlignment === 'left') {
       alignment = dataAlignment;
     } else {
-      const marginLeft = domNode.style.marginLeft;
-      const marginRight = domNode.style.marginRight;
-      if (marginLeft === 'auto' && marginRight === 'auto') {
-        alignment = 'center';
-      } else if (marginLeft === 'auto') {
+      const float = domNode.style.float;
+      if (float === 'left') {
+        alignment = 'left';
+      } else if (float === 'right') {
         alignment = 'right';
+      } else if (domNode.style.marginLeft === 'auto' && domNode.style.marginRight === 'auto') {
+        alignment = 'center';
       }
     }
 
@@ -228,12 +229,15 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     element.style.borderRadius = '4px';
     element.style.display = 'block';
 
-    if (this.__alignment === 'center') {
+    if (this.__alignment === 'left') {
+      element.style.float = 'left';
+      element.style.marginRight = '16px';
+    } else if (this.__alignment === 'right') {
+      element.style.float = 'right';
+      element.style.marginLeft = '16px';
+    } else {
       element.style.marginLeft = 'auto';
       element.style.marginRight = 'auto';
-    } else if (this.__alignment === 'right') {
-      element.style.marginLeft = 'auto';
-      element.style.marginRight = '0';
     }
 
     return { element };
