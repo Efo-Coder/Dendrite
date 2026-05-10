@@ -20,10 +20,11 @@ interface ImageComponentProps {
   width: number;
   height: number;
   alignment: 'left' | 'center' | 'right';
+  maintainAspectRatio: boolean;
   nodeKey: string;
 }
 
-function ImageComponent({ src, altText, width, height, alignment, nodeKey }: ImageComponentProps) {
+function ImageComponent({ src, altText, width, height, alignment, maintainAspectRatio, nodeKey }: ImageComponentProps) {
   const [editor] = useLexicalComposerContext();
 
   const onWidthChange = useCallback(
@@ -71,6 +72,18 @@ function ImageComponent({ src, altText, width, height, alignment, nodeKey }: Ima
     });
   }, [editor, nodeKey]);
 
+  const onAspectRatioChange = useCallback(
+    (locked: boolean) => {
+      editor.update(() => {
+        const node = $getNodeByKey(nodeKey);
+        if ($isImageNode(node)) {
+          node.setMaintainAspectRatio(locked);
+        }
+      });
+    },
+    [editor, nodeKey]
+  );
+
   return (
     <ResizableImage
       src={src}
@@ -78,9 +91,11 @@ function ImageComponent({ src, altText, width, height, alignment, nodeKey }: Ima
       initialWidth={width}
       initialHeight={height}
       initialAlignment={alignment}
+      initialMaintainAspectRatio={maintainAspectRatio}
       onWidthChange={onWidthChange}
       onHeightChange={onHeightChange}
       onAlignmentChange={onAlignmentChange}
+      onAspectRatioChange={onAspectRatioChange}
       onDelete={onDelete}
     />
   );
@@ -92,6 +107,7 @@ export interface ImagePayload {
   width?: number;
   height?: number;
   alignment?: 'left' | 'center' | 'right';
+  maintainAspectRatio?: boolean;
   key?: NodeKey;
 }
 
@@ -102,6 +118,7 @@ export type SerializedImageNode = Spread<
     width: number;
     height: number;
     alignment: 'left' | 'center' | 'right';
+    maintainAspectRatio: boolean;
   },
   SerializedLexicalNode
 >;
@@ -149,7 +166,8 @@ function convertImageElement(domNode: Node): null | DOMConversionOutput {
       }
     }
 
-    const node = $createImageNode({ altText, src, width, height, alignment });
+    const maintainAspectRatio = domNode.getAttribute('data-maintain-aspect-ratio') === 'true';
+    const node = $createImageNode({ altText, src, width, height, alignment, maintainAspectRatio });
     return { node };
   }
   return null;
@@ -161,6 +179,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   __width: number;
   __height: number;
   __alignment: 'left' | 'center' | 'right';
+  __maintainAspectRatio: boolean;
 
   static getType(): string {
     return 'image';
@@ -173,18 +192,20 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
       node.__width,
       node.__height,
       node.__alignment,
+      node.__maintainAspectRatio,
       node.__key
     );
   }
 
   static importJSON(serializedNode: SerializedImageNode): ImageNode {
-    const { altText, src, width, height, alignment } = serializedNode;
+    const { altText, src, width, height, alignment, maintainAspectRatio } = serializedNode;
     const node = $createImageNode({
       altText,
       src,
       width,
       height,
       alignment,
+      maintainAspectRatio: maintainAspectRatio ?? false,
     });
     return node;
   }
@@ -199,6 +220,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     element.setAttribute('data-width', String(this.__width));
     element.setAttribute('data-height', String(this.__height));
     element.setAttribute('data-alignment', this.__alignment);
+    element.setAttribute('data-maintain-aspect-ratio', String(this.__maintainAspectRatio));
 
     // Apply basic styling
     element.style.width = `${this.__width}%`;
@@ -232,6 +254,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     width: number = 100,
     height: number = 300,
     alignment: 'left' | 'center' | 'right' = 'left',
+    maintainAspectRatio: boolean = false,
     key?: NodeKey
   ) {
     super(key);
@@ -240,6 +263,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     this.__width = width;
     this.__height = height;
     this.__alignment = alignment;
+    this.__maintainAspectRatio = maintainAspectRatio;
   }
 
   exportJSON(): SerializedImageNode {
@@ -249,6 +273,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
       width: this.__width,
       height: this.__height,
       alignment: this.__alignment,
+      maintainAspectRatio: this.__maintainAspectRatio,
       type: 'image',
       version: 1,
     };
@@ -274,6 +299,11 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     writable.__alignment = alignment;
   }
 
+  setMaintainAspectRatio(maintainAspectRatio: boolean): void {
+    const writable = this.getWritable();
+    writable.__maintainAspectRatio = maintainAspectRatio;
+  }
+
   // View
   createDOM(config: EditorConfig): HTMLElement {
     const div = document.createElement('div');
@@ -288,15 +318,9 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return div;
   }
 
-  updateDOM(prevNode: ImageNode): boolean {
-    // Return true if the node needs to be recreated
-    const needsUpdate =
-      prevNode.__width !== this.__width ||
-      prevNode.__height !== this.__height ||
-      prevNode.__alignment !== this.__alignment ||
-      prevNode.__src !== this.__src;
-
-    return needsUpdate;
+  updateDOM(): boolean {
+    // Component manages visual state locally – no remount needed on node updates
+    return false;
   }
 
   getSrc(): string {
@@ -327,6 +351,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
         width={this.__width}
         height={this.__height}
         alignment={this.__alignment}
+        maintainAspectRatio={this.__maintainAspectRatio}
         nodeKey={this.getKey()}
       />
     );
@@ -339,9 +364,10 @@ export function $createImageNode({
   width = 100,
   height = 300,
   alignment = 'left',
+  maintainAspectRatio = false,
   key,
 }: ImagePayload): ImageNode {
-  return $applyNodeReplacement(new ImageNode(src, altText, width, height, alignment, key));
+  return $applyNodeReplacement(new ImageNode(src, altText, width, height, alignment, maintainAspectRatio, key));
 }
 
 export function $isImageNode(

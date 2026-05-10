@@ -94,7 +94,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
         <div
           {...attributes}
           {...listeners}
-          className="flex items-center justify-center w-8 flex-shrink-0 cursor-grab active:cursor-grabbing text-accent-subtle hover:text-accent-fg"
+          className="flex items-center justify-center w-8 flex-shrink-0 cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary"
         >
           <GripVertical className="w-4 h-4" />
         </div>
@@ -108,7 +108,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
         {/* Note Header mit Title, Tag und Icons */}
         <div className="flex items-center gap-2 min-w-0">
           {/* Title */}
-          <h3 className="text-sm font-semibold text-accent-fg truncate flex-shrink min-w-0">
+          <h3 className="text-sm font-semibold text-text-primary truncate flex-shrink min-w-0">
             {getFirstLine(note.content)}
           </h3>
 
@@ -129,28 +129,28 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
 
           {/* Icons */}
           <div className="flex items-center space-x-1 flex-shrink-0">
-            {note.isPinned && <Pin className="w-3 h-3 text-accent-brand" />}
+            {note.isPinned && <Pin className="w-3 h-3 text-brand-primary" />}
             {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
-            {note.isLocked && <Lock className="w-3 h-3 text-accent-subtle" />}
+            {note.isLocked && <Lock className="w-3 h-3 text-text-secondary" />}
           </div>
         </div>
 
         {/* Note Preview - nur eine Zeile */}
-        <p className="text-xs text-accent-secondary truncate min-w-0">
+        <p className="text-xs text-text-secondary truncate min-w-0">
           {getPreview(note.content)}
         </p>
 
         {/* Folder Info */}
         <div className="flex items-center gap-1 min-w-0">
-          <Folder className="w-3 h-3 text-accent-subtle flex-shrink-0" />
-          <span className="text-xs text-accent-subtle truncate">
+          <Folder className="w-3 h-3 text-text-secondary flex-shrink-0" />
+          <span className="text-xs text-text-secondary truncate">
             {note.folder?.name || 'Alle Notizen'}
           </span>
         </div>
 
         {/* Note Meta */}
         <div className="flex items-center justify-between gap-2 min-w-0">
-          <span className="text-xs text-accent-subtle flex-shrink-0">
+          <span className="text-xs text-text-secondary flex-shrink-0">
             {formatDistanceToNow(new Date(dateDisplayMode === 'createdAt' ? note.createdAt : note.updatedAt), {
               addSuffix: true,
               locale: de,
@@ -158,7 +158,7 @@ const SortableNoteItem = ({ note, isSelected, onSelectNote, getPreview, getFirst
           </span>
         </div>
       </button>
-      {!isSelected && <div className="absolute bottom-0 inset-x-5 h-px bg-[var(--glass-border)]" />}
+      {!isSelected && <div className="absolute bottom-0 inset-x-5 h-px glass-divider" />}
     </div>
   );
 };
@@ -294,7 +294,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   const handleMoveToFolder = async (folderId: string | null) => {
     if (contextMenu.note) {
       try {
-        await updateNote(contextMenu.note.id, { folderId: folderId || undefined });
+        await updateNote(contextMenu.note.id, { folderId });
         toast.success('Notiz verschoben');
         if (onNotesReordered) onNotesReordered();
       } catch (error) {
@@ -451,6 +451,12 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     const tmp = document.createElement('DIV');
     tmp.innerHTML = html;
 
+    // Ersetze Bilder durch ihren Dateinamen (alt-Attribut)
+    tmp.querySelectorAll('img').forEach((img) => {
+      const name = img.getAttribute('alt') || img.getAttribute('src')?.split('/').pop()?.split('?')[0] || 'Uploaded Image';
+      img.replaceWith(document.createTextNode(name));
+    });
+
     // Ersetze Block-Level-Elemente durch Zeilenumbrüche
     const blockElements = tmp.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6, li, br');
     blockElements.forEach((el) => {
@@ -521,7 +527,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   if (notes.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 text-center">
-        <div className="text-accent-subtle">
+        <div className="text-text-secondary">
           <p className="text-sm">Keine Notizen gefunden</p>
         </div>
       </div>
@@ -538,9 +544,9 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
           <div
             className="glass-pill pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.59,0.04,0.3,1.43)]"
             style={{
-              left: 4,
+              left: 1,
               top: highlighterStyle.top,
-              width: 'calc(100% - 8px)',
+              width: 'calc(100% - 2px)',
               height: highlighterStyle.height,
             }}
           />
@@ -555,7 +561,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
             onContextMenu={(e) => handleNoteRightClick(e, note)}
             className={clsx(
               'w-full flex relative h-[100px] transition-colors',
-              currentNote?.id === note.id ? 'bg-accent-brand/10 ring-1 ring-inset ring-[color-mix(in_srgb,var(--color-accent-brand)_55%,transparent)] rounded-lg' : ''
+              currentNote?.id === note.id ? 'bg-brand-primary/10 ring-1 ring-inset ring-[color-mix(in_srgb,var(--color-brand-primary)_55%,transparent)] rounded-lg' : ''
             )}
           >
             {/* Platzhalter für Drag Handle - damit Layout konsistent bleibt */}
@@ -568,7 +574,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
               {/* Note Header mit Title, Tag und Icons */}
               <div className="flex items-center gap-2 min-w-0">
                 {/* Title */}
-                <h3 className="text-sm font-semibold text-accent-fg truncate flex-shrink min-w-0">
+                <h3 className="text-sm font-semibold text-text-primary truncate flex-shrink min-w-0">
                   {getFirstLine(note.content)}
                 </h3>
 
@@ -589,28 +595,28 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
 
                 {/* Icons */}
                 <div className="flex items-center space-x-1 flex-shrink-0">
-                  {note.isPinned && <Pin className="w-3 h-3 text-accent-brand" />}
+                  {note.isPinned && <Pin className="w-3 h-3 text-brand-primary" />}
                   {note.isFavorite && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
-                  {note.isLocked && <Lock className="w-3 h-3 text-accent-subtle" />}
+                  {note.isLocked && <Lock className="w-3 h-3 text-text-secondary" />}
                 </div>
               </div>
 
               {/* Note Preview - nur eine Zeile */}
-              <p className="text-xs text-accent-secondary truncate min-w-0">
+              <p className="text-xs text-text-secondary truncate min-w-0">
                 {getPreview(note.content)}
               </p>
 
               {/* Folder Info */}
               <div className="flex items-center gap-1 min-w-0">
-                <Folder className="w-3 h-3 text-accent-subtle flex-shrink-0" />
-                <span className="text-xs text-accent-subtle truncate">
+                <Folder className="w-3 h-3 text-text-secondary flex-shrink-0" />
+                <span className="text-xs text-text-secondary truncate">
                   {note.folder?.name || 'Alle Notizen'}
                 </span>
               </div>
 
               {/* Note Meta */}
               <div className="flex items-center justify-between gap-2 min-w-0">
-                <span className="text-xs text-accent-subtle flex-shrink-0">
+                <span className="text-xs text-text-secondary flex-shrink-0">
                   {formatDistanceToNow(new Date(dateDisplayMode === 'createdAt' ? note.createdAt : note.updatedAt), {
                     addSuffix: true,
                     locale: de,
@@ -618,7 +624,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
                 </span>
               </div>
             </button>
-            {currentNote?.id !== note.id && <div className="absolute bottom-0 inset-x-5 h-px bg-[var(--glass-border)]" />}
+            {currentNote?.id !== note.id && <div className="absolute bottom-0 inset-x-5 h-px glass-divider" />}
           </div>
         ))}
       </div>
@@ -662,9 +668,9 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     <>
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Sortierung Header */}
-      <div className="px-4 py-2 border-y glass-divider glass-header border-l-0 border-r-0 -mt-[1px]">
+      <div className="px-4 py-2 border-y glass-divider border-l-0 border-r-0 -mt-[1px]" style={{ background: 'var(--color-bg-header)', boxShadow: '0 4px 24px rgba(0,0,0,0.14)' }}>
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-accent-fg">Sortierung</span>
+          <span className="text-sm font-medium text-text-primary">Sortierung</span>
           <div className="flex items-center space-x-2 pr-[6px]">
             {/* Custom sort dropdown */}
             <button
@@ -674,15 +680,15 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
                 if (rect) setSortDropdownPos({ top: rect.bottom + 4, left: rect.right, width: rect.width });
                 setShowSortDropdown(v => !v);
               }}
-              className="flex items-center gap-1 px-2 py-1 border glass-divider rounded text-sm bg-accent-bg text-accent-fg hover:text-accent-brand transition-colors"
+              className="flex items-center gap-1 px-2 py-1 border glass-divider glass-bg rounded text-sm text-text-primary hover:text-brand-primary transition-colors"
             >
               <span>{sortLabels[sortBy] ?? 'Erstellt'}</span>
-              <ChevronDown className={`w-3 h-3 text-accent-subtle transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3 h-3 text-text-secondary transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
             </button>
 
             {showSortDropdown && createPortal(
               <div
-                className="fixed z-[9999] glass-panel rounded-xl shadow-lg py-1 w-36"
+                className="fixed z-[9999] glass-popup rounded-xl shadow-lg py-1 w-36"
                 style={{ top: sortDropdownPos.top, left: sortDropdownPos.left, transform: 'translateX(-100%)' }}
               >
                 <div ref={sortDropdownRef} className="relative" onMouseLeave={onSortLeave}>
@@ -699,7 +705,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
                       onClick={() => { updateSorting(value, sortOrder); setShowSortDropdown(false); }}
                       className={clsx(
                         'relative z-10 w-full text-left px-3 py-2 text-sm transition-colors',
-                        sortBy === value ? 'text-accent-brand' : 'text-accent-fg'
+                        sortBy === value ? 'text-brand-primary' : 'text-text-primary'
                       )}
                     >
                       {label}
@@ -712,7 +718,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
 
             <button
               onClick={() => updateSorting(sortBy, sortOrder === 'desc' ? 'asc' : 'desc')}
-              className={`p-1 text-accent-subtle hover:text-accent-brand transition-colors ${sortBy === 'manual' ? 'invisible' : ''}`}
+              className={`p-1 text-text-secondary hover:text-brand-primary transition-colors ${sortBy === 'manual' ? 'invisible' : ''}`}
               title={`Sortierung: ${sortOrder === 'desc' ? 'Absteigend' : 'Aufsteigend'}`}
               tabIndex={sortBy === 'manual' ? -1 : 0}
             >

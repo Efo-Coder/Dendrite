@@ -40,6 +40,10 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
   const [content, setContent] = useState(note.content);
   const [isSaving, setIsSaving] = useState(false);
+  const contentRef = useRef(content);
+  const noteRef = useRef(note);
+  useEffect(() => { contentRef.current = content; }, [content]);
+  useEffect(() => { noteRef.current = note; }, [note]);
   const [folderMenuPos, setFolderMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [tagMenuPos, setTagMenuPos] = useState<{ x: number; y: number } | null>(null);
 
@@ -58,6 +62,16 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const tagMenuRef = useRef<HTMLDivElement>(null);
   const { pill: folderPill, onEnter: onFolderEnter, onLeave: onFolderLeave } = useGlassPill(folderMenuRef);
   const { pill: tagPill, onEnter: onTagEnter, onLeave: onTagLeave } = useGlassPill(tagMenuRef);
+
+  useEffect(() => {
+    return () => {
+      const currentContent = contentRef.current;
+      const currentNote = noteRef.current;
+      if (currentContent !== currentNote.content) {
+        updateNote(currentNote.id, { content: currentContent });
+      }
+    };
+  }, [note.id]);
 
   useEffect(() => {
     setContent(note.content);
@@ -211,7 +225,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
       onMouseEnter={enterFn}
       className={clsx(
         'p-2 rounded-lg transition-colors relative z-10',
-        folderMenuPos ? 'text-accent-brand' : 'text-accent-fg'
+        folderMenuPos ? 'text-brand-primary' : 'text-text-primary'
       )}
       title="Ordner wählen"
     >
@@ -225,7 +239,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
       onMouseEnter={enterFn}
       className={clsx(
         'p-2 rounded-lg transition-colors relative z-10',
-        tagMenuPos ? 'text-accent-brand' : 'text-accent-fg'
+        tagMenuPos ? 'text-brand-primary' : 'text-text-primary'
       )}
       title="Tags verwalten"
     >
@@ -237,7 +251,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
     <div className="h-full flex flex-col bg-transparent relative">
       {/* Toolbar wrapper — z-10 ensures stacking context above the editor's overflow stacking context */}
       <div className="relative z-10">
-        <div ref={toolbarRef} className="p-4 h-9 glass-header px-6 flex items-center justify-between relative" style={{ boxShadow: 'none' }} onMouseLeave={onToolbarLeave}>
+        <div ref={toolbarRef} className="p-4 h-9 px-6 flex items-center justify-between relative" style={{ background: 'var(--color-bg-header)', boxShadow: 'none' }} onMouseLeave={onToolbarLeave}>
           {toolbarPill && (
             <div
               className="glass-pill"
@@ -253,7 +267,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                   onMouseEnter={(e) => onToolbarEnter(e, note.isPinned)}
                   className={clsx(
                     'p-2 rounded-lg transition-colors relative z-10',
-                    note.isPinned ? 'text-accent-brand' : 'text-accent-fg'
+                    note.isPinned ? 'text-brand-primary' : 'text-text-primary'
                   )}
                   title="Notiz anheften"
                 >
@@ -264,7 +278,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                   onMouseEnter={(e) => onToolbarEnter(e, false)}
                   className={clsx(
                     'p-2 rounded-lg transition-colors relative z-10',
-                    note.isFavorite ? 'text-yellow-500' : 'text-accent-fg'
+                    note.isFavorite ? 'text-yellow-500' : 'text-text-primary'
                   )}
                   title="Zu Favoriten hinzufügen"
                 >
@@ -273,7 +287,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                 <button
                   onClick={handleArchive}
                   onMouseEnter={(e) => onToolbarEnter(e, false)}
-                  className="p-2 rounded-lg text-accent-fg transition-colors relative z-10"
+                  className="p-2 rounded-lg text-text-primary transition-colors relative z-10"
                   title="Archivieren"
                 >
                   <Archive className="w-4 h-4" />
@@ -290,7 +304,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                     onMouseEnter={(e) => onToolbarEnter(e, showOverflow)}
                     className={clsx(
                       'p-2 rounded-lg transition-colors flex-shrink-0 mr-2 relative z-10',
-                      showOverflow ? 'text-accent-brand' : 'text-accent-fg'
+                      showOverflow ? 'text-brand-primary' : 'text-text-primary'
                     )}
                     title="Weitere Optionen"
                   >
@@ -301,12 +315,12 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             )}
 
             {isArchived && (
-              <button onClick={handleRestore} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-accent-fg transition-colors relative z-10" title="Aus Archiv wiederherstellen">
+              <button onClick={handleRestore} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-text-primary transition-colors relative z-10" title="Aus Archiv wiederherstellen">
                 <ArchiveRestore className="w-4 h-4" />
               </button>
             )}
             {isInTrash && (
-              <button onClick={handleRestore} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-accent-fg transition-colors relative z-10" title="Wiederherstellen">
+              <button onClick={handleRestore} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-text-primary transition-colors relative z-10" title="Wiederherstellen">
                 <RotateCcw className="w-4 h-4" />
               </button>
             )}
@@ -315,8 +329,8 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
           {/* Right side — Trash + Close always visible */}
           <div className="flex items-center gap-1">
             {!isInTrash && (
-              <div className="flex items-center space-x-2 text-xs text-accent-secondary min-w-0 mr-1">
-                <Clock className="w-4 h-4 flex-shrink-0 text-accent-fg" />
+              <div className="flex items-center space-x-2 text-xs text-text-secondary min-w-0 mr-1">
+                <Clock className="w-4 h-4 flex-shrink-0 text-text-primary" />
                 {!isNarrow && (
                   <span className="truncate">
                     {isSaving
@@ -329,12 +343,12 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             <button
               onClick={handleDelete}
               onMouseEnter={(e) => onToolbarEnter(e, false)}
-              className="p-2 rounded-lg text-accent-fg hover:text-red-500 transition-colors relative z-10"
+              className="p-2 rounded-lg text-text-primary hover:text-red-500 transition-colors relative z-10"
               title={isInTrash ? 'Endgültig löschen' : 'In Papierkorb'}
             >
               <Trash2 className="w-4 h-4" />
             </button>
-            <button onClick={handleClose} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-accent-fg transition-colors relative z-10" title="Notiz schließen">
+            <button onClick={handleClose} onMouseEnter={(e) => onToolbarEnter(e, false)} className="p-2 rounded-lg text-text-primary transition-colors relative z-10" title="Notiz schließen">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -344,7 +358,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
         {isCompact && !isInTrash && !isArchived && showOverflow && (
           <>
             <div className="fixed inset-0" onClick={() => setShowOverflow(false)} />
-            <div ref={overflowPopupRef} className="absolute top-full left-10 mt-1 glass-panel rounded-xl shadow-xl p-2 z-50 flex gap-1" onMouseLeave={onOverflowLeave}>
+            <div ref={overflowPopupRef} className="absolute top-full left-10 mt-1 glass-popup rounded-xl shadow-xl p-2 z-50 flex gap-1" onMouseLeave={onOverflowLeave}>
               {overflowPill && (
                 <div
                   className="glass-pill"
@@ -377,7 +391,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
           <div className="fixed inset-0 z-[9998]" onClick={() => setFolderMenuPos(null)} />
           <div
             ref={folderMenuRef}
-            className="fixed glass-panel rounded-xl shadow-lg py-1 overflow-hidden z-[9999]"
+            className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden z-[9999]"
             style={{ left: folderMenuPos.x, top: folderMenuPos.y, minWidth: '200px' }}
             onMouseLeave={onFolderLeave}
           >
@@ -390,11 +404,11 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             <button
               onClick={() => handleMoveToFolder(null)}
               onMouseEnter={onFolderEnter}
-              className="relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors text-accent-fg"
+              className="relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors text-text-primary"
             >
-              <FolderOpen className="w-4 h-4 text-accent-subtle flex-shrink-0" />
-              <span className="flex-1 text-left text-accent-secondary">Kein Ordner</span>
-              {!note.folderId && <Check className="w-3 h-3 text-accent-brand flex-shrink-0" />}
+              <FolderOpen className="w-4 h-4 text-text-secondary flex-shrink-0" />
+              <span className="flex-1 text-left text-text-secondary">Kein Ordner</span>
+              {!note.folderId && <Check className="w-3 h-3 text-brand-primary flex-shrink-0" />}
             </button>
             {folders.map((folder) => (
               <button
@@ -403,12 +417,12 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                 onMouseEnter={onFolderEnter}
                 className={clsx(
                   'relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
-                  note.folderId === folder.id ? 'text-accent-brand' : 'text-accent-fg'
+                  note.folderId === folder.id ? 'text-brand-primary' : 'text-text-primary'
                 )}
               >
                 <FolderOpen className="w-4 h-4 flex-shrink-0" style={{ color: folder.color || '#10b981' }} />
                 <span className="flex-1 text-left">{folder.name}</span>
-                {note.folderId === folder.id && <Check className="w-3 h-3 text-accent-brand flex-shrink-0" />}
+                {note.folderId === folder.id && <Check className="w-3 h-3 text-brand-primary flex-shrink-0" />}
               </button>
             ))}
           </div>
@@ -422,7 +436,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
           <div className="fixed inset-0 z-[9998]" onClick={() => setTagMenuPos(null)} />
           <div
             ref={tagMenuRef}
-            className="fixed glass-panel rounded-xl shadow-lg py-1 overflow-hidden z-[9999]"
+            className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden z-[9999]"
             style={{ left: tagMenuPos.x, top: tagMenuPos.y, minWidth: '200px' }}
             onMouseLeave={onTagLeave}
           >
@@ -433,7 +447,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
               />
             )}
             {tags.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-accent-subtle italic">Keine Tags verfügbar</div>
+              <div className="px-3 py-2 text-sm text-text-secondary italic">Keine Tags verfügbar</div>
             ) : tags.map((tag) => {
               const isSelected = note.tags?.some(t => t.id === tag.id);
               return (
@@ -441,11 +455,11 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
                   key={tag.id}
                   onClick={() => handleToggleTag(tag.id)}
                   onMouseEnter={onTagEnter}
-                  className="relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors text-accent-fg"
+                  className="relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors text-text-primary"
                 >
                   <TagIcon className="w-4 h-4 flex-shrink-0" style={{ color: tag.color }} />
                   <span className="flex-1 text-left">{tag.name}</span>
-                  {isSelected && <Check className="w-3 h-3 text-accent-brand flex-shrink-0" />}
+                  {isSelected && <Check className="w-3 h-3 text-brand-primary flex-shrink-0" />}
                 </button>
               );
             })}

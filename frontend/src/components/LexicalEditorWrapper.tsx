@@ -331,7 +331,7 @@ const LexicalEditorWrapper = ({
         }
 
         .editor-placeholder {
-          color: color-mix(in srgb, var(--color-accent-brand) 45%, transparent);
+          color: color-mix(in srgb, var(--color-brand-primary) 45%, transparent);
           overflow: hidden;
           position: absolute;
           text-overflow: ellipsis;
@@ -504,6 +504,7 @@ const LexicalEditorWrapper = ({
           border-radius: 4px;
           margin: 8px 0;
         }
+
       `}</style>
 
       <LexicalComposer initialConfig={initialConfig}>
@@ -515,20 +516,31 @@ const LexicalEditorWrapper = ({
         {toolbar}
 
         {/* Editor */}
-        <div ref={scrollRef} className="flex-1 scrollbar-overlay px-12 pt-8 pb-8 bg-transparent overflow-y-auto" style={{ isolation: 'isolate' }}>
-          <div className="editor-container">
-            <RichTextPlugin
-              contentEditable={<ContentEditable className="editor-input" />}
-              placeholder={<div className="editor-placeholder">{placeholder}</div>}
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            <HistoryPlugin />
-            <AutoFocusPlugin />
-            <ListPlugin />
-            <LinkPlugin />
-            <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-            <ImagesPlugin />
+        <div className="relative flex-1 min-h-0">
+          <div ref={scrollRef} className="absolute inset-0 scrollbar-overlay px-12 pt-8 pb-8 bg-transparent overflow-y-auto" style={{ isolation: 'isolate' }}>
+            <div className="editor-container">
+              <RichTextPlugin
+                contentEditable={<ContentEditable className="editor-input" />}
+                placeholder={<div className="editor-placeholder">{placeholder}</div>}
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+              <HistoryPlugin />
+              <AutoFocusPlugin />
+              <ListPlugin />
+              <LinkPlugin />
+              <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+              <ImagesPlugin />
+            </div>
           </div>
+          {/* Top scroll fade – softens text appearing directly beneath the toolbar */}
+          <div
+            className="absolute top-0 left-0 pointer-events-none z-10"
+            style={{
+              right: '10px',
+              height: '100px',
+              background: 'linear-gradient(to bottom, color-mix(in srgb, var(--color-bg-secondary) 100%, black 10%), transparent 50%)',
+            }}
+          />
         </div>
       </LexicalComposer>
     </>
