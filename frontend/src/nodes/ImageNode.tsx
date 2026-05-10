@@ -27,26 +27,15 @@ interface ImageComponentProps {
 function ImageComponent({ src, altText, width, height, alignment, maintainAspectRatio, nodeKey }: ImageComponentProps) {
   const [editor] = useLexicalComposerContext();
 
-  const onWidthChange = useCallback(
-    (newWidth: number) => {
+  const onSizeChange = useCallback(
+    (newWidth: number, newHeight: number) => {
       editor.update(() => {
         const node = $getNodeByKey(nodeKey);
         if ($isImageNode(node)) {
           node.setWidth(newWidth);
-        }
-      });
-    },
-    [editor, nodeKey]
-  );
-
-  const onHeightChange = useCallback(
-    (newHeight: number) => {
-      editor.update(() => {
-        const node = $getNodeByKey(nodeKey);
-        if ($isImageNode(node)) {
           node.setHeight(newHeight);
         }
-      });
+      }, { discrete: true });
     },
     [editor, nodeKey]
   );
@@ -92,8 +81,7 @@ function ImageComponent({ src, altText, width, height, alignment, maintainAspect
       initialHeight={height}
       initialAlignment={alignment}
       initialMaintainAspectRatio={maintainAspectRatio}
-      onWidthChange={onWidthChange}
-      onHeightChange={onHeightChange}
+      onSizeChange={onSizeChange}
       onAlignmentChange={onAlignmentChange}
       onAspectRatioChange={onAspectRatioChange}
       onDelete={onDelete}

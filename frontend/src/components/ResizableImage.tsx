@@ -10,8 +10,7 @@ interface ResizableImageProps {
   initialHeight?: number;
   initialAlignment?: 'left' | 'center' | 'right';
   initialMaintainAspectRatio?: boolean;
-  onWidthChange?: (width: number) => void;
-  onHeightChange?: (height: number) => void;
+  onSizeChange?: (width: number, height: number) => void;
   onAlignmentChange?: (alignment: 'left' | 'center' | 'right') => void;
   onAspectRatioChange?: (locked: boolean) => void;
   onDelete?: () => void;
@@ -26,8 +25,7 @@ const ResizableImage = ({
   initialHeight = 300,
   initialAlignment = 'left',
   initialMaintainAspectRatio = false,
-  onWidthChange,
-  onHeightChange,
+  onSizeChange,
   onAlignmentChange,
   onAspectRatioChange,
   onDelete,
@@ -49,9 +47,15 @@ const ResizableImage = ({
   const startYRef = useRef(0);
   const startWidthRef = useRef(0);
   const startHeightRef = useRef(0);
+  const liveWidthRef = useRef(width);
+  const liveHeightRef = useRef(height);
   const aspectRatioRef = useRef(1);
   const editorWidthRef = useRef(800);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync local state from props when Lexical updates externally (e.g. undo/redo)
+  useEffect(() => { if (!isResizing) setWidth(initialWidth ?? 100); }, [initialWidth]);
+  useEffect(() => { if (!isResizing) setHeight(initialHeight ?? 300); }, [initialHeight]);
 
   // Sync float/size/margin to the Lexical createDOM wrapper div (parent of this component).
   // This is needed because the float must be on a sibling of text paragraphs for text-wrap to work.
@@ -129,20 +133,23 @@ const ResizableImage = ({
       const deltaX = e.clientX - startXRef.current;
       const deltaY = e.clientY - startYRef.current;
 
+      const setW = (v: number) => { liveWidthRef.current = v; setWidth(v); };
+      const setH = (v: number) => { liveHeightRef.current = v; setHeight(v); };
+
       if (resizeDirection === 'right') {
         const deltaPercent = (deltaX / containerWidth) * 100;
         const newWidth = Math.min(100, Math.max(10, startWidthRef.current + deltaPercent));
-        setWidth(newWidth);
+        setW(newWidth);
         if (maintainAspectRatio) {
           const actualWidth = (newWidth / 100) * containerWidth;
-          setHeight(Math.max(50, actualWidth / aspectRatioRef.current));
+          setH(Math.max(50, actualWidth / aspectRatioRef.current));
         }
       } else if (resizeDirection === 'bottom') {
         const newHeight = Math.max(50, startHeightRef.current + deltaY);
-        setHeight(newHeight);
+        setH(newHeight);
         if (maintainAspectRatio) {
           const newWidth = (newHeight * aspectRatioRef.current / containerWidth) * 100;
-          setWidth(Math.min(100, Math.max(10, newWidth)));
+          setW(Math.min(100, Math.max(10, newWidth)));
         }
       } else if (resizeDirection === 'corner') {
         const deltaPercent = (deltaX / containerWidth) * 100;
@@ -150,11 +157,11 @@ const ResizableImage = ({
         const newHeight = Math.max(50, startHeightRef.current + deltaY);
         if (maintainAspectRatio) {
           const actualWidth = (newWidth / 100) * containerWidth;
-          setWidth(newWidth);
-          setHeight(Math.max(50, actualWidth / aspectRatioRef.current));
+          setW(newWidth);
+          setH(Math.max(50, actualWidth / aspectRatioRef.current));
         } else {
-          setWidth(newWidth);
-          setHeight(newHeight);
+          setW(newWidth);
+          setH(newHeight);
         }
       }
     };
@@ -162,8 +169,11 @@ const ResizableImage = ({
     const handleMouseUp = () => {
       if (isResizing) {
         setIsResizing(false);
-        if (onWidthChange && width !== startWidthRef.current) onWidthChange(width);
-        if (onHeightChange && height !== startHeightRef.current) onHeightChange(height);
+        const wChanged = liveWidthRef.current !== startWidthRef.current;
+        const hChanged = liveHeightRef.current !== startHeightRef.current;
+        if (onSizeChange && (wChanged || hChanged)) {
+          onSizeChange(liveWidthRef.current, liveHeightRef.current);
+        }
       }
     };
 
@@ -175,7 +185,7 @@ const ResizableImage = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, width, height, onWidthChange, onHeightChange, resizeDirection, maintainAspectRatio]);
+  }, [isResizing, width, height, onSizeChange, resizeDirection, maintainAspectRatio]);
 
   const handleAlignmentChange = (newAlignment: 'left' | 'center' | 'right') => {
     setAlignment(newAlignment);

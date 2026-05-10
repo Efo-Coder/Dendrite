@@ -9,6 +9,9 @@ import {
   FORMAT_ELEMENT_COMMAND,
   UNDO_COMMAND,
   REDO_COMMAND,
+  CAN_UNDO_COMMAND,
+  CAN_REDO_COMMAND,
+  COMMAND_PRIORITY_LOW,
   $createParagraphNode,
   ElementFormatType,
 } from 'lexical';
@@ -56,6 +59,7 @@ type ToolbarBtn = {
   action: () => void;
   title: string;
   isActive?: boolean;
+  isDisabled?: boolean;
 };
 
 const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
@@ -65,6 +69,8 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
   const [isUnderline, setIsUnderline] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
   const [blockType, setBlockType] = useState('paragraph');
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
@@ -116,6 +122,12 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
       editorState.read(() => { updateToolbar(); });
     });
   }, [editor, updateToolbar]);
+
+  useEffect(() => {
+    const unregUndo = editor.registerCommand(CAN_UNDO_COMMAND, (payload) => { setCanUndo(payload); return false; }, COMMAND_PRIORITY_LOW);
+    const unregRedo = editor.registerCommand(CAN_REDO_COMMAND, (payload) => { setCanRedo(payload); return false; }, COMMAND_PRIORITY_LOW);
+    return () => { unregUndo(); unregRedo(); };
+  }, [editor]);
 
   // ResizeObserver: determine how many groups fit
   useEffect(() => {
@@ -285,8 +297,8 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
     {
       id: 'history',
       buttons: [
-        { icon: Undo, action: () => editor.dispatchCommand(UNDO_COMMAND, undefined), title: 'Rückgängig' },
-        { icon: Redo, action: () => editor.dispatchCommand(REDO_COMMAND, undefined), title: 'Wiederholen' },
+        { icon: Undo, action: () => editor.dispatchCommand(UNDO_COMMAND, undefined), title: 'Rückgängig', isDisabled: !canUndo },
+        { icon: Redo, action: () => editor.dispatchCommand(REDO_COMMAND, undefined), title: 'Wiederholen', isDisabled: !canRedo },
       ],
     },
   ];
@@ -303,11 +315,11 @@ const RichTextToolbar = ({ disabled = false }: RichTextToolbarProps) => {
       key={key}
       onClick={btn.action}
       onMouseEnter={(e) => enterFn(e, !!btn.isActive)}
-      disabled={disabled}
+      disabled={disabled || !!btn.isDisabled}
       className={clsx(
         'p-2 rounded-lg transition-colors flex-shrink-0 relative z-10',
         btn.isActive ? 'text-brand-primary' : 'text-text-primary',
-        'disabled:opacity-50 disabled:cursor-not-allowed'
+        'disabled:opacity-30'
       )}
       title={btn.title}
     >
