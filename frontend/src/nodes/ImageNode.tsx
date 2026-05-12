@@ -10,9 +10,11 @@ import type {
 } from 'lexical';
 
 import { $applyNodeReplacement, DecoratorNode, $getNodeByKey } from 'lexical';
+import { $generateHtmlFromNodes } from '@lexical/html';
 import ResizableImage from '../components/ResizableImage';
+import { LexicalOnChangeContext } from '../components/LexicalEditorWrapper';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { useCallback } from 'react';
+import { useCallback, useContext } from 'react';
 
 interface ImageComponentProps {
   src: string;
@@ -26,18 +28,34 @@ interface ImageComponentProps {
 
 function ImageComponent({ src, altText, width, height, alignment, maintainAspectRatio, nodeKey }: ImageComponentProps) {
   const [editor] = useLexicalComposerContext();
+  const onEditorChange = useContext(LexicalOnChangeContext);
 
   const onSizeChange = useCallback(
     (newWidth: number, newHeight: number) => {
-      editor.update(() => {
-        const node = $getNodeByKey(nodeKey);
-        if ($isImageNode(node)) {
-          node.setWidth(newWidth);
-          node.setHeight(newHeight);
+      editor.update(
+        () => {
+          const node = $getNodeByKey(nodeKey);
+          if ($isImageNode(node)) {
+            node.setWidth(newWidth);
+            node.setHeight(newHeight);
+          }
+        },
+        {
+          discrete: true,
+          onUpdate: () => {
+            // Fires synchronously after the update is committed — read the
+            // current HTML and push it directly to NoteEditor's contentRef
+            // without waiting for OnChangePlugin's async React render cycle.
+            if (onEditorChange) {
+              editor.read(() => {
+                onEditorChange($generateHtmlFromNodes(editor));
+              });
+            }
+          },
         }
-      }, { discrete: true });
+      );
     },
-    [editor, nodeKey]
+    [editor, nodeKey, onEditorChange]
   );
 
   const onAlignmentChange = useCallback(
@@ -119,11 +137,11 @@ function convertImageElement(domNode: Node): null | DOMConversionOutput {
     let width = 100;
     const dataWidth = domNode.getAttribute('data-width');
     if (dataWidth) {
-      width = parseInt(dataWidth, 10);
+      width = parseFloat(dataWidth);
     } else {
-      const widthMatch = domNode.style.width.match(/(\d+)%/);
+      const widthMatch = domNode.style.width.match(/([\d.]+)%/);
       if (widthMatch) {
-        width = parseInt(widthMatch[1], 10);
+        width = parseFloat(widthMatch[1]);
       }
     }
 
@@ -131,11 +149,11 @@ function convertImageElement(domNode: Node): null | DOMConversionOutput {
     let height = 300;
     const dataHeight = domNode.getAttribute('data-height');
     if (dataHeight) {
-      height = parseInt(dataHeight, 10);
+      height = parseFloat(dataHeight);
     } else {
-      const heightMatch = domNode.style.height.match(/(\d+)px/);
+      const heightMatch = domNode.style.height.match(/([\d.]+)px/);
       if (heightMatch) {
-        height = parseInt(heightMatch[1], 10);
+        height = parseFloat(heightMatch[1]);
       }
     }
 

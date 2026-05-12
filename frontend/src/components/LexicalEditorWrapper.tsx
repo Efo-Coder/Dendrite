@@ -1,8 +1,10 @@
-import { ReactNode, useRef, useEffect } from 'react';
+import { ReactNode, useRef, useEffect, createContext } from 'react';
+import { Check } from 'lucide-react';
+import { CheckResetOverlay } from './CheckResetOverlay';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { HeadingNode, QuoteNode, $isQuoteNode } from '@lexical/rich-text';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
-import { ListItemNode, ListNode } from '@lexical/list';
+import { ListItemNode, ListNode, $isListNode, $isListItemNode, $createListNode } from '@lexical/list';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
 import { ImageNode } from '../nodes/ImageNode';
@@ -14,6 +16,7 @@ import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
+import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS } from '@lexical/markdown';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
@@ -29,7 +32,14 @@ import {
   KEY_ENTER_COMMAND,
   KEY_ESCAPE_COMMAND,
   COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_NORMAL,
+  INDENT_CONTENT_COMMAND,
+  LexicalNode,
 } from 'lexical';
+
+// Provides the onChange callback to decorator nodes (e.g. ImageComponent) so they
+// can push content updates synchronously without going through OnChangePlugin.
+export const LexicalOnChangeContext = createContext<((html: string) => void) | null>(null);
 
 interface LexicalEditorWrapperProps {
   content: string;
@@ -60,6 +70,8 @@ const editorTheme = {
     ol: 'editor-list-ol',
     ul: 'editor-list-ul',
     listitem: 'editor-listitem',
+    listitemChecked: 'editor-listitem-checked',
+    listitemUnchecked: 'editor-listitem-unchecked',
   },
   image: 'editor-image',
   link: 'editor-link',
@@ -112,33 +124,81 @@ function onError(error: Error) {
   console.error(error);
 }
 
-// Plugin to load initial content on mount
+// Plugin to load initial content on mount.
+// Also reads data-reset-id attributes from the HTML and restores them on the
+// rendered DOM elements after Lexical commits, so timer assignments survive reloads.
 function InitialContentPlugin({ content }: { content: string }) {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    editor.update(() => {
-      const parser = new DOMParser();
-      const dom = parser.parseFromString(content || '<p></p>', 'text/html');
-      const nodes = $generateNodesFromDOM(editor, dom);
+    const parser = new DOMParser();
+    const dom = parser.parseFromString(content || '<p></p>', 'text/html');
 
-      const root = $getRoot();
-      root.clear();
+    // Collect reset IDs (indexed by position among all checklist <li> elements)
+    const resetIds: string[] = [];
+    dom.querySelectorAll<HTMLElement>('li[aria-checked]').forEach(el => {
+      resetIds.push(el.dataset.resetId ?? '');
+    });
+
+    // Register update listener BEFORE the update so we catch the first DOM commit
+    const hasAny = resetIds.some(Boolean);
+    let unregister: (() => void) | undefined;
+    if (hasAny) {
+      unregister = editor.registerUpdateListener(() => {
+        unregister?.();
+        unregister = undefined;
+        const rootEl = editor.getRootElement();
+        if (!rootEl) return;
+        const domItems = rootEl.querySelectorAll<HTMLElement>(
+          'li.editor-listitem-checked, li.editor-listitem-unchecked'
+        );
+        domItems.forEach((el, i) => {
+          if (resetIds[i]) el.dataset.resetId = resetIds[i];
+        });
+      });
+    }
+
+    editor.update(() => {
+      const nodes = $generateNodesFromDOM(editor, dom);
+      $getRoot().clear();
       $insertNodes(nodes);
     });
-  }, [editor]); // Only run on mount, not when content changes
+
+    return () => unregister?.();
+  }, [editor]);
 
   return null;
 }
 
-// Plugin to handle content changes from user typing
+// Plugin to handle content changes from user typing.
+// After generating HTML, injects data-reset-id attributes from the live DOM so
+// timer assignments are persisted inside the note's content string.
 function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
   const [editor] = useLexicalComposerContext();
 
   const handleChange = () => {
     editor.read(() => {
-      const htmlString = $generateHtmlFromNodes(editor);
-      onChange(htmlString);
+      let html = $generateHtmlFromNodes(editor);
+
+      const rootEl = editor.getRootElement();
+      if (rootEl) {
+        const domItems = Array.from(rootEl.querySelectorAll<HTMLElement>(
+          'li.editor-listitem-checked, li.editor-listitem-unchecked'
+        ));
+        const hasResetIds = domItems.some(el => el.dataset.resetId);
+
+        if (hasResetIds) {
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          const htmlItems = doc.querySelectorAll<HTMLElement>('li[aria-checked]');
+          domItems.forEach((domEl, i) => {
+            const id = domEl.dataset.resetId;
+            if (id && htmlItems[i]) htmlItems[i].dataset.resetId = id;
+          });
+          html = doc.body.innerHTML;
+        }
+      }
+
+      onChange(html);
     });
   };
 
@@ -269,6 +329,48 @@ function MultilineQuotePlugin(): null {
   return null;
 }
 
+// Overrides INDENT_CONTENT_COMMAND for checklist items so that indenting nests
+// the item directly under its previous sibling — instead of Lexical's default
+// which wraps it in a new empty ListItemNode (showing a phantom checkbox).
+function CheckListIndentPlugin(): null {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      INDENT_CONTENT_COMMAND,
+      () => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return false;
+
+        let node: LexicalNode | null = selection.anchor.getNode();
+        while (node !== null && !$isListItemNode(node)) {
+          node = node.getParent();
+        }
+        if (!$isListItemNode(node)) return false;
+
+        const parentList = node.getParent();
+        if (!$isListNode(parentList) || parentList.getListType() !== 'check') return false;
+
+        const prevSibling = node.getPreviousSibling();
+        if (!$isListItemNode(prevSibling)) return false; // no prev sibling → fall through to Lexical default
+
+        const prevLastChild = prevSibling.getLastChild();
+        if ($isListNode(prevLastChild) && prevLastChild.getListType() === 'check') {
+          prevLastChild.append(node);
+        } else {
+          const newList = $createListNode('check');
+          newList.append(node);
+          prevSibling.append(newList);
+        }
+        return true;
+      },
+      COMMAND_PRIORITY_NORMAL,
+    );
+  }, [editor]);
+
+  return null;
+}
+
 const LexicalEditorWrapper = ({
   content,
   onChange,
@@ -277,12 +379,22 @@ const LexicalEditorWrapper = ({
   toolbar,
 }: LexicalEditorWrapperProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const checkIconRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       if (scrollRef.current) scrollRef.current.scrollTop = 0;
     });
     return () => cancelAnimationFrame(frame);
+  }, []);
+
+  // Extract the rendered Lucide Check SVG and set it as a CSS mask variable.
+  // This runs once per mount so every ::after can use the exact Lucide icon shape.
+  useEffect(() => {
+    const svg = checkIconRef.current?.querySelector('svg');
+    if (!svg) return;
+    const uri = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.outerHTML)}")`;
+    document.documentElement.style.setProperty('--check-icon-mask', uri);
   }, []);
   const initialConfig = {
     namespace: 'DendriteEditor',
@@ -306,6 +418,7 @@ const LexicalEditorWrapper = ({
   };
 
   return (
+    <LexicalOnChangeContext.Provider value={onChange}>
     <>
       <style>{`
         .editor-container {
@@ -379,6 +492,29 @@ const LexicalEditorWrapper = ({
           color: var(--color-accent-900);
         }
 
+        .editor-heading-h4 {
+          font-size: 1.1em;
+          font-weight: 700;
+          margin: 0.9em 0;
+          color: var(--color-accent-900);
+        }
+
+        .editor-heading-h5 {
+          font-size: 0.95em;
+          font-weight: 700;
+          margin: 1em 0;
+          color: var(--color-accent-900);
+        }
+
+        .editor-heading-h6 {
+          font-size: 0.85em;
+          font-weight: 700;
+          margin: 1em 0;
+          color: var(--color-accent-800);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
         .editor-list-ol {
           list-style-type: decimal;
           margin-left: 20px;
@@ -404,8 +540,121 @@ const LexicalEditorWrapper = ({
           color: var(--color-accent-700);
         }
 
+        .editor-listitem-unchecked::marker,
+        .editor-listitem-checked::marker {
+          display: none;
+        }
+
+        /* Hide the checkbox for Lexical's phantom wrapper nodes: list items that only
+           contain a nested <ul> and no <span> (text always renders as <span> in Lexical).
+           These are created by the default indent logic when there is no previous sibling. */
+        li.editor-listitem-unchecked:has(> ul):not(:has(> :not(ul))):before,
+        li.editor-listitem-checked:has(> ul):not(:has(> :not(ul))):before {
+          display: none;
+        }
+
         .editor-nested-listitem {
           list-style-type: none;
+        }
+
+        /* Remove the extra left margin that editor-list-ul adds for top-level checklists.
+           Nested checklist <ul> elements (whose direct children have editor-nested-listitem)
+           are not matched here, so they keep margin-left: 20px for visual nesting. */
+        ul.editor-list-ul:has(> li.editor-listitem.editor-listitem-unchecked),
+        ul.editor-list-ul:has(> li.editor-listitem.editor-listitem-checked) {
+          margin-left: 0;
+        }
+
+        .editor-listitem-checked,
+        .editor-listitem-unchecked {
+          position: relative;
+          list-style-type: none;
+          padding-left: 26px;
+          outline: none;
+        }
+        .editor-listitem-checked {
+          text-decoration: line-through;
+        }
+        .editor-listitem-checked > span {
+          opacity: 0.55;
+        }
+
+        /* Circle — width is read by CheckListPlugin via getComputedStyle(::before).width
+           to determine the clickable checkbox area, so keep width accurate. */
+        .editor-listitem-unchecked::before,
+        .editor-listitem-checked::before {
+          content: '';
+          width: 18px;
+          height: 18px;
+          top: 4px;
+          left: 0;
+          cursor: pointer;
+          display: block;
+          position: absolute;
+          border-radius: 50%;
+          border: 1.5px solid var(--color-text-primary, #e5e5e5);
+          background-color: transparent;
+          box-sizing: border-box;
+          transition: background-color 0.22s ease;
+        }
+        .editor-listitem-checked::before {
+          background-color: var(--color-text-primary, #e5e5e5);
+        }
+
+        /* Lucide Check icon — rendered via CSS mask-image using the SVG extracted from
+           the actual Lucide <Check /> component (set as --check-icon-mask on :root). */
+        .editor-listitem-checked::after {
+          content: '';
+          position: absolute;
+          pointer-events: none;
+          left: 3px;
+          top: 7.3px;
+          width: 12px;
+          height: 12px;
+          background-color: var(--color-bg-primary, #737373);
+          -webkit-mask-image: var(--check-icon-mask, none);
+          mask-image: var(--check-icon-mask, none);
+          -webkit-mask-size: contain;
+          mask-size: contain;
+          -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+          -webkit-mask-position: center;
+          mask-position: center;
+          clip-path: inset(0 100% 0 0);
+          animation: drawCheck 0.28s ease-out 0.1s both;
+        }
+        @keyframes drawCheck {
+          from { clip-path: inset(0 100% 0 0); }
+          to   { clip-path: inset(0 0% 0 0); }
+        }
+
+        /* Progress ring for unchecked checklist items with an auto-reset timer.
+           --ring-angle is set by CheckResetOverlay via JS (requestAnimationFrame).
+           Default 0deg = no ring (invisible until JS fires). The clockwise draw
+           animation and ongoing counterclockwise erase are both driven from JS. */
+        li.editor-listitem-unchecked[data-reset-id]::after {
+          content: '';
+          position: absolute;
+          width: 22px;
+          height: 22px;
+          top: 2px;
+          left: -2px;
+          border-radius: 50%;
+          pointer-events: none;
+          background: conic-gradient(
+            from -90deg,
+            var(--color-text-primary) var(--ring-angle, 0deg),
+            transparent var(--ring-angle, 0deg)
+          );
+          -webkit-mask-image: radial-gradient(circle at center, transparent 9px, black 9.5px, black 10.5px, transparent 11px);
+          mask-image: radial-gradient(circle at center, transparent 9px, black 9.5px, black 10.5px, transparent 11px);
+        }
+
+        /* Subtle static outline for checked items with a timer.
+           (::after is occupied by the checkmark, so we use ::before outline.) */
+        li.editor-listitem-checked[data-reset-id]::before {
+          outline: 1.5px solid color-mix(in srgb, var(--color-text-primary) 35%, transparent);
+          outline-offset: 2px;
         }
 
         .editor-link {
@@ -507,10 +756,17 @@ const LexicalEditorWrapper = ({
 
       `}</style>
 
+      {/* Hidden container — renders the Lucide Check icon so its SVG can be extracted
+          by the useEffect above and used as a CSS mask-image on ::after. */}
+      <div ref={checkIconRef} style={{ display: 'none' }} aria-hidden="true">
+        <Check size={24} strokeWidth={2.5} />
+      </div>
+
       <LexicalComposer initialConfig={initialConfig}>
         <InitialContentPlugin content={content} />
         <ChangePlugin onChange={onChange} />
         <MultilineQuotePlugin />
+        <CheckListIndentPlugin />
 
         {/* Toolbar */}
         {toolbar}
@@ -527,9 +783,11 @@ const LexicalEditorWrapper = ({
               <HistoryPlugin />
               <AutoFocusPlugin />
               <ListPlugin />
+              <CheckListPlugin />
               <LinkPlugin />
               <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
               <ImagesPlugin />
+              <CheckResetOverlay />
             </div>
           </div>
           {/* Top scroll fade – softens text appearing directly beneath the toolbar */}
@@ -544,6 +802,7 @@ const LexicalEditorWrapper = ({
         </div>
       </LexicalComposer>
     </>
+    </LexicalOnChangeContext.Provider>
   );
 };
 

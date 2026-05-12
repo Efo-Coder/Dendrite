@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useGlassPill } from '../hooks/useGlassPill';
 import { Note } from '../types';
@@ -40,10 +40,19 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
   const [content, setContent] = useState(note.content);
   const [isSaving, setIsSaving] = useState(false);
-  const contentRef = useRef(content);
+  // contentRef is updated synchronously in handleContentChange (before React renders),
+  // so save-on-switch always captures the latest Lexical content even if the React
+  // state update hasn't been processed yet.
+  const contentRef = useRef(note.content);
   const noteRef = useRef(note);
-  useEffect(() => { contentRef.current = content; }, [content]);
-  useEffect(() => { noteRef.current = note; }, [note]);
+  // noteRef updated via useEffect (no deps) so it stays on the OLD note during the
+  // switching-render's cleanup — the cleanup runs before this new effect fires.
+  useEffect(() => { noteRef.current = note; });
+
+  const handleContentChange = useCallback((html: string) => {
+    contentRef.current = html;
+    setContent(html);
+  }, []);
   const [folderMenuPos, setFolderMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [tagMenuPos, setTagMenuPos] = useState<{ x: number; y: number } | null>(null);
 
@@ -74,6 +83,8 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   }, [note.id]);
 
   useEffect(() => {
+    // Also reset contentRef so rapid switches don't carry stale content into the next cleanup.
+    contentRef.current = note.content;
     setContent(note.content);
   }, [note.id]);
 
@@ -376,7 +387,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
       <LexicalEditorWrapper
         key={note.id}
         content={note.content}
-        onChange={setContent}
+        onChange={handleContentChange}
         placeholder="Beginne zu schreiben..."
         disabled={isInTrash}
         toolbar={<RichTextToolbar disabled={isInTrash} noteId={note.id} />}
