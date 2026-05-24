@@ -40,10 +40,11 @@ interface NoteState {
   toggleArchive: (id: string) => Promise<void>;
   toggleTrash: (id: string) => Promise<void>;
   setCurrentNote: (note: Note | null) => void;
+  setNoteTitleOptimistic: (id: string, title: string) => void;
   clearError: () => void;
 }
 
-export const useNoteStore = create<NoteState>((set, get) => ({
+export const useNoteStore = create<NoteState>((set) => ({
   notes: [],
   currentNote: null,
   isLoading: false,
@@ -78,7 +79,12 @@ export const useNoteStore = create<NoteState>((set, get) => ({
   createNote: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const note = await noteService.createNote(data);
+      const note = await noteService.createNote({
+        title: data.title ?? '',
+        content: data.content,
+        folderId: data.folderId,
+        tags: data.tags,
+      });
       set((state) => ({
         notes: [note, ...state.notes],
         currentNote: note,
@@ -95,7 +101,23 @@ export const useNoteStore = create<NoteState>((set, get) => ({
   },
 
   updateNote: async (id, data) => {
-    set({ isLoading: true, error: null });
+    // Optimistic update so the editor never reads stale content/title when switching notes quickly
+    const optimistic: { title?: string; content?: string } = {};
+    if (data.title !== undefined) optimistic.title = data.title;
+    if (data.content !== undefined) optimistic.content = data.content;
+
+    set((state) => ({
+      isLoading: true,
+      error: null,
+      notes: state.notes.map((note) =>
+        note.id === id ? { ...note, ...optimistic } : note
+      ),
+      currentNote:
+        state.currentNote?.id === id
+          ? { ...state.currentNote, ...optimistic }
+          : state.currentNote,
+    }));
+
     try {
       const updatedNote = await noteService.updateNote(id, data);
       set((state) => ({
@@ -198,5 +220,9 @@ export const useNoteStore = create<NoteState>((set, get) => ({
   },
 
   setCurrentNote: (note) => set({ currentNote: note }),
+  setNoteTitleOptimistic: (id, title) =>
+    set((state) => ({
+      notes: state.notes.map((n) => (n.id === id ? { ...n, title } : n)),
+    })),
   clearError: () => set({ error: null }),
 }));

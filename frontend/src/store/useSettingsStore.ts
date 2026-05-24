@@ -9,11 +9,13 @@ interface SettingsState {
   dateDisplayMode: DateDisplayMode;
   theme: ThemeId;
   themeMode: ThemeMode;
+  showFocusTimer: boolean;
 
   // Actions
   setDateDisplayMode: (mode: DateDisplayMode) => void;
   setTheme: (theme: ThemeId) => void;
   setThemeMode: (mode: ThemeMode) => void;
+  setShowFocusTimer: (show: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -22,12 +24,14 @@ export const useSettingsStore = create<SettingsState>()(
       // Default settings
       dateDisplayMode: 'updatedAt',
       theme: 'sproutGreen',
-      themeMode: 'light',
+      themeMode: 'dark',
+      showFocusTimer: true,
 
       // Actions
       setDateDisplayMode: (mode) => set({ dateDisplayMode: mode }),
       setTheme: (theme) => set({ theme }),
       setThemeMode: (mode) => set({ themeMode: mode }),
+      setShowFocusTimer: (show) => set({ showFocusTimer: show }),
     }),
     {
       name: 'dendrite-settings', // localStorage key
