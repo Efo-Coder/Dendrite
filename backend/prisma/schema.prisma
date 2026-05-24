@@ -11,13 +11,16 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String?
-  avatarUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                          String    @id @default(uuid())
+  email                       String    @unique
+  password                    String
+  name                        String?
+  avatarUrl                   String?
+  isVerified                  Boolean   @default(false)
+  verificationToken           String?   @unique
+  verificationTokenExpiresAt  DateTime?
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
 
   notes       Note[]
   folders     Folder[]
@@ -46,6 +49,7 @@ model Folder {
 
 model Note {
   id          String   @id @default(uuid())
+  title       String?  @db.Text
   content     String   @db.Text
   isPinned    Boolean  @default(false)
   isLocked    Boolean  @default(false)
@@ -58,10 +62,11 @@ model Note {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  tags        Tag[]    @relation("NoteTags")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder      Folder?     @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags        Tag[]       @relation("NoteTags")
   attachments Attachment[]
+  shares      NoteShare[]
 
   @@index([userId])
   @@index([folderId])
@@ -99,6 +104,18 @@ model Attachment {
   note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@index([noteId])
+}
+
+model NoteShare {
+  id        String    @id @default(uuid())
+  token     String    @unique @default(uuid())
+  noteId    String
+  note      Note      @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([noteId])
+  @@map("note_shares")
 }
 
 model NoteOrder {

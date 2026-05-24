@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import Modal from './Modal';
+import ConfirmAccountDeletionModal from './ConfirmAccountDeletionModal';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useGlassPill } from '../../hooks/useGlassPill';
 import { LogOut, KeyRound, Pencil, Trash2, Eye, EyeOff, Camera, X } from 'lucide-react';
-import { useToast } from '../ToastContainer';
+import { useToast } from '../ui/ToastContainer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -28,7 +29,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
       setShowCurrent(false);
       setShowNew(false);
       setShowConfirm(false);
-      setDeleteConfirm(false);
+      setShowDeleteModal(false);
     }
   }, [isOpen, user?.name]);
 
@@ -119,7 +120,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Konto konnte nicht gelöscht werden');
       setDeleteLoading(false);
-      setDeleteConfirm(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -135,6 +136,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     : '';
 
   return (
+    <>
     <Modal isOpen={isOpen} onClose={onClose} title="Profil">
       <div className="space-y-6">
 
@@ -229,7 +231,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 className="input pr-10"
               />
               <button type="button" onClick={() => setShowCurrent(!showCurrent)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors">
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors no-press">
                 {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -242,7 +244,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 className="input pr-10"
               />
               <button type="button" onClick={() => setShowNew(!showNew)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors">
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors no-press">
                 {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -255,7 +257,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 className="input pr-10"
               />
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors">
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors no-press">
                 {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -276,7 +278,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
           {pill && (
             <div
               className="glass-pill"
-              style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height }}
+              style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height, opacity: pill.visible ? 1 : 0 }}
             />
           )}
 
@@ -290,41 +292,27 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             <span>Abmelden</span>
           </button>
 
-          {!deleteConfirm ? (
-            <button
-              onClick={() => setDeleteConfirm(true)}
-              onMouseEnter={(e) => onEnter(e, false)}
-              className="btn w-full flex items-center gap-2 relative z-10 text-text-primary hover:text-red-500"
-              type="button"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Konto löschen</span>
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={() => setDeleteConfirm(false)}
-                onMouseEnter={(e) => onEnter(e, false)}
-                className="btn flex-1 relative z-10"
-                type="button"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                onMouseEnter={(e) => onEnter(e, false)}
-                disabled={deleteLoading}
-                className="btn flex-1 text-red-500 hover:text-red-500 relative z-10"
-                type="button"
-              >
-                {deleteLoading ? 'Wird gelöscht...' : 'Endgültig löschen'}
-              </button>
-            </div>
-          )}
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            onMouseEnter={(e) => onEnter(e, false)}
+            className="btn w-full flex items-center gap-2 relative z-10 text-text-primary hover:text-red-500"
+            type="button"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Konto löschen</span>
+          </button>
         </div>
 
       </div>
     </Modal>
+
+    <ConfirmAccountDeletionModal
+      isOpen={showDeleteModal}
+      onClose={() => setShowDeleteModal(false)}
+      onConfirm={handleDeleteAccount}
+      isLoading={deleteLoading}
+    />
+    </>
   );
 };
 

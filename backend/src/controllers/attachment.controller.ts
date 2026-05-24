@@ -1,15 +1,23 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { prisma } from '../index';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { AuthRequest } from '../middleware/auth.middleware';
 
-interface AuthRequest extends Request {
-  userId?: string;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDir = path.resolve(__dirname, '../../uploads');
+
+function safeDeleteUpload(url: string) {
+  const filename = url.replace('/uploads/', '');
+  const resolved = path.resolve(uploadsDir, filename);
+  if (!resolved.startsWith(uploadsDir + path.sep) && resolved !== uploadsDir) return;
+  if (fs.existsSync(resolved)) fs.unlinkSync(resolved);
 }
 
 export const uploadAttachment = async (req: AuthRequest, res: Response) => {
   try {
-    const { noteId } = req.body;
+    const noteId = req.body.noteId as string;
     const file = req.file;
 
     if (!file) {
@@ -22,15 +30,19 @@ export const uploadAttachment = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'noteId ist erforderlich' });
     }
 
-    // Prüfen, ob die Notiz existiert
     const note = await prisma.note.findUnique({
       where: { id: noteId },
+      select: { userId: true },
     });
 
     if (!note) {
-      // Datei löschen, wenn Notiz nicht existiert
       fs.unlinkSync(file.path);
       return res.status(404).json({ error: 'Notiz nicht gefunden' });
+    }
+
+    if (note.userId !== req.userId) {
+      fs.unlinkSync(file.path);
+      return res.status(403).json({ error: 'Kein Zugriff' });
     }
 
     // Attachment in Datenbank erstellen
@@ -44,11 +56,10 @@ export const uploadAttachment = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.status(201).json(attachment);
+    return res.status(201).json(attachment);
   } catch (error) {
     console.error('Fehler beim Hochladen der Datei:', error);
 
-    // Datei löschen bei Fehler
     if (req.file) {
       try {
         fs.unlinkSync(req.file.path);
@@ -57,15 +68,14 @@ export const uploadAttachment = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    res.status(500).json({ error: 'Interner Serverfehler' });
+    return res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };
 
 export const deleteAttachment = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
-    // Attachment abrufen
     const attachment = await prisma.attachment.findUnique({
       where: { id },
     });
@@ -74,39 +84,41 @@ export const deleteAttachment = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Attachment nicht gefunden' });
     }
 
-    // Datei vom Dateisystem löschen
-    const uploadsDir = path.join(__dirname, '../../uploads');
-    const filename = attachment.url.replace('/uploads/', '');
-    const filePath = path.join(uploadsDir, filename);
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    const note = await prisma.note.findUnique({ where: { id: attachment.noteId }, select: { userId: true } });
+    if (!note || note.userId !== req.userId) {
+      return res.status(403).json({ error: 'Kein Zugriff' });
     }
 
-    // Attachment aus Datenbank löschen
+    safeDeleteUpload(attachment.url);
+
     await prisma.attachment.delete({
       where: { id },
     });
 
-    res.status(200).json({ message: 'Attachment erfolgreich gelöscht' });
+    return res.status(200).json({ message: 'Attachment erfolgreich gelöscht' });
   } catch (error) {
     console.error('Fehler beim Löschen des Attachments:', error);
-    res.status(500).json({ error: 'Interner Serverfehler' });
+    return res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };
 
 export const getAttachmentsByNoteId = async (req: AuthRequest, res: Response) => {
   try {
-    const { noteId } = req.params;
+    const noteId = req.params.noteId as string;
+
+    const note = await prisma.note.findUnique({ where: { id: noteId }, select: { userId: true } });
+    if (!note || note.userId !== req.userId) {
+      return res.status(403).json({ error: 'Kein Zugriff' });
+    }
 
     const attachments = await prisma.attachment.findMany({
       where: { noteId },
       orderBy: { createdAt: 'desc' },
     });
 
-    res.status(200).json(attachments);
+    return res.status(200).json(attachments);
   } catch (error) {
     console.error('Fehler beim Abrufen der Attachments:', error);
-    res.status(500).json({ error: 'Interner Serverfehler' });
+    return res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };

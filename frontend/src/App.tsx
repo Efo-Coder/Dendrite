@@ -1,19 +1,54 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { useAuthStore } from './store/useAuthStore';
-import { ToastProvider } from './components/ToastContainer';
-import ThemeProvider from './components/ThemeProvider';
+import { ToastProvider } from './components/ui/ToastContainer';
+import ThemeProvider from './components/ui/ThemeProvider';
 
 // Pages
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
-
+import SharedNotePage from './pages/SharedNotePage';
 // Components
-import PrivateRoute from './components/PrivateRoute';
+import PrivateRoute from './components/ui/PrivateRoute';
+
+function RouterContent() {
+  const { isAuthenticated } = useAuthStore();
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route
+          path="/"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
+        />
+        <Route
+          path="/login"
+          element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
+        />
+        <Route
+          path="/register"
+          element={isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />}
+        />
+        <Route path="/shared/:token" element={<SharedNotePage />} />
+        <Route
+          path="/*"
+          element={
+            <PrivateRoute>
+              <DashboardPage />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </AnimatePresence>
+  );
+}
 
 function App() {
-  const { loadUser, isAuthenticated } = useAuthStore();
+  const { loadUser } = useAuthStore();
 
   useEffect(() => {
     loadUser();
@@ -28,24 +63,7 @@ function App() {
             v7_relativeSplatPath: true,
           }}
         >
-          <Routes>
-            <Route
-              path="/login"
-              element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
-            />
-            <Route
-              path="/register"
-              element={isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />}
-            />
-            <Route
-              path="/*"
-              element={
-                <PrivateRoute>
-                  <DashboardPage />
-                </PrivateRoute>
-              }
-            />
-          </Routes>
+          <RouterContent />
         </Router>
       </ToastProvider>
     </ThemeProvider>

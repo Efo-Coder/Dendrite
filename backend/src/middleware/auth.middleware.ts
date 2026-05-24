@@ -18,10 +18,10 @@ export const authenticateToken = (
   }
 
   try {
-    const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+    const JWT_SECRET = process.env.JWT_SECRET!;
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     req.userId = decoded.userId;
-    next();
+    return next();
   } catch (error) {
     return res.status(403).json({ error: 'Invalid or expired token' });
   }

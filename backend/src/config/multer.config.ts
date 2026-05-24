@@ -10,10 +10,10 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Multer Speicher-Konfiguration
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     cb(null, uploadsDir);
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     // Eindeutigen Dateinamen generieren
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
 });
 
 // Datei-Filter für erlaubte Dateitypen
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   // Erlaubte Dateitypen
   const allowedMimeTypes = [
     'image/jpeg',
@@ -31,7 +31,6 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
     'image/png',
     'image/gif',
     'image/webp',
-    'image/svg+xml',
     'application/pdf',
     'text/plain',
     'application/msword',
