@@ -1,9 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ResetTimer =
-  | { type: 'daily'; time: string; lastResetDate?: string }
-  | { type: 'countdown'; endsAt: number; totalMs: number };
+export type ResetTimer = { type: 'countdown'; endsAt: number; totalMs: number };
 
 interface CheckResetState {
   timers: Record<string, ResetTimer>;

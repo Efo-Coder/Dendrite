@@ -8,47 +8,37 @@ export const getAllTags = async (req: AuthRequest, res: Response) => {
       where: { userId: req.userId },
       include: {
         notes: {
-          where: {
-            isDeleted: false,
-            isArchived: false,
-          },
-          select: {
-            id: true,
-          },
+          where: { isDeleted: false, isArchived: false },
+          select: { id: true },
         },
       },
       orderBy: { name: 'asc' },
     });
 
-    res.json({ tags });
+    return res.json({ tags });
   } catch (error) {
     console.error('GetAllTags error:', error);
-    res.status(500).json({ error: 'Fehler beim Abrufen der Tags' });
+    return res.status(500).json({ error: 'Fehler beim Abrufen der Tags' });
   }
 };
 
 export const getTagById = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const tag = await prisma.tag.findFirst({
-      where: {
-        id,
-        userId: req.userId,
-      },
-      include: {
-        notes: true,
-      },
+      where: { id, userId: req.userId },
+      include: { notes: true },
     });
 
     if (!tag) {
       return res.status(404).json({ error: 'Tag nicht gefunden' });
     }
 
-    res.json({ tag });
+    return res.json({ tag });
   } catch (error) {
     console.error('GetTagById error:', error);
-    res.status(500).json({ error: 'Fehler beim Abrufen des Tags' });
+    return res.status(500).json({ error: 'Fehler beim Abrufen des Tags' });
   }
 };
 
@@ -68,16 +58,16 @@ export const createTag = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.status(201).json({ tag });
+    return res.status(201).json({ tag });
   } catch (error) {
     console.error('CreateTag error:', error);
-    res.status(500).json({ error: 'Fehler beim Erstellen des Tags' });
+    return res.status(500).json({ error: 'Fehler beim Erstellen des Tags' });
   }
 };
 
 export const updateTag = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name, color } = req.body;
 
     const existingTag = await prisma.tag.findFirst({
@@ -96,16 +86,16 @@ export const updateTag = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.json({ tag });
+    return res.json({ tag });
   } catch (error) {
     console.error('UpdateTag error:', error);
-    res.status(500).json({ error: 'Fehler beim Aktualisieren des Tags' });
+    return res.status(500).json({ error: 'Fehler beim Aktualisieren des Tags' });
   }
 };
 
 export const deleteTag = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const existingTag = await prisma.tag.findFirst({
       where: { id, userId: req.userId },
@@ -117,9 +107,9 @@ export const deleteTag = async (req: AuthRequest, res: Response) => {
 
     await prisma.tag.delete({ where: { id } });
 
-    res.json({ message: 'Tag erfolgreich gelöscht' });
+    return res.json({ message: 'Tag erfolgreich gelöscht' });
   } catch (error) {
     console.error('DeleteTag error:', error);
-    res.status(500).json({ error: 'Fehler beim Löschen des Tags' });
+    return res.status(500).json({ error: 'Fehler beim Löschen des Tags' });
   }
 };

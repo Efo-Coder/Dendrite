@@ -9,49 +9,37 @@ export const getAllFolders = async (req: AuthRequest, res: Response) => {
       include: {
         children: true,
         notes: {
-          where: {
-            isDeleted: false,
-            isArchived: false,
-          },
-          select: {
-            id: true,
-          },
+          where: { isDeleted: false, isArchived: false },
+          select: { id: true },
         },
       },
       orderBy: { createdAt: 'asc' },
     });
 
-    res.json({ folders });
+    return res.json({ folders });
   } catch (error) {
     console.error('GetAllFolders error:', error);
-    res.status(500).json({ error: 'Fehler beim Abrufen der Ordner' });
+    return res.status(500).json({ error: 'Fehler beim Abrufen der Ordner' });
   }
 };
 
 export const getFolderById = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const folder = await prisma.folder.findFirst({
-      where: {
-        id,
-        userId: req.userId,
-      },
-      include: {
-        children: true,
-        notes: true,
-        parent: true,
-      },
+      where: { id, userId: req.userId },
+      include: { children: true, notes: true, parent: true },
     });
 
     if (!folder) {
       return res.status(404).json({ error: 'Ordner nicht gefunden' });
     }
 
-    res.json({ folder });
+    return res.json({ folder });
   } catch (error) {
     console.error('GetFolderById error:', error);
-    res.status(500).json({ error: 'Fehler beim Abrufen des Ordners' });
+    return res.status(500).json({ error: 'Fehler beim Abrufen des Ordners' });
   }
 };
 
@@ -71,22 +59,19 @@ export const createFolder = async (req: AuthRequest, res: Response) => {
         parentId: parentId || null,
         userId: req.userId!,
       },
-      include: {
-        children: true,
-        parent: true,
-      },
+      include: { children: true, parent: true },
     });
 
-    res.status(201).json({ folder });
+    return res.status(201).json({ folder });
   } catch (error) {
     console.error('CreateFolder error:', error);
-    res.status(500).json({ error: 'Fehler beim Erstellen des Ordners' });
+    return res.status(500).json({ error: 'Fehler beim Erstellen des Ordners' });
   }
 };
 
 export const updateFolder = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name, color, icon, parentId } = req.body;
 
     const existingFolder = await prisma.folder.findFirst({
@@ -105,22 +90,19 @@ export const updateFolder = async (req: AuthRequest, res: Response) => {
         icon: icon !== undefined ? icon : existingFolder.icon,
         parentId: parentId !== undefined ? parentId : existingFolder.parentId,
       },
-      include: {
-        children: true,
-        parent: true,
-      },
+      include: { children: true, parent: true },
     });
 
-    res.json({ folder });
+    return res.json({ folder });
   } catch (error) {
     console.error('UpdateFolder error:', error);
-    res.status(500).json({ error: 'Fehler beim Aktualisieren des Ordners' });
+    return res.status(500).json({ error: 'Fehler beim Aktualisieren des Ordners' });
   }
 };
 
 export const deleteFolder = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const existingFolder = await prisma.folder.findFirst({
       where: { id, userId: req.userId },
@@ -132,9 +114,9 @@ export const deleteFolder = async (req: AuthRequest, res: Response) => {
 
     await prisma.folder.delete({ where: { id } });
 
-    res.json({ message: 'Ordner erfolgreich gelöscht' });
+    return res.json({ message: 'Ordner erfolgreich gelöscht' });
   } catch (error) {
     console.error('DeleteFolder error:', error);
-    res.status(500).json({ error: 'Fehler beim Löschen des Ordners' });
+    return res.status(500).json({ error: 'Fehler beim Löschen des Ordners' });
   }
 };

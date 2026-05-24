@@ -1,8 +1,6 @@
-import { Request, Response } from 'express';
-
-interface AuthRequest extends Request {
-  userId?: string;
-}
+import { Response } from 'express';
+import fs from 'fs';
+import { AuthRequest } from '../middleware/auth.middleware';
 
 // Einfacher Image-Upload für Editor-Bilder (keine Attachment-DB-Einträge)
 export const uploadImage = async (req: AuthRequest, res: Response) => {
@@ -13,10 +11,9 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Keine Datei hochgeladen' });
     }
 
-    // Nur die URL zurückgeben, kein DB-Eintrag
     const imageUrl = `/uploads/${file.filename}`;
 
-    res.status(201).json({
+    return res.status(201).json({
       url: imageUrl,
       filename: file.originalname,
       fileType: file.mimetype,
@@ -25,16 +22,14 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Fehler beim Hochladen der Datei:', error);
 
-    // Datei löschen bei Fehler
     if (req.file) {
       try {
-        const fs = require('fs');
         fs.unlinkSync(req.file.path);
       } catch (unlinkError) {
         console.error('Fehler beim Löschen der Datei:', unlinkError);
       }
     }
 
-    res.status(500).json({ error: 'Interner Serverfehler' });
+    return res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };
