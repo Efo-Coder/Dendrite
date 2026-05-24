@@ -33,6 +33,11 @@ desktop.ini
 # IDE
 .vscode/
 .idea/
+
+# Claude Code / AI tools
+.agents/
+.claude/skills/
+skills-lock.json
 *.swp
 *.swo
 *~
