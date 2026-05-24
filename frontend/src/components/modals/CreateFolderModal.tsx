@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react';
 import Modal from './Modal';
 import { useFolderStore } from '../../store/useFolderStore';
-import ColorPickerInline from '../ColorPickerInline';
+import ColorPickerInline from '../editor/ColorPickerInline';
 
 interface CreateFolderModalProps {
   isOpen: boolean;

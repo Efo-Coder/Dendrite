@@ -2,6 +2,7 @@
 import Modal from './Modal';
 import { useFolderStore } from '../../store/useFolderStore';
 import { Folder } from '../../types';
+import ColorPickerInline from '../editor/ColorPickerInline';
 
 interface EditFolderModalProps {
   isOpen: boolean;
@@ -19,6 +20,8 @@ const colors = [
   '#ec4899', // pink
   '#06b6d4', // cyan
   '#84cc16', // lime
+  '#ffffff', // white
+  '#000000', // black
 ];
 
 const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolderModalProps) => {
@@ -104,16 +107,16 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
           <label className="block text-xs font-medium text-text-primary mb-2 uppercase tracking-wide">
             Farbe
           </label>
-          <div className="grid grid-cols-8 gap-2 mb-3">
+          <div className="flex flex-wrap gap-2 mb-2">
             {colors.map((color) => (
               <button
                 key={color}
                 type="button"
                 onClick={() => setSelectedColor(color)}
-                className={`w-8 h-8 rounded-lg transition-all relative group ${
+                className={`w-8 h-8 rounded-lg transition-transform hover:scale-110 flex-shrink-0 ${
                   selectedColor === color
-                    ? 'ring-1 ring-brand-primary scale-110'
-                    : 'hover:scale-105'
+                    ? 'ring-2 ring-brand-primary'
+                    : 'ring-1 ring-white/20'
                 }`}
                 style={{ backgroundColor: color }}
                 title={color}
@@ -121,36 +124,7 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
             ))}
           </div>
 
-          {/* Custom Color Picker */}
-          <div className="flex items-center gap-3">
-            <label htmlFor="custom-color" className="text-sm text-text-secondary">
-              Oder eigene Farbe:
-            </label>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <input
-                  id="custom-color"
-                  type="color"
-                  value={selectedColor}
-                  onChange={(e) => setSelectedColor(e.target.value)}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-8 h-8"
-                  title="Eigene Farbe wählen"
-                />
-                <div
-                  className={`w-8 h-8 rounded-lg cursor-pointer transition-all relative group ${
-                    !colors.includes(selectedColor)
-                      ? 'ring-1 ring-brand-primary scale-110'
-                      : 'hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: selectedColor }}
-                  onClick={() => document.getElementById('custom-color')?.click()}
-                />
-              </div>
-              <span className="text-xs text-text-secondary font-mono">
-                {selectedColor}
-              </span>
-            </div>
-          </div>
+          <ColorPickerInline color={selectedColor} onChange={setSelectedColor} storageKey="dendrite-tag-folder-favorites" presets={colors} />
         </div>
 
         {/* Buttons */}

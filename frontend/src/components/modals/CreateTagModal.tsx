@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react';
 import Modal from './Modal';
 import { useTagStore } from '../../store/useTagStore';
-import ColorPickerInline from '../ColorPickerInline';
+import ColorPickerInline from '../editor/ColorPickerInline';
 
 interface CreateTagModalProps {
   isOpen: boolean;
