@@ -1,0 +1,667 @@
+﻿import { ReactNode, useRef, useEffect, useLayoutEffect, createContext } from 'react';
+import { Check } from 'lucide-react';
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
+import { CollaborationPlugin } from '@lexical/react/LexicalCollaborationPlugin';
+import { LexicalCollaboration } from '@lexical/react/LexicalCollaborationContext';
+import { TimerCheckboxPlugin } from './CheckResetOverlay';
+import { TimerListItemNode } from './TimerListItemNode';
+import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { HeadingNode, QuoteNode, $isQuoteNode } from '@lexical/rich-text';
+import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
+import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
+import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
+import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
+import { ListItemNode, ListNode, $isListNode, $isListItemNode, $createListNode } from '@lexical/list';
+
+import { CodeHighlightNode, CodeNode, registerCodeHighlighting } from '@lexical/code';
+import { AutoLinkNode, LinkNode } from '@lexical/link';
+import { ImageNode } from './ImageNode';
+import ImagesPlugin from './ImagePlugin';
+import { ActiveLinePlugin } from './ActiveLinePlugin';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import { AutoLinkPlugin } from '@lexical/react/LexicalAutoLinkPlugin';
+import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
+import { ListPlugin } from '@lexical/react/LexicalListPlugin';
+import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
+import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
+import { TRANSFORMERS } from '@lexical/markdown';
+import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
+import {
+  $getRoot,
+  $insertNodes,
+  $getSelection,
+  $isRangeSelection,
+  $isElementNode,
+  $isRootNode,
+  $createParagraphNode,
+  $isParagraphNode,
+  $isTextNode,
+  KEY_ENTER_COMMAND,
+  KEY_ESCAPE_COMMAND,
+  COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_NORMAL,
+  INDENT_CONTENT_COMMAND,
+  LexicalNode,
+} from 'lexical';
+
+// Provides the onChange callback to decorator nodes (e.g. ImageComponent) so they
+// can push content updates synchronously without going through OnChangePlugin.
+export const LexicalOnChangeContext = createContext<((html: string) => void) | null>(null);
+
+export interface CollaborationConfig {
+  noteId: string;
+  token: string;
+  username: string;
+  cursorColor: string;
+}
+
+interface LexicalEditorWrapperProps {
+  content: string;
+  onChange: (content: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  toolbar?: ReactNode;
+  headerSlot?: ReactNode;
+  key?: string;
+  collaboration?: CollaborationConfig | null;
+}
+
+// Custom span importer: Lexical's default applyTextFormatFromStyle ignores color,
+// background-color, font-family, font-size. This converter (priority 1) restores them.
+const htmlImport = {
+  span: (domNode: HTMLElement) => {
+    const style = domNode.style;
+    const color = style.color;
+    const backgroundColor = style.backgroundColor;
+    const fontFamily = style.fontFamily;
+    const fontSize = style.fontSize;
+    if (!color && !backgroundColor && !fontFamily && !fontSize) return null;
+
+    return {
+      conversion: (el: HTMLElement) => {
+        const s = el.style;
+        const fontWeight = s.fontWeight;
+        const textDeco = s.textDecoration ? s.textDecoration.split(' ') : [];
+        const hasBold = fontWeight === '700' || fontWeight === 'bold';
+        const hasStrike = textDeco.includes('line-through');
+        const hasItalic = s.fontStyle === 'italic';
+        const hasUnder = textDeco.includes('underline');
+        const vAlign = s.verticalAlign;
+        const parts: string[] = [];
+        if (s.color) parts.push(`color: ${s.color}`);
+        if (s.backgroundColor) parts.push(`background-color: ${s.backgroundColor}`);
+        if (s.fontFamily) parts.push(`font-family: ${s.fontFamily}`);
+        if (s.fontSize) parts.push(`font-size: ${s.fontSize}`);
+        const inlineStyle = parts.join('; ');
+        return {
+          node: null,
+          forChild: (lexicalNode: LexicalNode) => {
+            if (!$isTextNode(lexicalNode)) return lexicalNode;
+            if (hasBold && !lexicalNode.hasFormat('bold')) lexicalNode.toggleFormat('bold');
+            if (hasStrike && !lexicalNode.hasFormat('strikethrough')) lexicalNode.toggleFormat('strikethrough');
+            if (hasItalic && !lexicalNode.hasFormat('italic')) lexicalNode.toggleFormat('italic');
+            if (hasUnder && !lexicalNode.hasFormat('underline')) lexicalNode.toggleFormat('underline');
+            if (vAlign === 'sub' && !lexicalNode.hasFormat('subscript')) lexicalNode.toggleFormat('subscript');
+            if (vAlign === 'super' && !lexicalNode.hasFormat('superscript')) lexicalNode.toggleFormat('superscript');
+            if (inlineStyle) {
+              const cur = lexicalNode.getStyle();
+              lexicalNode.setStyle(cur ? `${cur}; ${inlineStyle}` : inlineStyle);
+            }
+            return lexicalNode;
+          },
+        };
+      },
+      priority: 1 as const,
+    };
+  },
+};
+
+const editorTheme = {
+  ltr: 'ltr',
+  rtl: 'rtl',
+  paragraph: 'editor-paragraph',
+  quote: 'editor-quote',
+  heading: {
+    h1: 'editor-heading-h1',
+    h2: 'editor-heading-h2',
+    h3: 'editor-heading-h3',
+    h4: 'editor-heading-h4',
+    h5: 'editor-heading-h5',
+    h6: 'editor-heading-h6',
+  },
+  list: {
+    nested: {
+      listitem: 'editor-nested-listitem',
+    },
+    ol: 'editor-list-ol',
+    ul: 'editor-list-ul',
+    listitem: 'editor-listitem',
+    listitemChecked: 'editor-listitem-checked',
+    listitemUnchecked: 'editor-listitem-unchecked',
+  },
+  hr: 'editor-hr',
+  image: 'editor-image',
+  link: 'editor-link',
+  table: 'editor-table',
+  tableRow: 'editor-table-row',
+  tableCell: 'editor-table-cell',
+  tableCellHeader: 'editor-table-cell-header',
+  text: {
+    bold: 'editor-text-bold',
+    italic: 'editor-text-italic',
+    overflowed: 'editor-text-overflowed',
+    hashtag: 'editor-text-hashtag',
+    underline: 'editor-text-underline',
+    strikethrough: 'editor-text-strikethrough',
+    underlineStrikethrough: 'editor-text-underlineStrikethrough',
+    code: 'editor-text-code',
+  },
+  code: 'editor-code',
+  codeHighlight: {
+    atrule: 'editor-tokenAttr',
+    attr: 'editor-tokenAttr',
+    boolean: 'editor-tokenProperty',
+    builtin: 'editor-tokenSelector',
+    cdata: 'editor-tokenComment',
+    char: 'editor-tokenSelector',
+    class: 'editor-tokenFunction',
+    'class-name': 'editor-tokenFunction',
+    comment: 'editor-tokenComment',
+    constant: 'editor-tokenProperty',
+    deleted: 'editor-tokenProperty',
+    doctype: 'editor-tokenComment',
+    entity: 'editor-tokenOperator',
+    function: 'editor-tokenFunction',
+    important: 'editor-tokenVariable',
+    inserted: 'editor-tokenSelector',
+    keyword: 'editor-tokenAttr',
+    namespace: 'editor-tokenVariable',
+    number: 'editor-tokenProperty',
+    operator: 'editor-tokenOperator',
+    prolog: 'editor-tokenComment',
+    property: 'editor-tokenProperty',
+    punctuation: 'editor-tokenPunctuation',
+    regex: 'editor-tokenVariable',
+    selector: 'editor-tokenSelector',
+    string: 'editor-tokenSelector',
+    symbol: 'editor-tokenProperty',
+    tag: 'editor-tokenProperty',
+    url: 'editor-tokenOperator',
+    variable: 'editor-tokenVariable',
+  },
+};
+
+// Matches http(s):// or www. URLs with a TLD of 2-13 letters (no digits → filters garbage like .abc123)
+const URL_REGEX = /((https?:\/\/(www\.)?)|www\.)[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z]{2,13}(\/[-a-zA-Z0-9()@:%_+.~#?&/=]*)?/i;
+
+const URL_MATCHERS = [
+  (text: string) => {
+    const match = URL_REGEX.exec(text);
+    if (!match) return null;
+    const raw = match[0].replace(/[.,;!?]+$/, '');
+    return {
+      index: match.index,
+      length: raw.length,
+      text: raw,
+      url: raw.startsWith('http') ? raw : `https://${raw}`,
+    };
+  },
+];
+
+function LinkClickPlugin(): null {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      const anchor = (event.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null;
+      if (!anchor) return;
+      event.preventDefault();
+      window.open(anchor.href, '_blank', 'noopener,noreferrer');
+    };
+
+    return editor.registerRootListener((root, prev) => {
+      prev?.removeEventListener('click', handleClick as EventListener);
+      root?.addEventListener('click', handleClick as EventListener);
+    });
+  }, [editor]);
+
+  return null;
+}
+
+function onError(error: Error) {
+  console.error(error);
+}
+
+function FocusAtEndPlugin(): null {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      // Focus first → Lexical's focus-event handler queues its update (X)
+      // Then our selectEnd queues after (Y) → Y wins in the same batch
+      editor.getRootElement()?.focus({ preventScroll: true });
+      editor.update(() => {
+        $getRoot().selectEnd();
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [editor]);
+
+  return null;
+}
+
+function CodeHighlightPlugin(): null {
+  const [editor] = useLexicalComposerContext();
+  useEffect(() => registerCodeHighlighting(editor), [editor]);
+  return null;
+}
+
+// Plugin to load initial content on mount.
+function InitialContentPlugin({ content }: { content: string }) {
+  const [editor] = useLexicalComposerContext();
+
+  useLayoutEffect(() => {
+    editor.update(() => {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(content || '<p></p>', 'text/html');
+      const nodes = $generateNodesFromDOM(editor, dom);
+      $getRoot().clear();
+      $insertNodes(nodes);
+      $getRoot().selectEnd();
+    });
+  }, [editor]);
+
+  return null;
+}
+
+function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
+  const [editor] = useLexicalComposerContext();
+
+  const handleChange = () => {
+    editor.read(() => {
+      onChange($generateHtmlFromNodes(editor));
+    });
+  };
+
+  return <OnChangePlugin onChange={handleChange} ignoreSelectionChange />;
+}
+
+// Plugin to enable multiline blockquotes
+function MultilineQuotePlugin(): null {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    // Handle Enter key in quotes
+    const removeEnterListener = editor.registerCommand(
+      KEY_ENTER_COMMAND,
+      (event: KeyboardEvent | null) => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const anchorNode = selection.anchor.getNode();
+        let element = anchorNode;
+
+        // Find the parent element (could be paragraph inside quote)
+        if ($isParagraphNode(element)) {
+          const parent = element.getParent();
+          if (parent && $isQuoteNode(parent)) {
+            element = parent;
+          }
+        }
+
+        // If parent is quote node, we're in a quote
+        const parentElement = element.getParent();
+        if ($isQuoteNode(element) || ($isQuoteNode(parentElement))) {
+          const quoteNode = $isQuoteNode(element) ? element : parentElement!;
+
+          // Don't handle if shift is pressed (let default soft break happen)
+          if (event?.shiftKey) {
+            return false;
+          }
+
+          // Check if current paragraph is empty
+          const currentNode = $isParagraphNode(anchorNode) ? anchorNode : anchorNode.getParent();
+          if (currentNode && $isParagraphNode(currentNode)) {
+            const textContent = currentNode.getTextContent();
+
+            // If current line is empty and it's the last child, exit the quote
+            if (textContent.trim() === '' && currentNode === quoteNode.getLastChild()) {
+              event?.preventDefault();
+
+              // Remove the empty paragraph
+              currentNode.remove();
+
+              // Create new paragraph after quote
+              const newParagraph = $createParagraphNode();
+              quoteNode.insertAfter(newParagraph);
+              newParagraph.select();
+
+              return true;
+            }
+          }
+
+          // Create new paragraph inside quote
+          event?.preventDefault();
+          const newParagraph = $createParagraphNode();
+
+          // Insert after current paragraph
+          if (currentNode && $isParagraphNode(currentNode)) {
+            currentNode.insertAfter(newParagraph);
+          } else {
+            quoteNode.append(newParagraph);
+          }
+
+          newParagraph.select();
+          return true;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_HIGH
+    );
+
+    // Handle Escape key to exit quote
+    const removeEscapeListener = editor.registerCommand(
+      KEY_ESCAPE_COMMAND,
+      (event: KeyboardEvent) => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+
+        const anchorNode = selection.anchor.getNode();
+        let element = anchorNode;
+
+        // Find the quote node
+        if ($isParagraphNode(element)) {
+          const parent = element.getParent();
+          if (parent && $isQuoteNode(parent)) {
+            element = parent;
+          }
+        }
+
+        const parentElement = element.getParent();
+        if ($isQuoteNode(element) || ($isQuoteNode(parentElement))) {
+          const quoteNode = $isQuoteNode(element) ? element : parentElement!;
+
+          event.preventDefault();
+
+          // Create new paragraph after quote
+          const newParagraph = $createParagraphNode();
+          quoteNode.insertAfter(newParagraph);
+          newParagraph.select();
+
+          return true;
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_HIGH
+    );
+
+    return () => {
+      removeEnterListener();
+      removeEscapeListener();
+    };
+  }, [editor]);
+
+  return null;
+}
+
+// After each Lexical update, reads line-height from the first TextNode of every
+// ElementNode and writes it directly to the DOM element's style. This is needed
+// because Lexical's reconciler does NOT apply ElementNode.__style to the live DOM,
+// and inline spans with a smaller line-height than the inherited block value are
+// overridden by CSS cascade.
+function LineHeightSyncPlugin(): null {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      const map = new Map<string, string>();
+
+      editorState.read(() => {
+        function walk(node: LexicalNode): void {
+          if ($isRootNode(node)) {
+            for (const child of (node as any).getChildren() as LexicalNode[]) walk(child);
+            return;
+          }
+          if ($isElementNode(node)) {
+            for (const child of (node as any).getChildren() as LexicalNode[]) {
+              if ($isTextNode(child)) {
+                const match = /line-height\s*:\s*([^;]+)/.exec(child.getStyle());
+                map.set(node.getKey(), match ? match[1].trim() : '');
+                break;
+              }
+            }
+            for (const child of (node as any).getChildren() as LexicalNode[]) walk(child);
+          }
+        }
+        walk($getRoot());
+      });
+
+      map.forEach((lh, key) => {
+        const dom = editor.getElementByKey(key) as HTMLElement | null;
+        if (dom) dom.style.lineHeight = lh;
+      });
+    });
+  }, [editor]);
+
+  return null;
+}
+
+// Overrides INDENT_CONTENT_COMMAND for checklist items so that indenting nests
+// the item directly under its previous sibling — instead of Lexical's default
+// which wraps it in a new empty ListItemNode (showing a phantom checkbox).
+function CheckListIndentPlugin(): null {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      INDENT_CONTENT_COMMAND,
+      () => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return false;
+
+        let node: LexicalNode | null = selection.anchor.getNode();
+        while (node !== null && !$isListItemNode(node)) {
+          node = node.getParent();
+        }
+        if (!$isListItemNode(node)) return false;
+
+        const parentList = node.getParent();
+        if (!$isListNode(parentList) || parentList.getListType() !== 'check') return false;
+
+        const prevSibling = node.getPreviousSibling();
+        if (!$isListItemNode(prevSibling)) return false; // no prev sibling → fall through to Lexical default
+
+        const prevLastChild = prevSibling.getLastChild();
+        if ($isListNode(prevLastChild) && prevLastChild.getListType() === 'check') {
+          prevLastChild.append(node);
+        } else {
+          const newList = $createListNode('check');
+          newList.append(node);
+          prevSibling.append(newList);
+        }
+        return true;
+      },
+      COMMAND_PRIORITY_NORMAL,
+    );
+  }, [editor]);
+
+  return null;
+}
+
+const LexicalEditorWrapper = ({
+  content,
+  onChange,
+  placeholder = "Beginne zu schreiben...",
+  disabled = false,
+  toolbar,
+  headerSlot,
+  collaboration = null,
+}: LexicalEditorWrapperProps) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const checkIconRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  // Extract the rendered Lucide Check SVG and set it as a CSS mask variable.
+  // This runs once per mount so every ::after can use the exact Lucide icon shape.
+  useEffect(() => {
+    const svg = checkIconRef.current?.querySelector('svg');
+    if (!svg) return;
+    const uri = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.outerHTML)}")`;
+    document.documentElement.style.setProperty('--check-icon-mask', uri);
+  }, []);
+  const initialConfig = {
+    namespace: 'DendriteEditor',
+    theme: editorTheme,
+    onError,
+    editable: !disabled,
+    html: { import: htmlImport },
+    nodes: [
+      HeadingNode,
+      ListNode,
+      ListItemNode,
+      TimerListItemNode,
+      QuoteNode,
+      CodeNode,
+      CodeHighlightNode,
+      TableNode,
+      TableCellNode,
+      TableRowNode,
+      HorizontalRuleNode,
+      AutoLinkNode,
+      LinkNode,
+      ImageNode,
+    ],
+  };
+
+  return (
+    <LexicalOnChangeContext.Provider value={onChange}>
+    <>
+      {/* Hidden container — renders the Lucide Check icon so its SVG can be extracted
+          by the useEffect above and used as a CSS mask-image on ::after. */}
+      <div ref={checkIconRef} style={{ display: 'none' }} aria-hidden="true">
+        <Check size={24} strokeWidth={2.5} />
+      </div>
+
+      <LexicalCollaboration>
+      <LexicalComposer initialConfig={initialConfig}>
+        <div className="flex h-full min-h-0 flex-1 flex-col">
+          <InitialContentPlugin content={content} />
+          <ChangePlugin onChange={onChange} />
+          <MultilineQuotePlugin />
+          <CheckListIndentPlugin />
+
+          <div className="relative flex min-h-0 flex-1 flex-col">
+            <div
+              className="editor-info-column pointer-events-none absolute inset-y-0 left-0 w-20"
+              style={{
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.06) 18px, rgba(0,0,0,0.35) 48px, rgb(0,0,0) 72px, rgb(0,0,0) calc(100% - 72px), rgba(0,0,0,0.35) calc(100% - 48px), rgba(0,0,0,0.06) calc(100% - 18px), transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.06) 18px, rgba(0,0,0,0.35) 48px, rgb(0,0,0) 72px, rgb(0,0,0) calc(100% - 72px), rgba(0,0,0,0.35) calc(100% - 48px), rgba(0,0,0,0.06) calc(100% - 18px), transparent 100%)',
+              }}
+            />
+            <div
+              ref={scrollRef}
+              className="scrollbar-overlay min-h-0 flex-1 overflow-y-auto scroll-smooth px-20 pt-8 pb-24"
+              style={{
+                isolation: 'isolate',
+                WebkitMaskImage: [
+                  'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.06) 18px, rgba(0,0,0,0.35) 48px, rgb(0,0,0) 72px, rgb(0,0,0) calc(100% - 72px), rgba(0,0,0,0.35) calc(100% - 48px), rgba(0,0,0,0.06) calc(100% - 18px), transparent 100%)',
+                  'linear-gradient(rgb(0,0,0), rgb(0,0,0))',
+                ].join(', '),
+                maskImage: [
+                  'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.06) 18px, rgba(0,0,0,0.35) 48px, rgb(0,0,0) 72px, rgb(0,0,0) calc(100% - 72px), rgba(0,0,0,0.35) calc(100% - 48px), rgba(0,0,0,0.06) calc(100% - 18px), transparent 100%)',
+                  'linear-gradient(rgb(0,0,0), rgb(0,0,0))',
+                ].join(', '),
+                WebkitMaskSize: 'calc(100% - 10px) 100%, 10px 100%',
+                maskSize: 'calc(100% - 10px) 100%, 10px 100%',
+                WebkitMaskPosition: '0 0, 100% 0',
+                maskPosition: '0 0, 100% 0',
+                WebkitMaskRepeat: 'no-repeat, no-repeat',
+                maskRepeat: 'no-repeat, no-repeat',
+              }}
+            >
+              {headerSlot && (
+                <div className="w-full pt-6">
+                  {headerSlot}
+                </div>
+              )}
+              <div className="editor-container w-full">
+                <RichTextPlugin
+                  contentEditable={<ContentEditable className="editor-input" />}
+                  placeholder={<div className="editor-placeholder">{placeholder}</div>}
+                  ErrorBoundary={LexicalErrorBoundary}
+                />
+                {collaboration ? (
+                  <CollaborationPlugin
+                    id={collaboration.noteId}
+                    providerFactory={(id, yjsDocMap) => {
+                      const doc = new Y.Doc();
+                      yjsDocMap.set(id, doc);
+                      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                      const wsBase = apiUrl.replace(/^http/, 'ws');
+                      // WebsocketProvider implements the Provider interface at runtime;
+                      // cast needed because yjs awareness generics differ.
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      return new WebsocketProvider(
+                        `${wsBase}/collaboration`,
+                        id,
+                        doc,
+                        { params: { token: collaboration.token } },
+                      ) as any;
+                    }}
+                    username={collaboration.username}
+                    cursorColor={collaboration.cursorColor}
+                    shouldBootstrap
+                  />
+                ) : (
+                  <HistoryPlugin />
+                )}
+                <FocusAtEndPlugin />
+                <ListPlugin />
+                <CheckListPlugin />
+                <LinkPlugin />
+                <AutoLinkPlugin matchers={URL_MATCHERS} />
+                <LinkClickPlugin />
+                <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+                <ImagesPlugin />
+                <HorizontalRulePlugin />
+                <TablePlugin hasCellMerge={false} hasCellBackgroundColor={false} />
+                <CodeHighlightPlugin />
+                <TimerCheckboxPlugin />
+                <LineHeightSyncPlugin />
+                <ActiveLinePlugin />
+              </div>
+            </div>
+          </div>
+
+          {toolbar && (
+            <div className="relative z-20 min-h-0 flex-shrink-0 bg-transparent">
+              {toolbar}
+            </div>
+          )}
+        </div>
+      </LexicalComposer>
+      </LexicalCollaboration>
+    </>
+    </LexicalOnChangeContext.Provider>
+  );
+};
+
+export default LexicalEditorWrapper;
