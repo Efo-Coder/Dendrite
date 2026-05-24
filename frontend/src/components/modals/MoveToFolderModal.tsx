@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { FolderOpen, Plus } from 'lucide-react';
 import { useFolderStore } from '../../store/useFolderStore';
-import { useToast } from '../ToastContainer';
+import { useToast } from '../ui/ToastContainer';
 import Modal from './Modal';
 import CreateFolderModal from './CreateFolderModal';
 import { useGlassPill } from '../../hooks/useGlassPill';
@@ -54,7 +54,7 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
             {pill && (
               <div
                 className="glass-pill pointer-events-none"
-                style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height }}
+                style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height, opacity: pill.visible ? 1 : 0 }}
               />
             )}
             <div className="max-h-64 overflow-y-auto space-y-1">
@@ -62,9 +62,9 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
                 onClick={() => handleMove(null)}
                 onMouseEnter={onEnter}
                 className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative z-10 ${
-                  currentFolderId === null
-                    ? 'text-brand-primary'
-                    : 'text-text-primary'
+                  currentFolderId === null || currentFolderId === undefined
+                    ? 'text-text-primary'
+                    : 'text-text-secondary'
                 }`}
               >
                 <FolderOpen className="w-4 h-4 text-text-secondary" />
@@ -78,8 +78,8 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
                   onMouseEnter={onEnter}
                   className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative z-10 ${
                     currentFolderId === folder.id
-                      ? 'text-brand-primary'
-                      : 'text-text-primary'
+                      ? 'text-text-primary'
+                      : 'text-text-secondary'
                   }`}
                 >
                   <FolderOpen

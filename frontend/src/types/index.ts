@@ -1,3 +1,5 @@
+export type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag';
+
 export interface User {
   id: string;
   email: string;

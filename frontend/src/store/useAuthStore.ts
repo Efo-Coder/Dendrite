@@ -52,14 +52,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (email: string, password: string, name?: string) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await authService.register(email, password, name);
-      authService.setToken(data.token);
-      set({
-        user: data.user,
-        token: data.token,
-        isAuthenticated: true,
-        isLoading: false,
-      });
+      await authService.register(email, password, name);
+      set({ isLoading: false });
     } catch (error: any) {
       set({
         error: error.response?.data?.error || 'Registrierung fehlgeschlagen',
@@ -126,6 +120,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   deleteAccount: async () => {
     await authService.deleteAccount();
+    set({ user: null, token: null, isAuthenticated: false });
     authService.logout();
   },
 

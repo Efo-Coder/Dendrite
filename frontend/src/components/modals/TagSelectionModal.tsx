@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Tag, Plus } from 'lucide-react';
 import { useTagStore } from '../../store/useTagStore';
-import { useToast } from '../ToastContainer';
+import { useToast } from '../ui/ToastContainer';
 import Modal from './Modal';
 import CreateTagModal from './CreateTagModal';
 import { useGlassPill } from '../../hooks/useGlassPill';
@@ -67,7 +67,7 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
             {pill && (
               <div
                 className="glass-pill pointer-events-none"
-                style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height }}
+                style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height, opacity: pill.visible ? 1 : 0 }}
               />
             )}
             <div className="max-h-64 overflow-y-auto space-y-1">
@@ -86,8 +86,8 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
                       onMouseEnter={onEnter}
                       className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative z-10 ${
                         isSelected
-                          ? 'text-brand-primary'
-                          : 'text-text-primary'
+                          ? 'text-text-primary'
+                          : 'text-text-secondary'
                       }`}
                     >
                       <input

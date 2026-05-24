@@ -1,22 +1,37 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { motion } from 'motion/react';
 import { useNoteStore } from '../store/useNoteStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { useFolderStore } from '../store/useFolderStore';
-import { useTagStore } from '../store/useTagStore';
-import { useToast } from '../components/ToastContainer';
-import Sidebar from '../components/Sidebar';
-import NoteList from '../components/NoteList';
-import NoteEditor from '../components/NoteEditor';
-import Header from '../components/header';
-import { Plus, FileText, Trash2 } from 'lucide-react';
-import Modal from '../components/modals/Modal';
+import { useToast } from '../components/ui/ToastContainer';
+import Sidebar from '../components/sidebar/Sidebar';
+import NoteList, { type SortOption } from '../components/noteList/NoteList';
+import NoteEditor from '../components/editor/NoteEditor';
+import { FileText } from 'lucide-react';
+import EmptyTrashModal from '../components/modals/EmptyTrashModal';
+import clsx from 'clsx';
+import { ViewType } from '../types';
 
-type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag';
+type NoteFilters = {
+  archived?: boolean;
+  deleted?: boolean;
+  favorite?: boolean;
+  folderId?: string;
+  tagId?: string;
+};
+
+function buildFilters(view: ViewType, folderId?: string, tagId?: string): NoteFilters {
+  switch (view) {
+    case 'all':       return { archived: false, deleted: false };
+    case 'favorites': return { favorite: true, archived: false, deleted: false };
+    case 'archive':   return { archived: true, deleted: false };
+    case 'trash':     return { deleted: true };
+    case 'folder':    return { folderId, archived: false, deleted: false };
+    case 'tag':       return { tagId, archived: false, deleted: false };
+  }
+}
 
 const DashboardPage = () => {
   const { notes, fetchNotes, createNote, currentNote, setCurrentNote, deleteNote } = useNoteStore();
-  const { folders } = useFolderStore();
-  const { tags } = useTagStore();
   const { user } = useAuthStore();
   const toast = useToast();
   const [isCreating, setIsCreating] = useState(false);
@@ -28,60 +43,88 @@ const DashboardPage = () => {
   const [selectedFolderId, setSelectedFolderId] = useState<string>();
   const [selectedTagId, setSelectedTagId] = useState<string>();
 
+  const listSortContextKey = useMemo(() => {
+    const contextType =
+      currentView === 'folder' ? 'folder' :
+      currentView === 'tag' ? 'tag' :
+      currentView === 'favorites' ? 'favorites' :
+      currentView === 'archive' ? 'archive' :
+      currentView === 'trash' ? 'trash' :
+      'all';
+    const contextId =
+      currentView === 'folder' ? selectedFolderId :
+      currentView === 'tag' ? selectedTagId :
+      undefined;
+    return `${contextType}-${contextId || '_none'}`;
+  }, [currentView, selectedFolderId, selectedTagId]);
+
+  const [contextSortStates, setContextSortStates] = useState<
+    Record<string, { sortBy: SortOption; sortOrder: 'asc' | 'desc' }>
+  >(() => {
+    try {
+      const saved = localStorage.getItem('dendrite-sort-states');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [sortBy, setSortBy] = useState<SortOption>(() => {
+    try {
+      const saved = localStorage.getItem('dendrite-sort-states');
+      const states = saved ? JSON.parse(saved) : {};
+      return states['all-_none']?.sortBy ?? 'createdAt';
+    } catch { return 'createdAt'; }
+  });
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(() => {
+    try {
+      const saved = localStorage.getItem('dendrite-sort-states');
+      const states = saved ? JSON.parse(saved) : {};
+      return states['all-_none']?.sortOrder ?? 'desc';
+    } catch { return 'desc'; }
+  });
+
+  useEffect(() => {
+    const saved = contextSortStates[listSortContextKey];
+    if (saved) {
+      setSortBy(saved.sortBy);
+      setSortOrder(saved.sortOrder);
+    } else {
+      setSortBy('createdAt');
+      setSortOrder('desc');
+    }
+  }, [listSortContextKey]);
+
+  const handleSortChange = useCallback(
+    (by: SortOption, order: 'asc' | 'desc') => {
+      setSortBy(by);
+      setSortOrder(order);
+      setContextSortStates((prev) => {
+        const next = { ...prev, [listSortContextKey]: { sortBy: by, sortOrder: order } };
+        try { localStorage.setItem('dendrite-sort-states', JSON.stringify(next)); } catch {}
+        return next;
+      });
+    },
+    [listSortContextKey]
+  );
+
   // Animation State
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
-    // Initial load - nur Notizen die nicht archiviert/gelÃ¶scht sind
     fetchNotes({ archived: false, deleted: false });
   }, []);
 
   const refreshCurrentView = () => {
-    // Refresh the current view with the same filters
-    const filters: any = {};
-
-    switch (currentView) {
-      case 'all':
-        filters.archived = false;
-        filters.deleted = false;
-        break;
-      case 'favorites':
-        filters.favorite = true;
-        filters.archived = false;
-        filters.deleted = false;
-        break;
-      case 'archive':
-        filters.archived = true;
-        filters.deleted = false;
-        break;
-      case 'trash':
-        filters.deleted = true;
-        break;
-      case 'folder':
-        filters.folderId = selectedFolderId;
-        filters.archived = false;
-        filters.deleted = false;
-        break;
-      case 'tag':
-        filters.tagId = selectedTagId;
-        filters.archived = false;
-        filters.deleted = false;
-        break;
-    }
-
-    fetchNotes(filters);
-    // Trigger sidebar refresh
+    fetchNotes(buildFilters(currentView, selectedFolderId, selectedTagId));
     setRefreshTrigger(prev => prev + 1);
   };
 
   const handleViewChange = (view: ViewType, id?: string) => {
-    // Start fade-out animation
     setIsTransitioning(true);
 
-    // Wait for fade-out to complete
     setTimeout(() => {
       setCurrentView(view);
-      setCurrentNote(null); // Clear current note when switching views
+      setCurrentNote(null);
 
       if (view === 'folder') {
         setSelectedFolderId(id);
@@ -94,45 +137,12 @@ const DashboardPage = () => {
         setSelectedTagId(undefined);
       }
 
-      // Fetch notes based on view
-      const filters: any = {};
+      fetchNotes(buildFilters(view, view === 'folder' ? id : undefined, view === 'tag' ? id : undefined));
 
-      switch (view) {
-        case 'all':
-          filters.archived = false;
-          filters.deleted = false;
-          break;
-        case 'favorites':
-          filters.favorite = true;
-          filters.archived = false;
-          filters.deleted = false;
-          break;
-        case 'archive':
-          filters.archived = true;
-          filters.deleted = false;
-          break;
-        case 'trash':
-          filters.deleted = true;
-          break;
-        case 'folder':
-          filters.folderId = id;
-          filters.archived = false;
-          filters.deleted = false;
-          break;
-        case 'tag':
-          filters.tagId = id;
-          filters.archived = false;
-          filters.deleted = false;
-          break;
-      }
-
-      fetchNotes(filters);
-
-      // Start fade-in animation
       setTimeout(() => {
         setIsTransitioning(false);
       }, 50);
-    }, 200); // 200ms fade-out duration
+    }, 200);
   };
 
   const handleCreateNote = async () => {
@@ -143,16 +153,9 @@ const DashboardPage = () => {
         folderId: currentView === 'folder' ? selectedFolderId : undefined,
         tags: currentView === 'tag' && selectedTagId ? [selectedTagId] : undefined,
       });
-      console.log('New note created:', newNote);
-
-      // Setze die neue Notiz als aktuelle Notiz
       setCurrentNote(newNote);
-
-      // Aktualisiere die Notizliste
       refreshCurrentView();
-
       toast.success('Notiz erstellt');
-      // Trigger sidebar refresh
       setRefreshTrigger(prev => prev + 1);
     } catch (error: any) {
       console.error('Error creating note:', error);
@@ -171,90 +174,53 @@ const DashboardPage = () => {
       }
       await Promise.all(trashedNotes.map(n => deleteNote(n.id)));
       await fetchNotes({ deleted: true });
-      toast.error('Papierkorb geleert');
+      toast.success('Papierkorb geleert');
     } catch (error: any) {
       toast.error(error?.response?.data?.error || 'Papierkorb konnte nicht geleert werden');
     } finally {
       setShowEmptyTrashModal(false);
-      // Trigger sidebar refresh
       setRefreshTrigger(prev => prev + 1);
     }
   };
 
-  const getViewTitle = () => {
-    switch (currentView) {
-      case 'all':
-        return 'Alle Notizen';
-      case 'favorites':
-        return 'Favoriten';
-      case 'archive':
-        return 'Archiv';
-      case 'trash':
-        return 'Papierkorb';
-      case 'folder':
-        return folders.find(f => f.id === selectedFolderId)?.name ?? 'Ordner';
-      case 'tag':
-        return tags.find(t => t.id === selectedTagId)?.name ?? 'Tag';
-      default:
-        return 'Notizen';
-    }
-  };
 
   return (
-    <div className="flex h-screen overflow-hidden p-4 gap-4">
-      {/* Sidebar */}
-      <Sidebar
-        currentView={currentView}
-        onViewChange={handleViewChange}
-        selectedFolderId={selectedFolderId}
-        selectedTagId={selectedTagId}
-        refreshTrigger={refreshTrigger}
-        onTagUpdated={refreshCurrentView}
-      />
+    <motion.div
+      className="flex h-dvh min-h-0 flex-col overflow-hidden p-3 sm:p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.18, ease: 'easeInOut' } }}
+      transition={{ duration: 0.28, ease: 'easeInOut' }}
+    >
+      <div
+        className="flex min-h-0 flex-1 w-full flex-row items-stretch overflow-hidden rounded-[1.25rem] border border-divider shadow-[0_24px_64px_color-mix(in_srgb,#000_32%,transparent)]"
+        style={{
+          background: 'color-mix(in srgb, var(--color-bg-secondary) 82%, transparent)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
+      >
+        <Sidebar
+          currentView={currentView}
+          onViewChange={handleViewChange}
+          selectedFolderId={selectedFolderId}
+          selectedTagId={selectedTagId}
+          refreshTrigger={refreshTrigger}
+          onTagUpdated={refreshCurrentView}
+          user={user}
+        />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col gap-3">
-        {/* Header */}
-        <Header user={user} />
-
-        <div className="flex-1 flex gap-3 min-h-0">
-          {/* Note List */}
-          <div className="w-80 glass glass-border rounded-2xl overflow-hidden flex flex-col relative" style={{ background: 'var(--color-bg-secondary)' }}>
-            {/* Note List Header */}
-            <div className="p-4 border-b glass-divider flex items-center justify-between" style={{ background: 'var(--color-bg-header)' }}>
-              <h2 className="text-lg font-semibold text-text-primary">
-                {getViewTitle()}
-              </h2>
-              <div className="w-9 h-9 flex items-center justify-center">
-                {(currentView === 'all' || currentView === 'folder' || currentView === 'tag') ? (
-                  <button
-                    onClick={handleCreateNote}
-                    disabled={isCreating}
-                    className="p-2 text-text-secondary hover:text-brand-primary transition-colors"
-                    title="Neue Notiz"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
-                ) : currentView === 'trash' ? (
-                  <button
-                    onClick={() => setShowEmptyTrashModal(true)}
-                    className="px-3 py-2 text-text-primary hover:text-red-500 flex items-center gap-2"
-                    title="Papierkorb leeren"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Note List Items */}
+        <div className="flex min-h-0 min-w-0 flex-1">
+          <div className="flex w-[min(100%,380px)] sm:w-96 shrink-0 flex-col border-r border-divider min-h-0">
             <div
-              className={`flex-1 flex flex-col overflow-hidden transition-opacity duration-200 ${
+              className={clsx(
+                'flex-1 flex flex-col overflow-hidden min-h-0 transition-opacity duration-300',
                 isTransitioning ? 'opacity-0' : 'opacity-100'
-              }`}
+              )}
             >
               <NoteList
                 notes={notes}
+
                 currentNote={currentNote}
                 onSelectNote={setCurrentNote}
                 onNotesReordered={refreshCurrentView}
@@ -271,54 +237,59 @@ const DashboardPage = () => {
                   undefined
                 }
                 isTrash={currentView === 'trash'}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={handleSortChange}
+                onCreateNote={
+                  (currentView === 'all' || currentView === 'folder' || currentView === 'tag')
+                    ? handleCreateNote
+                    : undefined
+                }
+                isCreating={isCreating}
+                onEmptyTrash={currentView === 'trash' ? () => setShowEmptyTrashModal(true) : undefined}
               />
             </div>
           </div>
 
-          {/* Note Editor */}
-          <div className="flex-1 overflow-hidden glass glass-border rounded-2xl relative isolate" style={{ background: 'var(--color-bg-secondary)' }}>
+          <div className="relative isolate flex min-h-0 min-w-0 flex-1 flex-col bg-[color-mix(in_srgb,var(--color-bg-primary)_18%,transparent)]">
             {currentNote ? (
               <NoteEditor
                 note={currentNote}
                 onNoteUpdate={refreshCurrentView}
               />
             ) : (
-              <div className="h-full flex items-center justify-center text-text-secondary">
-                <div className="text-center">
-                  <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                  <p className="text-lg">Wähle eine Notiz oder erstelle eine neue</p>
+              <div className="flex h-full flex-1 items-center justify-center select-none">
+                <div className="flex flex-col items-center gap-5">
+                  <div className="relative">
+                    <div
+                      className="absolute inset-0 rounded-3xl blur-2xl opacity-30 pointer-events-none"
+                      style={{ background: 'color-mix(in srgb, var(--color-brand-primary) 60%, transparent)' }}
+                    />
+                    <div
+                      className="relative flex h-20 w-20 items-center justify-center rounded-3xl glass-border"
+                      style={{ background: 'color-mix(in srgb, var(--color-brand-primary) 8%, transparent)' }}
+                    >
+                      <FileText className="h-9 w-9 text-text-muted" />
+                    </div>
+                  </div>
+                  <div className="text-center space-y-1.5">
+                    <p className="text-sm font-medium text-text-secondary">Keine Notiz geöffnet</p>
+                    <p className="text-xs text-text-muted">Wähle eine Notiz aus der Liste oder erstelle eine neue</p>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
-
-        {/* Empty Trash Modal */}
-        <Modal isOpen={showEmptyTrashModal} onClose={() => setShowEmptyTrashModal(false)} title="Papierkorb leeren?">
-          <div className="space-y-4">
-            <p className="text-sm text-text-secondary">
-              Möchtest du wirklich alle Notizen im Papierkorb endgültig löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowEmptyTrashModal(false)}
-                className="px-3 py-2 rounded-lg bg-white/30 text-text-primary hover:bg-white/40"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleEmptyTrash}
-                className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500"
-              >
-                Endgültig löschen
-              </button>
-            </div>
-          </div>
-        </Modal>
       </div>
-    </div>
+
+      <EmptyTrashModal
+        isOpen={showEmptyTrashModal}
+        onClose={() => setShowEmptyTrashModal(false)}
+        onConfirm={handleEmptyTrash}
+      />
+    </motion.div>
   );
 };
 
 export default DashboardPage;
-
