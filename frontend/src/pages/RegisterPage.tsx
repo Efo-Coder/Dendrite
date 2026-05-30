@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useToast } from '../components/ui/ToastContainer';
@@ -62,14 +62,12 @@ const RegisterPage = () => {
     if (resendLoading) return;
     setResendLoading(true);
     setResendDone(false);
-    try {
-      await api.post('/auth/resend-verification', { email });
-      setResendDone(true);
-    } catch {
-      setResendDone(true);
-    } finally {
-      setResendLoading(false);
-    }
+    const [result] = await Promise.allSettled([
+      api.post('/auth/resend-verification', { email }),
+      new Promise(res => setTimeout(res, 1200)),
+    ]);
+    setResendLoading(false);
+    setResendDone(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -172,7 +170,7 @@ const RegisterPage = () => {
 
             {emailSent ? (
               /* Success state */
-              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                 <div style={{
                   width: '56px', height: '56px', borderRadius: '16px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -200,31 +198,43 @@ const RegisterPage = () => {
                 <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.16em', color: 'var(--ink-dim)', textTransform: 'uppercase', margin: 0 }}>
                   Link valid for 24 hours
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
-                  {resendDone ? (
-                    <p style={{ fontFamily: 'var(--serif-body)', fontSize: '13px', color: '#26ad53' }}>Verification email sent.</p>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResend}
-                      disabled={resendLoading}
-                      className="no-press"
-                      style={{
-                        fontFamily: 'var(--mono)',
-                        fontSize: '10px',
-                        letterSpacing: '0.14em',
-                        textTransform: 'uppercase',
-                        color: 'var(--ink-dim)',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'color .15s',
-                        opacity: resendLoading ? 0.4 : 1,
-                      }}
-                    >
-                      {resendLoading ? 'Sending…' : 'Resend email'}
-                    </button>
-                  )}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', marginTop: '8px', minHeight: '24px', justifyContent: 'center' }}>
+                  <AnimatePresence mode="wait" initial={false}>
+                    {resendDone ? (
+                      <motion.p
+                        key="done"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.25 }}
+                        style={{ fontFamily: 'var(--serif-body)', fontSize: '14px', color: '#26ad53', margin: 0 }}
+                      >
+                        Verification email sent.
+                      </motion.p>
+                    ) : (
+                      <motion.button
+                        key="btn"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.25 }}
+                        type="button"
+                        onClick={handleResend}
+                        disabled={resendLoading}
+                        className={`no-press hover:opacity-75 transition-opacity ${resendLoading ? 'opacity-50' : 'opacity-100'}`}
+                        style={{
+                          fontFamily: 'var(--serif-body)',
+                          fontSize: '14px',
+                          color: 'var(--accent)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: resendLoading ? 'default' : 'pointer',
+                        }}
+                      >
+                        {resendLoading ? 'Sending…' : 'Resend email'}
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
                   <Link
                     to="/login"
                     style={{ color: 'var(--accent)', fontFamily: 'var(--serif-body)', fontSize: '14px', transition: 'opacity .15s' }}
