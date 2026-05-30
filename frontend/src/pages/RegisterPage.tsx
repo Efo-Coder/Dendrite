@@ -304,7 +304,7 @@ const RegisterPage = () => {
                       color: 'var(--ink-mid)',
                       marginBottom: '8px',
                     }}>
-                      Name <span style={{ color: 'var(--ink-dim)', letterSpacing: '0.05em', textTransform: 'none', fontSize: '9px' }}>(optional)</span>
+                      Name
                     </label>
                     <input
                       id="name"
@@ -313,6 +313,7 @@ const RegisterPage = () => {
                       onChange={(e) => setName(e.target.value)}
                       className="input"
                       placeholder="Your name"
+                      required
                     />
                   </div>
 
