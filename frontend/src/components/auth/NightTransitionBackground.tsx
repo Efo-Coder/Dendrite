@@ -1,4 +1,4 @@
-import { useRef, Suspense } from 'react';
+import { useRef, useState, Suspense } from 'react';
 import { Canvas, useFrame, useThree, extend } from '@react-three/fiber';
 import { shaderMaterial, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
@@ -8,6 +8,8 @@ const NightTransitionMaterial = shaderMaterial(
     uProgress: 0.0,
     uDayTex: null as unknown as THREE.Texture,
     uNightTex: null as unknown as THREE.Texture,
+    uRepeat: new THREE.Vector2(1, 1),
+    uOffset: new THREE.Vector2(0, 0),
   },
   `varying vec2 vUv;
    void main() {
@@ -18,18 +20,22 @@ const NightTransitionMaterial = shaderMaterial(
    uniform sampler2D uDayTex;
    uniform sampler2D uNightTex;
    uniform float uProgress;
+   uniform vec2 uRepeat;
+   uniform vec2 uOffset;
    void main() {
-     vec4 day   = texture2D(uDayTex,   vUv);
-     vec4 night = texture2D(uNightTex, vUv);
-     // dunkle Pixel wechseln zuerst zur Nacht, helle (Himmel) zuletzt
+     vec2 uv = vUv * uRepeat + uOffset;
+     vec4 day   = texture2D(uDayTex,   uv);
+     vec4 night = texture2D(uNightTex, uv);
      float brightness = dot(day.rgb, vec3(0.299, 0.587, 0.114));
      float mixFactor  = clamp((uProgress * 2.0) - brightness, 0.0, 1.0);
      vec4 result = mix(day, night, mixFactor);
-     gl_FragColor = vec4(result.rgb * 1.0, result.a);
+     gl_FragColor = vec4(result.rgb, result.a);
    }`
 );
 
 extend({ NightTransitionMaterial });
+
+useTexture.preload(['/dendrite-forest.webp', '/dendrite-forest-dark.webp']);
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
@@ -40,15 +46,32 @@ declare module '@react-three/fiber' {
 
 function BackgroundMesh({ isDark }: { isDark: boolean }) {
   const matRef = useRef<any>(null);
-  const { viewport } = useThree();
+  const { viewport, size } = useThree();
   const [dayTex, nightTex] = useTexture([
-    '/dendrite-forest.jpg',
-    '/dendrite-forest-dark.png',
+    '/dendrite-forest.webp',
+    '/dendrite-forest-dark.webp',
   ]);
   const initialized = useRef(false);
 
   useFrame(() => {
     if (!matRef.current) return;
+
+    // Cover UV — berechnet bei jedem Frame damit Resize korrekt reagiert
+    const img = dayTex.image as HTMLImageElement | null;
+    if (img?.width) {
+      const imgAspect = img.width / img.height;
+      const canvasAspect = size.width / size.height;
+      let rx = 1, ry = 1, ox = 0, oy = 0;
+      if (canvasAspect > imgAspect) {
+        ry = imgAspect / canvasAspect;
+        oy = (1 - ry) / 2;
+      } else {
+        rx = canvasAspect / imgAspect;
+        ox = (1 - rx) / 2;
+      }
+      matRef.current.uRepeat.set(rx, ry);
+      matRef.current.uOffset.set(ox, oy);
+    }
 
     if (!initialized.current) {
       matRef.current.uProgress = isDark ? 1 : 0;
@@ -74,9 +97,9 @@ function StaticFallback({ isDark }: { isDark: boolean }) {
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
-        backgroundImage: `url('${isDark ? '/dendrite-forest-dark.png' : '/dendrite-forest.jpg'}')`,
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: `url('${isDark ? '/dendrite-forest-dark.webp' : '/dendrite-forest.webp'}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -84,13 +107,32 @@ function StaticFallback({ isDark }: { isDark: boolean }) {
   );
 }
 
+function FadingCanvas({ isDark }: { isDark: boolean }) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div style={{
+      position: 'absolute',
+      inset: 0,
+      opacity: visible ? 1 : 0,
+      transition: 'opacity 0.5s ease',
+    }}>
+      <Canvas
+        gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}
+        onCreated={() => requestAnimationFrame(() => setVisible(true))}
+      >
+        <BackgroundMesh isDark={isDark} />
+      </Canvas>
+    </div>
+  );
+}
+
 export default function NightTransitionBackground({ isDark }: { isDark: boolean }) {
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
-      <Suspense fallback={<StaticFallback isDark={isDark} />}>
-        <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}>
-          <BackgroundMesh isDark={isDark} />
-        </Canvas>
+      <StaticFallback isDark={isDark} />
+      <Suspense fallback={null}>
+        <FadingCanvas isDark={isDark} />
       </Suspense>
     </div>
   );

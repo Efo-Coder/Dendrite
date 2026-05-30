@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
-import { useGlassPill } from '../../hooks/useGlassPill';
 import clsx from 'clsx';
 
 export interface ContextMenuItem {
@@ -22,7 +21,6 @@ interface ContextMenuProps {
 
 const ContextMenu = ({ isOpen, position, onClose, items, minWidth = '160px' }: ContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
-  const { pill, onEnter, onLeave } = useGlassPill(menuRef);
 
   useLayoutEffect(() => {
     if (!isOpen || !menuRef.current) return;
@@ -73,22 +71,14 @@ const ContextMenu = ({ isOpen, position, onClose, items, minWidth = '160px' }: C
       transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
       className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
       style={{ left: position.x, top: position.y, minWidth, transformOrigin: 'top left' }}
-      onMouseLeave={onLeave}
     >
-      {pill && (
-        <div
-          className="glass-pill pointer-events-none"
-          style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height, opacity: pill.visible ? 1 : 0 }}
-        />
-      )}
       {items.map((item, i) => (
         <button
           key={i}
           onClick={() => { item.onClick(); onClose(); }}
-          onMouseEnter={onEnter}
           className={clsx(
-            'relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
-            item.variant === 'danger' ? 'text-red-400' : 'text-text-primary'
+            'w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)',
+            item.variant === 'danger' ? 'text-red-400' : 'text-(--ink)'
           )}
         >
           {item.icon}

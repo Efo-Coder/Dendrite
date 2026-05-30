@@ -54,7 +54,7 @@ function BlobCursor({ isVisible }: { isVisible: boolean }) {
     };
   }, [mouseX, mouseY]);
 
-  return (
+  return createPortal(
     <motion.div
       className="pointer-events-none fixed z-50 flex items-center justify-center"
       style={{ left: smoothX, top: smoothY, x: "-50%", y: "-50%" }}
@@ -64,22 +64,24 @@ function BlobCursor({ isVisible }: { isVisible: boolean }) {
     >
       <motion.div style={{ rotate }}>
         <motion.div
-          className="flex h-20 w-20 items-center justify-center rounded-full bg-foreground"
-          style={{ scaleX: scaleAlongMotion, scaleY: scalePerp }}
+          className="flex h-20 w-20 items-center justify-center rounded-full"
+          style={{ scaleX: scaleAlongMotion, scaleY: scalePerp, background: 'var(--ink)' }}
         >
           <motion.span
-            className="text-sm font-medium uppercase tracking-wide text-background"
+            className="text-sm font-medium uppercase tracking-wide"
             style={{
               rotate: useTransform(rotate, (r) => -r),
               scaleX: useTransform(scaleAlongMotion, (s) => 1 / s),
               scaleY: useTransform(scalePerp, (s) => 1 / s),
+              color: 'var(--bg)',
             }}
           >
             Open
           </motion.span>
         </motion.div>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }
 
