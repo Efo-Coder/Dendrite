@@ -47,9 +47,9 @@ export default function LandingPage() {
   }, [dark]);
 
   useEffect(() => {
-    const id = setTimeout(() => ScrollTrigger.refresh(), 100);
+    const id = requestAnimationFrame(() => ScrollTrigger.refresh());
     return () => {
-      clearTimeout(id);
+      cancelAnimationFrame(id);
       ScrollTrigger.getAll().forEach(t => t.kill());
     };
   }, []);
