@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { Pipette, X, Plus } from 'lucide-react';
 import clsx from 'clsx';
@@ -67,9 +67,9 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
       )}
 
       {/* Favorites row */}
-      <div className="flex items-center gap-2 flex-wrap min-h-[1.5rem]">
+      <div className="flex items-center gap-2 flex-wrap min-h-6">
         {favorites.map((fav) => (
-          <div key={fav} className="relative group/fav w-8 h-8 flex-shrink-0">
+          <div key={fav} className="relative group/fav w-8 h-8 shrink-0">
             <button
               type="button"
               onClick={() => onChange(fav)}
@@ -95,7 +95,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
           onClick={addToFavorites}
           title="Add current color to favorites"
           className={clsx(
-            'w-8 h-8 rounded-lg ring-1 ring-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] flex items-center justify-center transition-colors flex-shrink-0',
+            'w-8 h-8 rounded-lg ring-1 ring-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] flex items-center justify-center transition-colors shrink-0',
             canAdd
               ? 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink) hover:ring-(--ink)'
               : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] opacity-30 pointer-events-none'
@@ -131,7 +131,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
           onClick={openEyeDropper}
           title="Eyedropper"
           className={clsx(
-            'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 flex-shrink-0',
+            'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 shrink-0',
             !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-(--ink-mid)' : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink)'
           )}
         >
