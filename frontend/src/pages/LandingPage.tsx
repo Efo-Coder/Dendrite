@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { motion } from 'motion/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { HeaderSection } from '../components/landing/HeaderSection';
@@ -55,6 +56,12 @@ export default function LandingPage() {
   }, []);
 
   return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.18, ease: 'easeInOut' } }}
+      transition={{ duration: 0.28, ease: 'easeInOut' }}
+    >
     <SmoothScroll>
       <div style={{ background: 'var(--bg)', color: 'var(--ink)', minHeight: '100vh' }}>
         <HeaderSection dark={dark} onToggleDark={() => setThemeMode(dark ? 'light' : 'dark')} />
@@ -70,5 +77,6 @@ export default function LandingPage() {
         <FooterSection />
       </div>
     </SmoothScroll>
+    </motion.div>
   );
 }
