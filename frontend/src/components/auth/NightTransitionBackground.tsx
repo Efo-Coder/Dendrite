@@ -44,7 +44,7 @@ declare module '@react-three/fiber' {
   }
 }
 
-function BackgroundMesh({ isDark }: { isDark: boolean }) {
+function BackgroundMesh({ isDark, onReady }: { isDark: boolean; onReady?: () => void }) {
   const matRef = useRef<any>(null);
   const { viewport, size } = useThree();
   const [dayTex, nightTex] = useTexture([
@@ -76,6 +76,7 @@ function BackgroundMesh({ isDark }: { isDark: boolean }) {
     if (!initialized.current) {
       matRef.current.uProgress = isDark ? 1 : 0;
       initialized.current = true;
+      onReady?.();
       return;
     }
 
@@ -117,11 +118,8 @@ function FadingCanvas({ isDark }: { isDark: boolean }) {
       opacity: visible ? 1 : 0,
       transition: 'opacity 0.5s ease',
     }}>
-      <Canvas
-        gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}
-        onCreated={() => requestAnimationFrame(() => setVisible(true))}
-      >
-        <BackgroundMesh isDark={isDark} />
+      <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}>
+        <BackgroundMesh isDark={isDark} onReady={() => setVisible(true)} />
       </Canvas>
     </div>
   );
