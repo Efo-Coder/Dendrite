@@ -3,181 +3,222 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
+import { Moon, Sun } from "lucide-react";
+import { LOGO_SRC } from "../../config/brand";
 
-const sections = [
-  { id: "hero", label: "Home" },
-  { id: "features", label: "Features" },
-  { id: "services", label: "Services" },
-  { id: "about", label: "About" },
-  { id: "social-proof", label: "Testimonials" },
-  { id: "contact", label: "Contact" },
-];
-
-const menuItems = [
-  { label: "Home", href: "#hero" },
+const navLinks = [
   { label: "Features", href: "#features" },
-  { label: "Services", href: "#services" },
   { label: "About", href: "#about" },
-  { label: "Testimonials", href: "#social-proof" },
-  { label: "Contact", href: "#contact" },
+  { label: "FAQ", href: "#faq" },
 ];
 
+interface HeaderProps {
+  dark?: boolean;
+  onToggleDark?: () => void;
+}
 
-export function HeaderSection() {
-  const [activeSection, setActiveSection] = useState("Home");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + window.innerHeight / 3;
-      const isNearBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 100;
-
-      if (isNearBottom) {
-        setActiveSection("Contact");
-        return;
-      }
-
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const section = sections[i];
-        if (!section || section.id === "contact") continue;
-        const element = document.getElementById(section.id);
-        if (element) {
-          const { offsetTop } = element;
-          if (scrollPosition >= offsetTop) {
-            setActiveSection(section.label);
-            return;
-          }
-        }
-      }
-      if (sections[0]) setActiveSection(sections[0].label);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
     <motion.header
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed top-0 left-0 right-0 z-50 px-4 py-6 sm:px-12 sm:py-12 lg:px-24"
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        background: scrolled ? 'color-mix(in oklch, var(--bg-deep) 85%, transparent)' : 'transparent',
+        borderBottom: `0.5px solid ${scrolled ? 'var(--line)' : 'transparent'}`,
+        backdropFilter: scrolled ? 'blur(20px) saturate(150%)' : 'none',
+        WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(150%)' : 'none',
+        transition: 'background 0.3s ease, border-color 0.3s ease',
+      }}
     >
-      <div className="mx-auto flex max-w-360 items-center justify-between gap-4">
+      <div
+        className="mx-auto flex items-center"
+        style={{ maxWidth: '1400px', padding: '0 clamp(24px, 5vw, 80px)', height: '64px', gap: '8px' }}
+      >
         {/* Logo */}
-        <motion.a
+        <a
           href="#hero"
-          className="flex h-12 sm:h-16 font-medium tracking-tight text-base sm:text-xl items-center justify-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl text-white bg-neutral-900/70 backdrop-blur-lg px-4 sm:px-5 shadow-lg shrink-0"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-2.5 shrink-0"
+          style={{ textDecoration: 'none' }}
         >
           <img
-            src="/dendrite-logo.svg"
+            src={LOGO_SRC}
             alt=""
-            className="h-5 w-5 sm:h-6 sm:w-6"
-            style={{ filter: 'brightness(0) invert(1)' }}
+            style={{ width: '24px', height: '24px', opacity: 0.85 }}
           />
-          Dendrite
-        </motion.a>
+          <span style={{
+            fontFamily: 'var(--serif-display)',
+            fontSize: '19px',
+            fontWeight: 500,
+            fontStyle: 'italic',
+            color: 'var(--ink)',
+            letterSpacing: '0.01em',
+          }}>
+            Dendrite
+          </span>
+        </a>
 
-        {/* Right side: nav dropdown */}
-        <div className="flex items-center">
-          {/* Nav dropdown */}
-          <div className="relative h-12 sm:h-16">
-            <motion.div
-              className="absolute top-0 right-0 w-48 sm:w-60 bg-neutral-900/70 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-lg overflow-hidden"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{
-                opacity: 1,
-                y: 0,
-                height: isMenuOpen ? "auto" : (isMobile ? 48 : 64),
-              }}
-              transition={{
-                duration: 0.4,
-                ease: [0.22, 1, 0.36, 1],
-                height: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
-              }}
+        {/* Separator */}
+        <div style={{ width: '0.5px', height: '18px', background: 'var(--line)', margin: '0 12px', flexShrink: 0 }} className="hidden sm:block" />
+
+        {/* Nav links — desktop */}
+        <nav className="hidden sm:flex items-center flex-1" style={{ gap: '30px' }}>
+          {navLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              className="relative group transition-colors duration-150 text-(--ink-mid) hover:text-(--ink)"
+              style={{ fontFamily: 'var(--serif-body)', fontSize: '14px', letterSpacing: '-0.005em', padding: '6px 0', textDecoration: 'none' }}
             >
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="flex h-12 sm:h-16 w-full items-center justify-between gap-4 px-4 sm:px-5 text-white"
-              >
-                <span className="text-base sm:text-lg font-medium">{activeSection}</span>
-                <motion.div
-                  className="relative h-5 w-5 sm:h-6 sm:w-6"
-                  animate={{ rotate: isMenuOpen ? 45 : 0 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <span className="absolute left-1/2 top-0 h-5 sm:h-6 w-[1.5px] -translate-x-1/2 bg-current" />
-                  <span className="absolute left-0 top-1/2 h-[1.5px] w-5 sm:w-6 -translate-y-1/2 bg-current" />
-                </motion.div>
-              </button>
+              {link.label}
+              <span
+                className="absolute bottom-0 left-0 w-0 group-hover:w-full"
+                style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }}
+              />
+            </a>
+          ))}
+        </nav>
 
-              <AnimatePresence>
-                {isMenuOpen && (
-                  <motion.nav
-                    className="px-5 pb-5"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2, delay: 0.1 }}
-                  >
-                    <ul className="flex flex-col gap-1">
-                      {menuItems.map((item, index) => (
-                        <motion.li
-                          key={item.label}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.3, delay: 0.05 * index, ease: [0.22, 1, 0.36, 1] }}
-                        >
-                          <a
-                            href={item.href}
-                            onClick={() => { setIsMenuOpen(false); setActiveSection(item.label); }}
-                            className={`block py-1.5 text-lg font-medium transition-colors hover:text-white ${
-                              activeSection === item.label
-                                ? "text-white underline underline-offset-4"
-                                : "text-white/60"
-                            }`}
-                          >
-                            {item.label}
-                          </a>
-                        </motion.li>
-                      ))}
-                      <motion.li
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        transition={{ duration: 0.3, delay: 0.05 * menuItems.length, ease: [0.22, 1, 0.36, 1] }}
-                      >
-                        <Link
-                          to="/register"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="block py-1.5 text-lg font-medium text-white/60 hover:text-white transition-colors mt-2 border-t border-white/10 pt-3"
-                        >
-                          Get Started →
-                        </Link>
-                      </motion.li>
-                    </ul>
-                  </motion.nav>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </div>
+        {/* Actions */}
+        <div className="ml-auto flex items-center gap-2">
+          {onToggleDark && (
+            <button
+              onClick={onToggleDark}
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-transparent text-(--ink-mid) hover:text-(--ink) hover:bg-(--surface) hover:rotate-[20deg] transition-all duration-200"
+              style={{ border: '0.5px solid var(--line)', cursor: 'pointer', flexShrink: 0 }}
+              title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {dark ? <Sun size={13} /> : <Moon size={13} />}
+            </button>
+          )}
+
+          <Link
+            to="/login"
+            className="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg transition-colors duration-150 text-(--ink-mid) hover:text-(--ink) hover:bg-(--surface)"
+            style={{ fontFamily: 'var(--serif-body)', fontSize: '14.5px', textDecoration: 'none' }}
+          >
+            Sign in
+          </Link>
+
+          <Link
+            to="/register"
+            className="inline-flex items-center"
+            style={{
+              padding: '8px 18px',
+              borderRadius: '9px',
+              background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
+              color: 'oklch(0.15 0.020 60)',
+              fontFamily: 'var(--serif-display)',
+              fontWeight: 600,
+              fontSize: '14px',
+              letterSpacing: '0.03em',
+              textDecoration: 'none',
+              boxShadow: '0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 3px 10px color-mix(in oklch, var(--accent) 25%, transparent)',
+              transition: 'transform 0.1s ease',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-0.5px)')}
+            onMouseLeave={e => (e.currentTarget.style.transform = '')}
+          >
+            Get Started
+          </Link>
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            className="sm:hidden flex flex-col justify-center items-center w-9 h-9 rounded-lg gap-1.25 transition-colors hover:bg-(--surface)"
+            style={{ background: 'transparent', border: '0.5px solid var(--line)', cursor: 'pointer', color: 'var(--ink-mid)' }}
+            aria-label="Toggle menu"
+          >
+            <span
+              className="block w-4 h-px bg-current rounded transition-all duration-200"
+              style={{ transform: menuOpen ? 'translateY(5px) rotate(45deg)' : '' }}
+            />
+            <span
+              className="block w-4 h-px bg-current rounded transition-all duration-200"
+              style={{ opacity: menuOpen ? 0 : 1 }}
+            />
+            <span
+              className="block w-4 h-px bg-current rounded transition-all duration-200"
+              style={{ transform: menuOpen ? 'translateY(-5px) rotate(-45deg)' : '' }}
+            />
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden sm:hidden"
+            style={{ background: 'var(--bg-deep)', borderBottom: '0.5px solid var(--line)' }}
+          >
+            <div style={{ padding: '12px clamp(24px, 5vw, 80px) 20px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              {navLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-3 py-2.5 rounded-lg transition-colors text-(--ink-mid) hover:text-(--ink) hover:bg-(--surface)"
+                  style={{ fontFamily: 'var(--serif-body)', fontSize: '16px', textDecoration: 'none' }}
+                >
+                  {link.label}
+                </a>
+              ))}
+              <div style={{ height: '0.5px', background: 'var(--line-soft)', margin: '10px 0' }} />
+              {onToggleDark && (
+                <button
+                  onClick={onToggleDark}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-(--ink-mid) hover:text-(--ink) hover:bg-(--surface)"
+                  style={{ fontFamily: 'var(--serif-body)', fontSize: '16px', background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                >
+                  {dark ? <Sun size={15} /> : <Moon size={15} />}
+                  {dark ? 'Switch to light mode' : 'Switch to dark mode'}
+                </button>
+              )}
+              <Link
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                className="block px-3 py-2.5 rounded-lg transition-colors text-(--ink-mid) hover:text-(--ink) hover:bg-(--surface)"
+                style={{ fontFamily: 'var(--serif-body)', fontSize: '16px', textDecoration: 'none' }}
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setMenuOpen(false)}
+                className="block text-center mt-1"
+                style={{
+                  padding: '11px',
+                  borderRadius: '9px',
+                  background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
+                  color: 'oklch(0.15 0.020 60)',
+                  fontFamily: 'var(--serif-display)',
+                  fontWeight: 600,
+                  fontSize: '15px',
+                  textDecoration: 'none',
+                }}
+              >
+                Get Started
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 }

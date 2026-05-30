@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { FolderOpen, Plus } from 'lucide-react';
 import { useFolderStore } from '../../store/useFolderStore';
 import { useToast } from '../ui/ToastContainer';
 import Modal from './Modal';
 import CreateFolderModal from './CreateFolderModal';
-import { useGlassPill } from '../../hooks/useGlassPill';
 
 interface MoveToFolderModalProps {
   isOpen: boolean;
@@ -17,9 +16,6 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
   const { folders, fetchFolders } = useFolderStore();
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const toast = useToast();
-
-  const listRef = useRef<HTMLDivElement>(null);
-  const { pill, onEnter, onLeave } = useGlassPill(listRef);
 
   useEffect(() => {
     if (isOpen) {
@@ -39,47 +35,38 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
   const handleFolderCreated = () => {
     setShowCreateFolderModal(false);
     fetchFolders();
-    toast.success('Ordner erstellt');
+    toast.success('Folder created');
   };
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Notiz verschieben">
+      <Modal isOpen={isOpen} onClose={onClose} title="Move note" showFooter={true}>
         <div className="space-y-4">
-          <p className="text-sm text-text-secondary">
-            Wähle einen Ordner aus, in den die Notiz verschoben werden soll:
+          <p className="text-sm text-(--ink-mid)">
+            Choose a folder to move the note into:
           </p>
 
-          <div ref={listRef} className="relative" onMouseLeave={onLeave}>
-            {pill && (
-              <div
-                className="glass-pill pointer-events-none"
-                style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height, opacity: pill.visible ? 1 : 0 }}
-              />
-            )}
-            <div className="max-h-64 overflow-y-auto space-y-1">
+          <div className="modal-list-scroll space-y-1">
               <button
                 onClick={() => handleMove(null)}
-                onMouseEnter={onEnter}
-                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative z-10 ${
+                className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover:bg-(--surface-hi) ${
                   currentFolderId === null || currentFolderId === undefined
-                    ? 'text-text-primary'
-                    : 'text-text-secondary'
+                    ? 'text-(--ink)'
+                    : 'text-(--ink-mid)'
                 }`}
               >
-                <FolderOpen className="w-4 h-4 text-text-secondary" />
-                <span className="text-sm">Kein Ordner</span>
+                <FolderOpen className="w-4 h-4 text-(--ink-mid)" />
+                <span className="text-sm">No folder</span>
               </button>
 
               {folders.map((folder) => (
                 <button
                   key={folder.id}
                   onClick={() => handleMove(folder.id)}
-                  onMouseEnter={onEnter}
-                  className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative z-10 ${
+                  className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors hover:bg-(--surface-hi) ${
                     currentFolderId === folder.id
-                      ? 'text-text-primary'
-                      : 'text-text-secondary'
+                      ? 'text-(--ink)'
+                      : 'text-(--ink-mid)'
                   }`}
                 >
                   <FolderOpen
@@ -90,21 +77,15 @@ const MoveToFolderModal = ({ isOpen, onClose, onMove, currentFolderId }: MoveToF
                 </button>
               ))}
 
-              <div className="border-b glass-divider" />
+              <div className="border-b border-(--line-soft)" />
 
               <button
                 onClick={handleCreateFolder}
-                onMouseEnter={onEnter}
-                className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors text-text-primary relative z-10"
+                className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors text-(--ink) hover:bg-(--surface-hi)"
               >
                 <Plus className="w-4 h-4" />
-                <span className="text-sm">Neuen Ordner erstellen</span>
+                <span className="text-sm">Create new folder</span>
               </button>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <button onClick={onClose} className="btn">Abbrechen</button>
           </div>
         </div>
       </Modal>

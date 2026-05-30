@@ -44,7 +44,12 @@ export const getSharedNote = async (req: AuthRequest, res: Response): Promise<vo
   const share = await prisma.noteShare.findUnique({
     where: { token },
     include: {
-      note: { include: { tags: true, folder: true } },
+      note: {
+        include: {
+          folder: true,
+          noteTags: { include: { tag: true }, orderBy: { createdAt: 'asc' } },
+        },
+      },
     },
   });
 
@@ -53,7 +58,9 @@ export const getSharedNote = async (req: AuthRequest, res: Response): Promise<vo
     res.status(410).json({ error: 'Dieser Link ist abgelaufen' }); return;
   }
 
-  res.json({ note: share.note, shareToken: share.token });
+  const { noteTags, ...noteRest } = share.note as any;
+  const note = { ...noteRest, tags: (noteTags ?? []).map((nt: any) => nt.tag) };
+  res.json({ note, shareToken: share.token });
 };
 
 export const updateSharedNote = async (req: AuthRequest, res: Response): Promise<void> => {

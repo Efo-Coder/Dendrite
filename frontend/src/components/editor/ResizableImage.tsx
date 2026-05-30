@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { AlignLeft, AlignCenter, AlignRight, Trash2, Lock, Unlock, Square, Scan } from 'lucide-react';
-import { useGlassPill } from '../../hooks/useGlassPill';
 
 interface ResizableImageProps {
   src: string;
@@ -48,7 +47,6 @@ const ResizableImage = ({
 
   const imageRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
-  const { pill, onEnter: onPillEnter, onLeave: onPillLeave } = useGlassPill(controlsRef);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
   const startWidthRef = useRef(0);
@@ -275,58 +273,50 @@ const ResizableImage = ({
               ? 'opacity 180ms ease, transform 220ms cubic-bezier(0.34, 1.4, 0.64, 1)'
               : 'opacity 180ms ease-in, transform 200ms ease-in',
           }}
-          onMouseLeave={onPillLeave}
         >
-          {pill && <div className="glass-pill" style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height, opacity: pill.visible ? 1 : 0 }} />}
           <button
             onClick={() => !positionLocked && handleAlignmentChange('left')}
-            onMouseEnter={(e) => !positionLocked && onPillEnter(e, alignment === 'left')}
-            className={`p-1.5 rounded-md transition-all relative z-10 ${positionLocked ? 'opacity-30 pointer-events-none' : alignment === 'left' ? 'text-brand-primary' : ''}`}
-            title="Links ausrichten (Text fließt rechts)"
+            className={`p-1.5 rounded-md transition-all hover:bg-(--surface-hi) ${positionLocked ? 'opacity-30 pointer-events-none' : alignment === 'left' ? 'text-(--accent)' : ''}`}
+            title="Align left (text wraps right)"
           >
             <AlignLeft className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => !positionLocked && handleAlignmentChange('center')}
-            onMouseEnter={(e) => !positionLocked && onPillEnter(e, alignment === 'center')}
-            className={`p-1.5 rounded-md transition-all relative z-10 ${positionLocked ? 'opacity-30 pointer-events-none' : alignment === 'center' ? 'text-brand-primary' : ''}`}
-            title="Zentrieren (Block)"
+            className={`p-1.5 rounded-md transition-all hover:bg-(--surface-hi) ${positionLocked ? 'opacity-30 pointer-events-none' : alignment === 'center' ? 'text-(--accent)' : ''}`}
+            title="Center (block)"
           >
             <AlignCenter className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => !positionLocked && handleAlignmentChange('right')}
-            onMouseEnter={(e) => !positionLocked && onPillEnter(e, alignment === 'right')}
-            className={`p-1.5 rounded-md transition-all relative z-10 ${positionLocked ? 'opacity-30 pointer-events-none' : alignment === 'right' ? 'text-brand-primary' : ''}`}
-            title="Rechts ausrichten (Text fließt links)"
+            className={`p-1.5 rounded-md transition-all hover:bg-(--surface-hi) ${positionLocked ? 'opacity-30 pointer-events-none' : alignment === 'right' ? 'text-(--accent)' : ''}`}
+            title="Align right (text wraps left)"
           >
             <AlignRight className="w-3.5 h-3.5" />
           </button>
-          <div className="h-6 w-px glass-divider mx-1 flex-shrink-0" />
+          <div className="h-6 w-px border-l border-(--line-soft) mx-1 shrink-0" />
           <button
             onClick={() => { if (positionLocked) return; const next = !maintainAspectRatio; setMaintainAspectRatio(next); if (onAspectRatioChange) onAspectRatioChange(next); }}
-            onMouseEnter={(e) => !positionLocked && onPillEnter(e, maintainAspectRatio)}
-            className={`p-1.5 rounded-md transition-all relative z-10 ${positionLocked ? 'opacity-30 pointer-events-none' : maintainAspectRatio ? 'text-brand-primary' : ''}`}
-            title={maintainAspectRatio ? 'Seitenverhältnis gesperrt' : 'Seitenverhältnis entsperrt'}
+            className={`p-1.5 rounded-md transition-all hover:bg-(--surface-hi) ${positionLocked ? 'opacity-30 pointer-events-none' : maintainAspectRatio ? 'text-(--accent)' : ''}`}
+            title={maintainAspectRatio ? 'Aspect ratio locked' : 'Aspect ratio unlocked'}
           >
             {maintainAspectRatio ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
           </button>
-          <div className="h-6 w-px glass-divider mx-1 flex-shrink-0" />
+          <div className="h-6 w-px border-l border-(--line-soft) mx-1 shrink-0" />
           <button
             onClick={() => { const next = !positionLocked; setPositionLocked(next); if (onPositionLockChange) onPositionLockChange(next); }}
-            onMouseEnter={(e) => onPillEnter(e, positionLocked)}
-            className={`p-1.5 rounded-md transition-all relative z-10 ${positionLocked ? 'text-brand-primary' : ''}`}
-            title={positionLocked ? 'Position entsperren' : 'Position sperren'}
+            className={`p-1.5 rounded-md transition-all hover:bg-(--surface-hi) ${positionLocked ? 'text-(--accent)' : ''}`}
+            title={positionLocked ? 'Unlock position' : 'Lock position'}
           >
             {positionLocked ? <Square className="w-3.5 h-3.5" /> : <Scan className="w-3.5 h-3.5" />}
           </button>
-          <div className="h-6 w-px glass-divider mx-1 flex-shrink-0" />
+          <div className="h-6 w-px border-l border-(--line-soft) mx-1 shrink-0" />
           {onDelete && (
             <button
               onClick={() => !positionLocked && onDelete?.()}
-              onMouseEnter={(e) => !positionLocked && onPillEnter(e, false)}
-              className={`p-1.5 rounded-md relative z-10 transition-all ${positionLocked ? 'opacity-30 pointer-events-none' : 'hover:text-red-500'}`}
-              title="Bild löschen"
+              className={`p-1.5 rounded-md transition-all hover:bg-(--surface-hi) ${positionLocked ? 'opacity-30 pointer-events-none' : 'hover:text-red-500'}`}
+              title="Delete image"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -346,32 +336,32 @@ const ResizableImage = ({
 
         {showControls && !positionLocked && (
           <>
-            <div onMouseDown={(e) => handleMouseDown(e, 'right')} className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full cursor-ew-resize border-2 z-10" style={{ touchAction: 'none', background: 'var(--color-bg-primary)', borderColor: 'var(--color-brand-primary)' }} />
-            <div onMouseDown={(e) => handleMouseDown(e, 'bottom')} className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rounded-full cursor-ns-resize border-2 z-10" style={{ touchAction: 'none', background: 'var(--color-bg-primary)', borderColor: 'var(--color-brand-primary)' }} />
-            <div onMouseDown={(e) => handleMouseDown(e, 'corner')} className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full cursor-nwse-resize border-2 z-10" style={{ touchAction: 'none', background: 'var(--color-bg-primary)', borderColor: 'var(--color-brand-primary)' }} />
+            <div onMouseDown={(e) => handleMouseDown(e, 'right')} className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full cursor-ew-resize border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
+            <div onMouseDown={(e) => handleMouseDown(e, 'bottom')} className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rounded-full cursor-ns-resize border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
+            <div onMouseDown={(e) => handleMouseDown(e, 'corner')} className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full cursor-nwse-resize border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
           </>
         )}
 
         {showControls && !isResizing && (
-          <div className="absolute inset-0 pointer-events-none border-2" style={{ borderColor: 'var(--color-brand-primary)' }} />
+          <div className="absolute inset-0 pointer-events-none border-2" style={{ borderColor: 'var(--accent)' }} />
         )}
         {isResizing && (
-          <div className="absolute inset-0 pointer-events-none border-2" style={{ borderColor: 'var(--color-brand-primary)', backgroundColor: 'color-mix(in srgb, var(--color-brand-primary) 5%, transparent)' }} />
+          <div className="absolute inset-0 pointer-events-none border-2" style={{ borderColor: 'var(--accent)', backgroundColor: 'color-mix(in srgb, var(--accent) 5%, transparent)' }} />
         )}
       </div>
 
       {/* Size Indicator */}
       {isResizing && (
-        <div className="image-size-indicator absolute -bottom-9 left-1/2 -translate-x-1/2 glass-popup rounded-lg px-3 py-1.5 text-xs text-text-primary shadow-xl font-mono whitespace-nowrap flex items-center" style={{ zIndex: 50 }}>
+        <div className="image-size-indicator absolute -bottom-9 left-1/2 -translate-x-1/2 glass-popup rounded-lg px-3 py-1.5 text-xs text-(--ink) shadow-xl font-mono whitespace-nowrap flex items-center" style={{ zIndex: 50 }}>
           {(() => {
             const actualWidthPx = Math.round((width / 100) * editorWidthRef.current);
             return (
               <>
-                {maintainAspectRatio && <span className="mr-2 text-text-secondary relative -top-px"><Lock className="w-3 h-3" /></span>}
-                <span className="text-brand-primary font-semibold">{actualWidthPx}</span>
-                <span className="text-text-secondary mx-1">×</span>
-                <span className="text-brand-primary font-semibold">{Math.round(height)}</span>
-                <span className="text-text-secondary ml-0.5">px</span>
+                {maintainAspectRatio && <span className="mr-2 text-(--ink-mid) relative -top-px"><Lock className="w-3 h-3" /></span>}
+                <span className="text-(--accent) font-semibold">{actualWidthPx}</span>
+                <span className="text-(--ink-mid) mx-1">×</span>
+                <span className="text-(--accent) font-semibold">{Math.round(height)}</span>
+                <span className="text-(--ink-mid) ml-0.5">px</span>
               </>
             );
           })()}

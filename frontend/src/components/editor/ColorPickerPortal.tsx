@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { useSmartPopupStyle, type PopupAnchor } from '../../hooks/useSmartPopupStyle';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { Pipette, X, Plus } from 'lucide-react';
-import { useGlassPill } from '../../hooks/useGlassPill';
 import clsx from 'clsx';
 import { hexToRgb, rgbToHex, hexToHsl, hslToHex } from './colorUtils';
 
@@ -16,6 +16,8 @@ interface ColorPickerPortalProps {
   presets: { label: string; value: string }[];
   storageKey: string;
   fallbackColor?: string;
+  padding?: number;
+  onPlacementChange?: (p: 'above' | 'below') => void;
 }
 
 const ColorPickerPortal = ({
@@ -26,19 +28,21 @@ const ColorPickerPortal = ({
   presets,
   storageKey,
   fallbackColor = '#000000',
+  padding = 8,
+  onPlacementChange,
 }: ColorPickerPortalProps) => {
   const [inputMode, setInputMode] = useState<'hex' | 'rgb' | 'hsl'>('hex');
-  const modeTabsRef = useRef<HTMLDivElement>(null);
-  const { pill, onEnter, onLeave } = useGlassPill(modeTabsRef);
   const popupRef = useRef<HTMLDivElement>(null);
-  const popupStyle = useSmartPopupStyle(position, popupRef);
+  const { style: popupStyle, placement } = useSmartPopupStyle(position, popupRef, padding);
+
+  useEffect(() => {
+    if (position) onPlacementChange?.(placement);
+  }, [placement, position, onPlacementChange]);
 
   const [favorites, setFavorites] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); }
     catch { return []; }
   });
-
-  if (!position) return null;
 
   const safeHex = color && color.startsWith('#') ? color : fallbackColor;
 
@@ -67,16 +71,30 @@ const ColorPickerPortal = ({
   const canAdd = color && !favorites.includes(color) && !presets.some(p => p.value === color) && favorites.length < 13;
 
   return createPortal(
-    <>
+    <AnimatePresence>
+      {position && (
+      <>
       <div className="fixed inset-0" onClick={onClose} />
-      <div
+      <motion.div
         ref={popupRef}
-        className="fixed glass-popup rounded-xl shadow-xl"
-        style={{ ...popupStyle, width: '220px' }}
+        className={`fixed overflow-hidden border border-(--line) ${placement === 'above' ? 'border-b-0' : 'border-t-0'}`}
+        style={{
+          ...popupStyle,
+          background: 'transparent',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderRadius: placement === 'above' ? '1rem 1rem 0 0' : '0 0 1rem 1rem',
+          clipPath: placement === 'above' ? 'inset(0 round 1rem 1rem 0 0)' : 'inset(0 round 0 0 1rem 1rem)',
+          transformOrigin: placement === 'above' ? 'center bottom' : 'center top',
+        }}
+        initial={{ opacity: 0, scale: 0.97, y: placement === 'above' ? 12 : -12 }}
+        animate={{ opacity: 1, scale: 1, y: placement === 'above' ? 20 : -20 }}
+        exit={{ opacity: 0, scale: 0.97, y: placement === 'above' ? 12 : -12, transition: { duration: 0.1 } }}
+        transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
         onMouseDown={(e) => { if (!(e.target instanceof HTMLInputElement)) e.preventDefault(); }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-2 flex flex-col gap-1">
+        <div className={`p-2 flex flex-col gap-1 ${placement === 'above' ? 'pb-7' : 'pt-7'}`}>
           <div className="flex flex-wrap gap-1">
             {presets.map(({ label, value }) => (
               <button
@@ -111,7 +129,7 @@ const ColorPickerPortal = ({
                 <button
                   onClick={(e) => { e.stopPropagation(); removeFromFavorites(fav); }}
                   className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-black/70 text-white opacity-0 group-hover/fav:opacity-100 transition-opacity grid place-items-center leading-none"
-                  title="Entfernen"
+                  title="Remove"
                 >
                   <X className="w-2 h-2" />
                 </button>
@@ -119,12 +137,12 @@ const ColorPickerPortal = ({
             ))}
             <button
               onClick={addToFavorites}
-              title="Aktuelle Farbe zu Favoriten hinzufügen"
+              title="Add current color to favorites"
               className={clsx(
-                'w-6 h-6 rounded-md ring-1 ring-text-muted flex items-center justify-center transition-colors flex-shrink-0',
+                'w-6 h-6 rounded-md ring-1 ring-(--ink-low) flex items-center justify-center transition-colors flex-shrink-0',
                 canAdd
-                  ? 'text-text-muted hover:text-text-primary hover:ring-text-primary'
-                  : 'text-text-muted opacity-30 pointer-events-none'
+                  ? 'text-(--ink-low) hover:text-(--ink) hover:ring-(--ink)'
+                  : 'text-(--ink-low) opacity-30 pointer-events-none'
               )}
             >
               <Plus className="w-3 h-3" />
@@ -137,25 +155,14 @@ const ColorPickerPortal = ({
             style={{ width: '100%', height: '140px' }}
           />
 
-          <div
-            ref={modeTabsRef}
-            className="flex items-center gap-1 relative rounded-lg overflow-hidden"
-            onMouseLeave={onLeave}
-          >
-            {pill && (
-              <div
-                className="glass-pill pointer-events-none"
-                style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height, opacity: pill.visible ? 1 : 0 }}
-              />
-            )}
+          <div className="flex items-center gap-1 relative rounded-lg overflow-hidden">
             {(['hex', 'rgb', 'hsl'] as const).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setInputMode(mode)}
-                onMouseEnter={(e) => onEnter(e, inputMode === mode)}
                 className={clsx(
                   'flex-1 h-8 rounded text-xs font-medium uppercase tracking-wide transition-colors relative z-10',
-                  inputMode === mode ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'
+                  inputMode === mode ? 'text-(--ink)' : 'text-(--ink-low) hover:text-(--ink)'
                 )}
               >
                 {mode}
@@ -163,11 +170,10 @@ const ColorPickerPortal = ({
             ))}
             <button
               onClick={openEyeDropper}
-              onMouseEnter={(e) => onEnter(e, false)}
-              title="Pipette"
+              title="Eyedropper"
               className={clsx(
                 'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 flex-shrink-0',
-                !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-text-muted' : 'text-text-muted hover:text-text-primary'
+                !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-(--ink-low)' : 'text-(--ink-low) hover:text-(--ink)'
               )}
             >
               <Pipette className="w-3.5 h-3.5" />
@@ -176,7 +182,7 @@ const ColorPickerPortal = ({
 
           {inputMode === 'hex' && (
             <div className="flex items-center gap-1.5">
-              <span className="text-lg pb-2 text-text-muted select-none">#</span>
+              <span className="text-lg pb-2 text-(--ink-low) select-none">#</span>
               <HexColorInput
                 color={safeHex}
                 onChange={onChange}
@@ -192,7 +198,7 @@ const ColorPickerPortal = ({
               <div className="grid grid-cols-3 gap-1">
                 {(['r', 'g', 'b'] as const).map((ch) => (
                   <div key={ch} className="flex flex-col items-center gap-0.5">
-                    <span className="text-[10px] text-text-muted uppercase">{ch}</span>
+                    <span className="text-[10px] text-(--ink-low) uppercase">{ch}</span>
                     <input
                       type="number" min={0} max={255}
                       value={rgb[ch]}
@@ -215,7 +221,7 @@ const ColorPickerPortal = ({
               <div className="grid grid-cols-3 gap-1">
                 {([['h', hsl.h, 360], ['s', hsl.s, 100], ['l', hsl.l, 100]] as const).map(([ch, val, max]) => (
                   <div key={ch} className="flex flex-col items-center gap-0.5">
-                    <span className="text-[10px] text-text-muted uppercase">{ch}</span>
+                    <span className="text-[10px] text-(--ink-low) uppercase">{ch}</span>
                     <input
                       type="number" min={0} max={max}
                       value={val}
@@ -232,8 +238,9 @@ const ColorPickerPortal = ({
             );
           })()}
         </div>
-      </div>
-    </>,
+      </motion.div>
+      </>)}
+    </AnimatePresence>,
     getModalPortalRoot()
   );
 };

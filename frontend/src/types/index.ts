@@ -1,10 +1,18 @@
 export type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag';
 
+export interface NoteCounts {
+  all: number;
+  favorites: number;
+  archive: number;
+  trash: number;
+}
+
 export interface User {
   id: string;
   email: string;
   name: string | null;
   avatarUrl?: string | null;
+  plan: string;
   createdAt: string;
   updatedAt: string;
 }

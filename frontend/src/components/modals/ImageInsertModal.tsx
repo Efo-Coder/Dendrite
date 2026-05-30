@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { Upload, X, Image, Loader2 } from 'lucide-react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { Upload, X, Image } from 'lucide-react';
 import Modal from './Modal';
 import { attachmentService } from '../../services/attachment.service';
 import clsx from 'clsx';
@@ -16,6 +16,36 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const prevHeightRef = useRef<number>(0);
+
+  const handleModeChange = (mode: 'url' | 'upload') => {
+    if (contentRef.current) {
+      prevHeightRef.current = contentRef.current.offsetHeight;
+    }
+    setImageMode(mode);
+  };
+
+  useLayoutEffect(() => {
+    const el = contentRef.current;
+    if (!el || !prevHeightRef.current) return;
+    const newHeight = el.scrollHeight;
+    if (Math.abs(newHeight - prevHeightRef.current) < 2) return;
+
+    el.style.transition = 'none';
+    el.style.height = `${prevHeightRef.current}px`;
+    el.style.overflow = 'hidden';
+
+    requestAnimationFrame(() => {
+      el.style.transition = 'height .3s cubic-bezier(.2,.8,.2,1)';
+      el.style.height = `${newHeight}px`;
+      el.addEventListener('transitionend', () => {
+        el.style.height = '';
+        el.style.transition = '';
+        el.style.overflow = '';
+      }, { once: true });
+    });
+  }, [imageMode]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -33,8 +63,8 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) { alert('Bitte wähle eine Bilddatei aus.'); return; }
-    if (file.size > 10 * 1024 * 1024) { alert('Die Datei ist zu groß. Maximale Größe: 10 MB'); return; }
+    if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
+    if (file.size > 10 * 1024 * 1024) { alert('The file is too large. Maximum size: 10 MB'); return; }
     setSelectedFile(file);
   };
 
@@ -49,8 +79,8 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
         onInsert(attachmentService.getAttachmentUrl(result.url), selectedFile.name);
         onClose();
       } catch (error) {
-        console.error('Fehler beim Hochladen:', error);
-        alert('Fehler beim Hochladen des Bildes. Bitte versuche es erneut.');
+        console.error('Upload error:', error);
+        alert('Error uploading image. Please try again.');
       } finally {
         setIsUploading(false);
       }
@@ -58,24 +88,34 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Bild hinzufügen">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Add image"
+      showFooter
+      confirmLabel="Add"
+      onConfirm={handleSubmit}
+      confirmDisabled={isUploading || (imageMode === 'url' && !imageUrl.trim()) || (imageMode === 'upload' && !selectedFile)}
+      isConfirming={isUploading}
+    >
+      <div ref={contentRef}>
       <div className="flex space-x-1 -mt-2 mb-5 p-1">
         {(['url', 'upload'] as const).map((mode) => (
           <button
             key={mode}
-            onClick={() => setImageMode(mode)}
+            onClick={() => handleModeChange(mode)}
             disabled={isUploading}
             className={clsx(
               'flex-1 px-4 py-2 text-sm font-medium transition-all relative group disabled:opacity-50',
-              imageMode === mode ? 'text-brand-primary' : 'btn-themed',
+              imageMode === mode ? 'text-(--accent)' : 'text-(--ink-mid)',
             )}
           >
-            <span className="relative">{mode === 'url' ? 'URL' : 'Hochladen'}</span>
+            <span className="relative">{mode === 'url' ? 'URL' : 'Upload'}</span>
             <span className={clsx(
               'absolute bottom-0 left-0 right-0 h-0.5 transition-opacity',
               imageMode === mode
-                ? 'bg-gradient-to-r from-transparent via-brand-primary to-transparent opacity-100'
-                : 'bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100',
+                ? 'bg-linear-to-r from-transparent via-brand-primary to-transparent opacity-100'
+                : 'bg-linear-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100',
             )} />
           </button>
         ))}
@@ -83,7 +123,7 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
 
       {imageMode === 'url' && (
         <div className="mb-5">
-          <label className="block text-xs font-medium text-text-primary mb-2 uppercase tracking-wide">Bild-URL</label>
+          <label className="modal-label block mb-2">Image URL</label>
           <input
             type="url"
             value={imageUrl}
@@ -101,55 +141,36 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
 
       {imageMode === 'upload' && (
         <div className="mb-5">
-          <label className="block text-xs font-medium text-text-primary mb-2 uppercase tracking-wide">Datei auswählen</label>
+          <label className="modal-label block mb-2">Select file</label>
           <div className="flex flex-col space-y-3">
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="flex items-center justify-center space-x-2 px-4 py-6 border-2 border-dashed border-white/30 rounded-xl text-text-secondary hover:border-brand-primary/50 hover:text-brand-primary hover:bg-white/10 transition-all disabled:opacity-50"
+              className="flex items-center justify-center space-x-2 px-4 py-6 border-2 border-dashed border-white/30 rounded-xl text-(--ink-mid) hover:border-(--accent)/50 hover:text-(--accent) hover:bg-white/10 transition-all disabled:opacity-50"
             >
               <Upload className="w-5 h-5" />
-              <span className="text-sm font-medium">{selectedFile ? 'Andere Datei wählen' : 'Datei auswählen'}</span>
+              <span className="text-sm font-medium">{selectedFile ? 'Choose different file' : 'Select file'}</span>
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
             {selectedFile && (
               <div className="flex items-center justify-between px-3 py-2.5 bg-white/20 border border-white/30 rounded-lg">
                 <div className="flex items-center space-x-2 flex-1 min-w-0">
-                  <Image className="w-4 h-4 text-brand-primary flex-shrink-0" />
-                  <span className="text-sm text-text-primary truncate">{selectedFile.name}</span>
+                  <Image className="w-4 h-4 text-(--accent) shrink-0" />
+                  <span className="text-sm text-(--ink) truncate">{selectedFile.name}</span>
                 </div>
                 <button
                   onClick={() => setSelectedFile(null)}
                   disabled={isUploading}
-                  className="ml-2 p-1 rounded-md btn-themed transition-all disabled:opacity-50"
+                  className="ml-2 p-1 rounded-mdtransition-all disabled:opacity-50"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             )}
-            <p className="text-xs text-text-secondary text-center">JPG, PNG, GIF, WebP, SVG · max. 10 MB</p>
+            <p className="text-xs text-(--ink-mid) text-center">JPG, PNG, GIF, WebP, SVG · max. 10 MB</p>
           </div>
         </div>
       )}
-
-      <div className="flex justify-end space-x-2">
-        <button
-          onClick={handleClose}
-          disabled={isUploading}
-          className="px-4 py-2 text-sm btn-themed transition-all relative group disabled:opacity-50"
-        >
-          <span className="relative">Abbrechen</span>
-          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        </button>
-        <button
-          onClick={handleSubmit}
-          disabled={isUploading || (imageMode === 'url' && !imageUrl.trim()) || (imageMode === 'upload' && !selectedFile)}
-          className="flex items-center space-x-2 px-4 py-2 text-sm btn-themed transition-all relative group disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {isUploading && <Loader2 className="w-4 h-4 animate-spin relative" />}
-          <span className="relative">{isUploading ? 'Wird hochgeladen...' : 'Hinzufügen'}</span>
-          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 group-disabled:opacity-0 transition-opacity" />
-        </button>
       </div>
     </Modal>
   );

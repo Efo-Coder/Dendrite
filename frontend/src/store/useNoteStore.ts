@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Note } from '../types';
+import { Note, NoteCounts } from '../types';
 import { noteService } from '../services/note.service';
 
 interface NoteState {
@@ -7,8 +7,10 @@ interface NoteState {
   currentNote: Note | null;
   isLoading: boolean;
   error: string | null;
+  noteCounts: NoteCounts;
 
   // Actions
+  fetchNoteCounts: () => Promise<void>;
   fetchNotes: (filters?: {
     folderId?: string;
     tagId?: string;
@@ -49,6 +51,14 @@ export const useNoteStore = create<NoteState>((set) => ({
   currentNote: null,
   isLoading: false,
   error: null,
+  noteCounts: { all: 0, favorites: 0, archive: 0, trash: 0 },
+
+  fetchNoteCounts: async () => {
+    try {
+      const res = await noteService.getNoteCounts();
+      set({ noteCounts: res });
+    } catch {}
+  },
 
   fetchNotes: async (filters) => {
     set({ isLoading: true, error: null });

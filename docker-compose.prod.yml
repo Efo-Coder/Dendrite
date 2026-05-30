@@ -1,0 +1,74 @@
+services:
+  database:
+    image: postgres:16
+    container_name: dendrite-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dendrite-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: dendrite-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@database:5432/${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - dendrite-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_GOOGLE_FONTS_API_KEY: ${VITE_GOOGLE_FONTS_API_KEY}
+    container_name: dendrite-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - dendrite-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: dendrite-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - dendrite-network
+
+volumes:
+  postgres_data:
+  uploads_data:
+
+networks:
+  dendrite-network:
+    driver: bridge

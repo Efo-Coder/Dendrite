@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import SharedNotePage from './pages/SharedNotePage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 // Components
 import PrivateRoute from './components/ui/PrivateRoute';
 
@@ -34,6 +35,7 @@ function RouterContent() {
           element={isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />}
         />
         <Route path="/shared/:token" element={<SharedNotePage />} />
+        <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
         <Route
           path="/*"
           element={
@@ -49,14 +51,13 @@ function RouterContent() {
 
 function App() {
   const { loadUser } = useAuthStore();
-
   useEffect(() => {
     loadUser();
   }, [loadUser]);
 
   return (
     <ThemeProvider>
-      <ToastProvider>
+<ToastProvider>
         <Router
           future={{
             v7_startTransition: true,

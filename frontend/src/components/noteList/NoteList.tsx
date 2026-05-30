@@ -1,31 +1,34 @@
-﻿import { startOfDay, startOfWeek } from 'date-fns';
+import { startOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { Note } from '../../types';
-import { Plus, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react';
 import clsx from 'clsx';
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { AnimatePresence, motion, Reorder } from 'motion/react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Fragment } from 'react';
+import { AnimatePresence, motion, Reorder, MotionConfig } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { noteService } from '../../services/note.service';
 import { useNoteStore } from '../../store/useNoteStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useToast } from '../ui/ToastContainer';
+import { useSmartPopupStyle } from '../../hooks/useSmartPopupStyle';
+import type { PopupAnchor } from '../../hooks/useSmartPopupStyle';
+import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import NoteContextMenu from './NoteContextMenu';
 import MoveToFolderModal from '../modals/MoveToFolderModal';
 import TagSelectionModal from '../modals/TagSelectionModal';
-import { getModalPortalRoot } from '../../lib/modalPortalRoot';
-import { useGlassPill } from '../../hooks/useGlassPill';
 import ReorderNoteItem, { NoteItemContent } from './NoteItem';
 import { getFirstLine } from './noteListUtils';
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 export type SortOption = 'createdAt' | 'updatedAt' | 'title' | 'pinned' | 'manual';
-type ListTab = 'all' | 'today' | 'week';
+type ListTab = 'all' | 'today' | 'week' | 'month';
 
 interface NoteListProps {
-
   notes: Note[];
   currentNote: Note | null;
   onSelectNote: (note: Note | null) => void;
   onNotesReordered?: () => void;
+  viewLabel?: string;
   contextType: string;
   contextId?: string;
   isTrash?: boolean;
@@ -35,98 +38,177 @@ interface NoteListProps {
   onCreateNote?: () => void;
   isCreating?: boolean;
   onEmptyTrash?: () => void;
+  focusSearchTrigger?: number;
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
 
-const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextType, contextId, isTrash, sortBy, sortOrder, onSortChange, onCreateNote, isCreating, onEmptyTrash }: NoteListProps) => {
-  const { updateNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, deleteNote, searchNotes } = useNoteStore();
+const NoteList = ({
+  notes, currentNote, onSelectNote, onNotesReordered,
+  viewLabel, contextType, contextId, isTrash,
+  sortBy, sortOrder, onSortChange,
+  onCreateNote, isCreating, onEmptyTrash, focusSearchTrigger,
+}: NoteListProps) => {
+
+  // ── Hooks ──────────────────────────────────────────────────────────────────
+
+  const { updateNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, deleteNote, searchNotes, noteCounts } = useNoteStore();
   const { dateDisplayMode } = useSettingsStore();
   const toast = useToast();
 
-  const [localNotes, setLocalNotes] = useState(notes);
-  const [hoveredNoteId, setHoveredNoteId] = useState<string | null>(null);
-  const [highlighterStyle, setHighlighterStyle] = useState({ top: 0, height: 0 });
-  const noteRefs = useRef<Record<string, HTMLElement | null>>({});
-  const noteListScrollRef = useRef<HTMLDivElement | null>(null);
-  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ── State ──────────────────────────────────────────────────────────────────
+
+  // Only non-null while the user is actively drag-reordering
+  const [dragNotes, setDragNotes] = useState<Note[] | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const waitingToClearDragRef = useRef(false);
+
+  useEffect(() => {
+    if (waitingToClearDragRef.current) {
+      waitingToClearDragRef.current = false;
+      setDragNotes(null);
+    }
+  }, [notes]);
 
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
     position: { x: number; y: number };
     note: Note | null;
-  }>({
-    isOpen: false,
-    position: { x: 0, y: 0 },
-    note: null,
-  });
+  }>({ isOpen: false, position: { x: 0, y: 0 }, note: null });
 
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
 
-  // Search & filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [listTab, setListTab] = useState<ListTab>('all');
-  const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+  const [hoveredTab, setHoveredTab] = useState<ListTab | null>(null);
   const [sortFieldMenuOpen, setSortFieldMenuOpen] = useState(false);
-  const [filterPanelPos, setFilterPanelPos] = useState({ top: 0, left: 0, width: 200 });
-  const filterTriggerRef = useRef<HTMLButtonElement>(null);
-  const filterPanelRef = useRef<HTMLDivElement>(null);
-  const sortFieldDropdownRef = useRef<HTMLDivElement>(null);
-  const { pill: sortFieldPill, onEnter: onSortFieldEnter, onLeave: onSortFieldLeave } = useGlassPill(sortFieldDropdownRef);
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<PopupAnchor | null>(null);
 
+  // ── Refs ───────────────────────────────────────────────────────────────────
+
+  // Stable reference for use inside async callbacks (handleReorderDragEnd)
+  const localNotesRef = useRef<Note[]>([]);
+  const listSearchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const sortPopupRef = useRef<HTMLDivElement | null>(null);
+
+  const { style: sortPopupStyle } = useSmartPopupStyle(sortMenuAnchor, sortPopupRef, 0);
+
+  // ── Derived values ─────────────────────────────────────────────────────────
+
+  // Filter notes by the selected time-range tab.
   const displayNotes = useMemo(() => {
-    if (isTrash) return notes;
+    if (isTrash) {
+      return notes.filter(n => n.isDeleted);
+    }
     const now = new Date();
     const dayStart = startOfDay(now);
     const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const monthStart = startOfMonth(now);
     return notes.filter((n) => {
       const updated = new Date(n.updatedAt);
       if (listTab === 'today') return updated >= dayStart;
-      if (listTab === 'week') return updated >= weekStart;
+      if (listTab === 'week')  return updated >= weekStart;
+      if (listTab === 'month') return updated >= monthStart;
       return true;
     });
   }, [notes, listTab, isTrash]);
 
+  // Sorted/reordered notes — computed synchronously so renders never see stale data.
+  // During drag, dragNotes holds the live reorder snapshot; otherwise derived from displayNotes.
+  const localNotes = useMemo(() => {
+    if (dragNotes) return dragNotes;
+    if (sortBy === 'manual') return displayNotes;
+    return [...displayNotes].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      let cmp = 0;
+      switch (sortBy) {
+        case 'createdAt': cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(); break;
+        case 'updatedAt': cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(); break;
+        case 'title': {
+          const aT = a.title || getFirstLine(a.content);
+          const bT = b.title || getFirstLine(b.content);
+          cmp = aT.localeCompare(bT);
+          break;
+        }
+        case 'pinned': cmp = a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1; break;
+      }
+      return sortOrder === 'desc' ? -cmp : cmp;
+    });
+  }, [dragNotes, displayNotes, sortBy, sortOrder]);
+
+  // Group into pinned + month buckets for the reorder view
+  const groups = useMemo(() => {
+    const pinned = localNotes.filter(n => n.isPinned);
+    const rest   = localNotes.filter(n => !n.isPinned);
+    const monthMap = new Map<string, Note[]>();
+    rest.forEach(n => {
+      const key = new Date(n.updatedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase();
+      if (!monthMap.has(key)) monthMap.set(key, []);
+      monthMap.get(key)!.push(n);
+    });
+    const result: { label: string; items: Note[] }[] = [];
+    if (pinned.length) result.push({ label: 'PINNED', items: pinned });
+    monthMap.forEach((items, label) => result.push({ label, items }));
+    return result;
+  }, [localNotes]);
+
+  // Count shown in the header — uses pre-computed store totals for global views
+  const displayCount =
+    contextType === 'all'       ? noteCounts.all :
+    contextType === 'favorites' ? noteCounts.favorites :
+    contextType === 'archive'   ? noteCounts.archive :
+    contextType === 'trash'     ? noteCounts.trash :
+    localNotes.length;
+
   const sortLabels: Partial<Record<SortOption, string>> = {
-    createdAt: 'Erstellt',
-    updatedAt: 'Aktualisiert',
-    title: 'Titel',
-    manual: 'Manuell',
+    createdAt: 'Created',
+    updatedAt: 'Updated',
+    title: 'Title',
+    manual: 'Manual',
   };
 
   const listTabs: { id: ListTab; label: string }[] = [
-    { id: 'all', label: 'Alle' },
-    { id: 'today', label: 'Heute' },
-    { id: 'week', label: 'Diese Woche' },
+    { id: 'all',   label: 'All' },
+    { id: 'today', label: 'Today' },
+    { id: 'week',  label: 'This Week' },
+    { id: 'month', label: 'This Month' },
   ];
 
-  const localNotesRef = useRef(localNotes);
+  // ── Effects ────────────────────────────────────────────────────────────────
+
+  // Keep ref in sync for use inside async callbacks
   useEffect(() => { localNotesRef.current = localNotes; }, [localNotes]);
-  const isDraggingRef = useRef(false);
 
-  useEffect(() => {
-    setLocalNotes(displayNotes);
-  }, [displayNotes]);
+  // Reset drag state synchronously before paint when context changes — prevents
+  // stale drag notes from a previous category briefly appearing in the new view
+  useLayoutEffect(() => {
+    setDragNotes(null);
+    setIsDragging(false);
+  }, [contextType, contextId]);
 
+  // Close sort popup on outside click
   useEffect(() => {
-    if (!filterPanelOpen) return;
+    if (!sortFieldMenuOpen) return;
     const onDown = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (filterPanelRef.current?.contains(t) || filterTriggerRef.current?.contains(t)) return;
-      setFilterPanelOpen(false);
+      const target = e.target as Node;
+      if (listSearchRef.current?.contains(target)) return;
+      if (sortPopupRef.current?.contains(target)) return;
       setSortFieldMenuOpen(false);
+      setSortMenuAnchor(null);
     };
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
-  }, [filterPanelOpen]);
+  }, [sortFieldMenuOpen]);
 
+  // Focus search input when triggered externally (e.g. keyboard shortcut)
   useEffect(() => {
-    if (!sortFieldMenuOpen) onSortFieldLeave();
-  }, [sortFieldMenuOpen, onSortFieldLeave]);
+    if (focusSearchTrigger) searchInputRef.current?.focus();
+  }, [focusSearchTrigger]);
 
-  useEffect(() => {
-    return () => { if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current); };
-  }, []);
+  // ── Search & sort handlers ─────────────────────────────────────────────────
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,286 +221,222 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    if (!value.trim()) {
-      onNotesReordered?.();
-    }
+    if (!value.trim()) onNotesReordered?.();
   };
+
+  const handleSortToggle = () => {
+    if (sortFieldMenuOpen) {
+      setSortFieldMenuOpen(false);
+      setSortMenuAnchor(null);
+      return;
+    }
+    if (listSearchRef.current) {
+      const rect = listSearchRef.current.getBoundingClientRect();
+      setSortMenuAnchor({ x: rect.left + rect.width / 2, top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width });
+    }
+    setSortFieldMenuOpen(true);
+  };
+
+  // ── Context menu handlers ──────────────────────────────────────────────────
 
   const handleNoteRightClick = (e: React.MouseEvent, note: Note) => {
     e.preventDefault();
     e.stopPropagation();
-    setContextMenu({
-      isOpen: true,
-      position: { x: e.clientX, y: e.clientY },
-      note,
-    });
+    setContextMenu({ isOpen: true, position: { x: e.clientX, y: e.clientY }, note });
   };
 
   const closeContextMenu = () => {
-    setContextMenu(prev => ({
-      ...prev,
-      isOpen: false,
-      position: { x: 0, y: 0 },
-    }));
+    setContextMenu(prev => ({ ...prev, isOpen: false, position: { x: 0, y: 0 } }));
   };
 
   const handleEdit = () => {
-    if (contextMenu.note) {
-      onSelectNote(contextMenu.note);
-    }
+    if (contextMenu.note) onSelectNote(contextMenu.note);
   };
 
-  const handleMove = () => {
-    setShowMoveModal(true);
-  };
+  const handleMove = () => setShowMoveModal(true);
+  const handleTag  = () => setShowTagModal(true);
+
+  // ── Note action handlers ───────────────────────────────────────────────────
 
   const handleMoveToFolder = async (folderId: string | null) => {
-    if (contextMenu.note) {
-      try {
-        await updateNote(contextMenu.note.id, { folderId });
-        toast.success('Notiz verschoben');
-        if (onNotesReordered) onNotesReordered();
-      } catch (error) {
-        toast.error('Fehler beim Verschieben');
-      }
-    }
+    if (!contextMenu.note) return;
+    try {
+      await updateNote(contextMenu.note.id, { folderId });
+      toast.success('Note moved');
+      onNotesReordered?.();
+    } catch { toast.error('Error moving note'); }
   };
 
   const handlePin = async () => {
-    if (contextMenu.note) {
-      try {
-        await togglePin(contextMenu.note.id);
-        toast.success(contextMenu.note.isPinned ? 'Anheften entfernt' : 'Notiz angeheftet');
-        if (onNotesReordered) onNotesReordered();
-      } catch (error) {
-        toast.error('Fehler beim Anheften');
-      }
-    }
+    if (!contextMenu.note) return;
+    try {
+      await togglePin(contextMenu.note.id);
+      toast.success(contextMenu.note.isPinned ? 'Unpinned' : 'Note pinned');
+      onNotesReordered?.();
+    } catch { toast.error('Error pinning note'); }
   };
 
   const handleFavorite = async () => {
-    if (contextMenu.note) {
-      try {
-        await toggleFavorite(contextMenu.note.id);
-        toast.success(contextMenu.note.isFavorite ? 'Aus Favoriten entfernt' : 'Zu Favoriten hinzugefügt');
-        if (onNotesReordered) onNotesReordered();
-      } catch (error) {
-        toast.error('Fehler beim Favorisieren');
-      }
-    }
+    if (!contextMenu.note) return;
+    try {
+      await toggleFavorite(contextMenu.note.id);
+      toast.success(contextMenu.note.isFavorite ? 'Removed from favorites' : 'Added to favorites');
+      onNotesReordered?.();
+    } catch { toast.error('Error updating favorites'); }
   };
 
   const handleArchive = async () => {
-    if (contextMenu.note) {
-      try {
-        await toggleArchive(contextMenu.note.id);
-        toast.success(contextMenu.note.isArchived ? 'Aus Archiv geholt' : 'Notiz archiviert');
-        if (onNotesReordered) onNotesReordered();
-      } catch (error) {
-        toast.error('Fehler beim Archivieren');
-      }
-    }
-  };
-
-  const handleTag = () => {
-    setShowTagModal(true);
+    if (!contextMenu.note) return;
+    try {
+      await toggleArchive(contextMenu.note.id);
+      toast.success(contextMenu.note.isArchived ? 'Unarchived' : 'Note archived');
+      onNotesReordered?.();
+    } catch { toast.error('Error archiving note'); }
   };
 
   const handleUpdateTags = async (tagIds: string[]) => {
-    if (contextMenu.note) {
-      try {
-        await updateNote(contextMenu.note.id, { tags: tagIds });
-        toast.success('Tags aktualisiert');
-        if (onNotesReordered) onNotesReordered();
-      } catch (error) {
-        toast.error('Fehler beim Aktualisieren der Tags');
-      }
-    }
+    if (!contextMenu.note) return;
+    try {
+      await updateNote(contextMenu.note.id, { tags: tagIds });
+      toast.success('Tags updated');
+      onNotesReordered?.();
+    } catch { toast.error('Error updating tags'); }
   };
 
   const handleDelete = async () => {
-    if (contextMenu.note) {
-      const isCurrentNote = currentNote?.id === contextMenu.note.id;
+    if (!contextMenu.note) return;
+    const isCurrentNote = currentNote?.id === contextMenu.note.id;
+    try {
       if (contextMenu.note.isDeleted) {
-        try {
-          await deleteNote(contextMenu.note.id);
-          toast.success('Notiz endgültig gelöscht');
-          if (isCurrentNote) onSelectNote(null);
-          if (onNotesReordered) onNotesReordered();
-        } catch (error) {
-          toast.error('Fehler beim Löschen');
-        }
+        await deleteNote(contextMenu.note.id);
+        toast.success('Note permanently deleted');
       } else {
-        try {
-          await toggleTrash(contextMenu.note.id);
-          toast.success('Notiz gelöscht');
-          if (isCurrentNote) onSelectNote(null);
-          if (onNotesReordered) onNotesReordered();
-        } catch (error) {
-          toast.error('Fehler beim Löschen der Notiz');
-        }
+        await toggleTrash(contextMenu.note.id);
+        toast.success('Note deleted');
       }
-    }
+      if (isCurrentNote) onSelectNote(null);
+      onNotesReordered?.();
+    } catch { toast.error('Error deleting note'); }
   };
 
-  useEffect(() => {
-    if (sortBy === 'manual') return;
-    const sortedNotes = [...displayNotes].sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
+  const handleRestore = async () => {
+    if (!contextMenu.note) return;
+    try {
+      await toggleTrash(contextMenu.note.id);
+      toast.success('Note restored');
+      onNotesReordered?.();
+    } catch { toast.error('Error restoring note'); }
+  };
 
-      let comparison = 0;
-      switch (sortBy) {
-        case 'createdAt':
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          break;
-        case 'updatedAt':
-          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-          break;
-        case 'title':
-          const aTitleText = a.title || getFirstLine(a.content);
-          const bTitleText = b.title || getFirstLine(b.content);
-          comparison = aTitleText.localeCompare(bTitleText);
-          break;
-        case 'pinned':
-          comparison = a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1;
-          break;
+  // ── Drag / reorder handlers ────────────────────────────────────────────────
+
+  // Merges a reordered group back into the flat note list
+  const handleGroupReorder = useCallback((reorderedItems: Note[]) => {
+    setDragNotes(prev => {
+      const base = prev ?? localNotesRef.current;
+      const result: Note[] = [];
+      let inserted = false;
+      for (const n of base) {
+        if (reorderedItems.some(ri => ri.id === n.id)) {
+          if (!inserted) { result.push(...reorderedItems); inserted = true; }
+        } else {
+          result.push(n);
+        }
       }
-      return sortOrder === 'desc' ? -comparison : comparison;
+      return result;
     });
-    setLocalNotes(sortedNotes);
-  }, [displayNotes, sortBy, sortOrder]);
-
-  const measureRowInScroll = useCallback((noteId: string) => {
-    const rowEl = noteRefs.current[noteId];
-    if (!rowEl) return null;
-    return { top: rowEl.offsetTop, height: rowEl.offsetHeight };
   }, []);
 
-  useEffect(() => {
-    if (hoveredNoteId === null) return;
-    if (!localNotes.find(n => n.id === hoveredNoteId)) {
-      setHoveredNoteId(null);
-      return;
-    }
-    const m = measureRowInScroll(hoveredNoteId);
-    if (m) setHighlighterStyle(m);
-  }, [localNotes, hoveredNoteId, measureRowInScroll]);
-
-  useEffect(() => {
-    const scrollEl = noteListScrollRef.current;
-    if (!scrollEl || hoveredNoteId === null) return;
-    const onScroll = () => {
-      const m = measureRowInScroll(hoveredNoteId);
-      if (m) setHighlighterStyle(m);
-    };
-    scrollEl.addEventListener('scroll', onScroll, { passive: true });
-    return () => scrollEl.removeEventListener('scroll', onScroll);
-  }, [hoveredNoteId, measureRowInScroll]);
-
-  const handleMouseEnter = (noteId: string) => {
-    if (isDraggingRef.current) return;
-    if (leaveTimerRef.current) {
-      clearTimeout(leaveTimerRef.current);
-      leaveTimerRef.current = null;
-    }
-    setHoveredNoteId(noteId);
-    const m = measureRowInScroll(noteId);
-    if (m) setHighlighterStyle(m);
-  };
-
-  const handleMouseLeave = () => {
-    leaveTimerRef.current = setTimeout(() => {
-      setHoveredNoteId(null);
-    }, 80);
-  };
-
-  const handleSelectNote = (note: Note | null) => {
-    onSelectNote(note);
-  };
-
   const handleReorderDragStart = useCallback(() => {
-    isDraggingRef.current = true;
-    setHoveredNoteId(null);
+    setIsDragging(true);
   }, []);
 
   const handleReorderDragEnd = useCallback(async () => {
-    setTimeout(() => { isDraggingRef.current = false; }, 350);
+    setTimeout(() => setIsDragging(false), 250);
     onSortChange('manual', sortOrder);
     const noteOrders = localNotesRef.current.map((note, index) => ({ id: note.id, order: index }));
     try {
       await noteService.reorderNotes(noteOrders, contextType, contextId || null);
-      onNotesReordered?.();
+      if (onNotesReordered) {
+        waitingToClearDragRef.current = true;
+        onNotesReordered();
+      } else {
+        setDragNotes(null);
+      }
     } catch {
-      setLocalNotes(displayNotes);
+      setDragNotes(null);
     }
-  }, [sortOrder, contextType, contextId, onNotesReordered, onSortChange, displayNotes]);
+  }, [sortOrder, contextType, contextId, onNotesReordered, onSortChange]);
+
+  // ── JSX fragments ──────────────────────────────────────────────────────────
 
   const header = (
-    <div className="space-y-3 border-b border-divider p-3 pb-3">
-      <form onSubmit={handleSearch} className="relative">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          placeholder="Notizen durchsuchen..."
-          className="input input-inset w-full pl-10 pr-10 py-2.5 rounded-xl text-sm border border-[color-mix(in_srgb,var(--color-border-default)_50%,transparent)]"
-        />
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" />
-        <div className="absolute right-2 top-0 bottom-0 flex items-center">
+    <div className="notelist-head">
+      <div className="notelist-head-row">
+        <div className="notelist-title">{viewLabel || 'All Notes'}</div>
+        <span className="notelist-count">{displayCount} {displayCount === 1 ? 'note' : 'notes'}</span>
+      </div>
+      <div
+        ref={listSearchRef}
+        className="notelist-search"
+        style={sortFieldMenuOpen ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : undefined}
+      >
+        <Search className="search-icon w-3.5 h-3.5" />
+        <form onSubmit={handleSearch} style={{ flex: 1, minWidth: 0 }}>
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search notes…"
+          />
+        </form>
+        {sortBy !== 'manual' && (
           <button
-            ref={filterTriggerRef}
             type="button"
-            onClick={() => {
-              if (filterPanelOpen) {
-                setFilterPanelOpen(false);
-                setSortFieldMenuOpen(false);
-                return;
-              }
-              const el = filterTriggerRef.current;
-              if (el) {
-                const rect = el.getBoundingClientRect();
-                const w = 200;
-                const left = Math.max(8, Math.min(rect.right - w, window.innerWidth - w - 8));
-                setFilterPanelPos({ top: rect.bottom + 6, left, width: w });
-              }
-              setFilterPanelOpen(true);
-            }}
-            className={clsx(
-              'p-1.5 rounded-lg transition-colors duration-300',
-              filterPanelOpen &&
-                'text-brand-primary bg-[color-mix(in_srgb,var(--color-bg-elevated)_40%,transparent)]'
-            )}
-            title="Filter & Sortierung"
-            aria-label="Filter und Sortierung"
-            aria-expanded={filterPanelOpen}
-            aria-haspopup="dialog"
+            onClick={() => onSortChange(sortBy, sortOrder === 'desc' ? 'asc' : 'desc')}
+            style={{ padding: '4px', flexShrink: 0 }}
+            title={sortOrder === 'desc' ? 'Descending' : 'Ascending'}
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            {sortOrder === 'desc' ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
           </button>
-        </div>
-      </form>
+        )}
+        <button
+          type="button"
+          onClick={handleSortToggle}
+          style={{ padding: '4px', flexShrink: 0, color: sortFieldMenuOpen ? 'var(--accent)' : undefined }}
+          title="Sort"
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+        </button>
+      </div>
       {!isTrash && (
-        <div className="flex flex-wrap gap-1.5">
+        <div style={{ display: 'flex', gap: '4px', marginTop: '10px' }}>
           {listTabs.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setListTab(t.id)}
-              className={clsx(
-                'relative group px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300',
-                listTab === t.id
-                  ? 'text-text-primary bg-[color-mix(in_srgb,var(--color-brand-primary)_15%,transparent)]'
-                  : 'hover:bg-[color-mix(in_srgb,var(--color-text-primary)_6%,transparent)]'
-              )}
+              onMouseEnter={() => setHoveredTab(t.id)}
+              onMouseLeave={() => setHoveredTab(null)}
+              className={clsx('transition-colors', listTab === t.id ? 'text-(--accent)' : 'text-(--ink-low) hover:text-(--ink)')}
+              style={{
+                fontFamily: 'var(--mono)',
+                fontSize: '9px',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                padding: '3px 10px',
+                borderRadius: '20px',
+                border: listTab === t.id
+                  ? '0.5px solid color-mix(in oklch, var(--accent) 40%, transparent)'
+                  : hoveredTab === t.id
+                  ? '0.5px solid var(--ink)'
+                  : '0.5px solid var(--line-soft)',
+                background: listTab === t.id ? 'color-mix(in oklch, var(--accent) 12%, transparent)' : 'transparent',
+                cursor: 'pointer',
+              }}
             >
               {t.label}
-              <span className={clsx(
-                'absolute bottom-0 left-3 right-3 h-[2px] transition-colors duration-300',
-                listTab === t.id
-                  ? 'bg-brand-primary'
-                  : 'bg-transparent group-hover:bg-[color-mix(in_srgb,var(--color-brand-primary)_55%,transparent)]'
-              )} />
             </button>
           ))}
         </div>
@@ -426,92 +444,44 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     </div>
   );
 
-  const filterPanel = filterPanelOpen
-    ? createPortal(
-        <div
-          ref={filterPanelRef}
-          role="dialog"
-          aria-label="Sortierung"
-          className="fixed glass-popup rounded-xl border border-[color-mix(in_srgb,var(--color-border-default)_50%,transparent)] shadow-lg py-3 px-3 mt-1 ml-2"
+  const sortPortal = createPortal(
+    <AnimatePresence>
+      {sortFieldMenuOpen && sortMenuAnchor && (
+        <motion.div
+          key="sort-popup"
+          ref={sortPopupRef}
+          className="fixed overflow-hidden z-40 border border-(--line) border-t-0"
           style={{
-            top: filterPanelPos.top,
-            left: filterPanelPos.left,
-            width: filterPanelPos.width,
+            ...sortPopupStyle,
+            background: 'transparent',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderRadius: '0 0 8px 8px',
+            clipPath: 'inset(0 round 0 0 8px 8px)',
+            transformOrigin: 'center top',
           }}
+          initial={{ opacity: 0, scaleY: 0.96, y: -4 }}
+          animate={{ opacity: 1, scaleY: 1, y: 0 }}
+          exit={{ opacity: 0, scaleY: 0.96, y: -4, transition: { duration: 0.1 } }}
+          transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] }}
         >
-          <p className="text-sm ml-1 font-medium text-text-secondary tracking-wide mb-2">Sortierung</p>
-          <div className="flex items-center gap-2">
-            <div className="relative min-w-0 flex-1">
+          <div className="pt-2 pb-4">
+            {(Object.entries(sortLabels) as [SortOption, string][]).map(([value, label]) => (
               <button
+                key={value}
                 type="button"
-                onClick={() => setSortFieldMenuOpen((v) => !v)}
-                className="flex w-full items-center justify-between gap-1 rounded-full border border-[color-mix(in_srgb,var(--color-border-default)_50%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-elevated)_35%,transparent)] px-2.5 py-1.5 text-left text-sm text-text-primary transition-all duration-300 hover:text-brand-primary"
+                onClick={() => { onSortChange(value, sortOrder); setSortFieldMenuOpen(false); setSortMenuAnchor(null); }}
+                className={clsx('w-full px-3 py-2 text-left text-sm transition-colors hover:bg-(--surface-hi)', sortBy === value ? 'text-(--accent)' : '')}
               >
-                <span className="truncate">{sortLabels[sortBy] ?? 'Erstellt'}</span>
-                <ChevronDown
-                  className={clsx(
-                    'h-3 w-3 shrink-0 text-text-secondary transition-transform',
-                    sortFieldMenuOpen && 'rotate-180'
-                  )}
-                />
+                {label}
               </button>
-              {sortFieldMenuOpen && (
-                <div className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-xl glass-popup py-1" style={{ background: 'color-mix(in srgb, var(--color-bg-primary-surface) 85%, transparent)' }}>
-                  <div
-                    ref={sortFieldDropdownRef}
-                    className="relative"
-                    onMouseLeave={onSortFieldLeave}
-                  >
-                    {sortFieldPill && (
-                      <div
-                        className="glass-pill pointer-events-none"
-                        style={{
-                          left: sortFieldPill.left,
-                          top: sortFieldPill.top,
-                          width: sortFieldPill.width,
-                          height: sortFieldPill.height,
-                          opacity: sortFieldPill.visible ? 1 : 0,
-                        }}
-                      />
-                    )}
-                    {(Object.entries(sortLabels) as [SortOption, string][]).map(([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onMouseEnter={onSortFieldEnter}
-                        onClick={() => {
-                          onSortChange(value, sortOrder);
-                          setSortFieldMenuOpen(false);
-                        }}
-                        className={clsx(
-                          'relative z-10 w-full px-3 py-2 text-left text-sm transition-colors',
-                          sortBy === value ? 'text-brand-primary' : 'text-text-primary'
-                        )}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => onSortChange(sortBy, sortOrder === 'desc' ? 'asc' : 'desc')}
-              className={clsx(
-                'shrink-0 rounded-lg p-1.5 transition-colors hover:text-brand-primary',
-                sortBy === 'manual' && 'invisible pointer-events-none'
-              )}
-              title={sortOrder === 'desc' ? 'Absteigend' : 'Aufsteigend'}
-              tabIndex={sortBy === 'manual' ? -1 : 0}
-            >
-              {sortOrder === 'desc' ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
-            </button>
+            ))}
           </div>
-        </div>,
-        getModalPortalRoot()
-      )
-    : null;
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    getModalPortalRoot()
+  );
 
   const sharedModals = (
     <>
@@ -526,6 +496,7 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
         onArchive={handleArchive}
         onTag={handleTag}
         onDelete={handleDelete}
+        onRestore={handleRestore}
         note={contextMenu.note || { isPinned: false, isFavorite: false, isArchived: false, isDeleted: false }}
       />
       <MoveToFolderModal
@@ -540,56 +511,39 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
         onUpdateTags={handleUpdateTags}
         currentTagIds={contextMenu.note?.tags?.map(t => t.id) || []}
       />
-      {filterPanel}
     </>
   );
+
+  const emptyTrashFooter = onEmptyTrash ? (
+    <div className="notelist-footer">
+      <button type="button" onClick={onEmptyTrash} className="notelist-trash-btn">
+        <Trash2 style={{ width: 13, height: 13, flexShrink: 0 }} />
+        Empty Trash
+      </button>
+    </div>
+  ) : null;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   if (displayNotes.length === 0) {
     return (
       <>
         {header}
-        <div className="flex-1 flex items-center justify-center p-8 text-center select-none">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-text-secondary">Keine Notizen</p>
-            <p className="text-xs text-text-muted">{isTrash ? 'Papierkorb ist leer' : 'Erstelle eine neue Notiz'}</p>
-          </div>
+        <div className="notelist-empty">
+          <span className="mark">❧</span>
+          <p>{isTrash ? 'Trash is empty' : 'No notes'}</p>
         </div>
         {onCreateNote && (
-          <div className="flex-shrink-0">
-            <div className="border-t border-divider" />
-            <div className="flex h-16 items-center justify-center px-4">
-              <button
-                type="button"
-                onClick={onCreateNote}
-                disabled={isCreating}
-                className="w-full py-2 rounded-full text-sm font-medium text-text-primary transition-all duration-300 disabled:opacity-50 border border-[color-mix(in_srgb,var(--color-brand-primary)_35%,transparent)] bg-[color-mix(in_srgb,var(--color-brand-primary)_14%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-brand-primary)_22%,transparent)] hover:shadow-[0_0_24px_color-mix(in_srgb,var(--color-brand-primary)_15%,transparent)]"
-              >
-                <span className="inline-flex items-center justify-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  Neue Notiz
-                </span>
-              </button>
-            </div>
+          <div className="notelist-footer">
+            <button type="button" onClick={onCreateNote} disabled={isCreating} className="notelist-new-btn">
+              <Plus style={{ width: 14, height: 14, flexShrink: 0 }} />
+              {isCreating ? 'Creating…' : 'New Note'}
+            </button>
           </div>
         )}
-        {isTrash && onEmptyTrash && (
-          <div className="flex-shrink-0">
-            <div className="border-t border-divider" />
-            <div className="flex h-16 items-center justify-center px-4">
-              <button
-                type="button"
-                onClick={onEmptyTrash}
-                className="w-full py-2 rounded-full text-sm font-medium text-text-secondary transition-all duration-300 border border-[color-mix(in_srgb,#ef4444_25%,transparent)] bg-[color-mix(in_srgb,#ef4444_8%,transparent)] hover:bg-[color-mix(in_srgb,#ef4444_14%,transparent)] hover:text-red-400 hover:shadow-[0_0_24px_color-mix(in_srgb,#ef4444_10%,transparent)]"
-              >
-                <span className="inline-flex items-center justify-center gap-2">
-                  <Trash2 className="w-4 h-4" />
-                  Papierkorb leeren
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
+        {isTrash && onEmptyTrash && emptyTrashFooter}
         {sharedModals}
+        {sortPortal}
       </>
     );
   }
@@ -598,68 +552,32 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
     return (
       <>
         {header}
-        <div
-          ref={noteListScrollRef}
-          className="flex-1 relative scrollbar-overlay flex min-h-0 flex-col overflow-y-auto"
-        >
-          <AnimatePresence initial={false}>
-          {localNotes.map((note, index) => {
-            const isLast = index === localNotes.length - 1;
-            return (
-              <motion.div
-                key={note.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                <div
-                  ref={(el) => (noteRefs.current[note.id] = el)}
-                  onMouseEnter={() => handleMouseEnter(note.id)}
-                  onMouseLeave={handleMouseLeave}
+        <MotionConfig transition={isDragging ? { layout: { duration: 0.2 } } : { layout: { duration: 0 } }}>
+          <div key={contextType + (contextId ?? '')} className="notelist-scroll" style={{ position: 'relative' }}>
+            <AnimatePresence initial={false}>
+              {localNotes.map((note) => (
+                <motion.div
+                  key={note.id}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
                   onContextMenu={(e) => handleNoteRightClick(e, note)}
-                  className={clsx(
-                    'flex w-full relative z-[1] min-h-[108px]',
-                    !isLast &&
-                      "after:pointer-events-none after:absolute after:bottom-0 after:left-6 after:right-6 after:z-0 after:content-[''] after:border-b after:border-divider",
-                    currentNote?.id === note.id ? 'note-item-selected' : ''
-                  )}
+                  className={clsx('note-card', currentNote?.id === note.id && 'active')}
                 >
                   <NoteItemContent
                     note={note}
-                    isSelected={currentNote?.id === note.id}
                     showDragHandle={false}
                     dateDisplayMode={dateDisplayMode}
-                    onSelectNote={handleSelectNote}
+                    onSelectNote={onSelectNote}
                   />
-                </div>
-              </motion.div>
-            );
-          })}
-          </AnimatePresence>
-          <div
-            className="glass-pill pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.33,1,0.68,1)] !rounded-none"
-            style={{ left: 0, top: highlighterStyle.top, width: '100%', height: highlighterStyle.height, opacity: hoveredNoteId !== null ? 1 : 0, boxShadow: 'none' }}
-          />
-        </div>
-        {onEmptyTrash && (
-          <div className="flex-shrink-0">
-            <div className="border-t border-divider" />
-            <div className="flex h-16 items-center justify-center px-4">
-              <button
-                type="button"
-                onClick={onEmptyTrash}
-                className="w-full py-2 rounded-full text-sm font-medium text-text-secondary transition-all duration-300 border border-[color-mix(in_srgb,#ef4444_25%,transparent)] bg-[color-mix(in_srgb,#ef4444_8%,transparent)] hover:bg-[color-mix(in_srgb,#ef4444_14%,transparent)] hover:text-red-400 hover:shadow-[0_0_24px_color-mix(in_srgb,#ef4444_10%,transparent)]"
-              >
-                <span className="inline-flex items-center justify-center gap-2">
-                  <Trash2 className="w-4 h-4" />
-                  Papierkorb leeren
-                </span>
-              </button>
-            </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
-        )}
+        </MotionConfig>
+        {onEmptyTrash && emptyTrashFooter}
         {sharedModals}
+        {sortPortal}
       </>
     );
   }
@@ -667,65 +585,47 @@ const NoteList = ({ notes, currentNote, onSelectNote, onNotesReordered, contextT
   return (
     <>
       {header}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div
-            ref={noteListScrollRef}
-            className="flex-1 relative scrollbar-overlay flex min-h-0 flex-col overflow-y-auto"
-          >
-          <Reorder.Group
-            axis="y"
-            values={localNotes}
-            onReorder={setLocalNotes}
-            className="flex-1 flex flex-col list-none"
-            style={{ padding: 0, margin: 0 }}
-          >
-            <AnimatePresence initial={false}>
-            {localNotes.map((note, index) => (
-              <ReorderNoteItem
-                key={note.id}
-                note={note}
-                isSelected={currentNote?.id === note.id}
-                isLast={index === localNotes.length - 1}
-                onSelectNote={handleSelectNote}
-                showDragHandle={!isTrash}
-                dateDisplayMode={dateDisplayMode}
-                onMouseEnter={() => handleMouseEnter(note.id)}
-                onMouseLeave={handleMouseLeave}
-                noteRef={(el: HTMLElement | null) => (noteRefs.current[note.id] = el)}
-                onRightClick={handleNoteRightClick}
-                onDragStart={handleReorderDragStart}
-                onDragEnd={handleReorderDragEnd}
-              />
-            ))}
-            </AnimatePresence>
-          </Reorder.Group>
-          <div
-            className="glass-pill pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.33,1,0.68,1)] !rounded-none"
-            style={{ left: 0, top: highlighterStyle.top, width: '100%', height: highlighterStyle.height, opacity: hoveredNoteId !== null ? 1 : 0, boxShadow: 'none' }}
-          />
-          </div>
+      <MotionConfig transition={isDragging ? { layout: { duration: 0.2 } } : { layout: { duration: 0 } }}>
+        <div key={contextType + (contextId ?? '')} className="notelist-scroll" style={{ position: 'relative' }}>
+          {groups.map((group) => (
+            <Fragment key={group.label}>
+              <div className="notelist-group-label">{group.label}</div>
+              <Reorder.Group
+                axis="y"
+                values={group.items}
+                onReorder={handleGroupReorder}
+                style={{ padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '2px' }}
+              >
+                <AnimatePresence initial={false}>
+                  {group.items.map((note) => (
+                    <ReorderNoteItem
+                      key={note.id}
+                      note={note}
+                      isSelected={currentNote?.id === note.id}
+                      onSelectNote={onSelectNote}
+                      showDragHandle={!isTrash}
+                      dateDisplayMode={dateDisplayMode}
+                      onRightClick={handleNoteRightClick}
+                      onDragStart={handleReorderDragStart}
+                      onDragEnd={handleReorderDragEnd}
+                    />
+                  ))}
+                </AnimatePresence>
+              </Reorder.Group>
+            </Fragment>
+          ))}
         </div>
-      </div>
+      </MotionConfig>
       {onCreateNote && (
-        <div className="flex-shrink-0">
-          <div className="border-t border-divider" />
-          <div className="flex h-16 items-center justify-center px-4">
-            <button
-              type="button"
-              onClick={onCreateNote}
-              disabled={isCreating}
-              className="w-full py-2 rounded-full text-sm font-medium text-text-primary transition-all duration-300 disabled:opacity-50 border border-[color-mix(in_srgb,var(--color-brand-primary)_35%,transparent)] bg-[color-mix(in_srgb,var(--color-brand-primary)_14%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-brand-primary)_22%,transparent)] hover:shadow-[0_0_24px_color-mix(in_srgb,var(--color-brand-primary)_15%,transparent)]"
-            >
-              <span className="inline-flex items-center justify-center gap-2">
-                <Plus className="w-4 h-4" />
-                Neue Notiz
-              </span>
-            </button>
-          </div>
+        <div className="notelist-footer">
+          <button type="button" onClick={onCreateNote} disabled={isCreating} className="notelist-new-btn">
+            <Plus style={{ width: 14, height: 14, flexShrink: 0 }} />
+            {isCreating ? 'Creating…' : 'New Note'}
+          </button>
         </div>
       )}
       {sharedModals}
+      {sortPortal}
     </>
   );
 };

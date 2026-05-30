@@ -39,9 +39,9 @@ const ShareNoteModal = ({ isOpen, onClose, noteId, onShareChange }: ShareNoteMod
       const r = await createShare(noteId);
       setToken(r.data.token);
       onShareChange(r.data.token);
-      toast.success('Link erstellt');
+      toast.success('Link created');
     } catch {
-      toast.error('Fehler beim Erstellen des Links');
+      toast.error('Error creating link');
     } finally {
       setLoading(false);
     }
@@ -53,9 +53,9 @@ const ShareNoteModal = ({ isOpen, onClose, noteId, onShareChange }: ShareNoteMod
       await deleteShare(noteId);
       setToken(null);
       onShareChange(null);
-      toast.info('Link gelöscht');
+      toast.info('Link deleted');
     } catch {
-      toast.error('Fehler beim Löschen des Links');
+      toast.error('Error deleting link');
     } finally {
       setLoading(false);
     }
@@ -64,67 +64,67 @@ const ShareNoteModal = ({ isOpen, onClose, noteId, onShareChange }: ShareNoteMod
   const handleCopy = async () => {
     if (!shareUrl) return;
     await navigator.clipboard.writeText(shareUrl);
-    toast.success('Link kopiert');
+    toast.success('Link copied');
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Notiz teilen">
+    <Modal isOpen={isOpen} onClose={onClose} title="Share note">
       <div className="space-y-4 min-w-[320px]">
-        <div className="flex items-start gap-3 text-sm text-text-secondary">
-          <Users className="w-4 h-4 mt-0.5 flex-shrink-0 text-brand-primary" />
+        <div className="flex items-start gap-3 text-sm text-(--ink-mid)">
+          <Users className="w-4 h-4 mt-0.5 flex-shrink-0 text-(--accent)" />
           <span>
-            Personen mit dem Link können die Notiz in Echtzeit mitbearbeiten.
+            Anyone with the link can collaborate on this note in real time.
           </span>
         </div>
 
         {initialLoading ? (
           <div className="flex justify-center py-4">
-            <Loader2 className="w-5 h-5 animate-spin text-brand-primary" />
+            <Loader2 className="w-5 h-5 animate-spin text-(--accent)" />
           </div>
         ) : shareUrl ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 rounded-lg border border-[color-mix(in_srgb,var(--color-border-default)_60%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-elevated)_50%,transparent)] px-3 py-2">
-              <Link2 className="w-4 h-4 flex-shrink-0 text-brand-primary" />
-              <span className="flex-1 truncate text-sm text-text-secondary font-mono select-all">
+            <div className="flex items-center gap-2 rounded-lg border border-[color-mix(in_srgb,var(--line)_60%,transparent)] bg-[color-mix(in_srgb,var(--surface-hi)_50%,transparent)] px-3 py-2">
+              <Link2 className="w-4 h-4 flex-shrink-0 text-(--accent)" />
+              <span className="flex-1 truncate text-sm text-(--ink-mid) font-mono select-all">
                 {shareUrl}
               </span>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={handleCopy}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[color-mix(in_srgb,var(--color-border-default)_60%,transparent)] bg-brand-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[color-mix(in_srgb,var(--line)_60%,transparent)] bg-(--accent) px-3 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
               >
                 <Copy className="w-4 h-4" />
-                Link kopieren
+                Copy link
               </button>
               <button
                 onClick={handleDelete}
                 disabled={loading}
-                className="flex items-center justify-center gap-2 rounded-lg border border-[color-mix(in_srgb,var(--color-border-default)_60%,transparent)] px-3 py-2 text-sm text-text-secondary transition-colors hover:text-red-500 disabled:opacity-50"
+                className="flex items-center justify-center gap-2 rounded-lg border border-[color-mix(in_srgb,var(--line)_60%,transparent)] px-3 py-2 text-sm text-(--ink-mid) transition-colors hover:text-red-500 disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
               </button>
             </div>
-            <p className="text-xs text-text-muted">
-              Kollaborationsmodus ist aktiv. Änderungen werden sofort synchronisiert.
+            <p className="text-xs text-(--ink-low)">
+              Collaboration mode is active. Changes are synced instantly.
             </p>
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-text-secondary">
-              Diese Notiz ist noch nicht geteilt. Erstelle einen Link, um gemeinsam zu arbeiten.
+            <p className="text-sm text-(--ink-mid)">
+              This note is not shared yet. Create a link to collaborate.
             </p>
             <button
               onClick={handleCreate}
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--accent) px-4 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Link2 className="w-4 h-4" />
               )}
-              Link erstellen
+              Create link
             </button>
           </div>
         )}

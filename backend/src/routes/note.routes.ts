@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getAllNotes,
   getNoteById,
+  getNoteCounts,
   createNote,
   updateNote,
   deleteNote,
@@ -20,6 +21,7 @@ const router = Router();
 router.use(authenticateToken);
 
 router.get('/', getAllNotes);
+router.get('/counts', getNoteCounts);
 router.get('/search', searchNotes);
 router.get('/:id', getNoteById);
 router.post('/', createNote);

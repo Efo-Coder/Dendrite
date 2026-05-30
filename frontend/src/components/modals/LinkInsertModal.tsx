@@ -9,9 +9,9 @@ interface LinkInsertModalProps {
 }
 
 const LinkInsertModal = ({ isOpen, onClose, linkUrl, setLinkUrl, onSubmit }: LinkInsertModalProps) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="Link hinzufügen">
+  <Modal isOpen={isOpen} onClose={onClose} title="Add link">
     <div className="mb-5">
-      <label className="block text-xs font-medium text-text-primary mb-2 uppercase tracking-wide">URL</label>
+      <label className="block text-xs font-medium text-(--ink) mb-2 uppercase tracking-wide">URL</label>
       <input
         type="url"
         value={linkUrl}
@@ -25,12 +25,12 @@ const LinkInsertModal = ({ isOpen, onClose, linkUrl, setLinkUrl, onSubmit }: Lin
       />
     </div>
     <div className="flex justify-end space-x-2">
-      <button onClick={onClose} className="px-4 py-2 text-sm btn-themed transition-all relative group">
-        <span className="relative">Abbrechen</span>
+      <button onClick={onClose} className="px-4 py-2 text-smtransition-all relative group">
+        <span className="relative">Cancel</span>
         <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       </button>
-      <button onClick={onSubmit} disabled={!linkUrl.trim()} className="px-4 py-2 text-sm btn-themed transition-all relative group disabled:opacity-40 disabled:cursor-not-allowed">
-        <span className="relative">Hinzufügen</span>
+      <button onClick={onSubmit} disabled={!linkUrl.trim()} className="px-4 py-2 text-smtransition-all relative group disabled:opacity-40 disabled:cursor-not-allowed">
+        <span className="relative">Add</span>
         <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 group-disabled:opacity-0 transition-opacity" />
       </button>
     </div>

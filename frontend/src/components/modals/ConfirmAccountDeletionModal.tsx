@@ -25,21 +25,21 @@ const ConfirmAccountDeletionModal = ({ isOpen, onClose, onConfirm, isLoading }: 
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Konto löschen"
+      title="Delete account"
       showFooter
-      confirmLabel="Endgültig löschen"
+      confirmLabel="Delete permanently"
       onConfirm={handleConfirm}
       confirmVariant="danger"
       confirmDisabled={input !== 'Delete'}
       isConfirming={isLoading}
     >
       <div className="space-y-4">
-        <p className="text-sm text-text-secondary">
-          Diese Aktion kann nicht rückgängig gemacht werden. Alle Notizen, Ordner und Tags werden permanent gelöscht.
+        <p className="text-sm text-(--ink-mid)">
+          This action cannot be undone. All notes, folders and tags will be permanently deleted.
         </p>
         <div>
-          <label className="block text-xs text-text-muted mb-2">
-            Gib <span className="font-mono font-medium text-text-primary">Delete</span> ein um zu bestätigen
+          <label className="block text-xs text-(--ink-low) mb-2">
+            Type <span className="font-mono font-medium text-(--ink) pr-1 pl-1">Delete</span> to confirm
           </label>
           <input
             type="text"

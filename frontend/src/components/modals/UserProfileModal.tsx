@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import Modal from './Modal';
 import ConfirmAccountDeletionModal from './ConfirmAccountDeletionModal';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useGlassPill } from '../../hooks/useGlassPill';
 import { LogOut, KeyRound, Pencil, Trash2, Eye, EyeOff, Camera, X } from 'lucide-react';
 import { useToast } from '../ui/ToastContainer';
 
@@ -45,17 +44,14 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     }
   }, [isOpen, user?.name]);
 
-  const actionGroupRef = useRef<HTMLDivElement>(null);
-  const { pill, onEnter, onLeave } = useGlassPill(actionGroupRef);
-
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault();
     setNameLoading(true);
     try {
       await updateProfile(name.trim());
-      toast.success('Name erfolgreich aktualisiert');
+      toast.success('Name updated successfully');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Name konnte nicht geändert werden');
+      toast.error(err.response?.data?.error || 'Could not update name');
     } finally {
       setNameLoading(false);
     }
@@ -64,18 +60,18 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast.error('Die Passwörter stimmen nicht überein');
+      toast.error('Passwords do not match');
       return;
     }
     setPasswordLoading(true);
     try {
       await changePassword(currentPassword, newPassword);
-      toast.success('Passwort erfolgreich geändert');
+      toast.success('Password changed successfully');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Passwort konnte nicht geändert werden');
+      toast.error(err.response?.data?.error || 'Could not change password');
     } finally {
       setPasswordLoading(false);
     }
@@ -85,9 +81,9 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     setAvatarLoading(true);
     try {
       await deleteAvatar();
-      toast.success('Profilbild entfernt');
+      toast.success('Profile picture removed');
     } catch {
-      toast.error('Profilbild konnte nicht entfernt werden');
+      toast.error('Could not remove profile picture');
     } finally {
       setAvatarLoading(false);
     }
@@ -99,9 +95,9 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     setAvatarLoading(true);
     try {
       await uploadAvatar(file);
-      toast.success('Profilbild aktualisiert');
+      toast.success('Profile picture updated');
     } catch {
-      toast.error('Profilbild konnte nicht hochgeladen werden');
+      toast.error('Could not upload profile picture');
     } finally {
       setAvatarLoading(false);
       e.target.value = '';
@@ -118,7 +114,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     try {
       await deleteAccount();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Konto konnte nicht gelöscht werden');
+      toast.error(err.response?.data?.error || 'Could not delete account');
       setDeleteLoading(false);
       setShowDeleteModal(false);
     }
@@ -132,12 +128,12 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     .slice(0, 2);
 
   const memberSince = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString('de-DE', { year: 'numeric', month: 'long' })
+    ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })
     : '';
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={onClose} title="Profil">
+    <Modal isOpen={isOpen} onClose={onClose} title="Profile" className="profile-modal">
       <div className="space-y-6">
 
         {/* Avatar + Info */}
@@ -147,7 +143,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               onClick={() => avatarInputRef.current?.click()}
               disabled={avatarLoading}
               className="relative w-14 h-14 rounded-full group"
-              title="Profilbild ändern"
+              title="Change profile picture"
             >
               {user?.avatarUrl ? (
                 <img
@@ -156,8 +152,14 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                   className="w-14 h-14 rounded-full object-cover"
                 />
               ) : (
-                <div className="profile-avatar w-14 h-14 rounded-full flex items-center justify-center text-lg font-semibold text-text-primary">
-                  {avatarLoading ? '...' : initials}
+                <div style={{
+                  width: '100%', height: '100%', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--accent), var(--accent-deep))',
+                  color: 'var(--bg-deep)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'var(--serif-display)', fontWeight: 600, fontSize: '20px',
+                  boxShadow: '0 0 0 0.5px var(--line)',
+                }}>
+                  {avatarLoading ? '…' : initials}
                 </div>
               )}
               <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -168,7 +170,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               <button
                 onClick={handleDeleteAvatar}
                 disabled={avatarLoading}
-                title="Profilbild entfernen"
+                title="Remove profile picture"
                 className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 hover:bg-red-400 flex items-center justify-center transition-all opacity-0 group-hover/avatar:opacity-100"
               >
                 <X className="w-3 h-3 text-white" />
@@ -183,43 +185,44 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             onChange={handleAvatarChange}
           />
           <div>
-            <p className="text-sm font-semibold text-text-primary">{user?.name || '–'}</p>
-            <p className="text-xs text-text-secondary">{user?.email}</p>
+            <p className="text-sm font-semibold text-(--ink)">{user?.name || '–'}</p>
+            <p className="text-xs text-(--ink-mid)">{user?.email}</p>
             {memberSince && (
-              <p className="text-xs text-text-secondary mt-0.5">Mitglied seit {memberSince}</p>
+              <p className="text-xs text-(--ink-mid) mt-0.5">Member since {memberSince}</p>
             )}
           </div>
         </div>
 
-        <div className="border-b glass-divider" />
+        <div className="border-b border-(--line-soft)" />
 
         {/* Name ändern */}
         <div>
-          <label className="text-xs font-medium text-text-primary mb-3 uppercase tracking-wide flex items-center gap-1.5">
-            <Pencil className="w-3 h-3" /> Name ändern
+          <label className="text-xs font-medium text-(--ink) mb-3 uppercase tracking-wide flex items-center gap-1.5">
+            <Pencil className="w-3 h-3" /> Change name
           </label>
           <form onSubmit={handleUpdateName} className="flex gap-2">
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Anzeigename"
-              className="input flex-1"
+              placeholder="Display name"
+              className="modal-input"
+              style={{ flex: 1, width: 'auto' }}
             />
             <button
               type="submit"
               disabled={nameLoading || !name.trim()}
               className="btn disabled:opacity-50"
             >
-              {nameLoading ? '...' : 'Speichern'}
+              {nameLoading ? '...' : 'Save'}
             </button>
           </form>
         </div>
 
         {/* Passwort ändern */}
         <div>
-          <label className="text-xs font-medium text-text-primary mb-3 uppercase tracking-wide flex items-center gap-1.5">
-            <KeyRound className="w-3 h-3" /> Passwort ändern
+          <label className="text-xs font-medium text-(--ink) mb-3 uppercase tracking-wide flex items-center gap-1.5">
+            <KeyRound className="w-3 h-3" /> Change password
           </label>
           <form onSubmit={handleChangePassword} className="space-y-2">
             <div className="relative">
@@ -227,8 +230,9 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 type={showCurrent ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Aktuelles Passwort"
-                className="input pr-10"
+                placeholder="Current password"
+                className="modal-input"
+                style={{ paddingRight: '40px' }}
               />
               <button type="button" onClick={() => setShowCurrent(!showCurrent)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors no-press">
@@ -240,8 +244,9 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 type={showNew ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Neues Passwort"
-                className="input pr-10"
+                placeholder="New password"
+                className="modal-input"
+                style={{ paddingRight: '40px' }}
               />
               <button type="button" onClick={() => setShowNew(!showNew)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors no-press">
@@ -253,8 +258,9 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 type={showConfirm ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Neues Passwort bestätigen"
-                className="input pr-10"
+                placeholder="Confirm new password"
+                className="modal-input"
+                style={{ paddingRight: '40px' }}
               />
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors no-press">
@@ -266,40 +272,29 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
               className="btn w-full disabled:opacity-50"
             >
-              {passwordLoading ? 'Wird geändert...' : 'Passwort ändern'}
+              {passwordLoading ? 'Changing...' : 'Change password'}
             </button>
           </form>
         </div>
 
-        <div className="border-b glass-divider" />
-
         {/* Abmelden & Konto löschen */}
-        <div ref={actionGroupRef} className="relative space-y-2" onMouseLeave={onLeave}>
-          {pill && (
-            <div
-              className="glass-pill"
-              style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height, opacity: pill.visible ? 1 : 0 }}
-            />
-          )}
-
+        <div className="modal-form-ft" style={{ flexDirection: 'column' }}>
           <button
             onClick={handleLogout}
-            onMouseEnter={(e) => onEnter(e, false)}
-            className="btn w-full flex items-center gap-2 text-text-primary hover:text-red-500 relative z-10"
+            className="btn w-full flex items-center gap-2 text-(--ink) hover:text-red-500"
             type="button"
           >
             <LogOut className="w-4 h-4" />
-            <span>Abmelden</span>
+            <span>Sign out</span>
           </button>
 
           <button
             onClick={() => setShowDeleteModal(true)}
-            onMouseEnter={(e) => onEnter(e, false)}
-            className="btn w-full flex items-center gap-2 relative z-10 text-text-primary hover:text-red-500"
+            className="btn w-full flex items-center gap-2 text-(--ink) hover:text-red-500"
             type="button"
           >
             <Trash2 className="w-4 h-4" />
-            <span>Konto löschen</span>
+            <span>Delete account</span>
           </button>
         </div>
 

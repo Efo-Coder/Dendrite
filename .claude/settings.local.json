@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(*)",
-      "PowerShell(*)"
+      "PowerShell(*)",
+      "WebFetch(domain:reactbits.dev)",
+      "Read(//c/Users/efrah/Downloads/Dendrite-Cursor/**)"
     ]
   }
 }
