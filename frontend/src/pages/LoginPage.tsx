@@ -16,7 +16,6 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem(REMEMBERED_EMAIL_KEY));
-  const [shake, setShake] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
   const { login, error, isLoading, clearError } = useAuthStore();
@@ -43,9 +42,6 @@ const LoginPage = () => {
     if (error && error !== prevError.current) {
       toast.error(error, 6000);
       prevError.current = error;
-      setShake(true);
-      const t = setTimeout(() => setShake(false), 500);
-      return () => clearTimeout(t);
     }
     if (!error) prevError.current = null;
   }, [error]);
@@ -209,11 +205,7 @@ const LoginPage = () => {
               </p>
             </div>
 
-            {/* Form — wraps in shake motion */}
-            <motion.div
-              animate={shake ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}}
-              transition={{ duration: 0.4 }}
-            >
+            <div>
               {isUnverifiedError && (
                 <div style={{ marginBottom: '16px' }}>
                   {resendDone ? (
@@ -363,7 +355,7 @@ const LoginPage = () => {
                   {isLoading ? 'Signing in...' : 'Sign in'}
                 </button>
               </form>
-            </motion.div>
+            </div>
 
             <p style={{ marginTop: '32px', fontFamily: 'var(--serif-body)', fontSize: '14px', color: 'var(--ink-dim)', textAlign: 'center' }}>
               Don't have an account?{' '}
