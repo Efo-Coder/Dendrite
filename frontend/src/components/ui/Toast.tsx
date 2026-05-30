@@ -68,7 +68,7 @@ const Toast = ({ id, type, message, duration = 3000, onClose }: ToastProps) => {
       {/* Close Button */}
       <button
         onClick={handleClose}
-        className="absolute top-3 right-3 icon-btn-sm rounded-lg transition-colors"
+        className="absolute top-3 right-3 opacity-50 hover:opacity-100 transition-opacity"
       >
         <X className="w-4 h-4" />
       </button>
