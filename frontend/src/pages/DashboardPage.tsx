@@ -285,10 +285,10 @@ const DashboardPage = () => {
             </AnimatePresence>
           </div>
           <div className="app-titlebar-actions">
-            <DarkModeToggle className="titlebar-btn" />
+            <DarkModeToggle className="titlebar-btn icon-btn-auth" />
             <button
               type="button"
-              className="titlebar-btn"
+              className="titlebar-btn icon-btn-auth"
               onClick={() => setShowSettingsModal(true)}
               title="Settings"
             >
