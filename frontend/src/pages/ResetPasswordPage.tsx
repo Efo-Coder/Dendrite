@@ -129,7 +129,7 @@ const ResetPasswordPage = () => {
           style={{
             background: 'color-mix(in srgb, var(--surface) 55%, transparent)',
             border: '0.5px solid var(--line)',
-            color: 'var(--ink-mid)',
+            color: 'var(--ink-low)',
           }}
         >
           <Home className="w-4 h-4" />
@@ -141,7 +141,7 @@ const ResetPasswordPage = () => {
           style={{
             background: 'color-mix(in srgb, var(--surface) 55%, transparent)',
             border: '0.5px solid var(--line)',
-            color: 'var(--ink-mid)',
+            color: 'var(--ink-low)',
           }}
         >
           {themeMode === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -217,7 +217,7 @@ const ResetPasswordPage = () => {
                       fontSize: '10px',
                       letterSpacing: '0.18em',
                       textTransform: 'uppercase',
-                      color: 'var(--ink-mid)',
+                      color: 'var(--ink-low)',
                       marginBottom: '8px',
                     }}>
                       New password
@@ -268,7 +268,7 @@ const ResetPasswordPage = () => {
                       fontSize: '10px',
                       letterSpacing: '0.18em',
                       textTransform: 'uppercase',
-                      color: 'var(--ink-mid)',
+                      color: 'var(--ink-low)',
                       marginBottom: '8px',
                     }}>
                       Confirm password

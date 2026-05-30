@@ -81,7 +81,7 @@ const ForgotPasswordPage = () => {
           style={{
             background: 'color-mix(in srgb, var(--surface) 55%, transparent)',
             border: '0.5px solid var(--line)',
-            color: 'var(--ink-mid)',
+            color: 'var(--ink-low)',
           }}
           title="Back to home"
         >
@@ -94,7 +94,7 @@ const ForgotPasswordPage = () => {
           style={{
             background: 'color-mix(in srgb, var(--surface) 55%, transparent)',
             border: '0.5px solid var(--line)',
-            color: 'var(--ink-mid)',
+            color: 'var(--ink-low)',
           }}
         >
           {themeMode === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -126,7 +126,7 @@ const ForgotPasswordPage = () => {
                 </h1>
                 <p style={{ fontFamily: 'var(--serif-body)', fontSize: '14px', color: 'var(--ink-low)', lineHeight: 1.65, margin: 0 }}>
                   If an account with{' '}
-                  <span style={{ color: 'var(--ink-mid)', fontWeight: 500 }}>{email}</span>{' '}
+                  <span style={{ color: 'var(--ink-low)', fontWeight: 500 }}>{email}</span>{' '}
                   exists, we sent a reset link. Check your spam folder if it doesn't arrive.
                 </p>
                 <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.16em', color: 'var(--ink-dim)', textTransform: 'uppercase', margin: 0 }}>
@@ -182,7 +182,7 @@ const ForgotPasswordPage = () => {
                       fontSize: '10px',
                       letterSpacing: '0.18em',
                       textTransform: 'uppercase',
-                      color: 'var(--ink-mid)',
+                      color: 'var(--ink-low)',
                       marginBottom: '8px',
                     }}>
                       Email

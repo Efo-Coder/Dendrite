@@ -155,7 +155,7 @@ const RegisterPage = () => {
           style={{
             background: 'color-mix(in srgb, var(--surface) 55%, transparent)',
             border: '0.5px solid var(--line)',
-            color: 'var(--ink-mid)',
+            color: 'var(--ink-low)',
           }}
           title="Back to home"
         >
@@ -168,7 +168,7 @@ const RegisterPage = () => {
           style={{
             background: 'color-mix(in srgb, var(--surface) 55%, transparent)',
             border: '0.5px solid var(--line)',
-            color: 'var(--ink-mid)',
+            color: 'var(--ink-low)',
           }}
           title={`Switch to ${themeMode === 'dark' ? 'light' : 'dark'} mode`}
         >
@@ -203,7 +203,7 @@ const RegisterPage = () => {
                 </h1>
                 <p style={{ fontFamily: 'var(--serif-body)', fontSize: '14px', color: 'var(--ink-low)', lineHeight: 1.65, margin: 0 }}>
                   We sent a verification email to{' '}
-                  <span style={{ color: 'var(--ink-mid)', fontWeight: 500 }}>{email}</span>.{' '}
+                  <span style={{ color: 'var(--ink-low)', fontWeight: 500 }}>{email}</span>.{' '}
                   Click the link to complete your registration.
                 </p>
                 <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.16em', color: 'var(--ink-dim)', textTransform: 'uppercase', margin: 0 }}>
@@ -312,7 +312,7 @@ const RegisterPage = () => {
                       fontSize: '10px',
                       letterSpacing: '0.18em',
                       textTransform: 'uppercase',
-                      color: 'var(--ink-mid)',
+                      color: 'var(--ink-low)',
                       marginBottom: '8px',
                     }}>
                       Name
@@ -335,7 +335,7 @@ const RegisterPage = () => {
                       fontSize: '10px',
                       letterSpacing: '0.18em',
                       textTransform: 'uppercase',
-                      color: 'var(--ink-mid)',
+                      color: 'var(--ink-low)',
                       marginBottom: '8px',
                     }}>
                       Email
@@ -358,7 +358,7 @@ const RegisterPage = () => {
                       fontSize: '10px',
                       letterSpacing: '0.18em',
                       textTransform: 'uppercase',
-                      color: 'var(--ink-mid)',
+                      color: 'var(--ink-low)',
                       marginBottom: '8px',
                     }}>
                       Password
@@ -408,7 +408,7 @@ const RegisterPage = () => {
                       fontSize: '10px',
                       letterSpacing: '0.18em',
                       textTransform: 'uppercase',
-                      color: 'var(--ink-mid)',
+                      color: 'var(--ink-low)',
                       marginBottom: '8px',
                     }}>
                       Confirm password

@@ -155,7 +155,7 @@ const LoginPage = () => {
           style={{
             background: 'color-mix(in srgb, var(--surface) 55%, transparent)',
             border: '0.5px solid var(--line)',
-            color: 'var(--ink-mid)',
+            color: 'var(--ink-low)',
           }}
           title="Back to home"
         >
@@ -168,7 +168,7 @@ const LoginPage = () => {
           style={{
             background: 'color-mix(in srgb, var(--surface) 55%, transparent)',
             border: '0.5px solid var(--line)',
-            color: 'var(--ink-mid)',
+            color: 'var(--ink-low)',
           }}
           title={`Switch to ${themeMode === 'dark' ? 'light' : 'dark'} mode`}
         >
@@ -240,7 +240,7 @@ const LoginPage = () => {
                     fontSize: '10px',
                     letterSpacing: '0.18em',
                     textTransform: 'uppercase',
-                    color: 'var(--ink-mid)',
+                    color: 'var(--ink-low)',
                     marginBottom: '8px',
                   }}>
                     Email
@@ -263,7 +263,7 @@ const LoginPage = () => {
                       fontSize: '10px',
                       letterSpacing: '0.18em',
                       textTransform: 'uppercase',
-                      color: 'var(--ink-mid)',
+                      color: 'var(--ink-low)',
                     }}>
                       Password
                     </label>
@@ -332,7 +332,7 @@ const LoginPage = () => {
                     fontSize: '10px',
                     letterSpacing: '0.14em',
                     textTransform: 'uppercase',
-                    color: 'var(--ink-mid)',
+                    color: 'var(--ink-low)',
                   }}>
                     Remember me
                   </span>
