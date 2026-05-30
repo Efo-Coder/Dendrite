@@ -11,14 +11,14 @@ const EmptyTrashModal = ({ isOpen, onClose, onConfirm }: EmptyTrashModalProps) =
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Papierkorb leeren?"
+      title="Empty trash?"
       showFooter
-      confirmLabel="Endgültig löschen"
+      confirmLabel="Delete permanently"
       onConfirm={onConfirm}
       confirmVariant="danger"
     >
-      <p className="text-sm text-text-secondary">
-        Möchtest du wirklich alle Notizen im Papierkorb endgültig löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.
+      <p className="text-sm text-(--ink-mid)">
+        Are you sure you want to permanently delete all notes in the trash? This action cannot be undone.
       </p>
     </Modal>
   );

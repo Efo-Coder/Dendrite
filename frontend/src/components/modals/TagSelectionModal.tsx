@@ -4,7 +4,6 @@ import { useTagStore } from '../../store/useTagStore';
 import { useToast } from '../ui/ToastContainer';
 import Modal from './Modal';
 import CreateTagModal from './CreateTagModal';
-import { useGlassPill } from '../../hooks/useGlassPill';
 
 interface TagSelectionModalProps {
   isOpen: boolean;
@@ -19,9 +18,6 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(currentTagIds);
   const toast = useToast();
 
-  const listRef = useRef<HTMLDivElement>(null);
-  const { pill, onEnter, onLeave } = useGlassPill(listRef);
-
   useEffect(() => {
     if (isOpen) {
       fetchTags();
@@ -33,11 +29,11 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
   }, [isOpen]);
 
   const handleTagToggle = (tagId: string) => {
-    setSelectedTagIds(prev =>
-      prev.includes(tagId)
-        ? prev.filter(id => id !== tagId)
-        : [...prev, tagId]
-    );
+    setSelectedTagIds(prev => {
+      if (prev.includes(tagId)) return prev.filter(id => id !== tagId);
+      if (prev.length >= 4) { toast.error('Maximum 4 tags per note'); return prev; }
+      return [...prev, tagId];
+    });
   };
 
   const handleSave = () => {
@@ -52,79 +48,72 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
   const handleTagCreated = () => {
     setShowCreateTagModal(false);
     fetchTags();
-    toast.success('Tag erstellt');
+    toast.success('Tag created');
   };
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Tags verwalten">
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Manage tags"
+        showFooter={true}
+        confirmLabel="Save"
+        onConfirm={handleSave}
+      >
         <div className="space-y-4">
-          <p className="text-sm text-text-secondary">
-            Wähle die Tags aus, die mit dieser Notiz verknüpft werden sollen:
+          <p className="text-sm text-(--ink-mid)">
+            Select the tags to associate with this note:
           </p>
 
-          <div ref={listRef} className="relative" onMouseLeave={onLeave}>
-            {pill && (
-              <div
-                className="glass-pill pointer-events-none"
-                style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height, opacity: pill.visible ? 1 : 0 }}
-              />
-            )}
-            <div className="max-h-64 overflow-y-auto space-y-1">
+          <div className="modal-list-scroll space-y-1">
               {tags.length === 0 ? (
-                <div className="text-center py-8 text-text-secondary">
+                <div className="text-center py-8 text-(--ink-mid)">
                   <Tag className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Keine Tags vorhanden</p>
+                  <p className="text-sm">No tags yet</p>
                 </div>
               ) : (
                 tags.map((tag) => {
                   const isSelected = selectedTagIds.includes(tag.id);
+                  const atLimit = selectedTagIds.length >= 4 && !isSelected;
                   return (
                     <button
                       key={tag.id}
                       onClick={() => handleTagToggle(tag.id)}
-                      onMouseEnter={onEnter}
-                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors relative z-10 ${
-                        isSelected
-                          ? 'text-text-primary'
-                          : 'text-text-secondary'
-                      }`}
+                      disabled={atLimit}
+                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                        atLimit
+                          ? 'opacity-40 cursor-not-allowed'
+                          : 'hover:bg-(--surface-hi)'
+                      } ${isSelected ? 'text-(--ink)' : 'text-(--ink-mid)'}`}
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => {}}
-                        className="w-4 h-4 rounded border-white/30 flex-shrink-0"
+                        className="w-4 h-4 rounded border-white/30 shrink-0"
                         style={{ accentColor: tag.color }}
                       />
-                      <Tag className="w-4 h-4 flex-shrink-0" style={{ color: tag.color }} />
+                      <Tag className="w-4 h-4 shrink-0" style={{ color: tag.color }} />
                       <span className="text-sm">{tag.name}</span>
                     </button>
                   );
                 })
               )}
 
-              <div className="border-b glass-divider" />
+              <div className="border-b border-(--line-soft)" />
 
               <button
                 onClick={handleCreateTag}
-                onMouseEnter={onEnter}
-                className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors text-text-primary relative z-10"
+                className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors text-(--ink) hover:bg-(--surface-hi)"
               >
                 <Plus className="w-4 h-4" />
-                <span className="text-sm">Neuen Tag erstellen</span>
+                <span className="text-sm">Create new tag</span>
               </button>
-            </div>
           </div>
 
-          <div className="flex justify-between items-center pt-4">
-            <div className="text-xs text-text-secondary">
-              {selectedTagIds.length} Tag{selectedTagIds.length !== 1 ? 's' : ''} ausgewählt
-            </div>
-            <div className="flex space-x-2">
-              <button onClick={onClose} className="btn">Abbrechen</button>
-              <button onClick={handleSave} className="btn">Speichern</button>
-            </div>
+          <div className="text-xs text-(--ink-mid)">
+            {selectedTagIds.length}/4 tags selected
           </div>
         </div>
       </Modal>

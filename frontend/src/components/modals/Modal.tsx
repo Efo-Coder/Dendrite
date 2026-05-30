@@ -1,19 +1,13 @@
-import { X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
-
-const cancelClass = 'btn';
-
-const confirmDefaultClass = 'btn';
-
-const confirmDangerClass = 'btn hover:text-red-400';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  className?: string;
   showFooter?: boolean;
   confirmLabel?: string;
   onConfirm?: () => void;
@@ -27,6 +21,7 @@ const Modal = ({
   onClose,
   title,
   children,
+  className,
   showFooter = false,
   confirmLabel,
   onConfirm,
@@ -34,56 +29,56 @@ const Modal = ({
   confirmDisabled = false,
   isConfirming = false,
 }: ModalProps) => {
+  const [visible, setVisible] = useState(isOpen);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setVisible(true);
+      setClosing(false);
+    } else if (visible) {
+      setClosing(true);
+      const t = setTimeout(() => setVisible(false), 200);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
     }
-
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!visible) return null;
 
   return createPortal(
-    <div className="fixed inset-0 flex items-center justify-center">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
-        onClick={onClose}
-      />
-
-      <div className="relative glass-popup rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-slide-up">
-        <div className="flex items-center justify-between p-6 border-b border-black/15 glass-divider !bg-transparent">
-          <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-          <button
-            onClick={onClose}
-            className="transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <div className={`modal-overlay${closing ? ' closing' : ''}`} onClick={onClose}>
+      <div className={`modal${className ? ` ${className}` : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-hd">
+          <div className="ornament">— · {title} · —</div>
         </div>
-
-        <div className={showFooter ? 'px-6 pt-6 pb-2' : 'p-6'}>{children}</div>
-
+        <div className="modal-body">{children}</div>
         {showFooter && (
-          <div className="flex justify-end gap-2 px-6 pb-6">
-            <button onClick={onClose} className={cancelClass}>
-              Abbrechen
+          <div className="modal-ft">
+            <button type="button" onClick={onClose} className="btn-ghost">
+              Cancel
             </button>
             {confirmLabel && onConfirm && (
               <button
+                type="button"
                 onClick={onConfirm}
                 disabled={confirmDisabled || isConfirming}
-                className={confirmVariant === 'danger' ? confirmDangerClass : confirmDefaultClass}
+                className={confirmVariant === 'danger' ? 'btn danger' : 'btn primary'}
               >
-                {isConfirming ? 'Lädt...' : confirmLabel}
+                {isConfirming ? 'Loading…' : confirmLabel}
               </button>
             )}
           </div>

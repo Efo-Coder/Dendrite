@@ -1,11 +1,47 @@
-import clsx from 'clsx';
-import Modal from './Modal';
-import { useSettingsStore, DateDisplayMode, ThemeId } from '../../store/useSettingsStore';
-import { themes, themeOrder } from '../../themes/themes';
-import { Check, Sprout } from 'lucide-react';
-import { useMemo, useRef } from 'react';
-import { useGlassPill } from '../../hooks/useGlassPill';
-import { motion } from 'motion/react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { getModalPortalRoot } from '../../lib/modalPortalRoot';
+import { useSettingsStore, PaletteId, FontId, DensityId, DateDisplayMode, CursorStyle } from '../../store/useSettingsStore';
+import { LOGO_SRC } from '../../config/brand';
+import { modKey } from '../../lib/platform';
+import ToggleSwitch from '../ui/ToggleSwitch';
+import RangeSlider from '../ui/RangeSlider';
+import Counter from '../ui/Counter';
+
+const PALETTES: { id: PaletteId; name: string; color: string }[] = [
+  { id: 'onyx',     name: 'Onyx & Champagne', color: 'oklch(0.2253 0.0084 79.15)'  },
+  { id: 'bordeaux', name: 'Bordeaux & Cream',  color: 'oklch(0.1518 0.0947 25)'  },
+  { id: 'forest',   name: 'Forest & Brass',    color: 'oklch(0.2341 0.0306 165)' },
+  { id: 'midnight', name: 'Midnight & Rose',   color: 'oklch(0.2341 0.038 260)' },
+  { id: 'obsidian', name: 'Obsidian & Ivory',  color: 'oklch(0.3056 0.006 0)'  },
+  { id: 'nacre',    name: 'Nacre & Rose Gold', color: 'oklch(0.2724 0.0429 15)'  },
+];
+
+const FONTS: { id: FontId; name: string }[] = [
+  { id: 'cormorant',   name: 'Cormorant' },
+  { id: 'eb-garamond', name: 'EB Garamond' },
+  { id: 'mixed',       name: 'Cormorant + Mono' },
+];
+
+const DENSITIES: { id: DensityId; label: string }[] = [
+  { id: 'compact', label: 'compact' },
+  { id: 'regular', label: 'regular' },
+  { id: 'comfy',   label: 'comfy' },
+];
+
+const getShortcuts = (): [string, string][] => {
+  const mod = modKey();
+  return [
+    ['Compose new note', `${mod} N`],
+    ['Search', `${mod} F`],
+    ['Toggle sidebar', `${mod} \\`],
+    ['Bold', `${mod} B`],
+    ['Italic', `${mod} I`],
+    ['Underline', `${mod} U`],
+    ['Pin / unpin', `${mod} P`],
+    ['Settings', `${mod} ,`],
+  ];
+};
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -13,164 +49,251 @@ interface SettingsModalProps {
 }
 
 const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
-  const { dateDisplayMode, setDateDisplayMode, theme, setTheme, showFocusTimer, setShowFocusTimer } = useSettingsStore();
+  const {
+    palette, setPalette,
+    themeMode, setThemeMode,
+    font, setFont,
+    fontSize, setFontSize,
+    dropCap, setDropCap,
+    density, setDensity,
+    dateDisplayMode, setDateDisplayMode,
+    autoSave, setAutoSave,
+    cursorStyle, setCursorStyle,
+  } = useSettingsStore();
 
-  const currentTheme = useMemo(() => themes[theme] || themes.sproutGreen, [theme]);
+  const [tab, setTab] = useState<'appearance' | 'editor' | 'sync' | 'shortcuts' | 'about'>('appearance');
+  const [visible, setVisible] = useState(isOpen);
+  const [closing, setClosing] = useState(false);
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
 
-  const dateSectionRef = useRef<HTMLDivElement>(null);
-  const themeSectionRef = useRef<HTMLDivElement>(null);
-  const { pill: datePill, onEnter: onDateEnter, onLeave: onDateLeave } = useGlassPill(dateSectionRef);
-  const { pill: themePill, onEnter: onThemeEnter, onLeave: onThemeLeave } = useGlassPill(themeSectionRef);
+  useEffect(() => {
+    if (isOpen) {
+      setVisible(true);
+      setClosing(false);
+    } else if (visibleRef.current) {
+      setClosing(true);
+      const t = setTimeout(() => setVisible(false), 200);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen]);
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Einstellungen">
-        <div className="space-y-6">
-          {/* Datumsanzeige */}
-          <div>
-            <label className="block text-xs font-medium text-text-primary mb-3 uppercase tracking-wide">
-              Datumsanzeige in Notizliste
-            </label>
-            <div ref={dateSectionRef} className="space-y-2 relative" onMouseLeave={onDateLeave}>
-              {datePill && (
-                <div
-                  className="glass-pill"
-                  style={{ left: datePill.left, top: datePill.top, width: datePill.width, height: datePill.height, opacity: datePill.visible ? 1 : 0 }}
-                />
-              )}
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    if (isOpen) {
+      document.addEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  if (!visible) return null;
+
+  return createPortal(
+    <div className={`modal-overlay${closing ? ' closing' : ''}`} onClick={onClose}>
+      <div className="modal settings-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-hd">
+          <div className="ornament">— · settings · —</div>
+          <h3 key={tab}>{{
+            appearance: 'Appearance',
+            editor: 'Editor',
+            sync: 'Sync & Backup',
+            shortcuts: 'Shortcuts',
+            about: 'About',
+          }[tab]}</h3>
+        </div>
+
+        <div className="settings-grid">
+          <div className="settings-nav">
+            {(['appearance', 'editor', 'sync', 'shortcuts', 'about'] as const).map((t) => (
               <button
-                type="button"
-                onClick={() => setDateDisplayMode('updatedAt' as DateDisplayMode)}
-                onMouseEnter={(e) => onDateEnter(e, dateDisplayMode === 'updatedAt')}
-                className={clsx('w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative z-10', dateDisplayMode !== 'updatedAt' && 'glass-border-box')}
-                style={dateDisplayMode === 'updatedAt' ? {
-                  backgroundColor: `${currentTheme.colors.brandPrimary}50`,
-                  border: `1px solid ${currentTheme.colors.brandPrimary}80`,
-                  color: 'var(--color-text-secondary)',
-                } : { background: 'transparent', color: 'var(--color-text-secondary)' }}
+                key={t}
+                className={tab === t ? 'active' : ''}
+                onClick={() => setTab(t)}
               >
-                <span className="text-sm font-medium">Bearbeitet am</span>
-                <motion.div
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: 'var(--color-text-secondary)' }}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: dateDisplayMode === 'updatedAt' ? 1 : 0, scale: dateDisplayMode === 'updatedAt' ? 1 : 0 }}
-                  transition={{ duration: 0.4, scale: { type: 'spring', visualDuration: 0.4, bounce: 0.5 } }}
-                />
+                {t === 'appearance' ? 'Appearance'
+                 : t === 'editor' ? 'Editor'
+                 : t === 'sync' ? 'Sync & Backup'
+                 : t === 'shortcuts' ? 'Shortcuts'
+                 : 'About'}
               </button>
-              <button
-                type="button"
-                onClick={() => setDateDisplayMode('createdAt' as DateDisplayMode)}
-                onMouseEnter={(e) => onDateEnter(e, dateDisplayMode === 'createdAt')}
-                className={clsx('w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all relative z-10', dateDisplayMode !== 'createdAt' && 'glass-border-box')}
-                style={dateDisplayMode === 'createdAt' ? {
-                  backgroundColor: `${currentTheme.colors.brandPrimary}50`,
-                  border: `1px solid ${currentTheme.colors.brandPrimary}80`,
-                  color: 'var(--color-text-secondary)',
-                } : { background: 'transparent', color: 'var(--color-text-secondary)' }}
-              >
-                <span className="text-sm font-medium">Erstellt am</span>
-                <motion.div
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: 'var(--color-text-secondary)' }}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: dateDisplayMode === 'createdAt' ? 1 : 0, scale: dateDisplayMode === 'createdAt' ? 1 : 0 }}
-                  transition={{ duration: 0.4, scale: { type: 'spring', visualDuration: 0.4, bounce: 0.5 } }}
-                />
-              </button>
-            </div>
-            <p className="mt-2 text-xs text-text-secondary">
-              Wähle, welches Datum in der Notizliste angezeigt werden soll.
-            </p>
+            ))}
           </div>
 
-          {/* Farbthema */}
-          <div>
-            <label className="block text-xs font-medium text-text-primary mb-3 uppercase tracking-wide">
-              Farbthema
-            </label>
-            <div ref={themeSectionRef} className="grid grid-cols-3 gap-3 relative" onMouseLeave={onThemeLeave}>
-              {themePill && (
-                <div
-                  className="glass-pill"
-                  style={{ left: themePill.left, top: themePill.top, width: themePill.width, height: themePill.height, opacity: themePill.visible ? 1 : 0 }}
-                />
-              )}
-              {themeOrder.map((themeId) => {
-                const themeData = themes[themeId];
-                const isSelected = theme === themeId;
-                return (
+          <div key={tab} className="settings-pane">
+            {tab === 'appearance' && (
+              <>
+                <div className="settings-row">
+                  <div className="lbl">Theme<small>Light for daylight; dark for the small hours.</small></div>
                   <button
-                    key={themeId}
-                    type="button"
-                    onClick={() => setTheme(themeId as ThemeId)}
-                    onMouseEnter={(e) => onThemeEnter(e, isSelected)}
-                    className={clsx('relative z-10 flex flex-col items-center p-3 rounded-lg backdrop-blur-md transition-all', !isSelected && 'glass-border-box')}
-                    style={isSelected ? {
-                      backgroundColor: `${themeData.colors.textSecondary}40`,
-                      border: `1px solid ${themeData.colors.borderDefault}`,
-                    } : { background: 'transparent' }}
+                    className="btn-toggle"
+                    onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
                   >
-                    <div className="w-10 h-10 rounded-full mb-2 border-2" style={{ backgroundColor: themeData.colors.brandPrimary }} />
-                    <span
-                      className="text-xs font-medium text-center"
-                      style={isSelected ? { color: 'var(--color-text-primary)' } : { color: 'var(--color-text-secondary)' }}
-                    >
-                      {themeData.name}
-                    </span>
-                    {isSelected && (
-                      <div className="absolute top-2 right-2">
-                        <Check className="w-4 h-4" style={{ color: 'var(--color-text-primary)' }} />
-                      </div>
-                    )}
+                    {themeMode === 'dark' ? '◑ Dark' : '○ Light'}
                   </button>
-                );
-              })}
-            </div>
-            <p className="mt-2 text-xs text-text-secondary">
-              Wähle ein Farbthema für die gesamte Anwendung.
-            </p>
-          </div>
+                </div>
 
-          {/* Fokuszeit */}
-          <div>
-            <label className="block text-xs font-medium text-text-primary mb-3 uppercase tracking-wide">
-              Ansicht
-            </label>
-            <button
-              type="button"
-              onClick={() => setShowFocusTimer(!showFocusTimer)}
-              className={clsx('no-press w-full flex items-center justify-between px-4 py-3 rounded-lg backdrop-blur-md transition-all', showFocusTimer ? '' : 'glass-border-box')}
-              style={showFocusTimer ? {
-                backgroundColor: `${currentTheme.colors.brandPrimary}10`,
-                border: `1px solid ${currentTheme.colors.brandPrimary}80`,
-              } : { background: 'transparent' }}
-            >
-              <div className="flex items-center gap-3">
-                <Sprout className="w-4 h-4" style={{ color: showFocusTimer ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }} />
-                <span className="text-sm font-medium" style={{ color: showFocusTimer ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
-                  Fokuszeit anzeigen
-                </span>
+                <div className="settings-row">
+                  <div className="lbl">Palette<small>A small library of disciplined moods.</small></div>
+                  <div className="swatch-row">
+                    {PALETTES.map((p) => (
+                      <div
+                        key={p.id}
+                        className={`swatch${palette === p.id ? ' active' : ''}`}
+                        style={{ background: p.color }}
+                        title={p.name}
+                        onClick={() => setPalette(p.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="settings-row">
+                  <div className="lbl">Date display<small>Which date to show in the notes list.</small></div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {([['updatedAt', 'Edited'], ['createdAt', 'Created']] as [DateDisplayMode, string][]).map(([id, label]) => (
+                      <button
+                        key={id}
+                        className={`btn-toggle${dateDisplayMode === id ? ' active' : ''}`}
+                        onClick={() => setDateDisplayMode(id)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="settings-row">
+                  <div className="lbl">Density<small>How much air between the words.</small></div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {DENSITIES.map((d) => (
+                      <button
+                        key={d.id}
+                        className={`btn-toggle${density === d.id ? ' active' : ''}`}
+                        onClick={() => setDensity(d.id)}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="settings-row">
+                  <div className="lbl">Cursor<small>Gold arrow or floating dot & ring.</small></div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {([['classic', 'Classic'], ['modern', 'Modern']] as [CursorStyle, string][]).map(([id, label]) => (
+                      <button
+                        key={id}
+                        className={`btn-toggle${cursorStyle === id ? ' active' : ''}`}
+                        onClick={() => setCursorStyle(id)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {tab === 'editor' && (
+              <>
+                <div className="settings-row">
+                  <div className="lbl">Typeface<small>For the title page and the running text.</small></div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {FONTS.map((f) => (
+                      <button
+                        key={f.id}
+                        className={`btn-toggle${font === f.id ? ' active' : ''}`}
+                        onClick={() => setFont(f.id)}
+                      >
+                        {f.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="settings-row">
+                  <div className="lbl">Type size<small>From whisper to lectern.</small></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <RangeSlider
+                      min={14} max={28} step={1} value={fontSize}
+                      onChange={setFontSize}
+                    />
+                    <span style={{ display: 'flex', alignItems: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-low)', width: 32 }}>
+                      <Counter
+                        value={fontSize}
+                        places={[10, 1]}
+                        fontSize={11}
+                        gap={0}
+                        borderRadius={0}
+                        horizontalPadding={0}
+                        textColor="var(--ink-low)"
+                        fontWeight={400}
+                        gradientHeight={3}
+                        gradientFrom="var(--surface)"
+                        gradientTo="transparent"
+                        counterStyle={{ fontFamily: 'var(--mono)' }}
+                      />
+                      px
+                    </span>
+                  </div>
+                </div>
+
+                <div className="settings-row">
+                  <div className="lbl">Drop cap<small>The luxurious first letter.</small></div>
+                  <ToggleSwitch checked={dropCap} onChange={setDropCap} />
+                </div>
+              </>
+            )}
+
+            {tab === 'sync' && (
+              <>
+                <div className="settings-row">
+                  <div className="lbl">Auto-save<small>Notes are saved automatically as you type.</small></div>
+                  <ToggleSwitch checked={autoSave} onChange={setAutoSave} />
+                </div>
+                <div className="settings-row">
+                  <div className="lbl">Local backup<small>Encrypted on disk.</small></div>
+                  <button className="btn-ghost" style={{ border: '0.5px solid var(--line)' }}>Export</button>
+                </div>
+              </>
+            )}
+
+            {tab === 'shortcuts' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '12px 24px', fontFamily: 'var(--serif-body)', fontSize: 14 }}>
+                {getShortcuts().map(([label, key]) => (
+                  <>
+                    <span key={label} style={{ color: 'var(--ink-mid)' }}>{label}</span>
+                    <kbd style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--accent)', background: 'var(--bg)', padding: '3px 8px', borderRadius: 5, border: '0.5px solid var(--line)' }}>{key}</kbd>
+                  </>
+                ))}
               </div>
-              <div
-                className="flex-shrink-0 flex items-center rounded-full p-[3px]"
-                style={{
-                  width: 44,
-                  height: 24,
-                  backgroundColor: showFocusTimer ? currentTheme.colors.brandPrimary : 'color-mix(in srgb, var(--color-text-primary) 15%, transparent)',
-                  justifyContent: showFocusTimer ? 'flex-end' : 'flex-start',
-                  transition: 'background-color 0.2s ease',
-                }}
-              >
-                <motion.div
-                  layout
-                  transition={{ type: 'spring', visualDuration: 0.2, bounce: 0.2 }}
-                  style={{ width: 18, height: 18, borderRadius: '50%', backgroundColor: 'white' }}
-                />
+            )}
+
+            {tab === 'about' && (
+              <div style={{ textAlign: 'center', padding: '20px 0', fontFamily: 'var(--serif-display)' }}>
+                <img src={LOGO_SRC} alt="Dendrite" style={{ width: 72, height: 72, marginBottom: 8, objectFit: 'contain', display: 'block', margin: '0 auto 8px' }} />
+                <div style={{ fontSize: 22, color: 'var(--ink)', letterSpacing: '0.02em' }}>Dendrite</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-low)', fontStyle: 'italic', marginTop: 4 }}>
+                  Notes for the patient mind. Letterpress edition.
+                </div>
+                <div style={{ marginTop: 24, fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-dim)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                  MMXXVI · Set in Cormorant & Garamond
+                </div>
               </div>
-            </button>
+            )}
           </div>
         </div>
-    </Modal>
+
+        <div className="modal-ft">
+          <button className="btn-ghost" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>,
+    getModalPortalRoot()
   );
 };
 
