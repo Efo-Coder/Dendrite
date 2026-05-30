@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { useSettingsStore, PaletteId, FontId, DensityId, DateDisplayMode, CursorStyle } from '../../store/useSettingsStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { authService } from '../../services/auth.service';
 import { LOGO_SRC } from '../../config/brand';
 import { modKey } from '../../lib/platform';
 import ToggleSwitch from '../ui/ToggleSwitch';
@@ -66,6 +68,57 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const [closing, setClosing] = useState(false);
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
+
+  const { user, updateProfile } = useAuthStore();
+  const [twoFASetup, setTwoFASetup] = useState<{ secret: string; qrCode: string } | null>(null);
+  const [twoFACode, setTwoFACode] = useState('');
+  const [twoFALoading, setTwoFALoading] = useState(false);
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+  const [disablePassword, setDisablePassword] = useState('');
+  const [showDisable, setShowDisable] = useState(false);
+
+  useEffect(() => {
+    if (user) setTwoFAEnabled((user as any).twoFactorEnabled ?? false);
+  }, [user]);
+
+  const handleSetup2FA = async () => {
+    setTwoFALoading(true);
+    try {
+      const data = await authService.setup2FA();
+      setTwoFASetup(data);
+    } catch {
+    } finally {
+      setTwoFALoading(false);
+    }
+  };
+
+  const handleEnable2FA = async () => {
+    if (twoFACode.length < 6) return;
+    setTwoFALoading(true);
+    try {
+      await authService.enable2FA(twoFACode);
+      setTwoFAEnabled(true);
+      setTwoFASetup(null);
+      setTwoFACode('');
+    } catch {
+    } finally {
+      setTwoFALoading(false);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    if (!disablePassword) return;
+    setTwoFALoading(true);
+    try {
+      await authService.disable2FA(disablePassword);
+      setTwoFAEnabled(false);
+      setShowDisable(false);
+      setDisablePassword('');
+    } catch {
+    } finally {
+      setTwoFALoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -259,6 +312,104 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   <div className="lbl">Local backup<small>Encrypted on disk.</small></div>
                   <button className="btn-ghost" style={{ border: '0.5px solid var(--line)' }}>Export</button>
                 </div>
+
+                <div style={{ height: '0.5px', background: 'var(--line-soft)', margin: '8px 0' }} />
+
+                <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+                  <div className="lbl">
+                    Two-factor authentication
+                    <small>{twoFAEnabled ? 'Your account is protected with an authenticator app.' : 'Add an extra layer of security to your account.'}</small>
+                  </div>
+                  {twoFAEnabled ? (
+                    <button
+                      className="btn-ghost"
+                      style={{ border: '0.5px solid var(--line)', color: 'var(--ink-mid)' }}
+                      onClick={() => setShowDisable(!showDisable)}
+                    >
+                      Disable
+                    </button>
+                  ) : (
+                    !twoFASetup && (
+                      <button
+                        className="btn-ghost"
+                        style={{ border: '0.5px solid var(--line)' }}
+                        onClick={handleSetup2FA}
+                        disabled={twoFALoading}
+                      >
+                        {twoFALoading ? 'Loading…' : 'Enable'}
+                      </button>
+                    )
+                  )}
+                </div>
+
+                {twoFASetup && !twoFAEnabled && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '0.5px solid var(--line)' }}>
+                    <p style={{ margin: 0, fontFamily: 'var(--serif-body)', fontSize: '13px', color: 'var(--ink-mid)', lineHeight: 1.6 }}>
+                      Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.), then enter the 6-digit code to confirm.
+                    </p>
+                    <img src={twoFASetup.qrCode} alt="QR Code" style={{ width: '160px', height: '160px', borderRadius: '8px', alignSelf: 'center' }} />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={twoFACode}
+                        onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className="input"
+                        placeholder="000000"
+                        style={{ flex: 1, letterSpacing: '0.2em', textAlign: 'center' }}
+                        maxLength={6}
+                      />
+                      <button
+                        className="btn-ghost"
+                        style={{ border: '0.5px solid var(--line)' }}
+                        onClick={handleEnable2FA}
+                        disabled={twoFALoading || twoFACode.length < 6}
+                      >
+                        {twoFALoading ? 'Verifying…' : 'Confirm'}
+                      </button>
+                    </div>
+                    <button
+                      className="no-press"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-dim)', textAlign: 'left' }}
+                      onClick={() => setTwoFASetup(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+                {showDisable && twoFAEnabled && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '0.5px solid var(--line)' }}>
+                    <p style={{ margin: 0, fontFamily: 'var(--serif-body)', fontSize: '13px', color: 'var(--ink-mid)' }}>
+                      Enter your password to disable two-factor authentication.
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="password"
+                        value={disablePassword}
+                        onChange={(e) => setDisablePassword(e.target.value)}
+                        className="input"
+                        placeholder="Your password"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        className="btn-ghost"
+                        style={{ border: '0.5px solid var(--line)', color: 'var(--ink-mid)' }}
+                        onClick={handleDisable2FA}
+                        disabled={twoFALoading || !disablePassword}
+                      >
+                        {twoFALoading ? 'Disabling…' : 'Confirm'}
+                      </button>
+                    </div>
+                    <button
+                      className="no-press"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-dim)', textAlign: 'left' }}
+                      onClick={() => { setShowDisable(false); setDisablePassword(''); }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </>
             )}
 

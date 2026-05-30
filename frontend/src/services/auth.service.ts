@@ -37,6 +37,24 @@ export const authService = {
     await api.delete('/auth/account');
   },
 
+  async setup2FA(): Promise<{ secret: string; qrCode: string }> {
+    const response = await api.post<{ secret: string; qrCode: string }>('/auth/2fa/setup');
+    return response.data;
+  },
+
+  async enable2FA(code: string): Promise<void> {
+    await api.post('/auth/2fa/enable', { code });
+  },
+
+  async disable2FA(password: string): Promise<void> {
+    await api.post('/auth/2fa/disable', { password });
+  },
+
+  async verify2FA(tempToken: string, code: string): Promise<{ user: any; token: string }> {
+    const response = await api.post<{ user: any; token: string }>('/auth/2fa/verify', { tempToken, code });
+    return response.data;
+  },
+
   async forgotPassword(email: string): Promise<void> {
     await api.post('/auth/forgot-password', { email });
   },

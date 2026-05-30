@@ -8,9 +8,11 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  requiresTwoFactor: boolean;
+  tempToken: string | null;
 
-  // Actions
   login: (email: string, password: string) => Promise<void>;
+  verifyTwoFactor: (code: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
   loadUser: () => Promise<void>;
@@ -22,29 +24,48 @@ interface AuthState {
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: localStorage.getItem('token'),
   isAuthenticated: !!localStorage.getItem('token'),
   isLoading: false,
   error: null,
+  requiresTwoFactor: false,
+  tempToken: null,
 
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
       const data = await authService.login(email, password);
+      if ((data as any).requiresTwoFactor) {
+        set({ requiresTwoFactor: true, tempToken: (data as any).tempToken, isLoading: false });
+        return;
+      }
+      authService.setToken(data.token);
+      set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false });
+    } catch (error: any) {
+      set({ error: error.response?.data?.error || 'Login failed', isLoading: false });
+      throw error;
+    }
+  },
+
+  verifyTwoFactor: async (code: string) => {
+    const { tempToken } = get();
+    if (!tempToken) return;
+    set({ isLoading: true, error: null });
+    try {
+      const data = await authService.verify2FA(tempToken, code);
       authService.setToken(data.token);
       set({
         user: data.user,
         token: data.token,
         isAuthenticated: true,
         isLoading: false,
+        requiresTwoFactor: false,
+        tempToken: null,
       });
     } catch (error: any) {
-      set({
-        error: error.response?.data?.error || 'Login failed',
-        isLoading: false,
-      });
+      set({ error: error.response?.data?.error || 'Invalid code', isLoading: false });
       throw error;
     }
   },
@@ -55,22 +76,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       await authService.register(email, password, name);
       set({ isLoading: false });
     } catch (error: any) {
-      set({
-        error: error.response?.data?.error || 'Registration failed',
-        isLoading: false,
-      });
+      set({ error: error.response?.data?.error || 'Registration failed', isLoading: false });
       throw error;
     }
   },
 
   logout: () => {
     authService.logout();
-    set({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      error: null,
-    });
+    set({ user: null, token: null, isAuthenticated: false, error: null, requiresTwoFactor: false, tempToken: null });
   },
 
   loadUser: async () => {
@@ -79,22 +92,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ isAuthenticated: false, user: null });
       return;
     }
-
     set({ isLoading: true });
     try {
       const user = await authService.getMe();
-      set({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } catch (error) {
-      set({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        isLoading: false,
-      });
+      set({ user, isAuthenticated: true, isLoading: false });
+    } catch {
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false });
       authService.logout();
     }
   },

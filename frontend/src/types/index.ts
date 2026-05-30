@@ -13,6 +13,7 @@ export interface User {
   name: string | null;
   avatarUrl?: string | null;
   plan: string;
+  twoFactorEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
 }

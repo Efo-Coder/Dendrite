@@ -18,7 +18,8 @@ const LoginPage = () => {
   const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem(REMEMBERED_EMAIL_KEY));
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
-  const { login, error, isLoading, clearError } = useAuthStore();
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const { login, verifyTwoFactor, error, isLoading, clearError, requiresTwoFactor } = useAuthStore();
   const { themeMode, setThemeMode } = useSettingsStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -67,6 +68,29 @@ const LoginPage = () => {
       setResendDone(true);
     } finally {
       setResendLoading(false);
+    }
+  };
+
+  const handleTwoFactorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await verifyTwoFactor(twoFactorCode);
+      sessionStorage.setItem('justLoggedIn', '1');
+      const pendingPlan = sessionStorage.getItem('pending_plan');
+      if (pendingPlan === 'writer' || pendingPlan === 'author') {
+        sessionStorage.removeItem('pending_plan');
+        try {
+          const { data } = await api.post('/checkout/create-session', { plan: pendingPlan });
+          window.location.href = data.url;
+          return;
+        } catch {
+          navigate('/dashboard');
+        }
+      } else {
+        navigate('/dashboard');
+      }
+    } catch {
+      // Error handled by store
     }
   };
 
@@ -169,6 +193,58 @@ const LoginPage = () => {
         <div className="relative z-10 flex-1 flex items-center justify-center" style={{ padding: '64px 40px' }}>
           <div style={{ width: '100%', maxWidth: '360px' }}>
 
+            {requiresTwoFactor ? (
+              <>
+                <div style={{ marginBottom: '40px', textAlign: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <Logo size="lg" showText={false} style={{ '--color-icon-primary': '#26ad53', '--color-icon-secondary': '#1ee85a' } as React.CSSProperties} />
+                  </div>
+                  <h1 style={{ fontFamily: 'var(--serif-display)', fontSize: '2.3rem', fontWeight: 400, fontStyle: 'italic', color: 'var(--ink)', letterSpacing: '-0.01em', margin: '18px 0 6px', lineHeight: 1.2 }}>
+                    Two-factor auth
+                  </h1>
+                  <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.22em', color: 'var(--ink-dim)', textTransform: 'uppercase', margin: 0 }}>
+                    Enter the code from your authenticator app
+                  </p>
+                </div>
+
+                <form onSubmit={handleTwoFactorSubmit} className="auth-panel" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div>
+                    <label htmlFor="twoFactorCode" style={{ display: 'block', fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-mid)', marginBottom: '8px' }}>
+                      6-digit code
+                    </label>
+                    <input
+                      id="twoFactorCode"
+                      type="text"
+                      inputMode="numeric"
+                      value={twoFactorCode}
+                      onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="input"
+                      placeholder="000000"
+                      required
+                      autoFocus
+                      style={{ letterSpacing: '0.3em', textAlign: 'center', fontSize: '1.2rem' }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading || twoFactorCode.length < 6}
+                    style={{
+                      marginTop: '4px', width: '100%', padding: '11px 16px', borderRadius: '10px',
+                      background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
+                      color: 'oklch(0.15 0.020 60)', border: 'none',
+                      fontFamily: 'var(--serif-display)', fontWeight: 600, fontSize: '15px', letterSpacing: '0.03em',
+                      cursor: isLoading || twoFactorCode.length < 6 ? 'not-allowed' : 'pointer',
+                      opacity: isLoading || twoFactorCode.length < 6 ? 0.6 : 1,
+                      boxShadow: '0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent)',
+                      transition: 'transform .1s, opacity .12s',
+                    }}
+                  >
+                    {isLoading ? 'Verifying…' : 'Verify'}
+                  </button>
+                </form>
+              </>
+            ) : (
+            <>
             {/* Logo + heading */}
             <div style={{ marginBottom: '40px', textAlign: 'center' }}>
               <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -362,6 +438,8 @@ const LoginPage = () => {
                 Register
               </Link>
             </p>
+            </>
+            )}
           </div>
         </div>
       </div>

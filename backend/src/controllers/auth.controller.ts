@@ -5,6 +5,8 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import speakeasy from 'speakeasy';
+import qrcode from 'qrcode';
 import { prisma } from '../index';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.service';
@@ -26,6 +28,7 @@ const USER_SELECT = {
   name: true,
   avatarUrl: true,
   plan: true,
+  twoFactorEnabled: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -94,6 +97,12 @@ export const login = async (req: Request, res: Response) => {
 
     const JWT_SECRET = process.env.JWT_SECRET!;
     const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+
+    if (user.twoFactorEnabled) {
+      const tempToken = jwt.sign({ userId: user.id, twoFactor: true }, JWT_SECRET, { expiresIn: '10m' });
+      return res.json({ requiresTwoFactor: true, tempToken });
+    }
+
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as any });
 
     return res.json({
@@ -301,6 +310,116 @@ export const resetPassword = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('ResetPassword error:', error);
     return res.status(500).json({ error: 'Could not reset password' });
+  }
+};
+
+export const setup2FA = async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.twoFactorEnabled) return res.status(400).json({ error: '2FA is already enabled' });
+
+    const secret = speakeasy.generateSecret({ name: `Dendrite (${user.email})`, length: 20 });
+
+    await prisma.user.update({ where: { id: user.id }, data: { twoFactorSecret: secret.base32 } });
+
+    const otpauthUrl = secret.otpauth_url!;
+    const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl);
+
+    return res.json({ secret: secret.base32, qrCode: qrCodeDataUrl });
+  } catch (error) {
+    console.error('Setup2FA error:', error);
+    return res.status(500).json({ error: 'Could not setup 2FA' });
+  }
+};
+
+export const enable2FA = async (req: AuthRequest, res: Response) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ error: 'Code is required' });
+
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!user || !user.twoFactorSecret) return res.status(400).json({ error: '2FA not set up' });
+
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token: code,
+      window: 1,
+    });
+
+    if (!verified) return res.status(400).json({ error: 'Invalid code' });
+
+    await prisma.user.update({ where: { id: user.id }, data: { twoFactorEnabled: true } });
+
+    return res.json({ message: '2FA enabled successfully' });
+  } catch (error) {
+    console.error('Enable2FA error:', error);
+    return res.status(500).json({ error: 'Could not enable 2FA' });
+  }
+};
+
+export const disable2FA = async (req: AuthRequest, res: Response) => {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Password is required' });
+
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) return res.status(401).json({ error: 'Incorrect password' });
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { twoFactorEnabled: false, twoFactorSecret: null },
+    });
+
+    return res.json({ message: '2FA disabled successfully' });
+  } catch (error) {
+    console.error('Disable2FA error:', error);
+    return res.status(500).json({ error: 'Could not disable 2FA' });
+  }
+};
+
+export const verify2FA = async (req: Request, res: Response) => {
+  try {
+    const { tempToken, code } = req.body;
+    if (!tempToken || !code) return res.status(400).json({ error: 'Token and code are required' });
+
+    const JWT_SECRET = process.env.JWT_SECRET!;
+    let payload: any;
+    try {
+      payload = jwt.verify(tempToken, JWT_SECRET);
+    } catch {
+      return res.status(401).json({ error: 'Invalid or expired session' });
+    }
+
+    if (!payload.twoFactor) return res.status(400).json({ error: 'Invalid token type' });
+
+    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user || !user.twoFactorSecret) return res.status(400).json({ error: 'User not found' });
+
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token: code,
+      window: 1,
+    });
+
+    if (!verified) return res.status(400).json({ error: 'Invalid code' });
+
+    const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as any });
+
+    return res.json({
+      message: 'Login successful',
+      user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, createdAt: user.createdAt },
+      token,
+    });
+  } catch (error) {
+    console.error('Verify2FA error:', error);
+    return res.status(500).json({ error: 'Could not verify 2FA' });
   }
 };
 
