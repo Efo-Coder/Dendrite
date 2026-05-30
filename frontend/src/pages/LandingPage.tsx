@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useSettingsStore } from '../store/useSettingsStore';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { HeaderSection } from '../components/landing/HeaderSection';
@@ -15,7 +16,8 @@ import { SmoothScroll } from '../components/landing/SmoothScroll';
 gsap.registerPlugin(ScrollTrigger);
 
 export default function LandingPage() {
-  const [dark, setDark] = useState(false);
+  const { themeMode, setThemeMode } = useSettingsStore();
+  const dark = themeMode === 'dark';
 
   useEffect(() => {
     const root = document.documentElement;
@@ -52,7 +54,7 @@ export default function LandingPage() {
   return (
     <SmoothScroll>
       <div style={{ background: 'var(--bg)', color: 'var(--ink)', minHeight: '100vh' }}>
-        <HeaderSection dark={dark} onToggleDark={() => setDark(d => !d)} />
+        <HeaderSection dark={dark} onToggleDark={() => setThemeMode(dark ? 'light' : 'dark')} />
         <main id="main-content" style={{ position: 'relative', zIndex: 10, background: 'var(--bg)' }}>
           <HeroSection />
           <FeaturesSection />
