@@ -35,7 +35,7 @@ const RegisterPage = () => {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
-  const { register, error, isLoading } = useAuthStore();
+  const { register, error, isLoading, clearError } = useAuthStore();
   const toast = useToast();
   const prevError = useRef<string | null>(null);
 
@@ -52,6 +52,10 @@ const RegisterPage = () => {
     }
     if (!msg) prevError.current = null;
   }, [localError, error]);
+
+  useEffect(() => {
+    return () => { clearError(); };
+  }, [clearError]);
 
   const { themeMode, setThemeMode } = useSettingsStore();
 
