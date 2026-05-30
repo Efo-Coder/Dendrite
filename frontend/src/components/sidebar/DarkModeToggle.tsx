@@ -19,7 +19,7 @@ const DarkModeToggle = ({ onMouseEnter, onMouseLeave, className }: DarkModeToggl
       onClick={toggleTheme}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={className ?? "icon-btn-md rounded-full flex items-center justify-center transition-colors text-(--ink)"}
+      className={className ?? "icon-btn-md icon-btn-auth rounded-full flex items-center justify-center"}
       title={`Switch to ${themeMode === 'dark' ? 'light' : 'dark'} mode`}
       aria-label={`Switch to ${themeMode === 'dark' ? 'light' : 'dark'} mode`}
     >
