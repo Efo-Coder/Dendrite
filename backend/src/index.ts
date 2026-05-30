@@ -2,7 +2,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import path from 'path';
@@ -19,6 +18,8 @@ import tagRoutes from './routes/tag.routes';
 import attachmentRoutes from './routes/attachment.routes';
 import uploadRoutes from './routes/upload.routes';
 import shareRoutes from './routes/share.routes';
+import checkoutRoutes from './routes/checkout.routes';
+import { handleWebhook } from './controllers/checkout.controller';
 
 import { setupYjsConnection } from './wsHandler';
 
@@ -42,16 +43,13 @@ const allowedOrigins = process.env.CORS_ORIGIN
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(helmet());
+
+// Stripe webhook needs raw body — must be registered before express.json()
+app.post('/api/checkout/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Zu viele Versuche. Bitte in 15 Minuten erneut versuchen.' },
-});
 app.use('/uploads', (_req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
@@ -61,7 +59,8 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/checkout', checkoutRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/tags', tagRoutes);

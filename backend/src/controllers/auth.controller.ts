@@ -25,6 +25,7 @@ const USER_SELECT = {
   email: true,
   name: true,
   avatarUrl: true,
+  plan: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -34,16 +35,16 @@ export const register = async (req: Request, res: Response) => {
     const { email, password, name } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email und Password sind erforderlich' });
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
     if (password.length < 8) {
-      return res.status(400).json({ error: 'Das Passwort muss mindestens 8 Zeichen lang sein' });
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ error: 'Email bereits registriert' });
+      return res.status(400).json({ error: 'Email already registered' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -62,10 +63,10 @@ export const register = async (req: Request, res: Response) => {
 
     await sendVerificationEmail(email, verificationToken);
 
-    return res.status(201).json({ message: 'Registrierung erfolgreich. Bitte bestätige deine E-Mail-Adresse.' });
+    return res.status(201).json({ message: 'Registration successful. Please verify your email address.' });
   } catch (error) {
     console.error('Register error:', error);
-    return res.status(500).json({ error: 'Fehler bei der Registrierung' });
+    return res.status(500).json({ error: 'Registration failed' });
   }
 };
 
@@ -74,21 +75,21 @@ export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email und Password sind erforderlich' });
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res.status(401).json({ error: 'Ungültige Anmeldedaten' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return res.status(401).json({ error: 'Ungültige Anmeldedaten' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     if (!user.isVerified) {
-      return res.status(403).json({ error: 'Bitte bestätige zuerst deine E-Mail-Adresse.' });
+      return res.status(403).json({ error: 'Please verify your email address first.' });
     }
 
     const JWT_SECRET = process.env.JWT_SECRET!;
@@ -96,13 +97,13 @@ export const login = async (req: Request, res: Response) => {
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as any });
 
     return res.json({
-      message: 'Login erfolgreich',
+      message: 'Login successful',
       user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, createdAt: user.createdAt },
       token,
     });
   } catch (error) {
     console.error('Login error:', error);
-    return res.status(500).json({ error: 'Fehler beim Login' });
+    return res.status(500).json({ error: 'Login failed' });
   }
 };
 
@@ -117,7 +118,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     return res.json({ user });
   } catch (error) {
     console.error('UpdateProfile error:', error);
-    return res.status(500).json({ error: 'Profil konnte nicht aktualisiert werden' });
+    return res.status(500).json({ error: 'Could not update profile' });
   }
 };
 
@@ -125,41 +126,41 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
   try {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'Aktuelles und neues Passwort sind erforderlich' });
+      return res.status(400).json({ error: 'Current and new password are required' });
     }
     if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'Das neue Passwort muss mindestens 8 Zeichen lang sein' });
+      return res.status(400).json({ error: 'New password must be at least 8 characters' });
     }
 
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!user) return res.status(404).json({ error: 'User nicht gefunden' });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     const isValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isValid) return res.status(401).json({ error: 'Aktuelles Passwort ist falsch' });
+    if (!isValid) return res.status(401).json({ error: 'Current password is incorrect' });
 
     const hashed = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({ where: { id: req.userId }, data: { password: hashed } });
 
-    return res.json({ message: 'Passwort erfolgreich geändert' });
+    return res.json({ message: 'Password changed successfully' });
   } catch (error) {
     console.error('ChangePassword error:', error);
-    return res.status(500).json({ error: 'Passwort konnte nicht geändert werden' });
+    return res.status(500).json({ error: 'Could not change password' });
   }
 };
 
 export const deleteAccount = async (req: AuthRequest, res: Response) => {
   try {
     await prisma.user.delete({ where: { id: req.userId } });
-    return res.json({ message: 'Konto erfolgreich gelöscht' });
+    return res.json({ message: 'Account deleted successfully' });
   } catch (error) {
     console.error('DeleteAccount error:', error);
-    return res.status(500).json({ error: 'Konto konnte nicht gelöscht werden' });
+    return res.status(500).json({ error: 'Could not delete account' });
   }
 };
 
 export const uploadAvatar = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'Kein Bild hochgeladen' });
+    if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
 
     const existing = await prisma.user.findUnique({ where: { id: req.userId }, select: { avatarUrl: true } });
     if (existing?.avatarUrl) safeDeleteUpload(existing.avatarUrl);
@@ -176,7 +177,7 @@ export const uploadAvatar = async (req: AuthRequest, res: Response) => {
       try { fs.unlinkSync(req.file.path); } catch {}
     }
     console.error('UploadAvatar error:', error);
-    return res.status(500).json({ error: 'Avatar konnte nicht hochgeladen werden' });
+    return res.status(500).json({ error: 'Could not upload avatar' });
   }
 };
 
@@ -192,19 +193,19 @@ export const deleteAvatar = async (req: AuthRequest, res: Response) => {
     return res.json({ user });
   } catch (error) {
     console.error('DeleteAvatar error:', error);
-    return res.status(500).json({ error: 'Avatar konnte nicht gelöscht werden' });
+    return res.status(500).json({ error: 'Could not delete avatar' });
   }
 };
 
 export const resendVerification = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ error: 'E-Mail ist erforderlich' });
+    if (!email) return res.status(400).json({ error: 'Email is required' });
 
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || user.isVerified) {
-      return res.json({ message: 'Falls die E-Mail existiert und noch nicht bestätigt ist, wurde eine neue E-Mail gesendet.' });
+      return res.json({ message: 'If the email exists and is not yet verified, a new email has been sent.' });
     }
 
     const verificationToken = crypto.randomBytes(32).toString('hex');
@@ -217,10 +218,10 @@ export const resendVerification = async (req: Request, res: Response) => {
 
     await sendVerificationEmail(email, verificationToken);
 
-    return res.json({ message: 'Falls die E-Mail existiert und noch nicht bestätigt ist, wurde eine neue E-Mail gesendet.' });
+    return res.json({ message: 'If the email exists and is not yet verified, a new email has been sent.' });
   } catch (error) {
     console.error('ResendVerification error:', error);
-    return res.status(500).json({ error: 'E-Mail konnte nicht gesendet werden' });
+    return res.status(500).json({ error: 'Could not send email' });
   }
 };
 
@@ -259,12 +260,12 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User nicht gefunden' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     return res.json({ user });
   } catch (error) {
     console.error('GetMe error:', error);
-    return res.status(500).json({ error: 'Fehler beim Abrufen der User-Daten' });
+    return res.status(500).json({ error: 'Could not fetch user data' });
   }
 };

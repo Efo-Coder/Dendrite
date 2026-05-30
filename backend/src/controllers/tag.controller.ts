@@ -4,16 +4,21 @@ import { AuthRequest } from '../middleware/auth.middleware';
 
 export const getAllTags = async (req: AuthRequest, res: Response) => {
   try {
-    const tags = await prisma.tag.findMany({
+    const rawTags = await prisma.tag.findMany({
       where: { userId: req.userId },
       include: {
-        notes: {
-          where: { isDeleted: false, isArchived: false },
-          select: { id: true },
+        noteTags: {
+          where: { note: { isDeleted: false, isArchived: false } },
+          select: { noteId: true },
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: { createdAt: 'asc' },
     });
+
+    const tags = rawTags.map(({ noteTags, ...tag }) => ({
+      ...tag,
+      notes: noteTags.map(nt => ({ id: nt.noteId })),
+    }));
 
     return res.json({ tags });
   } catch (error) {
@@ -28,7 +33,6 @@ export const getTagById = async (req: AuthRequest, res: Response) => {
 
     const tag = await prisma.tag.findFirst({
       where: { id, userId: req.userId },
-      include: { notes: true },
     });
 
     if (!tag) {
