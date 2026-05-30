@@ -247,31 +247,17 @@ const LoginPage = () => {
                 </div>
 
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
-                    <label htmlFor="password" style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: '10px',
-                      letterSpacing: '0.18em',
-                      textTransform: 'uppercase',
-                      color: 'var(--ink-low)',
-                    }}>
-                      Password
-                    </label>
-                    <Link
-                      to="/forgot-password"
-                      style={{
-                        fontFamily: 'var(--mono)',
-                        fontSize: '9px',
-                        letterSpacing: '0.12em',
-                        textTransform: 'uppercase',
-                        color: 'var(--ink-dim)',
-                        transition: 'color .15s',
-                      }}
-                      className="hover:text-(--accent)"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
+                  <label htmlFor="password" style={{
+                    display: 'block',
+                    fontFamily: 'var(--mono)',
+                    fontSize: '10px',
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    color: 'var(--ink-low)',
+                    marginBottom: '8px',
+                  }}>
+                    Password
+                  </label>
                   <div style={{ position: 'relative' }}>
                     <input
                       id="password"
@@ -292,6 +278,20 @@ const LoginPage = () => {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  <Link
+                    to="/forgot-password"
+                    style={{
+                      display: 'inline-block',
+                      marginTop: '8px',
+                      fontFamily: 'var(--serif-body)',
+                      fontSize: '13px',
+                      color: 'var(--ink-dim)',
+                      transition: 'color .15s',
+                    }}
+                    className="hover:text-(--accent)"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
 
                 {/* Remember me */}
