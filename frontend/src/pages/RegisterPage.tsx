@@ -62,7 +62,7 @@ const RegisterPage = () => {
     if (resendLoading) return;
     setResendLoading(true);
     setResendDone(false);
-    const [result] = await Promise.allSettled([
+    await Promise.allSettled([
       api.post('/auth/resend-verification', { email }),
       new Promise(res => setTimeout(res, 1200)),
     ]);
