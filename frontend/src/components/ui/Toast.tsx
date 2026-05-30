@@ -78,7 +78,9 @@ const Toast = ({ id, type, message, duration = 3000, onClose }: ToastProps) => {
         <div
           className={clsx('h-full w-full', progressColors[type])}
           style={{
-            animation: `progressBar ${duration}ms linear forwards`
+            transformOrigin: 'left',
+            willChange: 'transform',
+            animation: `progressBar ${duration}ms linear forwards`,
           }}
         />
       </div>
