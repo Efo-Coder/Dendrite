@@ -102,7 +102,7 @@ const ColorPickerPortal = ({
                 onClick={() => { onChange(value); onClose(); }}
                 title={label}
                 className={clsx(
-                  'w-6 h-6 rounded-md transition-transform hover:scale-110 flex-shrink-0',
+                  'w-6 h-6 rounded-md transition-transform hover:scale-110 shrink-0',
                   color === value ? 'ring-2 ring-brand-primary' : 'ring-1 ring-white/20'
                 )}
                 style={{
@@ -114,9 +114,9 @@ const ColorPickerPortal = ({
             ))}
           </div>
 
-          <div className="flex items-center gap-1 flex-wrap min-h-[1.5rem]">
+          <div className="flex items-center gap-1 flex-wrap min-h-6">
             {favorites.map((fav) => (
-              <div key={fav} className="relative group/fav w-6 h-6 flex-shrink-0">
+              <div key={fav} className="relative group/fav w-6 h-6 shrink-0">
                 <button
                   onClick={() => { onChange(fav); onClose(); }}
                   title={fav}
@@ -139,7 +139,7 @@ const ColorPickerPortal = ({
               onClick={addToFavorites}
               title="Add current color to favorites"
               className={clsx(
-                'w-6 h-6 rounded-md ring-1 ring-(--ink-low) flex items-center justify-center transition-colors flex-shrink-0',
+                'w-6 h-6 rounded-md ring-1 ring-(--ink-low) flex items-center justify-center transition-colors shrink-0',
                 canAdd
                   ? 'text-(--ink-low) hover:text-(--ink) hover:ring-(--ink)'
                   : 'text-(--ink-low) opacity-30 pointer-events-none'
@@ -172,7 +172,7 @@ const ColorPickerPortal = ({
               onClick={openEyeDropper}
               title="Eyedropper"
               className={clsx(
-                'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 flex-shrink-0',
+                'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 shrink-0',
                 !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-(--ink-low)' : 'text-(--ink-low) hover:text-(--ink)'
               )}
             >
