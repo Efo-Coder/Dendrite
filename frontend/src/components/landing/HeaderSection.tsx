@@ -94,8 +94,8 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
           {onToggleDark && (
             <button
               onClick={onToggleDark}
-              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-transparent text-(--ink-mid) hover:text-(--ink) hover:bg-(--surface) hover:rotate-[20deg] transition-all duration-200"
-              style={{ border: '0.5px solid var(--line)', cursor: 'pointer', flexShrink: 0 }}
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full icon-btn-auth"
+              style={{ cursor: 'pointer' }}
               title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
