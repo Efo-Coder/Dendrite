@@ -47,6 +47,7 @@ const LoginPage = () => {
   }, [error]);
 
   useEffect(() => {
+    clearError();
     return () => { clearError(); };
   }, [clearError]);
 
