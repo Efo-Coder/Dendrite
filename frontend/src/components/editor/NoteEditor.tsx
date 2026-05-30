@@ -1,10 +1,9 @@
 ﻿import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import TurndownService from 'turndown';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { getNoteTitle } from '../noteList/noteListUtils';
-import { useGlassPill } from '../../hooks/useGlassPill';
 import { Note } from '../../types';
 import { useNoteStore } from '../../store/useNoteStore';
 import { useFolderStore } from '../../store/useFolderStore';
@@ -14,13 +13,12 @@ import { useToast } from '../ui/ToastContainer';
 import RichTextToolbar from './RichTextToolbar';
 import LexicalEditorWrapper from './LexicalEditorWrapper';
 import ShareNoteModal from '../modals/ShareNoteModal';
+import { Icons } from '../ui/Icons';
 import {
   Pin,
-  Star,
   Trash2,
   FolderOpen,
   Tag as TagIcon,
-  Clock,
   Archive,
   ArchiveRestore,
   RotateCcw,
@@ -35,6 +33,7 @@ import {
   Printer,
   Copy,
   Users,
+  PanelLeft,
 } from 'lucide-react';
 import clsx from 'clsx';
 import TagSelectionModal from '../modals/TagSelectionModal';
@@ -43,6 +42,8 @@ import Modal from '../modals/Modal';
 interface NoteEditorProps {
   note: Note;
   onNoteUpdate?: () => void;
+  onToggleSidebar?: () => void;
+  sidebarCollapsed?: boolean;
 }
 
 function formatRelativeDate(dateString: string): string {
@@ -51,18 +52,22 @@ function formatRelativeDate(dateString: string): string {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 86_400_000);
   const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const timeStr = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-  if (dateOnly.getTime() === today.getTime()) return `Heute, ${timeStr}`;
-  if (dateOnly.getTime() === yesterday.getTime()) return `Gestern, ${timeStr}`;
-  return `${date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}, ${timeStr}`;
+  const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  if (dateOnly.getTime() === today.getTime()) return `Today, ${timeStr}`;
+  if (dateOnly.getTime() === yesterday.getTime()) return `Yesterday, ${timeStr}`;
+  return `${date.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}, ${timeStr}`;
 }
 
-const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
+const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: NoteEditorProps) => {
   const { updateNote, deleteNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, setCurrentNote, setNoteTitleOptimistic } = useNoteStore();
   const { folders } = useFolderStore();
-  const { tags } = useTagStore();
+  const { tags, createTag } = useTagStore();
   const { user } = useAuthStore();
   const toast = useToast();
+
+  const [addingTag, setAddingTag] = useState(false);
+  const [newTag, setNewTag] = useState('');
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
 
   const [title, setTitle] = useState(note.title ?? '');
   const titleRef = useRef(note.title ?? '');
@@ -83,6 +88,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const handleContentChange = useCallback((html: string) => {
     contentRef.current = html;
     setContent(html);
+    setIsSaving(true);
   }, []);
   const [folderMenuPos, setFolderMenuPos] = useState<{ x: number; y: number; anchorTop: number } | null>(null);
   const [tagMenuPos, setTagMenuPos] = useState<{ x: number; y: number; anchorTop: number } | null>(null);
@@ -92,31 +98,16 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [isCompact, setIsCompact] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
-  const [isNarrow, setIsNarrow] = useState(false);
   const [focusWritingMode, setFocusWritingMode] = useState(false);
   const [showToolbarTagModal, setShowToolbarTagModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
 
-  const { pill: toolbarPill, onEnter: onToolbarEnter, onLeave: onToolbarLeave } = useGlassPill(toolbarRef);
   const overflowPopupRef = useRef<HTMLDivElement>(null);
-  const { pill: overflowPill, onEnter: onOverflowEnter, onLeave: onOverflowLeave } = useGlassPill(overflowPopupRef);
-
-  // Folder/Tag/Export context menu refs + pills
   const folderMenuRef = useRef<HTMLDivElement>(null);
   const tagMenuRef = useRef<HTMLDivElement>(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
-  const { pill: folderPill, onEnter: onFolderEnter, onLeave: onFolderLeave } = useGlassPill(folderMenuRef);
-  const { pill: tagPill, onEnter: onTagEnter, onLeave: onTagLeave } = useGlassPill(tagMenuRef);
-  const { pill: exportPill, onEnter: onExportEnter, onLeave: onExportLeave } = useGlassPill(exportMenuRef);
-
-  const focusExitWrapRef = useRef<HTMLDivElement>(null);
-  const { pill: focusExitPill, onEnter: onFocusExitEnter, onLeave: onFocusExitLeave } = useGlassPill(focusExitWrapRef);
-
-  useEffect(() => {
-    if (!focusWritingMode) onFocusExitLeave();
-  }, [focusWritingMode, onFocusExitLeave]);
 
   useEffect(() => {
     return () => {
@@ -146,7 +137,6 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
     const observer = new ResizeObserver(([entry]) => {
       const w = entry.contentRect.width;
       setIsCompact(w < 480);
-      setIsNarrow(w < 560);
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -170,7 +160,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
     const timer = setTimeout(async () => {
       const shouldSaveContent = content !== note.content;
       const shouldSaveTitle = title !== lastSavedTitleRef.current;
-      if (!shouldSaveContent && !shouldSaveTitle) return;
+      if (!shouldSaveContent && !shouldSaveTitle) { setIsSaving(false); return; }
       const updates: { content?: string; title?: string } = {};
       if (shouldSaveContent) updates.content = content;
       if (shouldSaveTitle) updates.title = title;
@@ -183,7 +173,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
       } finally {
         setIsSaving(false);
       }
-    }, 1000);
+    }, 700);
     return () => clearTimeout(timer);
   }, [content, title]);
 
@@ -192,46 +182,71 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
     try {
       await updateNote(note.id, { folderId });
       setFolderMenuPos(null);
-      toast.info('Notiz verschoben');
+      toast.info('Note moved');
       if (onNoteUpdate) onNoteUpdate();
     } catch (error) {
-      toast.error('Fehler beim Verschieben');
+      toast.error('Error moving note');
     }
   };
 
   const handleToggleTag = async (tagId: string) => {
     const currentTagIds = note.tags?.map(t => t.id) || [];
-    const newTagIds = currentTagIds.includes(tagId)
-      ? currentTagIds.filter(id => id !== tagId)
-      : [...currentTagIds, tagId];
+    const isAdding = !currentTagIds.includes(tagId);
+    if (isAdding && currentTagIds.length >= 4) { toast.error('Maximum 4 tags per note'); return; }
+    const newTagIds = isAdding
+      ? [...currentTagIds, tagId]
+      : currentTagIds.filter(id => id !== tagId);
 
     try {
       await updateNote(note.id, { tags: newTagIds });
-      toast.info('Tags aktualisiert');
+      toast.info('Tags updated');
       if (onNoteUpdate) onNoteUpdate();
     } catch (error) {
-      toast.error('Fehler beim Aktualisieren der Tags');
+      toast.error('Error updating tags');
     }
   };
+
+  const submitInlineTagWithName = async (name: string) => {
+    const cleanName = name.trim().replace(/^#/, '');
+    setNewTag('');
+    setAddingTag(false);
+    setActiveSuggestion(-1);
+    if (!cleanName) return;
+    if (cleanName.length > 20) { toast.error('Tag name must be 20 characters or fewer'); return; }
+    try {
+      const existing = tags.find(t => t.name.toLowerCase() === cleanName.toLowerCase());
+      const tagId = existing ? existing.id : (await createTag({ name: cleanName })).id;
+      const currentTagIds = note.tags?.map(t => t.id) || [];
+      if (!currentTagIds.includes(tagId)) {
+        if (currentTagIds.length >= 4) { toast.error('Maximum 4 tags per note'); return; }
+        await updateNote(note.id, { tags: [...currentTagIds, tagId] });
+        if (onNoteUpdate) onNoteUpdate();
+      }
+    } catch {
+      toast.error('Error adding tag');
+    }
+  };
+
+  const submitInlineTag = () => submitInlineTagWithName(newTag);
 
   const handleDelete = async () => {
     if (note.isDeleted) {
       try {
         await deleteNote(note.id);
         setCurrentNote(null);
-        toast.error('Notiz endgültig gelöscht');
+        toast.error('Note permanently deleted');
         if (onNoteUpdate) onNoteUpdate();
       } catch (error) {
-        toast.error('Fehler beim Löschen');
+        toast.error('Error deleting note');
       }
     } else {
       try {
         await toggleTrash(note.id);
         setCurrentNote(null);
-        toast.error('Notiz gelöscht');
+        toast.error('Note deleted');
         if (onNoteUpdate) onNoteUpdate();
       } catch (error) {
-        toast.error('Fehler beim Löschen der Notiz');
+        toast.error('Error deleting note');
       }
     }
   };
@@ -239,10 +254,10 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const handleArchive = async () => {
     try {
       await toggleArchive(note.id);
-      toast.info('Notiz archiviert');
+      toast.info('Note archived');
       if (onNoteUpdate) onNoteUpdate();
     } catch (error) {
-      toast.error('Fehler beim Archivieren');
+      toast.error('Error archiving note');
     }
   };
 
@@ -250,14 +265,14 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
     try {
       if (note.isDeleted) {
         await toggleTrash(note.id);
-        toast.success('Notiz wiederhergestellt');
+        toast.success('Note restored');
       } else if (note.isArchived) {
         await toggleArchive(note.id);
-        toast.success('Notiz aus Archiv wiederhergestellt');
+        toast.success('Note unarchived');
       }
       if (onNoteUpdate) onNoteUpdate();
     } catch (error) {
-      toast.error('Fehler beim Wiederherstellen');
+      toast.error('Error restoring note');
     }
   };
 
@@ -281,17 +296,17 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
 
   const handleExportMarkdown = () => {
     const md = makeTurndown().turndown(content || '');
-    downloadFile(`${title || 'Notiz'}.md`, `# ${title}\n\n${md}`, 'text/markdown');
+    downloadFile(`${title || 'Note'}.md`, `# ${title}\n\n${md}`, 'text/markdown');
     setExportMenuPos(null);
-    toast.success('Markdown exportiert');
+    toast.success('Markdown exported');
   };
 
   const handleExportHtml = () => {
     const safeTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const html = `<!DOCTYPE html>\n<html lang="de">\n<head>\n<meta charset="UTF-8">\n<title>${safeTitle}</title>\n<style>body{font-family:system-ui,sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem;line-height:1.6}img{max-width:100%}</style>\n</head>\n<body>\n<h1>${safeTitle}</h1>\n${content}\n</body>\n</html>`;
-    downloadFile(`${title || 'Notiz'}.html`, html, 'text/html');
+    downloadFile(`${title || 'Note'}.html`, html, 'text/html');
     setExportMenuPos(null);
-    toast.success('HTML exportiert');
+    toast.success('HTML exported');
   };
 
   const handlePrint = () => {
@@ -307,7 +322,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const handleCopyMarkdown = async () => {
     const md = makeTurndown().turndown(content || '');
     await navigator.clipboard.writeText(`# ${title}\n\n${md}`);
-    toast.success('Markdown kopiert');
+    toast.success('Markdown copied');
     setExportMenuPos(null);
   };
 
@@ -318,7 +333,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
       try { await navigator.share({ title, text }); } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(text);
-      toast.success('In Zwischenablage kopiert');
+      toast.success('Copied to clipboard');
     }
     setExportMenuPos(null);
   };
@@ -400,7 +415,20 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const currentFolder = note.folderId ? folders.find(f => f.id === note.folderId) : null;
 
   const titleHeader = (
-    <div className="mb-1 mt-4">
+    <>
+      <div className="editor-meta">
+        {currentFolder && <span className="editor-breadcrumb">{currentFolder.name}</span>}
+        {currentFolder && <span className="editor-sep" />}
+        <span>{formatRelativeDate(note.updatedAt)}</span>
+        {!isInTrash && (
+          <span className="editor-save-status">
+            {isSaving
+              ? <><span className="editor-save-dot" style={{ background: 'var(--ink-dim)', boxShadow: 'none' }} /> Saving…</>
+              : <><span className="editor-save-dot" /> Saved</>
+            }
+          </span>
+        )}
+      </div>
       <textarea
         ref={titleAreaRef}
         value={title}
@@ -409,6 +437,7 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
           titleRef.current = v;
           setTitle(v);
           setNoteTitleOptimistic(note.id, v);
+          setIsSaving(true);
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
@@ -416,59 +445,118 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             (document.querySelector('.editor-input') as HTMLElement | null)?.focus();
           }
         }}
-        placeholder="Titel..."
+        placeholder="Untitled"
         disabled={isInTrash}
         rows={1}
         spellCheck
-        className="w-full bg-transparent border-none outline-none resize-none overflow-hidden disabled:opacity-60 placeholder:opacity-40"
-        style={{
-          fontSize: '3em',
-          fontWeight: 500,
-          lineHeight: 1.2,
-          height: '1.2em',
-          fontFamily: 'var(--font-display), "IBM Plex Serif", Georgia, serif',
-          color: 'var(--color-text-primary)',
-          padding: 0,
-          margin: 0,
-        }}
+        className="editor-title"
+        style={{ height: 'auto', opacity: isInTrash ? 0.6 : 1 }}
       />
-      <div className="flex h-4 items-center gap-1.5 mt-1 mb-4 select-none text-[0.95rem] leading-none" style={{ color: 'color-mix(in srgb, var(--color-text-muted) 90%, transparent)' }}>
-        {currentFolder && (
-          <>
-            <FolderOpen className="w-3 h-3 flex-shrink-0" style={{ color: currentFolder.color || undefined }} />
-            <span style={{ color: currentFolder.color || undefined }}>{currentFolder.name}</span>
-            <span className="opacity-50 mx-0.5">·</span>
-          </>
-        )}
-        <span>{formatRelativeDate(note.updatedAt)}</span>
+      <div className="editor-byline">
+        <div className="editor-tags">
+          {note.tags?.map(t => (
+            <span key={t.id} className="editor-tag" style={(() => { const live = tags.find(x => x.id === t.id); const c = live?.color ?? t.color; return { color: c, borderColor: `color-mix(in srgb, ${c} 35%, transparent)`, background: `color-mix(in srgb, ${c} 8%, transparent)` }; })()}>
+              {t.name}
+              {!isInTrash && (
+                <span className="tag-remove" onClick={() => handleToggleTag(t.id)}>×</span>
+              )}
+            </span>
+          ))}
+{!isInTrash && (note.tags?.length ?? 0) < 4 && (
+            addingTag ? (() => {
+              const tagSuggestions = newTag.length > 0
+                ? tags.filter(t =>
+                    !note.tags?.some(nt => nt.id === t.id) &&
+                    t.name.toLowerCase().startsWith(newTag.toLowerCase())
+                  )
+                : [];
+              return (
+                <div className="editor-tag-wrapper">
+                  <input
+                    autoFocus
+                    className="editor-tag-input"
+                    value={newTag}
+                    maxLength={20}
+                    onChange={e => { setNewTag(e.target.value); setActiveSuggestion(-1); }}
+                    onBlur={submitInlineTag}
+                    onKeyDown={e => {
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setActiveSuggestion(i => Math.min(i + 1, tagSuggestions.length - 1));
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setActiveSuggestion(i => Math.max(i - 1, -1));
+                      } else if (e.key === 'Tab' && tagSuggestions.length > 0) {
+                        e.preventDefault();
+                        setNewTag(tagSuggestions[0].name);
+                        setActiveSuggestion(-1);
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (activeSuggestion >= 0 && tagSuggestions[activeSuggestion]) {
+                          submitInlineTagWithName(tagSuggestions[activeSuggestion].name);
+                        } else {
+                          submitInlineTag();
+                        }
+                      } else if (e.key === 'Escape') {
+                        setAddingTag(false);
+                        setNewTag('');
+                        setActiveSuggestion(-1);
+                      }
+                    }}
+                  />
+                  {tagSuggestions.length > 0 && (
+                    <div className="editor-tag-suggestions">
+                      {tagSuggestions.map((tag, i) => (
+                        <button
+                          key={tag.id}
+                          tabIndex={-1}
+                          className={clsx('editor-tag-suggestion', i === activeSuggestion && 'active')}
+                          onMouseDown={e => {
+                            e.preventDefault();
+                            submitInlineTagWithName(tag.name);
+                          }}
+                        >
+                          <TagIcon style={{ width: 10, height: 10, color: tag.color, flexShrink: 0 }} />
+                          {tag.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })() : (
+              <button type="button" className="editor-tag-add" onClick={() => setAddingTag(true)}>
+                + Add tag
+              </button>
+            )
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 
   // Reusable button renderers (just the trigger, menu rendered via portal)
-  const folderButton = (enterFn?: (e: React.MouseEvent<HTMLButtonElement>) => void) => (
+  const folderButton = () => (
     <button
       onClick={openFolderMenu}
-      onMouseEnter={enterFn}
       className={clsx(
-        'icon-btn-md rounded-lg transition-colors relative z-10',
-        folderMenuPos ? 'text-text-primary' : ''
+        'icon-btn-md rounded-lg transition-colors',
+        folderMenuPos ? 'text-(--ink)' : ''
       )}
-      title="Verschieben in Ordner"
+      title="Move to folder"
     >
       <FolderOpen className="w-4 h-4" />
     </button>
   );
 
-  const tagButton = (enterFn?: (e: React.MouseEvent<HTMLButtonElement>) => void) => (
+  const tagButton = () => (
     <button
       onClick={openTagMenu}
-      onMouseEnter={enterFn}
       className={clsx(
-        'icon-btn-md rounded-lg transition-colors relative z-10',
-        tagMenuPos ? 'text-brand-primary' : ''
+        'icon-btn-md rounded-lg transition-colors',
+        tagMenuPos ? 'text-(--accent)' : ''
       )}
-      title="Tag hinzufügen"
+      title="Add tag"
     >
       <TagIcon className="w-4 h-4" />
     </button>
@@ -477,245 +565,185 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
   const handleToolbarTags = async (tagIds: string[]) => {
     try {
       await updateNote(note.id, { tags: tagIds });
-      toast.info('Tags aktualisiert');
+      toast.info('Tags updated');
       if (onNoteUpdate) onNoteUpdate();
     } catch {
-      toast.error('Fehler beim Aktualisieren der Tags');
+      toast.error('Error updating tags');
     }
     setShowToolbarTagModal(false);
   };
 
   return (
-    <div className={clsx('relative flex h-full flex-col bg-transparent', focusWritingMode && 'bg-transparent')}>
-      <div
+    <motion.div
+      className="relative h-full flex flex-col bg-transparent"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+    >
+      <motion.div
         className={clsx(
-          'relative z-10 transition-all duration-500 ease-out',
-          focusWritingMode ? 'max-h-0 overflow-hidden opacity-0 pointer-events-none' : 'max-h-16 overflow-visible opacity-100'
+          'relative z-10 transition-[max-height,opacity] duration-500 ease-out pt-4.5',
+          focusWritingMode ? 'max-h-0 overflow-hidden opacity-0 pointer-events-none' : 'max-h-15.5 overflow-visible opacity-100'
         )}
+        initial={{ y: 6 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
       >
-        <div
-          ref={toolbarRef}
-          className="relative flex h-11 items-center justify-between bg-transparent px-6 sm:px-12"
-          onMouseLeave={onToolbarLeave}
-        >
-          {toolbarPill && (
             <div
-              className="glass-pill"
-              style={{ left: toolbarPill.left, top: toolbarPill.top, width: toolbarPill.width, height: toolbarPill.height, opacity: toolbarPill.visible ? 1 : 0 }}
-            />
-          )}
-          {/* Left side */}
-          <div className="flex items-center gap-1">
-            {!isInTrash && !isArchived && (
-              <>
-                <button
-                  onClick={async () => { await togglePin(note.id); toast.success(note.isPinned ? 'Anheften entfernt' : 'Notiz angeheftet'); }}
-                  onMouseEnter={(e) => onToolbarEnter(e, note.isPinned)}
-                  className={clsx(
-                    'icon-btn-md rounded-lg transition-colors relative z-10',
-                    note.isPinned ? 'text-brand-primary' : ''
-                  )}
-                  title="Notiz anheften"
-                >
-                  <Pin className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={async () => { await toggleFavorite(note.id); toast.info(note.isFavorite ? 'Aus Favoriten entfernt' : 'Zu Favoriten hinzugefügt'); }}
-                  onMouseEnter={(e) => onToolbarEnter(e, false)}
-                  className={clsx(
-                    'icon-btn-md rounded-lg transition-colors relative z-10',
-                    note.isFavorite ? 'text-yellow-500' : ''
-                  )}
-                  title="Zu Favoriten hinzufügen"
-                >
-                  <Star className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={handleArchive}
-                  onMouseEnter={(e) => onToolbarEnter(e, false)}
-                  className="icon-btn-md rounded-lg transition-colors relative z-10"
-                  title="Archivieren"
-                >
-                  <Archive className="w-4 h-4" />
-                </button>
-
-                {!isCompact ? (
-                  <>
-                    {folderButton((e) => onToolbarEnter(e, false))}
-                    {tagButton((e) => onToolbarEnter(e, false))}
-                  </>
-                ) : (
+              ref={toolbarRef}
+              className="relative flex h-11 items-center justify-between bg-transparent px-6 sm:px-12 pb-5"
+            >
+              {/* Left side */}
+              <div className="flex items-center gap-1">
+                {onToggleSidebar && (
                   <button
-                    onClick={() => setShowOverflow(v => !v)}
-                    onMouseEnter={(e) => onToolbarEnter(e, showOverflow)}
-                    className={clsx(
-                      'icon-btn-md rounded-lg transition-colors flex-shrink-0 mr-2 relative z-10',
-                      showOverflow ? 'text-brand-primary' : ''
-                    )}
-                    title="Weitere Optionen"
+                    type="button"
+                    onClick={onToggleSidebar}
+                    className={clsx('icon-btn-md rounded-lg transition-colors', sidebarCollapsed && 'text-(--accent)')}
+                    title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
                   >
-                    <MoreHorizontal className="w-4 h-4" />
+                    <PanelLeft className="w-4 h-4" />
                   </button>
                 )}
-              </>
-            )}
+                {!isInTrash && !isArchived && (
+                  <>
+                    <button
+                      onClick={async () => { await togglePin(note.id); toast.success(note.isPinned ? 'Unpinned' : 'Note pinned'); }}
+                      className={clsx(
+                        'icon-btn-md rounded-lg transition-colors',
+                        note.isPinned ? 'text-(--accent)' : ''
+                      )}
+                      title="Pin note"
+                    >
+                      <Pin className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={async () => { await toggleFavorite(note.id); toast.info(note.isFavorite ? 'Removed from favorites' : 'Added to favorites'); }}
+                      className="icon-btn-md rounded-lg transition-colors"
+                      style={note.isFavorite ? { color: 'var(--accent)' } : undefined}
+                      title="Add to favorites"
+                    >
+                      {note.isFavorite ? <Icons.starFill size={16} /> : <Icons.star size={16} />}
+                    </button>
+                    <button
+                      onClick={handleArchive}
+                      className="icon-btn-md rounded-lg transition-colors"
+                      title="Archive"
+                    >
+                      <Archive className="w-4 h-4" />
+                    </button>
 
-            {isArchived && (
-              <button onClick={handleRestore} onMouseEnter={(e) => onToolbarEnter(e, false)} className="icon-btn-md rounded-lg transition-colors relative z-10" title="Aus Archiv wiederherstellen">
-                <ArchiveRestore className="w-4 h-4" />
-              </button>
-            )}
-            {isInTrash && (
-              <button onClick={handleRestore} onMouseEnter={(e) => onToolbarEnter(e, false)} className="icon-btn-md rounded-lg transition-colors relative z-10" title="Wiederherstellen">
-                <RotateCcw className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1">
-            
-            {!isInTrash && (
-              <div className="flex items-center space-x-2 text-sm text-text-muted min-w-0 mr-10">
-                {!isNarrow && (
-                  <span className="truncate flex items-center gap-1">
-                    {isSaving ? (
+                    {!isCompact ? (
                       <>
-                        <Clock className="w-4 h-4 flex-shrink-0 text-brand-primary" />
-                        Wird gespeichert...
+                        {folderButton()}
+                        {tagButton()}
                       </>
                     ) : (
-                      <>
-                        <Check className="w-4 h-4 flex-shrink-0 text-brand-primary" />
-                        Gespeichert
-                      </>
+                      <button
+                        onClick={() => setShowOverflow(v => !v)}
+                        className={clsx(
+                          'icon-btn-md rounded-lg transition-colors shrink-0 mr-2',
+                          showOverflow ? 'text-(--accent)' : ''
+                        )}
+                        title="More options"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
                     )}
-                  </span>
+                  </>
+                )}
+
+                {isArchived && (
+                  <button onClick={handleRestore} className="icon-btn-md rounded-lg transition-colors" title="Restore from archive">
+                    <ArchiveRestore className="w-4 h-4" />
+                  </button>
+                )}
+                {isInTrash && (
+                  <button onClick={handleRestore} className="icon-btn-md rounded-lg transition-colors" title="Restore">
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
                 )}
               </div>
-            )}
-            <button
-              onClick={openExportMenu}
-              onMouseEnter={(e) => onToolbarEnter(e, !!exportMenuPos)}
-              className={clsx(
-                'icon-btn-md rounded-lg transition-colors relative z-10',
-                exportMenuPos ? 'text-brand-primary' : ''
-              )}
-              title="Exportieren / Teilen"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-            {!isInTrash && (
-              <button
-                type="button"
-                onClick={() => setFocusWritingMode((v) => !v)}
-                onMouseEnter={(e) => onToolbarEnter(e, false)}
-                className="icon-btn-md rounded-lg transition-colors relative z-10"
-                title={focusWritingMode ? 'Fokusmodus beenden' : 'Fokusmodus'}
-              >
-                {focusWritingMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-              </button>
-            )}
-            <button
-              onClick={handleDelete}
-              onMouseEnter={(e) => onToolbarEnter(e, false)}
-              className="icon-btn-md rounded-lg transition-colors relative z-10 text-text-secondary hover:text-red-500"
-              title={isInTrash ? 'Endgültig löschen' : 'In Papierkorb'}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-            <button onClick={handleClose} onMouseEnter={(e) => onToolbarEnter(e, false)} className="icon-btn-md rounded-lg transition-colors relative z-10" title="Notiz schließen">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
 
-        {/* Compact overflow popup */}
-        {isCompact && !isInTrash && !isArchived && showOverflow && (
-          <>
-            <div className="fixed inset-0" onClick={() => setShowOverflow(false)} />
-            <div ref={overflowPopupRef} className="absolute top-full left-10 mt-1 glass-popup rounded-xl shadow-xl p-2 z-50 flex gap-1" onMouseLeave={onOverflowLeave}>
-              {overflowPill && (
-                <div
-                  className="glass-pill"
-                  style={{ left: overflowPill.left, top: overflowPill.top, width: overflowPill.width, height: overflowPill.height, opacity: overflowPill.visible ? 1 : 0 }}
-                />
-              )}
-              {folderButton((e) => onOverflowEnter(e, false))}
-              {tagButton((e) => onOverflowEnter(e, false))}
+              <div className="flex items-center gap-1">
+                {!isInTrash && (
+                  <button
+                    type="button"
+                    onClick={() => setFocusWritingMode((v) => !v)}
+                    className="icon-btn-md rounded-lg transition-colors"
+                    title={focusWritingMode ? 'Exit focus mode' : 'Focus mode'}
+                  >
+                    {focusWritingMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  </button>
+                )}
+                {!isInTrash && (
+                  <button
+                    onClick={openExportMenu}
+                    className={clsx(
+                      'icon-btn-md rounded-lg transition-colors',
+                      exportMenuPos ? 'text-(--accent)' : ''
+                    )}
+                    title="Export / Share"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  onClick={handleDelete}
+                  className="icon-btn-md rounded-lg hover:text-red-500"
+                  title={isInTrash ? 'Delete permanently' : 'Move to trash'}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <button onClick={handleClose} className="icon-btn-md rounded-lg transition-colors" title="Close note">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          </>
-        )}
-      </div>
+
+            {/* Compact overflow popup */}
+            {isCompact && !isInTrash && !isArchived && showOverflow && (
+              <>
+                <div className="fixed inset-0" onClick={() => setShowOverflow(false)} />
+                <div ref={overflowPopupRef} className="absolute top-full left-10 mt-1 glass-popup rounded-xl shadow-xl p-2 z-50 flex gap-1">
+                  {folderButton()}
+                  {tagButton()}
+                </div>
+              </>
+            )}
+      </motion.div>
 
       <div
-        ref={focusExitWrapRef}
         className={clsx(
-          'absolute right-6 top-3 z-[60] sm:right-12 transition-[opacity,transform] duration-500 ease-out',
-          focusWritingMode ? 'pointer-events-auto' : 'pointer-events-none'
-        )}
-        onMouseLeave={onFocusExitLeave}
-      >
-        {focusExitPill && (
-          <div
-            className="glass-pill glass-pill-circle pointer-events-none"
-            style={{
-              left: focusExitPill.left,
-              top: focusExitPill.top,
-              width: focusExitPill.width,
-              height: focusExitPill.height,
-              opacity: focusExitPill.visible ? 1 : 0,
-            }}
-          />
-        )}
-        <button
-          type="button"
-          onClick={() => setFocusWritingMode(false)}
-          onMouseEnter={(e) => {
-            const btn = e.currentTarget;
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                onFocusExitEnter({ currentTarget: btn } as unknown as React.MouseEvent<HTMLButtonElement>, false);
-              });
-            });
-          }}
-          onTransitionEnd={(e) => {
-            if (!focusWritingMode || e.propertyName !== 'opacity') return;
-            const btn = e.currentTarget;
-            if (btn.matches(':hover')) {
-              onFocusExitEnter({ currentTarget: btn } as unknown as React.MouseEvent<HTMLButtonElement>, false);
-            }
-          }}
-          className={clsx(
-            'relative z-10 font-medium rounded-full border border-[color-mix(in_srgb,var(--color-border-default)_50%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-elevated)_58%,transparent)] px-3 py-1.5 text-sm shadow-lg transition-[opacity,transform,color] duration-500 ease-out',
-            focusWritingMode ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
-          )}
-          aria-hidden={!focusWritingMode}
-          tabIndex={focusWritingMode ? 0 : -1}
-        >
-          Fokus beenden
-        </button>
-      </div>
+          'absolute right-6 top-3 z-60 sm:right-12 transition-[opacity,transform] duration-500 ease-out',
+              focusWritingMode ? 'pointer-events-auto' : 'pointer-events-none'
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => setFocusWritingMode(false)}
+              className={clsx(
+                'font-medium rounded-full border border-[color-mix(in_srgb,var(--line)_50%,transparent)] bg-[color-mix(in_srgb,var(--surface-hi)_58%,transparent)] px-3 py-1.5 text-sm shadow-lg transition-[opacity,transform,color] duration-500 ease-out hover:bg-(--surface-hi)',
+                focusWritingMode ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              )}
+              aria-hidden={!focusWritingMode}
+              tabIndex={focusWritingMode ? 0 : -1}
+            >
+              Exit focus
+            </button>
+          </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`${note.id}-${shareToken ?? 'none'}`}
-          className="min-h-0 flex-1 flex flex-col"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.14, ease: 'easeInOut' }}
-        >
           <LexicalEditorWrapper
             content={note.content}
             onChange={handleContentChange}
-            placeholder="Beginne zu schreiben..."
+            placeholder="Start writing..."
             disabled={isInTrash}
             headerSlot={titleHeader}
             collaboration={shareToken ? {
               noteId: note.id,
               token: shareToken,
-              username: user?.name || user?.email || 'Anonym',
-              cursorColor: 'var(--color-brand-primary)',
+              username: user?.name || user?.email || 'Anonymous',
+              cursorColor: 'var(--accent)',
             } : null}
             toolbar={
               <RichTextToolbar
@@ -727,8 +755,6 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
               />
             }
           />
-        </motion.div>
-      </AnimatePresence>
 
       {/* Folder context menu — portal to document.body */}
       {folderMenuPos && createPortal(
@@ -738,39 +764,30 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             ref={folderMenuRef}
             className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
             style={{ left: folderMenuPos.x, top: folderMenuPos.y, minWidth: '200px' }}
-            onMouseLeave={onFolderLeave}
           >
-            {folderPill && (
-              <div
-                className="glass-pill pointer-events-none"
-                style={{ left: folderPill.left, top: folderPill.top, width: folderPill.width, height: folderPill.height, opacity: folderPill.visible ? 1 : 0 }}
-              />
-            )}
             <button
               onClick={() => handleMoveToFolder(null)}
-              onMouseEnter={onFolderEnter}
               className={clsx(
-                'relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
-                !note.folderId ? 'text-text-primary' : ''
+                'w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)',
+                !note.folderId ? 'text-(--ink)' : ''
               )}
             >
-              <FolderOpen className="w-4 h-4 text-text-secondary flex-shrink-0" />
-              <span className="flex-1 text-left">Kein Ordner</span>
-              {!note.folderId && <Check className="w-3 h-3 text-brand-primary flex-shrink-0" />}
+              <FolderOpen className="w-4 h-4 text-(--ink-mid) shrink-0" />
+              <span className="flex-1 text-left">No folder</span>
+              {!note.folderId && <Check className="w-3 h-3 text-(--accent) shrink-0" />}
             </button>
             {folders.map((folder) => (
               <button
                 key={folder.id}
                 onClick={() => handleMoveToFolder(folder.id)}
-                onMouseEnter={onFolderEnter}
                 className={clsx(
-                  'relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
-                  note.folderId === folder.id ? 'text-text-primary' : ''
+                  'w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)',
+                  note.folderId === folder.id ? 'text-(--ink)' : ''
                 )}
               >
-                <FolderOpen className="w-4 h-4 flex-shrink-0" style={{ color: folder.color || '#10b981' }} />
+                <FolderOpen className="w-4 h-4 shrink-0" style={{ color: folder.color || '#10b981' }} />
                 <span className="flex-1 text-left">{folder.name}</span>
-                {note.folderId === folder.id && <Check className="w-3 h-3 text-brand-primary flex-shrink-0" />}
+                {note.folderId === folder.id && <Check className="w-3 h-3 text-(--accent) shrink-0" />}
               </button>
             ))}
           </div>
@@ -793,14 +810,14 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
         onShareChange={setShareToken}
       />
 
-      <Modal isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} title={getNoteTitle(note) || 'Notiz'}>
-        <div className="text-base text-text-secondary">
+      <Modal isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} title={getNoteTitle(note) || 'Note'}>
+        <div className="text-base text-(--ink-mid)">
           <p className="flex items-start gap-2">
-            <Info className="w-4 h-4 flex-shrink-0 mt-[6px] text-brand-primary" />
+            <Info className="w-4 h-4 shrink-0 mt-1.5 text-(--accent)" />
             <span>
-              Erstellt: {new Date(note.createdAt).toLocaleString('de-DE')}
+              Created: {new Date(note.createdAt).toLocaleString(undefined)}
               <br />
-              Zuletzt bearbeitet: {new Date(note.updatedAt).toLocaleString('de-DE')}
+              Last edited: {new Date(note.updatedAt).toLocaleString(undefined)}
             </span>
           </p>
         </div>
@@ -813,46 +830,38 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             ref={exportMenuRef}
             className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
             style={{ left: exportMenuPos.x, top: exportMenuPos.y, minWidth: '220px' }}
-            onMouseLeave={onExportLeave}
           >
-            {exportPill && (
-              <div
-                className="glass-pill pointer-events-none"
-                style={{ left: exportPill.left, top: exportPill.top, width: exportPill.width, height: exportPill.height, opacity: exportPill.visible ? 1 : 0 }}
-              />
-            )}
             <button
               onClick={() => { setShowShareModal(true); setExportMenuPos(null); }}
-              onMouseEnter={onExportEnter}
-              className="relative z-10 w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)"
             >
-              <Users className="w-4 h-4 flex-shrink-0 text-brand-primary" />
+              <Users className="w-4 h-4 shrink-0 text-(--accent)" />
               <span className="flex-1 text-left">
-                Notiz teilen
-                {shareToken && <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-brand-primary align-middle" />}
+                Share note
+                {shareToken && <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-(--accent) align-middle" />}
               </span>
             </button>
-            <div className="my-1 mx-2 border-t border-[color-mix(in_srgb,var(--color-border-default)_50%,transparent)]" />
-            <button onClick={handleExportMarkdown} onMouseEnter={onExportEnter} className="relative z-10 w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors">
-              <Download className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1 text-left">Als Markdown exportieren</span>
+            <div className="my-1 mx-2 border-t border-[color-mix(in_srgb,var(--line)_50%,transparent)]" />
+            <button onClick={handleExportMarkdown} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)">
+              <Download className="w-4 h-4 shrink-0" />
+              <span className="flex-1 text-left">Export as Markdown</span>
             </button>
-            <button onClick={handleExportHtml} onMouseEnter={onExportEnter} className="relative z-10 w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors">
-              <Download className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1 text-left">Als HTML exportieren</span>
+            <button onClick={handleExportHtml} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)">
+              <Download className="w-4 h-4 shrink-0" />
+              <span className="flex-1 text-left">Export as HTML</span>
             </button>
-            <button onClick={handlePrint} onMouseEnter={onExportEnter} className="relative z-10 w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors">
-              <Printer className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1 text-left">Drucken / Als PDF</span>
+            <button onClick={handlePrint} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)">
+              <Printer className="w-4 h-4 shrink-0" />
+              <span className="flex-1 text-left">Print / Save as PDF</span>
             </button>
-            <div className="my-1 mx-2 border-t border-[color-mix(in_srgb,var(--color-border-default)_50%,transparent)]" />
-            <button onClick={handleCopyMarkdown} onMouseEnter={onExportEnter} className="relative z-10 w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors">
-              <Copy className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1 text-left">Markdown kopieren</span>
+            <div className="my-1 mx-2 border-t border-[color-mix(in_srgb,var(--line)_50%,transparent)]" />
+            <button onClick={handleCopyMarkdown} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)">
+              <Copy className="w-4 h-4 shrink-0" />
+              <span className="flex-1 text-left">Copy Markdown</span>
             </button>
-            <button onClick={handleShare} onMouseEnter={onExportEnter} className="relative z-10 w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors">
-              <Share2 className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1 text-left">Teilen</span>
+            <button onClick={handleShare} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)">
+              <Share2 className="w-4 h-4 shrink-0" />
+              <span className="flex-1 text-left">Share</span>
             </button>
           </div>
         </>,
@@ -866,31 +875,23 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
             ref={tagMenuRef}
             className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
             style={{ left: tagMenuPos.x, top: tagMenuPos.y, minWidth: '200px' }}
-            onMouseLeave={onTagLeave}
           >
-            {tagPill && (
-              <div
-                className="glass-pill pointer-events-none"
-                style={{ left: tagPill.left, top: tagPill.top, width: tagPill.width, height: tagPill.height, opacity: tagPill.visible ? 1 : 0 }}
-              />
-            )}
             {tags.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-text-secondary italic">Keine Tags verfügbar</div>
+              <div className="px-3 py-2 text-sm text-(--ink-mid) italic">No tags available</div>
             ) : tags.map((tag) => {
               const isSelected = note.tags?.some(t => t.id === tag.id);
               return (
                 <button
                   key={tag.id}
                   onClick={() => handleToggleTag(tag.id)}
-                  onMouseEnter={onTagEnter}
                   className={clsx(
-                    'relative z-10 w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
-                    isSelected ? 'text-text-primary' : ''
+                    'w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)',
+                    isSelected ? 'text-(--ink)' : ''
                   )}
                 >
-                  <TagIcon className="w-4 h-4 flex-shrink-0" style={{ color: tag.color }} />
+                  <TagIcon className="w-4 h-4 shrink-0" style={{ color: tag.color }} />
                   <span className="flex-1 text-left">{tag.name}</span>
-                  {isSelected && <Check className="w-3 h-3 text-brand-primary flex-shrink-0" />}
+                  {isSelected && <Check className="w-3 h-3 text-(--accent) shrink-0" />}
                 </button>
               );
             })}
@@ -898,8 +899,9 @@ const NoteEditor = ({ note, onNoteUpdate }: NoteEditorProps) => {
         </>,
         getModalPortalRoot()
       )}
-    </div>
+    </motion.div>
   );
 };
 
 export default NoteEditor;
+

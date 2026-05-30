@@ -1,4 +1,5 @@
 ﻿import { ReactNode, useRef, useEffect, useLayoutEffect, createContext } from 'react';
+import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -44,9 +45,11 @@ import {
   $isTextNode,
   KEY_ENTER_COMMAND,
   KEY_ESCAPE_COMMAND,
+  KEY_TAB_COMMAND,
   COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_NORMAL,
   INDENT_CONTENT_COMMAND,
+  OUTDENT_CONTENT_COMMAND,
   LexicalNode,
 } from 'lexical';
 
@@ -458,6 +461,27 @@ function LineHeightSyncPlugin(): null {
   return null;
 }
 
+function TabIndentPlugin(): null {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_TAB_COMMAND,
+      (event: KeyboardEvent) => {
+        event.preventDefault();
+        editor.dispatchCommand(
+          event.shiftKey ? OUTDENT_CONTENT_COMMAND : INDENT_CONTENT_COMMAND,
+          undefined,
+        );
+        return true;
+      },
+      COMMAND_PRIORITY_NORMAL,
+    );
+  }, [editor]);
+
+  return null;
+}
+
 // Overrides INDENT_CONTENT_COMMAND for checklist items so that indenting nests
 // the item directly under its previous sibling — instead of Lexical's default
 // which wraps it in a new empty ListItemNode (showing a phantom checkbox).
@@ -567,6 +591,7 @@ const LexicalEditorWrapper = ({
           <ChangePlugin onChange={onChange} />
           <MultilineQuotePlugin />
           <CheckListIndentPlugin />
+          <TabIndentPlugin />
 
           <div className="relative flex min-h-0 flex-1 flex-col">
             <div
@@ -578,25 +603,13 @@ const LexicalEditorWrapper = ({
             />
             <div
               ref={scrollRef}
-              className="scrollbar-overlay min-h-0 flex-1 overflow-y-auto scroll-smooth px-20 pt-8 pb-24"
-              style={{
-                isolation: 'isolate',
-                WebkitMaskImage: [
-                  'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.06) 18px, rgba(0,0,0,0.35) 48px, rgb(0,0,0) 72px, rgb(0,0,0) calc(100% - 72px), rgba(0,0,0,0.35) calc(100% - 48px), rgba(0,0,0,0.06) calc(100% - 18px), transparent 100%)',
-                  'linear-gradient(rgb(0,0,0), rgb(0,0,0))',
-                ].join(', '),
-                maskImage: [
-                  'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.06) 18px, rgba(0,0,0,0.35) 48px, rgb(0,0,0) 72px, rgb(0,0,0) calc(100% - 72px), rgba(0,0,0,0.35) calc(100% - 48px), rgba(0,0,0,0.06) calc(100% - 18px), transparent 100%)',
-                  'linear-gradient(rgb(0,0,0), rgb(0,0,0))',
-                ].join(', '),
-                WebkitMaskSize: 'calc(100% - 10px) 100%, 10px 100%',
-                maskSize: 'calc(100% - 10px) 100%, 10px 100%',
-                WebkitMaskPosition: '0 0, 100% 0',
-                maskPosition: '0 0, 100% 0',
-                WebkitMaskRepeat: 'no-repeat, no-repeat',
-                maskRepeat: 'no-repeat, no-repeat',
-              }}
+              className="editor-canvas scroll-smooth"
             >
+              <motion.div
+                initial={{ y: 6 }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+              >
               {headerSlot && (
                 <div className="w-full pt-6">
                   {headerSlot}
@@ -604,7 +617,7 @@ const LexicalEditorWrapper = ({
               )}
               <div className="editor-container w-full">
                 <RichTextPlugin
-                  contentEditable={<ContentEditable className="editor-input" />}
+                  contentEditable={<ContentEditable className="editor-input editor-body" />}
                   placeholder={<div className="editor-placeholder">{placeholder}</div>}
                   ErrorBoundary={LexicalErrorBoundary}
                 />
@@ -648,11 +661,12 @@ const LexicalEditorWrapper = ({
                 <LineHeightSyncPlugin />
                 <ActiveLinePlugin />
               </div>
+              </motion.div>
             </div>
           </div>
 
           {toolbar && (
-            <div className="relative z-20 min-h-0 flex-shrink-0 bg-transparent">
+            <div className="relative z-20 min-h-0 shrink-0 bg-transparent">
               {toolbar}
             </div>
           )}

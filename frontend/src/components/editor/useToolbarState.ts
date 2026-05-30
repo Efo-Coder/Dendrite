@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import type { MouseEvent } from 'react';
+import type { MouseEvent, RefObject } from 'react';
 import type { PopupAnchor } from '../../hooks/useSmartPopupStyle';
 import { animate, useMotionValue, useTransform } from 'motion/react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
@@ -75,7 +75,18 @@ const mergeStyle = (existingStyle: string, patch: Record<string, string>): strin
   return Object.entries(styles).map(([k, v]) => `${k}: ${v}`).join('; ');
 };
 
-export function useToolbarState(minimalChrome: boolean) {
+export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<HTMLElement | null>) {
+  const tbAnchor = (btn: DOMRect): PopupAnchor => {
+    const tb = toolbarRef?.current?.getBoundingClientRect();
+    return {
+      x: btn.left + btn.width / 2,
+      top: tb?.top ?? btn.top,
+      bottom: tb?.bottom ?? btn.bottom,
+      left: tb?.left,
+      width: tb?.width,
+    };
+  };
+
   const [editor] = useLexicalComposerContext();
   const { timers, setTimer, removeTimer } = useCheckResetStore();
 
@@ -110,14 +121,14 @@ export function useToolbarState(minimalChrome: boolean) {
   const [fontSize, setFontSize] = useState('');
   const [lineHeight, setLineHeight] = useState('');
 
-  const [showFontPickerModal, setShowFontPickerModal] = useState(false);
+  const [fontPickerPos, setFontPickerPos] = useState<PopupAnchor | null>(null);
   const [colorPickerPos, setColorPickerPos] = useState<PopupAnchor | null>(null);
   const [highlightPickerPos, setHighlightPickerPos] = useState<PopupAnchor | null>(null);
   const [fontSizePos, setFontSizePos] = useState<PopupAnchor | null>(null);
   const [lineHeightPickerPos, setLineHeightPickerPos] = useState<PopupAnchor | null>(null);
   const [headingPickerPos, setHeadingPickerPos] = useState<PopupAnchor | null>(null);
   const [codeLanguage, setCodeLanguage] = useState('js');
-  const [codeLangPickerPos, setCodeLangPickerPos] = useState<{ x: number; y: number } | null>(null);
+  const [codeLangPickerPos, setCodeLangPickerPos] = useState<PopupAnchor | null>(null);
 
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -143,7 +154,7 @@ export function useToolbarState(minimalChrome: boolean) {
 
   const checklistNodeKeyRef = useRef<string | null>(null);
   const [showTimerModal, setShowTimerModal] = useState(false);
-  const [checklistDropdownPos, setChecklistDropdownPos] = useState<{ x: number; y: number } | null>(null);
+  const [checklistDropdownPos, setChecklistDropdownPos] = useState<PopupAnchor | null>(null);
   const [checklistCountdownHours, setChecklistCountdownHours] = useState(1);
   const [checklistCountdownMinutes, setChecklistCountdownMinutes] = useState(0);
   const [checklistExistingTimer, setChecklistExistingTimer] = useState<ResetTimer | undefined>(undefined);
@@ -151,6 +162,7 @@ export function useToolbarState(minimalChrome: boolean) {
   const closeAllPopups = () => {
     setColorPickerPos(null);
     setHighlightPickerPos(null);
+    setFontPickerPos(null);
     setFontSizePos(null);
     setLineHeightPickerPos(null);
     setHeadingPickerPos(null);
@@ -159,43 +171,50 @@ export function useToolbarState(minimalChrome: boolean) {
   };
 
   const openColorFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    e.stopPropagation();
+    if (colorPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setColorPickerPos({ x: rect.left + rect.width / 2, top: rect.top, bottom: rect.bottom });
+    setColorPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
   };
 
   const openHighlightFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    e.stopPropagation();
+    if (highlightPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setHighlightPickerPos({ x: rect.left + rect.width / 2, top: rect.top, bottom: rect.bottom });
+    setHighlightPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
   };
 
-  const openFontPickerFromMenu = () => {
+  const openFontPickerFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (fontPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setShowFontPickerModal(true);
+    setFontPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
   };
 
   const openFontSizeFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    e.stopPropagation();
+    if (fontSizePos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setFontSizePos({ x: rect.left + rect.width / 2, top: rect.top, bottom: rect.bottom });
+    setFontSizePos(tbAnchor(e.currentTarget.getBoundingClientRect()));
   };
 
   const openLineHeightFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    e.stopPropagation();
+    if (lineHeightPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setLineHeightPickerPos({ x: rect.left + rect.width / 2, top: rect.top, bottom: rect.bottom });
+    setLineHeightPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
   };
 
   const openChecklistDropdown = (e: MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    e.stopPropagation();
+    if (checklistDropdownPos) { closeAllPopups(); return; }
     closeAllPopups();
-    setChecklistDropdownPos({ x: rect.left, y: rect.bottom + 4 });
+    setChecklistDropdownPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
   };
 
   const openTimerModal = () => {
@@ -350,9 +369,10 @@ export function useToolbarState(minimalChrome: boolean) {
   };
 
   const openHeadingPicker = (e: MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    e.stopPropagation();
+    if (headingPickerPos) { closeAllPopups(); return; }
     closeAllPopups();
-    setHeadingPickerPos(prev => prev ? null : { x: rect.left + rect.width / 2, top: rect.top, bottom: rect.bottom });
+    setHeadingPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
   };
 
   const updateToolbar = useCallback(() => {
@@ -521,9 +541,10 @@ export function useToolbarState(minimalChrome: boolean) {
   };
 
   const openCodeLangPicker = (e: MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    e.stopPropagation();
+    if (codeLangPickerPos) { closeAllPopups(); return; }
     closeAllPopups();
-    setCodeLangPickerPos(prev => prev ? null : { x: rect.left, y: rect.bottom + 4 });
+    setCodeLangPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
   };
 
   const formatCheckList = () => {
@@ -677,7 +698,7 @@ export function useToolbarState(minimalChrome: boolean) {
     blockType,
     canUndo, canRedo, canOutdent,
     fontColor, highlightColor, fontFamily, fontSize, lineHeight,
-    showFontPickerModal, setShowFontPickerModal,
+    fontPickerPos, setFontPickerPos,
     colorPickerPos, setColorPickerPos,
     highlightPickerPos, setHighlightPickerPos,
     fontSizePos, setFontSizePos,

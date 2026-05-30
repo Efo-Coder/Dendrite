@@ -102,7 +102,7 @@ export function TimerCheckboxPlugin() {
       const activeIds = new Set<string>();
 
       if (root) {
-        const scrollContainer = root.closest('.scrollbar-overlay') as HTMLElement | null;
+        const scrollContainer = root.closest('.editor-canvas') as HTMLElement | null;
         const infoColumn = scrollContainer?.parentElement?.querySelector<HTMLElement>('.editor-info-column') ?? null;
 
         root.querySelectorAll<SVGSVGElement>('.timer-ring[data-reset-id]').forEach(ring => {

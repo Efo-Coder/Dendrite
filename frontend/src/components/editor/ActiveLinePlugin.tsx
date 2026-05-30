@@ -9,12 +9,7 @@ const DURATION = 0.5;
 const EASE: [number, number, number, number] = [0.33, 1, 0.68, 1];
 
 function highlightColor() {
-  const hex = getComputedStyle(document.documentElement)
-    .getPropertyValue('--color-brand-500').trim().replace('#', '');
-  const r = parseInt(hex.slice(0, 2), 16);
-  const g = parseInt(hex.slice(2, 4), 16);
-  const b = parseInt(hex.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},0.15)`;
+  return 'color-mix(in oklch, var(--accent-hi) 15%, transparent)';
 }
 
 export function ActiveLinePlugin() {

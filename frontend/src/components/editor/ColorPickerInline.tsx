@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { Pipette, X, Plus } from 'lucide-react';
-import { useGlassPill } from '../../hooks/useGlassPill';
 import clsx from 'clsx';
 import { hexToRgb, rgbToHex, hexToHsl, hslToHex } from './colorUtils';
 
@@ -14,9 +13,6 @@ interface ColorPickerInlineProps {
 
 const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favorites', presets = [] }: ColorPickerInlineProps) => {
   const [inputMode, setInputMode] = useState<'hex' | 'rgb' | 'hsl'>('hex');
-  const modeTabsRef = useRef<HTMLDivElement>(null);
-  const { pill, onEnter, onLeave } = useGlassPill(modeTabsRef);
-
   const [favorites, setFavorites] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); }
     catch { return []; }
@@ -52,6 +48,24 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
 
   return (
     <div className="flex flex-col gap-2">
+      {presets.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {presets.map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => onChange(preset)}
+              title={preset}
+              className={clsx(
+                'w-8 h-8 rounded-lg transition-transform hover:scale-110 shrink-0',
+                color === preset ? 'ring-2 ring-(--accent)' : 'ring-1 ring-white/19'
+              )}
+              style={{ backgroundColor: preset }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Favorites row */}
       <div className="flex items-center gap-2 flex-wrap min-h-[1.5rem]">
         {favorites.map((fav) => (
@@ -70,7 +84,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
               type="button"
               onClick={(e) => { e.stopPropagation(); removeFromFavorites(fav); }}
               className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-black/70 text-white opacity-0 group-hover/fav:opacity-100 transition-opacity grid place-items-center leading-none"
-              title="Entfernen"
+              title="Remove"
             >
               <X className="w-2 h-2" />
             </button>
@@ -79,12 +93,12 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
         <button
           type="button"
           onClick={addToFavorites}
-          title="Aktuelle Farbe zu Favoriten hinzufügen"
+          title="Add current color to favorites"
           className={clsx(
-            'w-8 h-8 rounded-lg ring-1 ring-[color-mix(in_srgb,var(--color-text-secondary)_70%,transparent)] flex items-center justify-center transition-colors flex-shrink-0',
+            'w-8 h-8 rounded-lg ring-1 ring-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] flex items-center justify-center transition-colors flex-shrink-0',
             canAdd
-              ? 'text-[color-mix(in_srgb,var(--color-text-secondary)_70%,transparent)] hover:text-text-primary hover:ring-text-primary'
-              : 'text-[color-mix(in_srgb,var(--color-text-secondary)_70%,transparent)] opacity-30 pointer-events-none'
+              ? 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink) hover:ring-(--ink)'
+              : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] opacity-30 pointer-events-none'
           )}
         >
           <Plus className="w-3 h-3" />
@@ -98,26 +112,15 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
       />
 
       {/* Format tabs + eyedropper */}
-      <div
-        ref={modeTabsRef}
-        className="flex items-center gap-1 relative rounded-lg overflow-hidden"
-        onMouseLeave={onLeave}
-      >
-        {pill && (
-          <div
-            className="glass-pill pointer-events-none"
-            style={{ left: pill.left, top: pill.top, width: pill.width, height: pill.height, opacity: pill.visible ? 1 : 0 }}
-          />
-        )}
+      <div className="flex items-center gap-1 relative rounded-lg overflow-hidden">
         {(['hex', 'rgb', 'hsl'] as const).map((mode) => (
           <button
             key={mode}
             type="button"
             onClick={() => setInputMode(mode)}
-            onMouseEnter={(e) => onEnter(e, inputMode === mode)}
             className={clsx(
               'flex-1 h-8 rounded text-base font-medium uppercase tracking-wide transition-colors relative z-10',
-              inputMode === mode ? 'text-text-primary' : 'text-[color-mix(in_srgb,var(--color-text-secondary)_70%,transparent)] hover:text-text-primary'
+              inputMode === mode ? 'text-(--ink)' : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink)'
             )}
           >
             {mode}
@@ -126,25 +129,24 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
         <button
           type="button"
           onClick={openEyeDropper}
-          onMouseEnter={(e) => onEnter(e, false)}
-          title="Pipette"
+          title="Eyedropper"
           className={clsx(
             'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 flex-shrink-0',
-            !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-text-secondary' : 'text-[color-mix(in_srgb,var(--color-text-secondary)_70%,transparent)] hover:text-text-primary'
+            !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-(--ink-mid)' : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink)'
           )}
         >
-          <Pipette className="w-5 h-5" />
+          <Pipette className="w-4 h-4" />
         </button>
       </div>
 
       {/* Format inputs */}
       {inputMode === 'hex' && (
         <div className="flex items-center gap-1.5">
-          <span className="text-xl pb-2 text-[color-mix(in_srgb,var(--color-text-secondary)_70%,transparent)] select-none">#</span>
+          <span className="text-xl pb-2 text-(--ink-dim) select-none">#</span>
           <HexColorInput
             color={safeHex}
             onChange={onChange}
-            className="input text-sm h-8 px-2 flex-1"
+            className="modal-input text-sm h-8 px-2 flex-1"
             style={{ minWidth: 0, fontFamily: 'Inter' }}
           />
         </div>
@@ -156,7 +158,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
           <div className="grid grid-cols-3 gap-1">
             {(['r', 'g', 'b'] as const).map((ch) => (
               <div key={ch} className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] text-text-secondary uppercase">{ch}</span>
+                <span className="text-[10px] text-(--ink-dim) uppercase">{ch}</span>
                 <input
                   type="number" min={0} max={255}
                   value={rgb[ch]}
@@ -164,7 +166,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
                     const v = Math.max(0, Math.min(255, Number(e.target.value)));
                     onChange(rgbToHex(ch === 'r' ? v : rgb.r, ch === 'g' ? v : rgb.g, ch === 'b' ? v : rgb.b));
                   }}
-                  className="input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  className="modal-input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   style={{ fontFamily: 'Inter' }}
                 />
               </div>
@@ -179,7 +181,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
           <div className="grid grid-cols-3 gap-1">
             {([['h', hsl.h, 360], ['s', hsl.s, 100], ['l', hsl.l, 100]] as const).map(([ch, val, max]) => (
               <div key={ch} className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] text-text-secondary uppercase">{ch}</span>
+                <span className="text-[10px] text-(--ink-dim) uppercase">{ch}</span>
                 <input
                   type="number" min={0} max={max}
                   value={val}
@@ -187,7 +189,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
                     const v = Math.max(0, Math.min(max, Number(e.target.value)));
                     onChange(hslToHex(ch === 'h' ? v : hsl.h, ch === 's' ? v : hsl.s, ch === 'l' ? v : hsl.l));
                   }}
-                  className="input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  className="modal-input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   style={{ fontFamily: 'Inter' }}
                 />
               </div>
