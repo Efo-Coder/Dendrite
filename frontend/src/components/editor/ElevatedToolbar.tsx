@@ -65,12 +65,6 @@ const LANG_ICONS: Record<string, IconType> = {
 const isPickerActive = (value: string, current: string, defaultValue: string) =>
   current === value || (value === defaultValue && !current);
 
-const pickerItemCls = (active: boolean, extra = '') =>
-  clsx(
-    'py-1.5 text-sm transition-colors text-left whitespace-nowrap hover:bg-(--surface-hi)',
-    active ? 'text-(--accent)' : 'text-(--ink)',
-    extra,
-  );
 
 const PAGES = 3;
 const ITEM_W = 32;

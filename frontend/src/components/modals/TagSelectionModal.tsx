@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Tag, Plus } from 'lucide-react';
 import { useTagStore } from '../../store/useTagStore';
 import { useToast } from '../ui/ToastContainer';
