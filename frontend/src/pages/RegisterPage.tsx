@@ -38,6 +38,7 @@ const RegisterPage = () => {
   const { register, error, isLoading, clearError } = useAuthStore();
   const toast = useToast();
   const prevError = useRef<string | null>(null);
+  const isMounted = useRef(false);
 
   useEffect(() => {
     const plan = sessionStorage.getItem('pending_plan');
@@ -45,6 +46,11 @@ const RegisterPage = () => {
   }, []);
 
   useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      prevError.current = localError || error;
+      return;
+    }
     const msg = localError || error;
     if (msg && msg !== prevError.current) {
       toast.error(msg, 6000);
@@ -54,6 +60,7 @@ const RegisterPage = () => {
   }, [localError, error]);
 
   useEffect(() => {
+    clearError();
     return () => { clearError(); };
   }, [clearError]);
 
