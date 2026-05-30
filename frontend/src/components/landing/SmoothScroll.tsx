@@ -22,15 +22,20 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) return;
 
-    const lenis = new Lenis(LENIS_OPTIONS);
+    let lenis: Lenis;
+    let tickerFn: (time: number) => void;
+    let raf1: number;
+    let raf2: number;
 
-    lenis.on("scroll", ScrollTrigger.update);
-
-    const tickerFn = (time: number) => {
-      lenis.raf(time * 1000);
-    };
-    gsap.ticker.add(tickerFn);
-    gsap.ticker.lagSmoothing(0);
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        lenis = new Lenis(LENIS_OPTIONS);
+        lenis.on("scroll", ScrollTrigger.update);
+        tickerFn = (time: number) => { lenis.raf(time * 1000); };
+        gsap.ticker.add(tickerFn);
+        gsap.ticker.lagSmoothing(0);
+      });
+    });
 
     function handleAnchorClick(e: MouseEvent) {
       const target = e.target as HTMLElement;
@@ -40,6 +45,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       if (!href) return;
       e.preventDefault();
 
+      if (!lenis) return;
       if (href === "#") {
         lenis.scrollTo(0, { offset: 0 });
         return;
@@ -55,10 +61,14 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     document.addEventListener("click", handleAnchorClick);
 
     return () => {
-      gsap.ticker.remove(tickerFn);
-      lenis.off("scroll", ScrollTrigger.update);
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      if (tickerFn) gsap.ticker.remove(tickerFn);
+      if (lenis) {
+        lenis.off("scroll", ScrollTrigger.update);
+        lenis.destroy();
+      }
       document.removeEventListener("click", handleAnchorClick);
-      lenis.destroy();
     };
   }, []);
 
