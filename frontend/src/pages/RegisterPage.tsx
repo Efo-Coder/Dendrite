@@ -91,7 +91,6 @@ const RegisterPage = () => {
     }
   };
 
-  const displayError = localError || error;
 
   return (
     <motion.div
