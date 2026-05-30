@@ -9,6 +9,8 @@ import ThemeProvider from './components/ui/ThemeProvider';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import SharedNotePage from './pages/SharedNotePage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
@@ -34,6 +36,8 @@ function RouterContent() {
           path="/register"
           element={isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />}
         />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/shared/:token" element={<SharedNotePage />} />
         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
         <Route

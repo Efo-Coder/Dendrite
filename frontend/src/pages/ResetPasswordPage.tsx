@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { useAuthStore } from '../store/useAuthStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import Logo from '../components/ui/Logo';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
-import { Eye, EyeOff, Moon, Sun, Mail, Home } from 'lucide-react';
-import api from '../services/api';
+import { Eye, EyeOff, Moon, Sun, Home, CheckCircle } from 'lucide-react';
+import { authService } from '../services/auth.service';
 
 function getPasswordStrength(password: string): { level: 0 | 1 | 2 | 3; label: string; color: string } {
   if (!password) return { level: 0, label: '', color: 'transparent' };
@@ -21,65 +20,49 @@ function getPasswordStrength(password: string): { level: 0 | 1 | 2 | 3; label: s
   return { level: 3, label: 'Strong', color: '#26ad53' };
 }
 
-const RegisterPage = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+const ResetPasswordPage = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [confirmTouched, setConfirmTouched] = useState(false);
-  const [localError, setLocalError] = useState('');
-  const [emailSent, setEmailSent] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-  const [resendDone, setResendDone] = useState(false);
-  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
-  const { register, error, isLoading } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [searchParams] = useSearchParams();
+  const { themeMode, setThemeMode } = useSettingsStore();
+  const navigate = useNavigate();
+  const token = searchParams.get('token');
 
   useEffect(() => {
-    const plan = sessionStorage.getItem('pending_plan');
-    if (plan === 'writer' || plan === 'author') setPendingPlan(plan);
-  }, []);
-
-  const { themeMode, setThemeMode } = useSettingsStore();
+    if (!token) setError('Invalid or missing reset link.');
+  }, [token]);
 
   const strength = getPasswordStrength(password);
-  const confirmMismatch = confirmTouched && confirmPassword !== '' && confirmPassword !== password;
-
-  const handleResend = async () => {
-    if (resendLoading) return;
-    setResendLoading(true);
-    setResendDone(false);
-    try {
-      await api.post('/auth/resend-verification', { email });
-      setResendDone(true);
-    } catch {
-      setResendDone(true);
-    } finally {
-      setResendLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLocalError('');
+    setError('');
     if (password !== confirmPassword) {
-      setLocalError('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
     if (password.length < 8) {
-      setLocalError('Password must be at least 8 characters long');
+      setError('Password must be at least 8 characters');
       return;
     }
+    if (!token) return;
+
+    setIsLoading(true);
     try {
-      await register(email, password, name);
-      setEmailSent(true);
-    } catch {
-      // Error handled by store
+      await authService.resetPassword(token, password);
+      setSuccess(true);
+      setTimeout(() => navigate('/login'), 2500);
+    } catch (err: any) {
+      setError(err?.response?.data?.error || 'Invalid or expired reset link');
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const displayError = localError || error;
 
   return (
     <motion.div
@@ -89,7 +72,7 @@ const RegisterPage = () => {
       exit={{ opacity: 0, transition: { duration: 0.18, ease: 'easeInOut' } }}
       transition={{ duration: 0.28, ease: 'easeInOut' }}
     >
-      {/* Left: visual panel — desktop only */}
+      {/* Left: visual panel */}
       <div className="hidden lg:block relative overflow-hidden" style={{ width: '55%' }}>
         <NightTransitionBackground isDark={themeMode === 'dark'} />
         <div
@@ -137,7 +120,6 @@ const RegisterPage = () => {
             border: '0.5px solid var(--line)',
             color: 'var(--ink-mid)',
           }}
-          title="Back to home"
         >
           <Home className="w-4 h-4" />
         </Link>
@@ -150,17 +132,14 @@ const RegisterPage = () => {
             border: '0.5px solid var(--line)',
             color: 'var(--ink-mid)',
           }}
-          title={`Switch to ${themeMode === 'dark' ? 'light' : 'dark'} mode`}
         >
           {themeMode === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
-        {/* Form area */}
         <div className="relative z-10 flex-1 flex items-center justify-center" style={{ padding: '64px 40px' }}>
           <div style={{ width: '100%', maxWidth: '360px' }}>
 
-            {emailSent ? (
-              /* Success state */
+            {success ? (
               <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
                 <div style={{
                   width: '56px', height: '56px', borderRadius: '16px',
@@ -168,7 +147,7 @@ const RegisterPage = () => {
                   background: 'rgba(38,173,83,0.12)',
                   border: '0.5px solid rgba(38,173,83,0.3)',
                 }}>
-                  <Mail className="w-6 h-6" style={{ color: '#26ad53' }} />
+                  <CheckCircle className="w-6 h-6" style={{ color: '#26ad53' }} />
                 </div>
                 <h1 style={{
                   fontFamily: 'var(--serif-display)',
@@ -179,53 +158,14 @@ const RegisterPage = () => {
                   margin: 0,
                   letterSpacing: '-0.01em',
                 }}>
-                  Email sent
+                  Password updated
                 </h1>
                 <p style={{ fontFamily: 'var(--serif-body)', fontSize: '14px', color: 'var(--ink-low)', lineHeight: 1.65, margin: 0 }}>
-                  We sent a verification email to{' '}
-                  <span style={{ color: 'var(--ink-mid)', fontWeight: 500 }}>{email}</span>.{' '}
-                  Click the link to complete your registration.
+                  Redirecting you to sign in…
                 </p>
-                <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.16em', color: 'var(--ink-dim)', textTransform: 'uppercase', margin: 0 }}>
-                  Link valid for 24 hours
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
-                  {resendDone ? (
-                    <p style={{ fontFamily: 'var(--serif-body)', fontSize: '13px', color: '#26ad53' }}>Verification email sent.</p>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResend}
-                      disabled={resendLoading}
-                      className="no-press"
-                      style={{
-                        fontFamily: 'var(--mono)',
-                        fontSize: '10px',
-                        letterSpacing: '0.14em',
-                        textTransform: 'uppercase',
-                        color: 'var(--ink-dim)',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'color .15s',
-                        opacity: resendLoading ? 0.4 : 1,
-                      }}
-                    >
-                      {resendLoading ? 'Sending…' : 'Resend email'}
-                    </button>
-                  )}
-                  <Link
-                    to="/login"
-                    style={{ color: 'var(--accent)', fontFamily: 'var(--serif-body)', fontSize: '14px', transition: 'opacity .15s' }}
-                    className="hover:opacity-75"
-                  >
-                    Back to sign in
-                  </Link>
-                </div>
               </div>
             ) : (
               <>
-                {/* Logo + heading */}
                 <div style={{ marginBottom: '40px', textAlign: 'center' }}>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Logo
@@ -244,87 +184,34 @@ const RegisterPage = () => {
                     margin: '18px 0 6px',
                     lineHeight: 1.2,
                   }}>
-                    Create account
+                    New password
                   </h1>
-                  {pendingPlan ? (
-                    <p style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: '10px',
-                      letterSpacing: '0.18em',
-                      color: 'var(--accent)',
-                      textTransform: 'uppercase',
-                      margin: 0,
-                    }}>
-                      {pendingPlan === 'writer' ? 'Writer plan' : 'Author plan'} · activate after sign-in
-                    </p>
-                  ) : (
-                    <p style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: '10px',
-                      letterSpacing: '0.22em',
-                      color: 'var(--ink-dim)',
-                      textTransform: 'uppercase',
-                      margin: 0,
-                    }}>
-                      Free, no subscription
-                    </p>
-                  )}
+                  <p style={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: '10px',
+                    letterSpacing: '0.22em',
+                    color: 'var(--ink-dim)',
+                    textTransform: 'uppercase',
+                    margin: 0,
+                  }}>
+                    Choose a strong password
+                  </p>
                 </div>
 
-                {/* Error */}
-                {displayError && (
+                {error && (
                   <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg text-sm" style={{ marginBottom: '20px' }}>
-                    {displayError}
+                    {error}
+                    {(error.includes('expired') || error.includes('Invalid')) && (
+                      <div style={{ marginTop: '8px' }}>
+                        <Link to="/forgot-password" style={{ color: 'var(--accent)', fontSize: '12px' }}>
+                          Request a new reset link
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="auth-panel" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                  <div>
-                    <label htmlFor="name" style={{
-                      display: 'block',
-                      fontFamily: 'var(--mono)',
-                      fontSize: '10px',
-                      letterSpacing: '0.18em',
-                      textTransform: 'uppercase',
-                      color: 'var(--ink-mid)',
-                      marginBottom: '8px',
-                    }}>
-                      Name <span style={{ color: 'var(--ink-dim)', letterSpacing: '0.05em', textTransform: 'none', fontSize: '9px' }}>(optional)</span>
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="input"
-                      placeholder="Your name"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" style={{
-                      display: 'block',
-                      fontFamily: 'var(--mono)',
-                      fontSize: '10px',
-                      letterSpacing: '0.18em',
-                      textTransform: 'uppercase',
-                      color: 'var(--ink-mid)',
-                      marginBottom: '8px',
-                    }}>
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="input"
-                      placeholder="your@email.com"
-                      required
-                    />
-                  </div>
-
                   <div>
                     <label htmlFor="password" style={{
                       display: 'block',
@@ -335,7 +222,7 @@ const RegisterPage = () => {
                       color: 'var(--ink-mid)',
                       marginBottom: '8px',
                     }}>
-                      Password
+                      New password
                     </label>
                     <div style={{ position: 'relative' }}>
                       <input
@@ -347,6 +234,8 @@ const RegisterPage = () => {
                         style={{ paddingRight: '2.5rem' }}
                         placeholder="At least 8 characters"
                         required
+                        autoFocus
+                        disabled={!token}
                       />
                       <button
                         type="button"
@@ -357,7 +246,6 @@ const RegisterPage = () => {
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    {/* Password strength indicator */}
                     {password && (
                       <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ flex: 1, height: '3px', borderRadius: '2px', background: 'var(--line)', overflow: 'hidden' }}>
@@ -393,14 +281,14 @@ const RegisterPage = () => {
                         type={showConfirmPassword ? 'text' : 'password'}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        onBlur={() => setConfirmTouched(true)}
                         className="input"
                         style={{
                           paddingRight: '2.5rem',
-                          borderColor: confirmMismatch ? 'rgba(239,68,68,0.5)' : undefined,
+                          borderColor: confirmPassword && confirmPassword !== password ? 'rgba(239,68,68,0.5)' : undefined,
                         }}
                         placeholder="••••••••"
                         required
+                        disabled={!token}
                       />
                       <button
                         type="button"
@@ -411,7 +299,7 @@ const RegisterPage = () => {
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    {confirmMismatch && (
+                    {confirmPassword && confirmPassword !== password && (
                       <p style={{ marginTop: '6px', fontFamily: 'var(--mono)', fontSize: '9px', letterSpacing: '0.1em', color: '#ef4444' }}>
                         Passwords do not match
                       </p>
@@ -420,7 +308,7 @@ const RegisterPage = () => {
 
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || !token}
                     style={{
                       marginTop: '4px',
                       width: '100%',
@@ -433,24 +321,23 @@ const RegisterPage = () => {
                       fontWeight: 600,
                       fontSize: '15px',
                       letterSpacing: '0.03em',
-                      cursor: isLoading ? 'not-allowed' : 'pointer',
-                      opacity: isLoading ? 0.6 : 1,
+                      cursor: isLoading || !token ? 'not-allowed' : 'pointer',
+                      opacity: isLoading || !token ? 0.6 : 1,
                       boxShadow: '0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent)',
                       transition: 'transform .1s, opacity .12s',
                     }}
                   >
-                    {isLoading ? 'Creating account…' : 'Create account'}
+                    {isLoading ? 'Updating…' : 'Set new password'}
                   </button>
                 </form>
 
                 <p style={{ marginTop: '32px', fontFamily: 'var(--serif-body)', fontSize: '14px', color: 'var(--ink-dim)', textAlign: 'center' }}>
-                  Already have an account?{' '}
                   <Link
                     to="/login"
                     style={{ color: 'var(--accent)', transition: 'opacity .15s' }}
                     className="hover:opacity-75"
                   >
-                    Sign in
+                    Back to sign in
                   </Link>
                 </p>
               </>
@@ -462,4 +349,4 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage;
+export default ResetPasswordPage;

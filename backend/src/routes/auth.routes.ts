@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { register, login, verifyEmail, resendVerification, getMe, updateProfile, changePassword, deleteAccount, uploadAvatar, deleteAvatar } from '../controllers/auth.controller';
+import { register, login, verifyEmail, resendVerification, forgotPassword, resetPassword, getMe, updateProfile, changePassword, deleteAccount, uploadAvatar, deleteAvatar } from '../controllers/auth.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 import { upload } from '../config/multer.config';
 
@@ -19,6 +19,8 @@ router.post('/register', loginLimiter, register);
 router.post('/login', loginLimiter, login);
 router.get('/verify-email', verifyEmail);
 router.post('/resend-verification', resendVerification);
+router.post('/forgot-password', loginLimiter, forgotPassword);
+router.post('/reset-password', resetPassword);
 router.get('/me', authenticateToken, getMe);
 router.put('/profile', authenticateToken, updateProfile);
 router.put('/password', authenticateToken, changePassword);

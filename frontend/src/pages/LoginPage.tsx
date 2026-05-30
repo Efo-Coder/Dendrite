@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useAuthStore } from '../store/useAuthStore';
@@ -8,19 +8,35 @@ import NightTransitionBackground from '../components/auth/NightTransitionBackgro
 import { Eye, EyeOff, Moon, Sun, CheckCircle, AlertCircle, Send, Home } from 'lucide-react';
 import api from '../services/api';
 
+const REMEMBERED_EMAIL_KEY = 'dendrite_remembered_email';
+
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem(REMEMBERED_EMAIL_KEY) || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem(REMEMBERED_EMAIL_KEY));
+  const [shake, setShake] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
-  const { login, error, isLoading } = useAuthStore();
+  const { login, error, isLoading, clearError } = useAuthStore();
   const { themeMode, setThemeMode } = useSettingsStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const verified = searchParams.get('verified');
 
   const isUnverifiedError = error?.includes('verify') ?? false;
+
+  useEffect(() => {
+    if (error) {
+      setShake(true);
+      const t = setTimeout(() => setShake(false), 500);
+      return () => clearTimeout(t);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    return () => { clearError(); };
+  }, [clearError]);
 
   const handleResend = async () => {
     if (!email || resendLoading) return;
@@ -39,6 +55,13 @@ const LoginPage = () => {
     e.preventDefault();
     try {
       await login(email, password);
+
+      if (rememberMe) {
+        localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+      } else {
+        localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+      }
+
       sessionStorage.setItem('justLoggedIn', '1');
 
       const pendingPlan = sessionStorage.getItem('pending_plan');
@@ -74,7 +97,6 @@ const LoginPage = () => {
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.50) 100%)' }}
         />
-        {/* Editorial text */}
         <div className="absolute bottom-0 left-0 right-0 z-10" style={{ padding: '56px' }}>
           <p style={{
             fontFamily: 'var(--mono)',
@@ -103,13 +125,11 @@ const LoginPage = () => {
 
       {/* Right: form panel */}
       <div className="flex-1 relative flex flex-col" style={{ background: 'var(--bg-deep)' }}>
-        {/* Panel separator */}
         <div
           className="absolute top-0 left-0 bottom-0 hidden lg:block"
           style={{ width: '0.5px', background: 'var(--line)' }}
         />
 
-        {/* Home button */}
         <Link
           to="/"
           className="absolute top-4 left-6 z-20 icon-btn-lg rounded-full flex items-center justify-center backdrop-blur-xl"
@@ -123,7 +143,6 @@ const LoginPage = () => {
           <Home className="w-4 h-4" />
         </Link>
 
-        {/* Theme toggle */}
         <button
           onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
           className="absolute top-4 right-6 z-20 icon-btn-lg rounded-full flex items-center justify-center backdrop-blur-xl"
@@ -175,7 +194,7 @@ const LoginPage = () => {
             </div>
 
             {/* Alerts */}
-            {(verified === 'true' || verified === 'expired' || verified === 'error' || error) && (
+            {(verified === 'true' || verified === 'expired' || verified === 'error') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
                 {verified === 'true' && (
                   <div className="flex items-center gap-2.5 bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-lg text-sm">
@@ -189,112 +208,166 @@ const LoginPage = () => {
                     {verified === 'expired' ? 'The verification link has expired.' : 'Invalid verification link.'}
                   </div>
                 )}
-                {error && (
-                  <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg text-sm space-y-2">
-                    <p>{error}</p>
-                    {isUnverifiedError && (
-                      resendDone ? (
-                        <p className="text-green-400 text-xs">Verification email sent.</p>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleResend}
-                          disabled={resendLoading || !email}
-                          className="no-press flex items-center gap-1.5 text-xs text-white/60 hover:text-white/90 transition-colors disabled:opacity-40"
-                        >
-                          <Send className="w-3 h-3" />
-                          {resendLoading ? 'Sending...' : 'Resend verification email'}
-                        </button>
-                      )
-                    )}
-                  </div>
-                )}
               </div>
             )}
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="auth-panel" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label htmlFor="email" style={{
-                  display: 'block',
-                  fontFamily: 'var(--mono)',
-                  fontSize: '10px',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'var(--ink-mid)',
-                  marginBottom: '8px',
-                }}>
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input"
-                  placeholder="your@email.com"
-                  required
-                />
-              </div>
+            {/* Form — wraps in shake motion */}
+            <motion.div
+              animate={shake ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}}
+              transition={{ duration: 0.4 }}
+            >
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg text-sm space-y-2" style={{ marginBottom: '20px' }}>
+                  <p>{error}</p>
+                  {isUnverifiedError && (
+                    resendDone ? (
+                      <p className="text-green-400 text-xs">Verification email sent.</p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={resendLoading || !email}
+                        className="no-press flex items-center gap-1.5 text-xs text-white/60 hover:text-white/90 transition-colors disabled:opacity-40"
+                      >
+                        <Send className="w-3 h-3" />
+                        {resendLoading ? 'Sending...' : 'Resend verification email'}
+                      </button>
+                    )
+                  )}
+                </div>
+              )}
 
-              <div>
-                <label htmlFor="password" style={{
-                  display: 'block',
-                  fontFamily: 'var(--mono)',
-                  fontSize: '10px',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'var(--ink-mid)',
-                  marginBottom: '8px',
-                }}>
-                  Password
-                </label>
-                <div style={{ position: 'relative' }}>
+              <form onSubmit={handleSubmit} className="auth-panel" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div>
+                  <label htmlFor="email" style={{
+                    display: 'block',
+                    fontFamily: 'var(--mono)',
+                    fontSize: '10px',
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    color: 'var(--ink-mid)',
+                    marginBottom: '8px',
+                  }}>
+                    Email
+                  </label>
                   <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="input"
-                    style={{ paddingRight: '2.5rem' }}
-                    placeholder="••••••••"
+                    placeholder="your@email.com"
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="no-press absolute right-3 top-1/2 -translate-y-1/2"
-                    style={{ color: 'var(--ink-low)', transition: 'color .15s' }}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                style={{
-                  marginTop: '4px',
-                  width: '100%',
-                  padding: '11px 16px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
-                  color: 'oklch(0.15 0.020 60)',
-                  border: 'none',
-                  fontFamily: 'var(--serif-display)',
-                  fontWeight: 600,
-                  fontSize: '15px',
-                  letterSpacing: '0.03em',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  opacity: isLoading ? 0.6 : 1,
-                  boxShadow: '0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent)',
-                  transition: 'transform .1s, opacity .12s',
-                }}
-              >
-                {isLoading ? 'Signing in...' : 'Sign in'}
-              </button>
-            </form>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                    <label htmlFor="password" style={{
+                      fontFamily: 'var(--mono)',
+                      fontSize: '10px',
+                      letterSpacing: '0.18em',
+                      textTransform: 'uppercase',
+                      color: 'var(--ink-mid)',
+                    }}>
+                      Password
+                    </label>
+                    <Link
+                      to="/forgot-password"
+                      style={{
+                        fontFamily: 'var(--mono)',
+                        fontSize: '9px',
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: 'var(--ink-dim)',
+                        transition: 'color .15s',
+                      }}
+                      className="hover:text-(--accent)"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="input"
+                      style={{ paddingRight: '2.5rem' }}
+                      placeholder="••••••••"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="no-press absolute right-3 top-1/2 -translate-y-1/2"
+                      style={{ color: 'var(--ink-low)', transition: 'color .15s' }}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Remember me */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+                  <div
+                    onClick={() => setRememberMe(!rememberMe)}
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      borderRadius: '4px',
+                      border: `1.5px solid ${rememberMe ? 'var(--accent)' : 'var(--line)'}`,
+                      background: rememberMe ? 'var(--accent)' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      transition: 'background .15s, border-color .15s',
+                    }}
+                  >
+                    {rememberMe && (
+                      <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                        <path d="M1 3.5L3.5 6L8 1" stroke="oklch(0.15 0.020 60)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                  <span style={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: '10px',
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    color: 'var(--ink-mid)',
+                  }}>
+                    Remember me
+                  </span>
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  style={{
+                    marginTop: '4px',
+                    width: '100%',
+                    padding: '11px 16px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
+                    color: 'oklch(0.15 0.020 60)',
+                    border: 'none',
+                    fontFamily: 'var(--serif-display)',
+                    fontWeight: 600,
+                    fontSize: '15px',
+                    letterSpacing: '0.03em',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    opacity: isLoading ? 0.6 : 1,
+                    boxShadow: '0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent)',
+                    transition: 'transform .1s, opacity .12s',
+                  }}
+                >
+                  {isLoading ? 'Signing in...' : 'Sign in'}
+                </button>
+              </form>
+            </motion.div>
 
             <p style={{ marginTop: '32px', fontFamily: 'var(--serif-body)', fontSize: '14px', color: 'var(--ink-dim)', textAlign: 'center' }}>
               Don't have an account?{' '}
