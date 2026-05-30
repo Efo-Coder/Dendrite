@@ -37,7 +37,7 @@ export default function LandingPage() {
       root.style.setProperty('--border', 'oklch(0.922 0 0)');
     }
     return () => {
-      root.removeAttribute('data-theme');
+      root.setAttribute('data-theme', themeMode);
       root.style.removeProperty('--background');
       root.style.removeProperty('--foreground');
       root.style.removeProperty('--muted');
