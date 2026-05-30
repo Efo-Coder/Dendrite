@@ -23,12 +23,12 @@ services:
       dockerfile: Dockerfile.prod
     container_name: dendrite-backend
     restart: unless-stopped
+    env_file:
+      - .env.prod
     environment:
       NODE_ENV: production
       PORT: 3000
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@database:5432/${DB_NAME}
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGIN: ${CORS_ORIGIN}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
