@@ -1,37 +1,41 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { HeaderSection } from '../components/landing/HeaderSection';
 import { HeroSection } from '../components/landing/HeroSection';
 import { FeaturesSection } from '../components/landing/FeaturesSection';
 import { ServicesSection } from '../components/landing/ServicesSection';
 import { AboutSection } from '../components/landing/AboutSection';
 import { SocialProofSection } from '../components/landing/SocialProofSection';
+import { PricingSection } from '../components/landing/PricingSection';
 import { FaqSection } from '../components/landing/FaqSection';
 import { FooterSection } from '../components/landing/FooterSection';
-import { ThemeSwitchButton } from '../components/landing/ThemeSwitchButton';
 import { SmoothScroll } from '../components/landing/SmoothScroll';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function LandingPage() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.toggle('dark', dark);
     if (dark) {
-      root.style.setProperty('--background', 'oklch(0.145 0 0)');
+      root.removeAttribute('data-theme');
+      root.style.setProperty('--background', 'oklch(0.16 0.008 60)');
       root.style.setProperty('--foreground', 'oklch(0.985 0 0)');
       root.style.setProperty('--muted', 'oklch(0.269 0 0)');
       root.style.setProperty('--muted-foreground', 'oklch(0.708 0 0)');
       root.style.setProperty('--border', 'oklch(1 0 0 / 10%)');
     } else {
-      root.style.setProperty('--background', 'oklch(1 0 0)');
+      root.setAttribute('data-theme', 'light');
+      root.style.setProperty('--background', 'oklch(0.97 0.006 80)');
       root.style.setProperty('--foreground', 'oklch(0.145 0 0)');
-      root.style.setProperty('--muted', 'oklch(0.97 0 0)');
+      root.style.setProperty('--muted', 'oklch(0.93 0.008 80)');
       root.style.setProperty('--muted-foreground', 'oklch(0.556 0 0)');
       root.style.setProperty('--border', 'oklch(0.922 0 0)');
     }
-
     return () => {
-      root.classList.remove('dark');
+      root.removeAttribute('data-theme');
       root.style.removeProperty('--background');
       root.style.removeProperty('--foreground');
       root.style.removeProperty('--muted');
@@ -40,20 +44,25 @@ export default function LandingPage() {
     };
   }, [dark]);
 
+  useEffect(() => {
+    const id = requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   return (
     <SmoothScroll>
-      <div style={{ background: 'var(--background)', color: 'var(--foreground)', minHeight: '100vh' }}>
-        <HeaderSection />
-        <main id="main-content" style={{ position: 'relative', zIndex: 10, background: 'var(--background)' }}>
-          <HeroSection isDark={dark} />
+      <div style={{ background: 'var(--bg)', color: 'var(--ink)', minHeight: '100vh' }}>
+        <HeaderSection dark={dark} onToggleDark={() => setDark(d => !d)} />
+        <main id="main-content" style={{ position: 'relative', zIndex: 10, background: 'var(--bg)' }}>
+          <HeroSection />
           <FeaturesSection />
           <ServicesSection />
           <AboutSection />
           <SocialProofSection />
+          <PricingSection />
           <FaqSection />
         </main>
         <FooterSection />
-        <ThemeSwitchButton dark={dark} onToggleDark={() => setDark((d) => !d)} />
       </div>
     </SmoothScroll>
   );

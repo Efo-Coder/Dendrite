@@ -58,15 +58,15 @@ const SharedNotePage = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-(--color-bg-base)">
-        <Loader2 className="w-6 h-6 animate-spin text-brand-primary" />
+      <div className="flex h-screen items-center justify-center bg-(--bg)">
+        <Loader2 className="w-6 h-6 animate-spin text-(--accent)" />
       </div>
     );
   }
 
   if (error || !note || !token) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-(--color-bg-base) text-text-primary">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-(--bg) text-(--ink)">
         <AlertCircle className="w-10 h-10 text-red-400" />
         <p className="text-lg font-medium">{error || 'Ungültiger Link'}</p>
       </div>
@@ -74,13 +74,13 @@ const SharedNotePage = () => {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-(--color-bg-base) text-text-primary">
+    <div className="flex h-screen flex-col bg-(--bg) text-(--ink)">
       {/* Minimal header */}
-      <div className="flex h-11 shrink-0 items-center justify-between border-b border-[color-mix(in_srgb,var(--color-border-default)_40%,transparent)] px-6">
-        <span className="text-sm font-medium text-text-secondary truncate max-w-xs">
+      <div className="flex h-11 shrink-0 items-center justify-between border-b border-[color-mix(in_srgb,var(--line)_40%,transparent)] px-6">
+        <span className="text-sm font-medium text-(--ink-mid) truncate max-w-xs">
           {note.title || 'Unbenannte Notiz'}
         </span>
-        <div className="flex items-center gap-1.5 text-xs text-brand-primary">
+        <div className="flex items-center gap-1.5 text-xs text-(--accent)">
           <Users className="w-3.5 h-3.5" />
           <span>Kollaborationsmodus</span>
         </div>
