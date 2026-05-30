@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from 'react';
+import { useEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -19,7 +19,7 @@ export default function LandingPage() {
   const { themeMode, setThemeMode } = useSettingsStore();
   const dark = themeMode === 'dark';
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const root = document.documentElement;
     if (dark) {
       root.removeAttribute('data-theme');

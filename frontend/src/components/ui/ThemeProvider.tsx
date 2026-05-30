@@ -1,4 +1,4 @@
-import { useLayoutEffect } from 'react';
+import { useEffect } from 'react';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 const FONTS = {
@@ -16,7 +16,7 @@ interface ThemeProviderProps {
 const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const { palette, themeMode, font, fontSize, dropCap, density, cursorStyle } = useSettingsStore();
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const root = document.documentElement;
     root.setAttribute('data-palette', palette);
     root.setAttribute('data-theme', themeMode);
