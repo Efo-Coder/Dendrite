@@ -28,6 +28,7 @@ const LoginPage = () => {
   const isUnverifiedError = error?.includes('verify') ?? false;
   const shownVerified = useRef(false);
   const prevError = useRef<string | null>(null);
+  const isMounted = useRef(false);
 
   useEffect(() => {
     if (!shownVerified.current) {
@@ -39,6 +40,11 @@ const LoginPage = () => {
   }, []);
 
   useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      prevError.current = error;
+      return;
+    }
     if (error && error !== prevError.current) {
       toast.error(error, 6000);
       prevError.current = error;
