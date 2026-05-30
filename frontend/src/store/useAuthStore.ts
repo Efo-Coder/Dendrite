@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     } catch (error: any) {
       set({
-        error: error.response?.data?.error || 'Login fehlgeschlagen',
+        error: error.response?.data?.error || 'Login failed',
         isLoading: false,
       });
       throw error;
@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.error || 'Registrierung fehlgeschlagen',
+        error: error.response?.data?.error || 'Registration failed',
         isLoading: false,
       });
       throw error;

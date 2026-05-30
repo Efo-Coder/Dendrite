@@ -1,5 +1,5 @@
 import api from './api';
-import { Note } from '../types';
+import { Note, NoteCounts } from '../types';
 
 export const noteService = {
   async getAllNotes(filters?: {
@@ -20,6 +20,11 @@ export const noteService = {
 
     const response = await api.get<{ notes: Note[] }>(`/notes?${params.toString()}`);
     return response.data.notes;
+  },
+
+  async getNoteCounts(): Promise<NoteCounts> {
+    const response = await api.get<NoteCounts>('/notes/counts');
+    return response.data;
   },
 
   async getNoteById(id: string): Promise<Note> {

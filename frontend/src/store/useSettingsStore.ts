@@ -2,50 +2,70 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type DateDisplayMode = 'updatedAt' | 'createdAt';
-export type ThemeId = 'sproutGreen' | 'blossomPink' | 'neuralBlue' | 'synapseCream' | 'pulseOrange' | 'branchBrown' | 'growthBeige' | 'cortexGray';
+export type PaletteId = 'onyx' | 'bordeaux' | 'forest' | 'midnight' | 'obsidian' | 'nacre';
 export type ThemeMode = 'light' | 'dark';
+export type FontId = 'cormorant' | 'eb-garamond' | 'mixed';
+export type DensityId = 'compact' | 'regular' | 'comfy';
+export type CursorStyle = 'classic' | 'modern';
 
 interface SettingsState {
   dateDisplayMode: DateDisplayMode;
-  theme: ThemeId;
+  palette: PaletteId;
   themeMode: ThemeMode;
-  showFocusTimer: boolean;
+  font: FontId;
+  fontSize: number;
+  dropCap: boolean;
+  density: DensityId;
+  autoSave: boolean;
+  cursorStyle: CursorStyle;
 
-  // Actions
   setDateDisplayMode: (mode: DateDisplayMode) => void;
-  setTheme: (theme: ThemeId) => void;
+  setPalette: (palette: PaletteId) => void;
   setThemeMode: (mode: ThemeMode) => void;
-  setShowFocusTimer: (show: boolean) => void;
+  setFont: (font: FontId) => void;
+  setFontSize: (size: number) => void;
+  setDropCap: (on: boolean) => void;
+  setDensity: (density: DensityId) => void;
+  setAutoSave: (on: boolean) => void;
+  setCursorStyle: (style: CursorStyle) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      // Default settings
       dateDisplayMode: 'updatedAt',
-      theme: 'sproutGreen',
-      themeMode: 'dark',
-      showFocusTimer: true,
+      palette: 'onyx',
+      themeMode: 'light',
+      font: 'cormorant',
+      fontSize: 19,
+      dropCap: true,
+      density: 'regular',
+      autoSave: true,
+      cursorStyle: 'classic',
 
-      // Actions
       setDateDisplayMode: (mode) => set({ dateDisplayMode: mode }),
-      setTheme: (theme) => set({ theme }),
+      setPalette: (palette) => set({ palette }),
       setThemeMode: (mode) => set({ themeMode: mode }),
-      setShowFocusTimer: (show) => set({ showFocusTimer: show }),
+      setFont: (font) => set({ font }),
+      setFontSize: (fontSize) => set({ fontSize }),
+      setDropCap: (dropCap) => set({ dropCap }),
+      setDensity: (density) => set({ density }),
+      setAutoSave: (autoSave) => set({ autoSave }),
+      setCursorStyle: (cursorStyle) => set({ cursorStyle }),
     }),
     {
-      name: 'dendrite-settings', // localStorage key
-      version: 1,
-      migrate: (persistedState: any, version: number) => {
-        // Migration für leafGreen -> sproutGreen mit Dark Mode
-        if (version === 0 && persistedState.theme === 'leafGreen') {
-          return {
-            ...persistedState,
-            theme: 'sproutGreen',
-            themeMode: 'dark',
-          };
+      name: 'dendrite-settings',
+      version: 4,
+      migrate: (_: any, version: number) => {
+        if (version < 2) {
+          return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: 'cormorant', fontSize: 19, dropCap: true, density: 'regular', autoSave: true, cursorStyle: 'classic' };
         }
-        return persistedState;
+        if (version < 3) return { ..._, cursorStyle: 'classic' };
+        if (version < 4) {
+          const oldStyle = _?.cursorStyle;
+          return { ..._, cursorStyle: oldStyle === 'classic' ? 'modern' : 'classic' };
+        }
+        return _;
       },
     }
   )
