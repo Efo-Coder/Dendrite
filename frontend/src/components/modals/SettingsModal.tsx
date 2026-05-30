@@ -69,7 +69,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
 
-  const { user, updateProfile } = useAuthStore();
+  const { user } = useAuthStore();
   const [twoFASetup, setTwoFASetup] = useState<{ secret: string; qrCode: string } | null>(null);
   const [twoFACode, setTwoFACode] = useState('');
   const [twoFALoading, setTwoFALoading] = useState(false);
