@@ -60,7 +60,7 @@ const Toast = ({ id, type, message, duration = 3000, onClose }: ToastProps) => {
       )}
     >
       {/* Icon */}
-      <div className="flex-shrink-0 pt-0.5">{icons[type]}</div>
+      <div className="shrink-0 pt-0.5">{icons[type]}</div>
 
       {/* Message */}
       <div className="flex-1 text-sm font-medium pr-8">{message}</div>
