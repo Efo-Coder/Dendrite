@@ -125,24 +125,14 @@ const ResetPasswordPage = () => {
 
         <Link
           to="/"
-          className="absolute top-4 left-6 z-20 icon-btn-lg rounded-full flex items-center justify-center backdrop-blur-xl"
-          style={{
-            background: 'color-mix(in srgb, var(--surface) 55%, transparent)',
-            border: '0.5px solid var(--line)',
-            color: 'var(--ink-low)',
-          }}
+          className="absolute top-4 left-6 z-20 icon-btn-auth icon-btn-lg rounded-full flex items-center justify-center backdrop-blur-xl"
         >
           <Home className="w-4 h-4" />
         </Link>
 
         <button
           onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
-          className="absolute top-4 right-6 z-20 icon-btn-lg rounded-full flex items-center justify-center backdrop-blur-xl"
-          style={{
-            background: 'color-mix(in srgb, var(--surface) 55%, transparent)',
-            border: '0.5px solid var(--line)',
-            color: 'var(--ink-low)',
-          }}
+          className="absolute top-4 right-6 z-20 icon-btn-auth icon-btn-lg rounded-full flex items-center justify-center backdrop-blur-xl"
         >
           {themeMode === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
@@ -348,3 +338,4 @@ const ResetPasswordPage = () => {
 };
 
 export default ResetPasswordPage;
+

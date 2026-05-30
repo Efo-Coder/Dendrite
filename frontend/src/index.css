@@ -243,6 +243,25 @@
     color: var(--ink); border-color: transparent; background-position: 99% 50%;
   }
 
+  /* Auth icon button — home + theme toggle on auth pages */
+  .icon-btn-auth {
+    color: var(--ink-low);
+    border: 0.5px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 55%, transparent);
+    background-image: linear-gradient(270deg,
+      color-mix(in oklch, var(--accent) 80%, transparent),
+      color-mix(in oklch, var(--accent-deep) 80%, transparent),
+      transparent, transparent);
+    background-position: 1% 50%;
+    background-size: 300% 300%;
+    transition: color 0.7s ease-out, background-position 0.7s ease-out, border-color 0.7s ease-out;
+  }
+  .icon-btn-auth:hover {
+    color: oklch(0.15 0.020 60);
+    border-color: transparent;
+    background-position: 99% 50%;
+  }
+
   /* Toggle button — used in Settings for option groups */
   .btn-toggle {
     display: inline-flex; align-items: center; justify-content: center;
