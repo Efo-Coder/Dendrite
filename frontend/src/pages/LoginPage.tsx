@@ -285,10 +285,8 @@ const LoginPage = () => {
                       marginTop: '8px',
                       fontFamily: 'var(--serif-body)',
                       fontSize: '13px',
-                      color: 'var(--ink-dim)',
-                      transition: 'color .15s',
                     }}
-                    className="hover:text-(--accent)"
+                    className="text-(--ink-dim) hover:text-(--accent) transition-colors"
                   >
                     Forgot password?
                   </Link>
