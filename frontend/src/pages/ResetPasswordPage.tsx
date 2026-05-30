@@ -228,7 +228,7 @@ const ResetPasswordPage = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="no-press absolute right-3 top-1/2 -translate-y-1/2"
+                        tabIndex={-1} className="no-press absolute right-3 top-1/2 -translate-y-1/2"
                         style={{ color: 'var(--ink-low)', transition: 'color .15s' }}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -281,7 +281,7 @@ const ResetPasswordPage = () => {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="no-press absolute right-3 top-1/2 -translate-y-1/2"
+                        tabIndex={-1} className="no-press absolute right-3 top-1/2 -translate-y-1/2"
                         style={{ color: 'var(--ink-low)', transition: 'color .15s' }}
                       >
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -338,4 +338,5 @@ const ResetPasswordPage = () => {
 };
 
 export default ResetPasswordPage;
+
 
