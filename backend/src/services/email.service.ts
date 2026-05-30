@@ -19,7 +19,7 @@ export async function sendVerificationEmail(email: string, token: string) {
 
   const html = `
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -36,16 +36,16 @@ export async function sendVerificationEmail(email: string, token: string) {
           </tr>
           <tr>
             <td style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:40px;">
-              <p style="margin:0 0 8px;font-size:22px;font-weight:600;color:#ffffff;">E-Mail bestätigen</p>
+              <p style="margin:0 0 8px;font-size:22px;font-weight:600;color:#ffffff;">Verify your email</p>
               <p style="margin:0 0 28px;font-size:15px;color:rgba(255,255,255,0.6);line-height:1.6;">
-                Klicke auf den Button, um deine Registrierung abzuschließen. Der Link ist 24 Stunden gültig.
+                Click the button below to complete your registration. The link is valid for 24 hours.
               </p>
               <a href="${verifyUrl}"
                  style="display:inline-block;background:#26ad53;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 32px;border-radius:12px;">
-                E-Mail bestätigen
+                Verify email
               </a>
               <p style="margin:28px 0 0;font-size:13px;color:rgba(255,255,255,0.35);line-height:1.6;">
-                Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br/>
+                If the button doesn't work, copy this link into your browser:<br/>
                 <span style="color:rgba(255,255,255,0.5);word-break:break-all;">${verifyUrl}</span>
               </p>
             </td>
@@ -53,7 +53,7 @@ export async function sendVerificationEmail(email: string, token: string) {
           <tr>
             <td align="center" style="padding-top:24px;">
               <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.25);">
-                Falls du kein Konto erstellt hast, kannst du diese E-Mail ignorieren.
+                If you didn't create an account, you can safely ignore this email.
               </p>
             </td>
           </tr>
@@ -67,7 +67,7 @@ export async function sendVerificationEmail(email: string, token: string) {
   await createTransporter().sendMail({
     from,
     to: email,
-    subject: 'Dendrite – E-Mail bestätigen',
+    subject: 'Dendrite – Verify your email',
     html,
   });
 }
@@ -79,7 +79,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
 
   const html = `
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -96,16 +96,16 @@ export async function sendPasswordResetEmail(email: string, token: string) {
           </tr>
           <tr>
             <td style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:40px;">
-              <p style="margin:0 0 8px;font-size:22px;font-weight:600;color:#ffffff;">Passwort zurücksetzen</p>
+              <p style="margin:0 0 8px;font-size:22px;font-weight:600;color:#ffffff;">Reset your password</p>
               <p style="margin:0 0 28px;font-size:15px;color:rgba(255,255,255,0.6);line-height:1.6;">
-                Klicke auf den Button, um ein neues Passwort zu setzen. Der Link ist 1 Stunde gültig.
+                Click the button below to set a new password. The link is valid for 1 hour.
               </p>
               <a href="${resetUrl}"
                  style="display:inline-block;background:#26ad53;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 32px;border-radius:12px;">
-                Passwort zurücksetzen
+                Reset password
               </a>
               <p style="margin:28px 0 0;font-size:13px;color:rgba(255,255,255,0.35);line-height:1.6;">
-                Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br/>
+                If the button doesn't work, copy this link into your browser:<br/>
                 <span style="color:rgba(255,255,255,0.5);word-break:break-all;">${resetUrl}</span>
               </p>
             </td>
@@ -113,7 +113,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
           <tr>
             <td align="center" style="padding-top:24px;">
               <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.25);">
-                Falls du kein Passwort-Reset angefordert hast, kannst du diese E-Mail ignorieren.
+                If you didn't request a password reset, you can safely ignore this email.
               </p>
             </td>
           </tr>
@@ -127,7 +127,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   await createTransporter().sendMail({
     from,
     to: email,
-    subject: 'Dendrite – Passwort zurücksetzen',
+    subject: 'Dendrite – Reset your password',
     html,
   });
 }
