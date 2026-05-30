@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -18,7 +18,33 @@ gsap.registerPlugin(ScrollTrigger);
 export default function LandingPage() {
   const { themeMode, setThemeMode } = useSettingsStore();
   const dark = themeMode === 'dark';
-  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (dark) {
+      root.removeAttribute('data-theme');
+      root.style.setProperty('--background', 'oklch(0.16 0.008 60)');
+      root.style.setProperty('--foreground', 'oklch(0.985 0 0)');
+      root.style.setProperty('--muted', 'oklch(0.269 0 0)');
+      root.style.setProperty('--muted-foreground', 'oklch(0.708 0 0)');
+      root.style.setProperty('--border', 'oklch(1 0 0 / 10%)');
+    } else {
+      root.setAttribute('data-theme', 'light');
+      root.style.setProperty('--background', 'oklch(0.97 0.006 80)');
+      root.style.setProperty('--foreground', 'oklch(0.145 0 0)');
+      root.style.setProperty('--muted', 'oklch(0.93 0.008 80)');
+      root.style.setProperty('--muted-foreground', 'oklch(0.556 0 0)');
+      root.style.setProperty('--border', 'oklch(0.922 0 0)');
+    }
+    return () => {
+      root.setAttribute('data-theme', themeMode);
+      root.style.removeProperty('--background');
+      root.style.removeProperty('--foreground');
+      root.style.removeProperty('--muted');
+      root.style.removeProperty('--muted-foreground');
+      root.style.removeProperty('--border');
+    };
+  }, [dark]);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => ScrollTrigger.refresh());
@@ -28,23 +54,9 @@ export default function LandingPage() {
     };
   }, []);
 
-  const landingVars = dark ? {
-    '--background': 'oklch(0.16 0.008 60)',
-    '--foreground': 'oklch(0.985 0 0)',
-    '--muted': 'oklch(0.269 0 0)',
-    '--muted-foreground': 'oklch(0.708 0 0)',
-    '--border': 'oklch(1 0 0 / 10%)',
-  } : {
-    '--background': 'oklch(0.97 0.006 80)',
-    '--foreground': 'oklch(0.145 0 0)',
-    '--muted': 'oklch(0.93 0.008 80)',
-    '--muted-foreground': 'oklch(0.556 0 0)',
-    '--border': 'oklch(0.922 0 0)',
-  };
-
   return (
     <SmoothScroll>
-      <div ref={containerRef} style={{ ...landingVars, background: 'var(--bg)', color: 'var(--ink)', minHeight: '100vh' } as React.CSSProperties}>
+      <div style={{ background: 'var(--bg)', color: 'var(--ink)', minHeight: '100vh' }}>
         <HeaderSection dark={dark} onToggleDark={() => setThemeMode(dark ? 'light' : 'dark')} />
         <main id="main-content" style={{ position: 'relative', zIndex: 10, background: 'var(--bg)' }}>
           <HeroSection />
