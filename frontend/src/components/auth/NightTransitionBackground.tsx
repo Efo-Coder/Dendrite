@@ -129,7 +129,10 @@ function FadingCanvas({ isDark }: { isDark: boolean }) {
 
 export default function NightTransitionBackground({ isDark }: { isDark: boolean }) {
   return (
-    <div style={{ position: 'absolute', inset: 0 }}>
+    <div
+      style={{ position: 'absolute', inset: 0, userSelect: 'none' }}
+      onContextMenu={(e) => e.preventDefault()}
+    >
       <StaticFallback isDark={isDark} />
       <Suspense fallback={null}>
         <FadingCanvas isDark={isDark} />
