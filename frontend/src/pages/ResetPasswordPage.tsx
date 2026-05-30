@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useToast } from '../components/ui/ToastContainer';
 import Logo from '../components/ui/Logo';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
 import { Eye, EyeOff, Moon, Sun, Home, CheckCircle } from 'lucide-react';
@@ -30,12 +31,22 @@ const ResetPasswordPage = () => {
   const [success, setSuccess] = useState(false);
   const [searchParams] = useSearchParams();
   const { themeMode, setThemeMode } = useSettingsStore();
+  const toast = useToast();
   const navigate = useNavigate();
   const token = searchParams.get('token');
+  const prevError = useRef<string | null>(null);
 
   useEffect(() => {
     if (!token) setError('Invalid or missing reset link.');
   }, [token]);
+
+  useEffect(() => {
+    if (error && error !== prevError.current) {
+      toast.error(error, 6000);
+      prevError.current = error;
+    }
+    if (!error) prevError.current = null;
+  }, [error]);
 
   const strength = getPasswordStrength(password);
 
@@ -197,19 +208,6 @@ const ResetPasswordPage = () => {
                     Choose a strong password
                   </p>
                 </div>
-
-                {error && (
-                  <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg text-sm" style={{ marginBottom: '20px' }}>
-                    {error}
-                    {(error.includes('expired') || error.includes('Invalid')) && (
-                      <div style={{ marginTop: '8px' }}>
-                        <Link to="/forgot-password" style={{ color: 'var(--accent)', fontSize: '12px' }}>
-                          Request a new reset link
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 <form onSubmit={handleSubmit} className="auth-panel" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                   <div>

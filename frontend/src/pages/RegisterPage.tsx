@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useToast } from '../components/ui/ToastContainer';
 import Logo from '../components/ui/Logo';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
 import { Eye, EyeOff, Moon, Sun, Mail, Home } from 'lucide-react';
@@ -35,11 +36,22 @@ const RegisterPage = () => {
   const [resendDone, setResendDone] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const { register, error, isLoading } = useAuthStore();
+  const toast = useToast();
+  const prevError = useRef<string | null>(null);
 
   useEffect(() => {
     const plan = sessionStorage.getItem('pending_plan');
     if (plan === 'writer' || plan === 'author') setPendingPlan(plan);
   }, []);
+
+  useEffect(() => {
+    const msg = localError || error;
+    if (msg && msg !== prevError.current) {
+      toast.error(msg, 6000);
+      prevError.current = msg;
+    }
+    if (!msg) prevError.current = null;
+  }, [localError, error]);
 
   const { themeMode, setThemeMode } = useSettingsStore();
 
@@ -270,13 +282,6 @@ const RegisterPage = () => {
                     </p>
                   )}
                 </div>
-
-                {/* Error */}
-                {displayError && (
-                  <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg text-sm" style={{ marginBottom: '20px' }}>
-                    {displayError}
-                  </div>
-                )}
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="auth-panel" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>

@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useToast } from '../components/ui/ToastContainer';
 import Logo from '../components/ui/Logo';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
-import { Eye, EyeOff, Moon, Sun, CheckCircle, AlertCircle, Send, Home } from 'lucide-react';
+import { Eye, EyeOff, Moon, Sun, Send, Home } from 'lucide-react';
 import api from '../services/api';
 
 const REMEMBERED_EMAIL_KEY = 'dendrite_remembered_email';
@@ -24,14 +25,29 @@ const LoginPage = () => {
   const [searchParams] = useSearchParams();
   const verified = searchParams.get('verified');
 
+  const toast = useToast();
   const isUnverifiedError = error?.includes('verify') ?? false;
+  const shownVerified = useRef(false);
+  const prevError = useRef<string | null>(null);
 
   useEffect(() => {
-    if (error) {
+    if (!shownVerified.current) {
+      shownVerified.current = true;
+      if (verified === 'true') toast.success('Email verified – you can now sign in.', 5000);
+      if (verified === 'expired') toast.error('The verification link has expired.', 6000);
+      if (verified === 'error') toast.error('Invalid verification link.', 6000);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (error && error !== prevError.current) {
+      toast.error(error, 6000);
+      prevError.current = error;
       setShake(true);
       const t = setTimeout(() => setShake(false), 500);
       return () => clearTimeout(t);
     }
+    if (!error) prevError.current = null;
   }, [error]);
 
   useEffect(() => {
@@ -193,46 +209,26 @@ const LoginPage = () => {
               </p>
             </div>
 
-            {/* Alerts */}
-            {(verified === 'true' || verified === 'expired' || verified === 'error') && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
-                {verified === 'true' && (
-                  <div className="flex items-center gap-2.5 bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-lg text-sm">
-                    <CheckCircle className="w-4 h-4 shrink-0" />
-                    Email verified – you can now sign in.
-                  </div>
-                )}
-                {(verified === 'expired' || verified === 'error') && (
-                  <div className="flex items-center gap-2.5 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg text-sm">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    {verified === 'expired' ? 'The verification link has expired.' : 'Invalid verification link.'}
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Form — wraps in shake motion */}
             <motion.div
               animate={shake ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}}
               transition={{ duration: 0.4 }}
             >
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg text-sm space-y-2" style={{ marginBottom: '20px' }}>
-                  <p>{error}</p>
-                  {isUnverifiedError && (
-                    resendDone ? (
-                      <p className="text-green-400 text-xs">Verification email sent.</p>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleResend}
-                        disabled={resendLoading || !email}
-                        className="no-press flex items-center gap-1.5 text-xs text-white/60 hover:text-white/90 transition-colors disabled:opacity-40"
-                      >
-                        <Send className="w-3 h-3" />
-                        {resendLoading ? 'Sending...' : 'Resend verification email'}
-                      </button>
-                    )
+              {isUnverifiedError && (
+                <div style={{ marginBottom: '16px' }}>
+                  {resendDone ? (
+                    <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#26ad53' }}>Verification email sent.</p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      disabled={resendLoading || !email}
+                      className="no-press flex items-center gap-1.5"
+                      style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-dim)', background: 'none', border: 'none', cursor: 'pointer', opacity: resendLoading || !email ? 0.4 : 1 }}
+                    >
+                      <Send className="w-3 h-3" />
+                      {resendLoading ? 'Sending...' : 'Resend verification email'}
+                    </button>
                   )}
                 </div>
               )}
