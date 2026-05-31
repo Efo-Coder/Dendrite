@@ -347,10 +347,10 @@ html.is-theme-switching {
 .animate-fade-in  { animation: fadeIn 0.3s ease-out forwards; }
 .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
 
-/* btn-shimmer — diagonal light sweep on hover, shared across primary/danger/notelist buttons */
-.btn-shimmer { position: relative; overflow: hidden; }
+/* hover-shimmer — diagonal light sweep on hover, shared across primary/danger/notelist buttons */
+.hover-shimmer { position: relative; overflow: hidden; }
 
-.btn-shimmer::before,
+.hover-shimmer::before,
 .win .notelist-new-btn::before,
 .win .notelist-trash-btn::before,
 .modal-overlay .btn.primary::before,
@@ -361,7 +361,8 @@ html.is-theme-switching {
   background-position: -100% -100%, 0 0; transition: 800ms ease;
 }
 
-.btn-shimmer:hover::before,
+.hover-shimmer:hover::before,
+.btn.primary:hover::before,
 .win .notelist-new-btn:hover::before,
 .win .notelist-trash-btn:hover::before,
 .modal-overlay .btn.primary:hover::before,
@@ -959,6 +960,23 @@ html .auth-inputs .input:focus { outline: none; box-shadow: 0 0 0 2px rgba(255, 
   background: var(--bg); flex-shrink: 0;
 }
 
+/* Primary button — global */
+.btn.primary {
+  display: inline-flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+  color: oklch(0.15 0.020 60);
+  font-family: var(--serif-display); font-weight: 600; letter-spacing: 0.03em;
+  text-decoration: none; cursor: pointer;
+  box-shadow: 0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
+}
+.btn.primary::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(-30deg, hsla(0,0%,0%,0) 60%, rgba(255,255,255,0.25) 70%, hsla(0,0%,0%,0) 85%, hsla(0,0%,0%,0) 100%);
+  background-size: 300% 300%, 100% 100%; background-repeat: no-repeat;
+  background-position: -100% -100%, 0 0; transition: 800ms ease;
+}
+
 /* Modal action buttons */
 .modal-overlay .btn {
   appearance: none; border: 1px solid transparent; padding: 8px 32px; border-radius: 0;
@@ -1257,7 +1275,10 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='18' viewBox='0 0 12 18'%3E%3Cline x1='3' y1='1.5' x2='9' y2='1.5' stroke='%238b6020' stroke-width='1.5' stroke-linecap='round'/%3E%3Cline x1='6' y1='1.5' x2='6' y2='16.5' stroke='%238b6020' stroke-width='1.5' stroke-linecap='round'/%3E%3Cline x1='3' y1='16.5' x2='9' y2='16.5' stroke='%238b6020' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") 6 9, text !important;
   }
 
+  html body .feature-image-area, html body .feature-image-area * { cursor: none !important; }
+
   html .resize-handle-ew.resize-handle-ew     { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Cpath d='M4 6H20M4 6L8 3M4 6L8 9M20 6L16 3M20 6L16 9' stroke='%233a2008' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3Cpath d='M4 6H20M4 6L8 3M4 6L8 9M20 6L16 3M20 6L16 9' stroke='%23b8891a' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3C/svg%3E") 12 6, ew-resize !important; }
   html .resize-handle-ns.resize-handle-ns     { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='24' viewBox='0 0 12 24'%3E%3Cpath d='M6 4V20M6 4L3 8M6 4L9 8M6 20L3 16M6 20L9 16' stroke='%233a2008' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3Cpath d='M6 4V20M6 4L3 8M6 4L9 8M6 20L3 16M6 20L9 16' stroke='%23b8891a' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3C/svg%3E") 6 12, ns-resize !important; }
   html .resize-handle-nwse.resize-handle-nwse { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M4 4L16 16M4 4L4 9M4 4L9 4M16 16L11 16M16 16L16 11' stroke='%233a2008' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3Cpath d='M4 4L16 16M4 4L4 9M4 4L9 4M16 16L11 16M16 16L16 11' stroke='%23b8891a' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3C/svg%3E") 10 10, nwse-resize !important; }
+
 }

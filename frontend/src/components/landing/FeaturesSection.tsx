@@ -254,6 +254,7 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
   const xTo = useRef<gsap.QuickToFunc | null>(null);
   const yTo = useRef<gsap.QuickToFunc | null>(null);
   const scaleTo = useRef<gsap.QuickToFunc | null>(null);
+  const inEllipseRef = useRef(false);
 
   useEffect(() => {
     if (!canvasWrapperRef.current) return;
@@ -264,15 +265,41 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = imageContainerRef.current?.getBoundingClientRect();
-    if (!rect || !xTo.current || !yTo.current) return;
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    xTo.current(-x * 30);
-    yTo.current(-y * 30);
+    if (!rect) return;
+    const dx = e.clientX - rect.left - rect.width / 2;
+    const dy = e.clientY - rect.top - rect.height / 2;
+    const inEllipse = (dx / (rect.width / 2)) ** 2 + (dy / (rect.height / 2)) ** 2 <= 1;
+
+    if (inEllipse !== inEllipseRef.current) {
+      inEllipseRef.current = inEllipse;
+      onHover(inEllipse);
+      imageContainerRef.current?.classList.toggle('feature-image-area', inEllipse);
+      if (inEllipse) {
+        scaleTo.current?.(1.22);
+      } else {
+        xTo.current?.(0);
+        yTo.current?.(0);
+        scaleTo.current?.(1.15);
+      }
+    }
+
+    if (inEllipse && xTo.current && yTo.current) {
+      xTo.current(-dx / rect.width * 30);
+      yTo.current(-dy / rect.height * 30);
+    }
   };
 
-  const handleMouseEnter = () => { onHover(true); scaleTo.current?.(1.22); };
-  const handleMouseLeave = () => { onHover(false); xTo.current?.(0); yTo.current?.(0); scaleTo.current?.(1.15); };
+  const handleMouseEnter = () => {};
+  const handleMouseLeave = () => {
+    if (inEllipseRef.current) {
+      inEllipseRef.current = false;
+      onHover(false);
+      imageContainerRef.current?.classList.remove('feature-image-area');
+    }
+    xTo.current?.(0);
+    yTo.current?.(0);
+    scaleTo.current?.(1.15);
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -306,10 +333,8 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
   return (
     <div
       ref={containerRef}
-      className="group cursor-pointer py-16 md:py-24"
+      className="group py-16 md:py-24"
       onClick={onClick}
-      onMouseEnter={() => onHover(true)}
-      onMouseLeave={() => onHover(false)}
     >
       <div className="mx-auto max-w-360 px-6 sm:px-12 lg:px-24">
         <div className={`flex flex-col gap-8 ${isEven ? "md:flex-row" : "md:flex-row-reverse"} md:items-center md:gap-16`}>

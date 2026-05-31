@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { BetaBanner } from "./BetaBanner";
 
 function DashboardMockup() {
   return (
@@ -209,6 +210,7 @@ export function HeroSection() {
       className="relative w-full overflow-hidden flex items-center"
       style={{ minHeight: '100dvh', background: 'var(--bg)' }}
     >
+      <BetaBanner />
       {/* Ambient radial glow */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -226,7 +228,7 @@ export function HeroSection() {
         style={{
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: 'clamp(100px, 14vh, 140px) clamp(24px, 5vw, 80px) clamp(60px, 10vh, 100px)',
+          padding: 'clamp(136px, calc(14vh + 36px), 180px) clamp(24px, 5vw, 80px) clamp(60px, 10vh, 100px)',
         }}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 items-center" style={{ gap: 'clamp(48px, 7vw, 100px)' }}>
@@ -315,45 +317,22 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 1.0, ease: [0.25, 1, 0.5, 1] }}
             >
-              <a
-                href="/register"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '11px 24px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
-                  color: 'oklch(0.15 0.020 60)',
-                  fontFamily: 'var(--serif-display)',
-                  fontWeight: 600,
-                  fontSize: '15px',
-                  letterSpacing: '0.03em',
-                  textDecoration: 'none',
-                  boxShadow: '0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent)',
-                  transition: 'transform 0.1s ease',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-1px)')}
-                onMouseLeave={e => (e.currentTarget.style.transform = '')}
-              >
+              <a href="/register" className="btn primary" style={{ padding: '11px 24px', borderRadius: '10px', fontSize: '15px' }}>
                 Start for free
               </a>
               <a
                 href="#features"
+                className="btn-ghost fill-slide text-(--ink-mid) hover:text-(--ink)"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
                   padding: '11px 24px',
-                  borderRadius: '10px',
-                  background: 'transparent',
-                  color: 'var(--ink-mid)',
-                  fontFamily: 'var(--serif-body)',
                   fontSize: '15px',
-                  textDecoration: 'none',
+                  borderRadius: '10px',
+                  fontFamily: 'var(--serif-body)',
+                  textTransform: 'none',
+                  letterSpacing: 'normal',
                   border: '0.5px solid var(--line)',
-                  transition: 'color 0.15s ease, background 0.15s ease',
+                  fontWeight: 500,
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--ink)'; (e.currentTarget as HTMLAnchorElement).style.background = 'var(--surface)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--ink-mid)'; (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; }}
               >
                 Explore features
               </a>
@@ -374,7 +353,7 @@ export function HeroSection() {
 
         {/* Scroll hint */}
         <motion.div
-          className="absolute bottom-8 left-0 right-0"
+          className="absolute bottom-1 left-0 right-0 flex items-center gap-3"
           style={{ padding: '0 clamp(24px, 5vw, 80px)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -389,6 +368,33 @@ export function HeroSection() {
           }}>
             Scroll
           </span>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            border: '1px solid var(--ink-dim)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <motion.svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              animate={{ y: [0, 4, 0] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <path
+                d="M2 4.5L7 9.5L12 4.5"
+                stroke="var(--ink-dim)"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </motion.svg>
+          </div>
         </motion.div>
       </div>
     </section>

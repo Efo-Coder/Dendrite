@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
 import { Moon, Sun } from "lucide-react";
 import { LOGO_SRC } from "../../config/brand";
+import { BetaBadge } from "../ui/BetaBadge";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -66,6 +67,7 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
           }}>
             Dendrite
           </span>
+          <BetaBadge style={{ transform: 'translate(-3px, -3px)' }} />
         </a>
 
         {/* Separator */}
@@ -105,30 +107,24 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
 
           <Link
             to="/login"
-            className="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg transition-colors duration-150 text-(--ink-mid) hover:text-(--ink) hover:bg-(--surface)"
-            style={{ fontFamily: 'var(--serif-body)', fontSize: '14.5px', textDecoration: 'none' }}
+            className="btn-ghost fill-slide hidden sm:inline-flex text-(--ink-mid) hover:text-(--ink)"
+            style={{ padding: '7px 16px',
+              fontSize: '14px',
+              fontWeight: 500,
+              borderRadius: '8px',
+              fontFamily: 'var(--serif-body)',
+              textTransform: 'none',
+              letterSpacing: 'normal',
+              border: '0.5px solid var(--line)',
+              }}
           >
             Sign in
           </Link>
 
           <Link
             to="/register"
-            className="inline-flex items-center"
-            style={{
-              padding: '8px 18px',
-              borderRadius: '9px',
-              background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
-              color: 'oklch(0.15 0.020 60)',
-              fontFamily: 'var(--serif-display)',
-              fontWeight: 600,
-              fontSize: '14px',
-              letterSpacing: '0.03em',
-              textDecoration: 'none',
-              boxShadow: '0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 3px 10px color-mix(in oklch, var(--accent) 25%, transparent)',
-              transition: 'transform 0.1s ease',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-0.5px)')}
-            onMouseLeave={e => (e.currentTarget.style.transform = '')}
+            className="btn primary"
+            style={{ padding: '8px 18px', fontSize: '14px', borderRadius: '9px' }}
           >
             Get Started
           </Link>

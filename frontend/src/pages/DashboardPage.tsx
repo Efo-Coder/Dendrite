@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { BetaBadge } from '../components/ui/BetaBadge';
 import { motion, AnimatePresence } from 'motion/react';
 // @ts-ignore
 import SplitText from '../components/ui/SplitText';
@@ -249,8 +250,9 @@ const DashboardPage = () => {
       <div className="win">
         {/* macOS window titlebar */}
         <div className="app-titlebar">
-          <div className="titlebar-logo">
+          <div className="titlebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <img src={LOGO_SRC} alt="Dendrite" className="brand-glyph" />
+            <BetaBadge />
           </div>
           <div className="app-titlebar-title" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <AnimatePresence mode="wait">

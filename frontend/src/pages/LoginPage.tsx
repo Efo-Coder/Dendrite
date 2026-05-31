@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useToast } from '../components/ui/ToastContainer';
 import Logo from '../components/ui/Logo';
+import { BetaBadge } from '../components/ui/BetaBadge';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
 import { Eye, EyeOff, Moon, Sun, Send, Home } from 'lucide-react';
 import api from '../services/api';
@@ -247,12 +248,13 @@ const LoginPage = () => {
             <>
             {/* Logo + heading */}
             <div style={{ marginBottom: '40px', textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                 <Logo
                   size="lg"
                   showText={false}
                   style={{ '--color-icon-primary': '#26ad53', '--color-icon-secondary': '#1ee85a' } as React.CSSProperties}
                 />
+                <BetaBadge />
               </div>
               <h1 style={{
                 fontFamily: 'var(--serif-display)',

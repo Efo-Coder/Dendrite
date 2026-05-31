@@ -9,6 +9,8 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+const IS_BETA = true;
+
 function CheckIcon() {
   return (
     <svg className="w-4 h-4 shrink-0" viewBox="0 0 16 16" fill="none">
@@ -111,20 +113,26 @@ const plans: Plan[] = [
 
 function PricingCard({ plan }: { plan: Plan }) {
   const navigate = useNavigate();
+  const locked = IS_BETA && plan.name !== 'Free';
+
   if (plan.highlighted) {
     return (
       <div
         className="relative rounded-2xl p-8 flex flex-col"
-        style={{ background: 'var(--ink)', color: 'var(--bg)' }}
+        data-locked={locked || undefined}
+        style={{ background: 'var(--ink)', color: 'var(--bg)', pointerEvents: locked ? 'none' : undefined }}
       >
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-          <span
-            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium uppercase tracking-widest whitespace-nowrap"
-            style={{ background: 'var(--bg)', color: 'var(--ink)' }}
-          >
-            Recommended
-          </span>
-        </div>
+        {locked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.5)', borderRadius: 'inherit', zIndex: 1, pointerEvents: 'none' }} />}
+        {!IS_BETA && (
+          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+            <span
+              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium uppercase tracking-widest whitespace-nowrap"
+              style={{ background: 'var(--bg)', color: 'var(--ink)' }}
+            >
+              Recommended
+            </span>
+          </div>
+        )}
 
         <div className="mb-8">
           <p className="text-sm font-medium uppercase tracking-widest mb-2" style={{ opacity: 0.55 }}>
@@ -155,8 +163,8 @@ function PricingCard({ plan }: { plan: Plan }) {
             sessionStorage.setItem('pending_plan', plan.name.toLowerCase());
             navigate('/register');
           }}
-          className="w-full text-center px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-75 cursor-pointer"
-          style={{ background: 'var(--bg)', color: 'var(--ink)' }}
+          className="btn-ghost fill-slide w-full text-center text-sm font-medium text-(--ink) cursor-pointer"
+          style={{ background: 'var(--bg)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', textTransform: 'none', letterSpacing: 'normal', border: 'none' }}
         >
           {plan.cta}
         </button>
@@ -167,11 +175,15 @@ function PricingCard({ plan }: { plan: Plan }) {
   return (
     <div
       className="rounded-2xl p-8 flex flex-col"
+      data-locked={locked || undefined}
       style={{
         background: 'var(--surface)',
         border: '1px solid var(--line)',
+        pointerEvents: locked ? 'none' : undefined,
+        position: 'relative',
       }}
     >
+      {locked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: 'inherit', zIndex: 1, pointerEvents: 'none' }} />}
       <div className="mb-8">
         <p
           className="text-sm font-medium uppercase tracking-widest mb-2"
@@ -204,10 +216,8 @@ function PricingCard({ plan }: { plan: Plan }) {
       {plan.name === 'Free' ? (
         <Link
           to="/register"
-          className="w-full text-center px-6 py-3 rounded-full text-sm font-medium transition-colors"
-          style={{ border: '1px solid var(--line)', color: 'var(--ink)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink-mid)')}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--line)')}
+          className="btn-ghost fill-slide w-full text-center text-sm font-medium text-(--ink)"
+          style={{ border: '1px solid var(--line)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', textTransform: 'none', letterSpacing: 'normal' }}
         >
           {plan.cta}
         </Link>
@@ -217,10 +227,8 @@ function PricingCard({ plan }: { plan: Plan }) {
             sessionStorage.setItem('pending_plan', plan.name.toLowerCase());
             navigate('/register');
           }}
-          className="w-full text-center px-6 py-3 rounded-full text-sm font-medium transition-colors cursor-pointer"
-          style={{ border: '1px solid var(--line)', color: 'var(--ink)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink-mid)')}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--line)')}
+          className="btn-ghost fill-slide w-full text-center text-sm font-medium text-(--ink) cursor-pointer"
+          style={{ border: '1px solid var(--line)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', textTransform: 'none', letterSpacing: 'normal' }}
         >
           {plan.cta}
         </button>

@@ -14,7 +14,6 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import SharedNotePage from './pages/SharedNotePage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
-import IconsDevPage from './pages/IconsDevPage';
 // Components
 import PrivateRoute from './components/ui/PrivateRoute';
 
@@ -41,8 +40,7 @@ function RouterContent() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/shared/:token" element={<SharedNotePage />} />
         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
-        <Route path="/dev/icons" element={<IconsDevPage />} />
-        <Route
+<Route
           path="/*"
           element={
             <PrivateRoute>
