@@ -140,6 +140,8 @@ interface Feature {
   titleDown: string;
   image: string;
   description: string;
+  zoom?: number;
+  offset?: [number, number];
 }
 
 const features: Feature[] = [
@@ -147,14 +149,16 @@ const features: Feature[] = [
     id: "1",
     titleUp: "Rich",
     titleDown: "Editing",
-    image: "/img/mock-project1.webp",
+    image: "/dendrite-notebook.webp",
+    zoom: 0.75,
+    offset: [0.13, -0.1],
     description: "Write the way you think — bold, flowing, structured, or raw. The editor bends to your style, not the other way around.",
   },
   {
     id: "2",
     titleUp: "Smart",
     titleDown: "Organization",
-    image: "/img/mock-project2.webp",
+    image: "/dendrite.webp",
     description: "The more you write, the more you need structure. Dendrite keeps every note findable before it becomes noise.",
   },
   {
@@ -350,7 +354,7 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
               className="absolute inset-0 w-full h-full"
               style={{ willChange: "transform", transformStyle: "preserve-3d", backfaceVisibility: "hidden", transform: "scale(1.15)" }}
             >
-              <WaterRipple src={feature.image} maskRadius={maskRadius} />
+              <WaterRipple src={feature.image} maskRadius={maskRadius} zoom={feature.zoom ?? 1.0} offset={feature.offset} />
             </div>
           </div>
 

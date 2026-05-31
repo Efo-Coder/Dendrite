@@ -26,8 +26,8 @@ const vertexShader = `
 
 const fragmentShader = `
   uniform sampler2D uTexture, uDisplacement;
-  uniform vec2 uResolution, uTextureSize, uMaskCenter;
-  uniform float uMaskRadius, uTime;
+  uniform vec2 uResolution, uTextureSize, uMaskCenter, uOffset;
+  uniform float uMaskRadius, uTime, uZoom;
   varying vec2 vUv;
   const float PI = 3.141592653589793238;
 
@@ -45,9 +45,9 @@ const fragmentShader = `
   }
 
   vec2 getCoverUV(vec2 uv, vec2 texSize) {
-    float scale = max(uResolution.x / texSize.x, uResolution.y / texSize.y);
+    float scale = max(uResolution.x / texSize.x, uResolution.y / texSize.y) * uZoom;
     vec2 offset = (uResolution - texSize * scale) * 0.5;
-    return (uv * uResolution - offset) / (texSize * scale);
+    return (uv * uResolution - offset) / (texSize * scale) + uOffset;
   }
 
   vec3 applyDuotone(vec3 c) {
@@ -91,7 +91,7 @@ function createBrushTexture(): THREE.Texture {
   return tex;
 }
 
-function WaterRippleScene({ src, maskRadius }: { src: string; maskRadius: number }) {
+function WaterRippleScene({ src, maskRadius, zoom = 1.0, offset = [0, 0] }: { src: string; maskRadius: number; zoom?: number; offset?: [number, number] }) {
   const { size, gl } = useThree();
   const mainMaterialRef = useRef<THREE.ShaderMaterial>(null);
   const imageTexture = useTexture(src);
@@ -195,6 +195,8 @@ function WaterRippleScene({ src, maskRadius }: { src: string; maskRadius: number
       uMaskRadius: { value: 0 },
       uMaskCenter: { value: new THREE.Vector2(0.5, 0.5) },
       uTime: { value: 0 },
+      uZoom: { value: zoom },
+      uOffset: { value: new THREE.Vector2(offset[0], offset[1]) },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -233,6 +235,8 @@ function WaterRippleScene({ src, maskRadius }: { src: string; maskRadius: number
       if (u.uTextureSize && img?.width && img?.height) u.uTextureSize.value.set(img.width, img.height);
       if (u.uMaskRadius) u.uMaskRadius.value = maskRadiusRef.current;
       if (u.uTime) u.uTime.value = timeRef.current;
+      if (u.uZoom) u.uZoom.value = zoom;
+      if (u.uOffset) u.uOffset.value.set(offset[0], offset[1]);
     }
     gl.setRenderTarget(prev);
   });
@@ -255,7 +259,7 @@ function WaterRippleScene({ src, maskRadius }: { src: string; maskRadius: number
 
 const emptySubscribe = () => () => {};
 
-export function WaterRipple({ src, maskRadius }: { src: string; maskRadius: number }) {
+export function WaterRipple({ src, maskRadius, zoom, offset }: { src: string; maskRadius: number; zoom?: number; offset?: [number, number] }) {
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -274,7 +278,7 @@ export function WaterRipple({ src, maskRadius }: { src: string; maskRadius: numb
           style={{ width: "100%", height: "100%" }}
           frameloop="always"
         >
-          <WaterRippleScene src={src} maskRadius={maskRadius} />
+          <WaterRippleScene src={src} maskRadius={maskRadius} zoom={zoom} offset={offset} />
         </Canvas>
       )}
     </div>
