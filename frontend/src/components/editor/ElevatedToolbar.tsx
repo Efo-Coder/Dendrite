@@ -103,8 +103,6 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
   const [fontSizePos, setFontSizePos] = useState<PopupAnchor | null>(null);
   const [lineHeightPickerPos, setLineHeightPickerPos] = useState<PopupAnchor | null>(null);
   const [codeLangPickerPos, setCodeLangPickerPos] = useState<PopupAnchor | null>(null);
-  const [colorPickerPlacement, setColorPickerPlacement] = useState<'above' | 'below'>('above');
-  const [highlightPickerPlacement, setHighlightPickerPlacement] = useState<'above' | 'below'>('above');
 
   const rafRef = useRef<number>(0);
   const posLockedRef = useRef(false);
@@ -620,7 +618,6 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         presets={TEXT_COLORS}
         storageKey="dendrite-favorite-colors"
         padding={0}
-        onPlacementChange={setColorPickerPlacement}
       />
 
       <ColorPickerPortal
@@ -632,7 +629,6 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         storageKey="dendrite-favorite-highlights"
         fallbackColor="#fef08a"
         padding={0}
-        onPlacementChange={setHighlightPickerPlacement}
       />
     </>,
     getModalPortalRoot(),
