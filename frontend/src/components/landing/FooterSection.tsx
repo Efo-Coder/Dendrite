@@ -2,99 +2,214 @@
 
 import { Link } from "react-router-dom";
 
-const navLinks = [
-  { label: "Home", href: "#hero" },
-  { label: "Features", href: "#features" },
-  { label: "Services", href: "#services" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+const platformItems = [
+  { label: "Web App", note: "Available now" },
+  { label: "Desktop", note: "Coming soon" },
+  { label: "Android", note: "Coming soon" },
+  { label: "iOS", note: "Coming soon" },
 ];
 
-const footerLinks = [
-  { label: "About", href: "#about" },
+const quickLinks = [
   { label: "Features", href: "#features" },
-  { label: "Contact", href: "#contact" },
+  { label: "About", href: "#about" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "FAQ", href: "#faq" },
 ];
 
 export function FooterSection() {
   return (
-    <footer id="contact" className="lg:sticky lg:bottom-0 lg:z-0 bg-foreground text-background">
-      <div className="px-6 sm:px-12 lg:px-24 pt-24 lg:pt-32 pb-16 lg:pb-24 text-center sm:text-left max-w-360 mx-auto">
-        <a
-          href="mailto:hello@dendrite.app"
-          className="text-2xl sm:text-5xl lg:text-7xl font-medium tracking-tight hover:opacity-80 transition-opacity break-all sm:break-normal"
+    <footer
+      id="contact"
+      className="lg:sticky lg:bottom-0 lg:z-0"
+      style={{ background: 'var(--ink)', color: 'var(--bg)', minHeight: '100dvh' }}
+    >
+      {/* CTA */}
+      <div className="px-6 sm:px-12 lg:px-24 pt-20 lg:pt-28 pb-8 lg:pb-8 max-w-360 mx-auto">
+        <p
+          style={{
+            fontFamily: 'var(--mono)',
+            fontSize: '10px',
+            letterSpacing: '0.28em',
+            textTransform: 'uppercase',
+            color: 'color-mix(in oklch, var(--bg) 40%, transparent)',
+            marginBottom: '20px',
+          }}
         >
-          hello@dendrite.app
-        </a>
-
-        <div className="mt-10">
-          <Link
-            to="/register"
-            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-lg font-medium rounded-full bg-background text-foreground hover:bg-background/90 transition-colors"
-          >
-            Create Free Account
-          </Link>
-        </div>
+          Dendrite · a notebook
+        </p>
+        <h2
+          style={{
+            fontFamily: 'var(--serif-display)',
+            fontSize: 'clamp(2.4rem, 6vw, 5.5rem)',
+            fontWeight: 300,
+            fontStyle: 'italic',
+            color: 'var(--bg)',
+            lineHeight: 1.05,
+            letterSpacing: '-0.02em',
+            margin: '0 0 20px',
+          }}
+        >
+          Start writing today.
+        </h2>
+        <p
+          style={{
+            fontFamily: 'var(--serif-body)',
+            fontSize: '1.05rem',
+            color: 'color-mix(in oklch, var(--bg) 55%, transparent)',
+            marginBottom: '36px',
+          }}
+        >
+          Free to start. Yours to keep.
+        </p>
+        <Link
+          to="/register"
+          className="inline-flex items-center justify-center hover:opacity-90 transition-opacity"
+          style={{
+            padding: '11px 28px',
+            borderRadius: '10px',
+            background: 'var(--bg)',
+            color: 'var(--ink)',
+            fontFamily: 'var(--serif-body)',
+            fontSize: '15px',
+            fontWeight: 500,
+          }}
+        >
+          Start for free
+        </Link>
       </div>
 
-      <div className="px-6 sm:px-12 lg:px-24 max-w-360 mx-auto">
-        <div className="border-t border-background/10" />
+      {/* Divider */}
+      <div className="px-6 sm:px-12 lg:px-24 mt-4 lg:mt-10 max-w-360 mx-auto">
+        <div style={{ borderTop: '1px solid color-mix(in oklch, var(--bg) 12%, transparent)' }} />
       </div>
 
-      <div className="px-6 sm:px-12 lg:px-24 py-16 lg:py-24 max-w-360 mx-auto">
+      {/* Columns */}
+      <div className="px-6 sm:px-12 lg:px-24 pt-8 lg:pt-10 pb-8 lg:pb-6 max-w-360 mx-auto">
         <div className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8">
+
+          {/* Brand */}
           <div>
-            <span className="text-4xl font-medium tracking-tight">dendrite</span>
-            <p className="mt-4 text-background/60 text-2xl">Think clearly. Write beautifully.</p>
+            <span
+              style={{
+                fontFamily: 'var(--serif-display)',
+                fontSize: '2rem',
+                fontWeight: 400,
+                color: 'var(--bg)',
+                display: 'block',
+                marginBottom: '8px',
+              }}
+            >
+              Dendrite
+            </span>
+            <p
+              style={{
+                fontFamily: 'var(--serif-body)',
+                fontSize: '1rem',
+                fontStyle: 'italic',
+                color: 'color-mix(in oklch, var(--bg) 45%, transparent)',
+              }}
+            >
+              Think clearly. Write beautifully.
+            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-16 lg:gap-24">
+
+            {/* Platform */}
             <div>
-              <h4 className="text-sm font-medium text-background/60 mb-6">Platform</h4>
-              <div className="mb-6">
-                <p className="font-medium mb-1">Web App</p>
-                <p className="text-background/60 text-sm">Available in any browser</p>
-              </div>
-              <div>
-                <p className="font-medium mb-1">Desktop</p>
-                <p className="text-background/60 text-sm">Coming soon</p>
+              <h4
+                style={{
+                  fontFamily: 'var(--mono)',
+                  fontSize: '9px',
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: 'color-mix(in oklch, var(--bg) 38%, transparent)',
+                  marginBottom: '20px',
+                }}
+              >
+                Platform
+              </h4>
+              <div className="flex flex-col gap-4">
+                {platformItems.map(({ label, note }) => (
+                  <div key={label}>
+                    <p style={{ fontFamily: 'var(--serif-body)', fontSize: '0.9rem', color: 'var(--bg)', margin: '0 0 2px' }}>
+                      {label}
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: 'var(--mono)',
+                        fontSize: '9px',
+                        letterSpacing: '0.1em',
+                        color: 'color-mix(in oklch, var(--bg) 30%, transparent)',
+                        margin: 0,
+                      }}
+                    >
+                      {note}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 
+            {/* Navigate */}
             <div>
-              <h4 className="text-sm font-medium text-background/60 mb-6">Features</h4>
-              <ul className="space-y-3">
-                <li><span className="text-background">Rich Text Editor</span></li>
-                <li><span className="text-background">Folders & Tags</span></li>
-                <li><span className="text-background">Note Sharing</span></li>
-                <li><span className="text-background">Dark Mode</span></li>
-                <li><span className="text-background">Fast Search</span></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium text-background/60 mb-6">Navigation</h4>
-              <ul className="space-y-3">
-                {navLinks.map((link) => (
-                  <li key={link.label}>
-                    <a href={link.href} className="text-background hover:text-background/60 transition-colors">
-                      {link.label}
+              <h4
+                style={{
+                  fontFamily: 'var(--mono)',
+                  fontSize: '9px',
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: 'color-mix(in oklch, var(--bg) 38%, transparent)',
+                  marginBottom: '20px',
+                }}
+              >
+                Navigate
+              </h4>
+              <ul className="flex flex-col gap-3">
+                {quickLinks.map(({ label, href }) => (
+                  <li key={label}>
+                    <a
+                      href={href}
+                      className="opacity-70 hover:opacity-100 transition-opacity"
+                      style={{ fontFamily: 'var(--serif-body)', fontSize: '0.9rem', color: 'var(--bg)' }}
+                    >
+                      {label}
                     </a>
                   </li>
                 ))}
               </ul>
             </div>
 
+            {/* Account */}
             <div>
-              <h4 className="text-sm font-medium text-background/60 mb-6">Account</h4>
-              <ul className="space-y-3">
+              <h4
+                style={{
+                  fontFamily: 'var(--mono)',
+                  fontSize: '9px',
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: 'color-mix(in oklch, var(--bg) 38%, transparent)',
+                  marginBottom: '20px',
+                }}
+              >
+                Account
+              </h4>
+              <ul className="flex flex-col gap-3">
                 <li>
-                  <Link to="/register" className="text-background hover:text-background/60 transition-colors">
+                  <Link
+                    to="/register"
+                    className="opacity-70 hover:opacity-100 transition-opacity"
+                    style={{ fontFamily: 'var(--serif-body)', fontSize: '0.9rem', color: 'var(--bg)' }}
+                  >
                     Sign Up Free
                   </Link>
                 </li>
                 <li>
-                  <Link to="/login" className="text-background hover:text-background/60 transition-colors">
+                  <Link
+                    to="/login"
+                    className="opacity-70 hover:opacity-100 transition-opacity"
+                    style={{ fontFamily: 'var(--serif-body)', fontSize: '0.9rem', color: 'var(--bg)' }}
+                  >
                     Log In
                   </Link>
                 </li>
@@ -104,23 +219,41 @@ export function FooterSection() {
         </div>
       </div>
 
+      {/* Divider */}
+      <div className="px-6 sm:px-12 lg:px-24 max-w-360 mx-auto">
+        <div style={{ borderTop: '1px solid color-mix(in oklch, var(--bg) 12%, transparent)' }} />
+      </div>
+
+      {/* Bottom bar */}
       <div className="px-6 sm:px-12 lg:px-24 py-6 max-w-360 mx-auto">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p
+            style={{
+              fontFamily: 'var(--mono)',
+              fontSize: '10px',
+              letterSpacing: '0.14em',
+              color: 'color-mix(in oklch, var(--bg) 28%, transparent)',
+              margin: 0,
+            }}
+          >
+            © 2026 Dendrite
+          </p>
           <div className="flex items-center gap-6">
-            {footerLinks.map((link) => (
-              <a key={link.label} href={link.href} className="text-sm text-background/60 hover:text-background transition-colors">
-                {link.label}
-              </a>
-            ))}
+            <Link
+              to="/privacy"
+              className="opacity-40 hover:opacity-70 transition-opacity"
+              style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--bg)' }}
+            >
+              Privacy
+            </Link>
+            <Link
+              to="/terms"
+              className="opacity-40 hover:opacity-70 transition-opacity"
+              style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--bg)' }}
+            >
+              Terms
+            </Link>
           </div>
-
-          <p className="text-sm text-background/40">
-            © 2026 Dendrite · All rights reserved
-          </p>
-
-          <p className="text-sm text-background/40">
-            Built with care · Worldwide
-          </p>
         </div>
       </div>
     </footer>

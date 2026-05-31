@@ -148,21 +148,21 @@ const features: Feature[] = [
     titleUp: "Rich",
     titleDown: "Editing",
     image: "/img/mock-project1.webp",
-    description: "A powerful editor with formatting, code blocks, tables, images, and checklists. Your ideas deserve more than plain text.",
+    description: "Write the way you think — bold, flowing, structured, or raw. The editor bends to your style, not the other way around.",
   },
   {
     id: "2",
     titleUp: "Smart",
     titleDown: "Organization",
     image: "/img/mock-project2.webp",
-    description: "Folders, tags, and fast search work together to keep every note exactly where you expect it.",
+    description: "The more you write, the more you need structure. Dendrite keeps every note findable before it becomes noise.",
   },
   {
     id: "3",
-    titleUp: "Secure",
-    titleDown: "Sharing",
-    image: "/img/mock-project3.webp",
-    description: "Share individual notes via a secure public link. Your ideas, accessible from anywhere.",
+    titleUp: "Calm",
+    titleDown: "by Design",
+    image: "/dendrite-forest.webp",
+    description: "A writing space that feels as good as the words you put into it. Every detail is considered so your mind doesn't have to be.",
   },
 ];
 

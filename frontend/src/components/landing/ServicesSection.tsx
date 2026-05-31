@@ -200,7 +200,7 @@ export function ServicesSection() {
           ref={titleRef}
           className="text-center text-[clamp(2.5rem,7vw,7rem)] font-medium leading-[1.1] tracking-tight text-foreground max-w-350"
         >
-          <SplitText>Your thoughts, organized. Ideas that endure.</SplitText>
+          <SplitText>Your thoughts deserve a better home.</SplitText>
         </h2>
       </div>
 

@@ -53,7 +53,7 @@ const fragmentShader = `
   vec3 applyDuotone(vec3 c) {
     c = clamp((c - 0.5) * 1.2 + 0.5, 0.0, 1.0);
     float lum = pow(dot(c, vec3(0.299, 0.587, 0.114)), 0.9);
-    vec3 shadow = vec3(0.08, 0.02, 0.18), highlight = vec3(0.98, 0.65, 0.85);
+    vec3 shadow = vec3(0.06, 0.03, 0.01), highlight = vec3(0.98, 0.76, 0.30);
     vec3 duo = mix(shadow, highlight, smoothstep(0.0, 1.0, lum));
     float shift = (c.r - c.b) * 0.1;
     duo.r += shift; duo.b -= shift * 0.5;

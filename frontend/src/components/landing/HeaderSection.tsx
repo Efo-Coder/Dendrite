@@ -10,6 +10,7 @@ import { BetaBadge } from "../ui/BetaBadge";
 const navLinks = [
   { label: "Features", href: "#features" },
   { label: "About", href: "#about" },
+  { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
 ];
 
