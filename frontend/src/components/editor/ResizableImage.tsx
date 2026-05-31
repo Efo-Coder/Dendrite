@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { AlignLeft, AlignCenter, AlignRight, Trash2, Lock, Unlock, Square, Scan } from 'lucide-react';
+import { useSmartPopupStyle, type PopupAnchor } from '../../hooks/useSmartPopupStyle';
 
 interface ResizableImageProps {
   src: string;
@@ -19,6 +19,7 @@ interface ResizableImageProps {
 }
 
 type ResizeDirection = 'right' | 'bottom' | 'corner';
+
 
 const ResizableImage = ({
   src,
@@ -43,7 +44,7 @@ const ResizableImage = ({
   const [isVisible, setIsVisible] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(initialMaintainAspectRatio);
   const [positionLocked, setPositionLocked] = useState(initialPositionLocked);
-  const [controlsPos, setControlsPos] = useState<{ left: number; top: number } | null>(null);
+  const [anchor, setAnchor] = useState<PopupAnchor | null>(null);
 
   const imageRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
@@ -56,6 +57,8 @@ const ResizableImage = ({
   const aspectRatioRef = useRef(1);
   const editorWidthRef = useRef(800);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { style: popupStyle } = useSmartPopupStyle(anchor, controlsRef);
 
   // Sync local state from props when Lexical updates externally (e.g. undo/redo)
   useEffect(() => { if (!isResizing) setWidth(initialWidth ?? 100); }, [initialWidth]);
@@ -92,17 +95,30 @@ const ResizableImage = ({
     }
   }, [alignment, width, height]);
 
-  // Measure popup, set exact position, then trigger enter animation
+  // Compute anchor for smart popup positioning, clamped to editor canvas bounds
   useLayoutEffect(() => {
-    if (!showControls || !imageRef.current || !controlsRef.current) return;
+    if (!showControls || !imageRef.current || !controlsRef.current) {
+      setAnchor(null);
+      return;
+    }
     const imageRect = imageRef.current.getBoundingClientRect();
-    const popupRect = controlsRef.current.getBoundingClientRect();
-    setControlsPos({
-      left: Math.round(imageRect.left + imageRect.width / 2 - popupRect.width / 2),
-      top: Math.round(imageRect.top - 4 - popupRect.height),
-    });
+    const popupW = controlsRef.current.offsetWidth;
+    const centerX = imageRect.left + imageRect.width / 2;
+
+    // Clamp horizontal position to the editor canvas (scroll container)
+    let scrollEl: HTMLElement | null = imageRef.current.parentElement;
+    while (scrollEl) {
+      const ov = getComputedStyle(scrollEl).overflowY;
+      if (ov === 'auto' || ov === 'scroll') break;
+      scrollEl = scrollEl.parentElement;
+    }
+    const canvasRect = scrollEl?.getBoundingClientRect();
+    let left = centerX - popupW / 2;
+    if (canvasRect) left = Math.max(canvasRect.left + 8, Math.min(canvasRect.right - popupW - 8, left));
+
+    setAnchor({ x: centerX, top: imageRect.top, bottom: imageRect.bottom, left });
     requestAnimationFrame(() => setIsVisible(true));
-  }, [showControls]);
+  }, [showControls, width, height]);
 
   // Returns the editor container width (not the image width when floating)
   const getEditorWidth = () => {
@@ -129,6 +145,7 @@ const ResizableImage = ({
       const actualWidth = (width / 100) * editorWidthRef.current;
       aspectRatioRef.current = actualWidth / height;
     }
+
   };
 
   useEffect(() => {
@@ -190,6 +207,7 @@ const ResizableImage = ({
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.documentElement.removeAttribute('data-resizing');
     };
   }, [isResizing, width, height, onSizeChange, resizeDirection, maintainAspectRatio]);
 
@@ -229,7 +247,7 @@ const ResizableImage = ({
           setIsVisible(false);
           hideTimeoutRef.current = setTimeout(() => {
             setShowControls(false);
-            setControlsPos(null);
+            setAnchor(null);
             hideTimeoutRef.current = null;
           }, 220);
         }
@@ -238,6 +256,29 @@ const ResizableImage = ({
 
     document.addEventListener('mousemove', handleMove);
     return () => document.removeEventListener('mousemove', handleMove);
+  }, [showControls, isResizing]);
+
+  // Fade out popup when the editor canvas scrolls
+  useEffect(() => {
+    if (!showControls || isResizing) return;
+    let scrollEl: HTMLElement | null = imageRef.current?.parentElement ?? null;
+    while (scrollEl) {
+      const ov = getComputedStyle(scrollEl).overflowY;
+      if (ov === 'auto' || ov === 'scroll') break;
+      scrollEl = scrollEl.parentElement;
+    }
+    if (!scrollEl) return;
+    const onScroll = () => {
+      setIsVisible(false);
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+        setAnchor(null);
+        hideTimeoutRef.current = null;
+      }, 250);
+    };
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    return () => scrollEl!.removeEventListener('scroll', onScroll);
   }, [showControls, isResizing]);
 
   const getContainerStyle = (): React.CSSProperties => {
@@ -259,14 +300,12 @@ const ResizableImage = ({
   return (
     <div ref={imageRef} style={getContainerStyle()} className="group" onMouseEnter={handleMouseEnter} onMouseMove={handleMouseEnter}>
 
-      {/* Controls – portal to document.body, positioned with exact integer pixels (no transform) */}
       {showControls && createPortal(
         <div
           ref={controlsRef}
-          className="fixed glass-popup rounded-lg shadow-xl flex items-center gap-0.5 px-1.5 py-1"
+          className="glass-popup rounded-lg shadow-xl flex items-center gap-0.5 px-1.5 py-1"
           style={{
-            left: controlsPos?.left ?? -9999,
-            top: controlsPos?.top ?? -9999,
+            ...popupStyle,
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? 'translateY(0)' : 'translateY(10px)',
             transition: isVisible
@@ -322,7 +361,7 @@ const ResizableImage = ({
             </button>
           )}
         </div>,
-        getModalPortalRoot()
+        document.body
       )}
 
       {/* Image + Resize Handles */}
@@ -336,9 +375,9 @@ const ResizableImage = ({
 
         {showControls && !positionLocked && (
           <>
-            <div onMouseDown={(e) => handleMouseDown(e, 'right')} className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full cursor-ew-resize border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
-            <div onMouseDown={(e) => handleMouseDown(e, 'bottom')} className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rounded-full cursor-ns-resize border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
-            <div onMouseDown={(e) => handleMouseDown(e, 'corner')} className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full cursor-nwse-resize border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
+            <div onMouseDown={(e) => handleMouseDown(e, 'right')} className="resize-handle-ew absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
+            <div onMouseDown={(e) => handleMouseDown(e, 'bottom')} className="resize-handle-ns absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rounded-full border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
+            <div onMouseDown={(e) => handleMouseDown(e, 'corner')} className="resize-handle-nwse absolute -bottom-2 -right-2 w-4 h-4 rounded-full border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
           </>
         )}
 

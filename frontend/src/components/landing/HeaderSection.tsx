@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -94,7 +94,7 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
           {onToggleDark && (
             <button
               onClick={onToggleDark}
-              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full icon-btn-auth"
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full icon-btn-auth fill-slide"
               style={{ cursor: 'pointer' }}
               title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}

@@ -2,30 +2,16 @@
 
 ## Voraussetzungen
 
-1. **Docker Desktop** installieren
-   - Windows: https://www.docker.com/products/docker-desktop
-   - Docker Desktop muss laufen, bevor du die App startest
+1. Docker Desktop muss laufen, bevor du die App startest
 
-2. **Git** (bereits installiert, da du das Repo hast)
-
-## Installation
-
-### Schnellstart (Windows)
-
-Doppelklick auf `start.bat` im Hauptverzeichnis. Das war's!
-
-### Schnellstart (Mac/Linux)
-
-```bash
-chmod +x start.sh
-./start.sh
 ```
 
-### Manueller Start
+## Aktualisierung
 
-```bash
-docker-compose up --build
-```
+Nach npm package downloads muss das docker image neu gebaut werden
+1. Container stoppen: docker compose down
+2. Container bauen:   docker compose -d --build
+
 
 ## Nach dem Start
 
@@ -34,19 +20,6 @@ Die Anwendung ist erreichbar unter:
 - **Backend API**: http://localhost:3000
 - **Datenbank**: localhost:5432
 
-## Erster Login
-
-1. Öffne http://localhost:5173 im Browser
-2. Klicke auf "Registrieren"
-3. Erstelle einen Account
-4. Du wirst automatisch eingeloggt und kannst loslegen!
-
-## Container verwalten
-
-### Container stoppen
-```bash
-docker-compose down
-```
 
 ### Container neu starten
 ```bash

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { useSettingsStore, PaletteId, FontId, DensityId, DateDisplayMode, CursorStyle } from '../../store/useSettingsStore';
@@ -182,7 +182,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                 <div className="settings-row">
                   <div className="lbl">Theme<small>Light for daylight; dark for the small hours.</small></div>
                   <button
-                    className="btn-toggle"
+                    className="btn-toggle fill-slide"
                     onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
                   >
                     {themeMode === 'dark' ? '◑ Dark' : '○ Light'}
@@ -210,7 +210,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     {([['updatedAt', 'Edited'], ['createdAt', 'Created']] as [DateDisplayMode, string][]).map(([id, label]) => (
                       <button
                         key={id}
-                        className={`btn-toggle${dateDisplayMode === id ? ' active' : ''}`}
+                        className={`btn-toggle fill-slide${dateDisplayMode === id ? ' active' : ''}`}
                         onClick={() => setDateDisplayMode(id)}
                       >
                         {label}
@@ -225,7 +225,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     {DENSITIES.map((d) => (
                       <button
                         key={d.id}
-                        className={`btn-toggle${density === d.id ? ' active' : ''}`}
+                        className={`btn-toggle fill-slide${density === d.id ? ' active' : ''}`}
                         onClick={() => setDensity(d.id)}
                       >
                         {d.label}
@@ -240,7 +240,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     {([['classic', 'Classic'], ['modern', 'Modern']] as [CursorStyle, string][]).map(([id, label]) => (
                       <button
                         key={id}
-                        className={`btn-toggle${cursorStyle === id ? ' active' : ''}`}
+                        className={`btn-toggle fill-slide${cursorStyle === id ? ' active' : ''}`}
                         onClick={() => setCursorStyle(id)}
                       >
                         {label}
@@ -259,7 +259,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     {FONTS.map((f) => (
                       <button
                         key={f.id}
-                        className={`btn-toggle${font === f.id ? ' active' : ''}`}
+                        className={`btn-toggle fill-slide${font === f.id ? ' active' : ''}`}
                         onClick={() => setFont(f.id)}
                       >
                         {f.name}
@@ -312,8 +312,6 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   <div className="lbl">Local backup<small>Encrypted on disk.</small></div>
                   <button className="btn-ghost" style={{ border: '0.5px solid var(--line)' }}>Export</button>
                 </div>
-
-                <div style={{ height: '0.5px', background: 'var(--line-soft)', margin: '8px 0' }} />
 
                 <div className="settings-row" style={{ alignItems: 'flex-start' }}>
                   <div className="lbl">

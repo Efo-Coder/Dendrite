@@ -1,5 +1,6 @@
+import React from 'react';
 import {
-  Folder, Briefcase, BookOpen, Home, Code2, Music, Camera,
+  Folder, BookOpen, Home, Code2, Music, Camera,
   Globe, Lock, Heart, Zap, Inbox, User,
   Coffee, Palette, Plane, ShoppingBag,
   Martini, Utensils, Hamburger, Cake, ChefHat, Cpu, Leaf,
@@ -8,11 +9,15 @@ import {
   Flag, FlaskRound, Tent, Ruler, ClipboardClock, Mail, Pencil, Drum, Guitar,
   Bug, MessageCircle,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { Icons } from '../components/ui/Icons';
 
-export const FOLDER_ICONS: Record<string, LucideIcon> = {
+const BriefcaseIcon = ({ style }: { style?: React.CSSProperties }) => (
+  <Icons.briefcase size={typeof style?.width === 'number' ? style.width + 2 : 16} stroke={1.1} />
+);
+
+export const FOLDER_ICONS: Record<string, React.ComponentType<any>> = {
   Folder,
-  Briefcase,
+  Briefcase: BriefcaseIcon,
   BookOpen,
   Home,
   Code2,

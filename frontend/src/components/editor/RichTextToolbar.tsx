@@ -63,21 +63,20 @@ const getPopupStyle = (placement: 'above' | 'below'): React.CSSProperties => ({
   backdropFilter: 'blur(16px)',
   WebkitBackdropFilter: 'blur(16px)',
   borderRadius: placement === 'above' ? '1rem 1rem 0 0' : '0 0 1rem 1rem',
-  clipPath: placement === 'above' ? 'inset(0 round 1rem 1rem 0 0)' : 'inset(0 round 0 0 1rem 1rem)',
-  transformOrigin: placement === 'above' ? 'center bottom' : 'center top',
+  clipPath: placement === 'above' ? 'inset(-1px round 1rem 1rem 0 0)' : 'inset(-1px round 0 0 1rem 1rem)',
 });
 
 const popupPad = (placement: 'above' | 'below', near = '2', far = '6') =>
   placement === 'above' ? `pt-${near} pb-${far}` : `pb-${near} pt-${far}`;
 
 const popupMotion = (placement: 'above' | 'below') => {
-  const dockY = placement === 'above' ? 16 : -16;
-  const initY = placement === 'above' ? 8 : -8;
+  const dock  = placement === 'above' ?  16 : -16;
+  const enter = dock + 8;
   return {
-    initial: { opacity: 0, scale: 0.97, y: initY },
-    animate: { opacity: 1, scale: 1, y: dockY },
-    exit: { opacity: 0, scale: 0.97, y: initY, transition: { duration: 0.1 } },
-    transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
+    initial: { opacity: 0, y: enter },
+    animate: { opacity: 1, y: dock },
+    exit: { opacity: 0, y: enter, transition: { duration: 0.12 } },
+    transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
   };
 };
 
@@ -189,10 +188,10 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
   const codeLangPickerRef = useRef<HTMLDivElement>(null);
   const checklistDropdownRef = useRef<HTMLDivElement>(null);
 
-  const { style: headingPickerStyle, placement: headingPickerPlacement } = useSmartPopupStyle(headingPickerPos, headingPickerRef, 0);
+  const { style: headingPickerStyle } = useSmartPopupStyle(headingPickerPos, headingPickerRef, -8);
   const { style: fontPickerStyle, placement: fontPickerPlacement } = useSmartPopupStyle(fontPickerPos, fontPickerRef, 0);
-  const { style: fontSizeStyle, placement: fontSizePlacement } = useSmartPopupStyle(fontSizePos, fontSizeRef, 0);
-  const { style: lineHeightStyle, placement: lineHeightPlacement } = useSmartPopupStyle(lineHeightPickerPos, lineHeightPickerRef, 0);
+  const { style: fontSizeStyle } = useSmartPopupStyle(fontSizePos, fontSizeRef, -8);
+  const { style: lineHeightStyle } = useSmartPopupStyle(lineHeightPickerPos, lineHeightPickerRef, -8);
   const { style: codeLangStyle, placement: codeLangPlacement } = useSmartPopupStyle(codeLangPickerPos, codeLangPickerRef, 0);
   const { style: checklistStyle, placement: checklistPlacement } = useSmartPopupStyle(checklistDropdownPos, checklistDropdownRef, 0);
 
@@ -356,11 +355,10 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
             className="fixed bottom-24 right-6 sm:right-12 w-[min(92vw,280px)] max-h-[70vh] overflow-y-auto rounded-2xl border border-[color-mix(in_srgb,var(--line)_50%,transparent)] p-2 glass-popup shadow-2xl z-50"
             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onClick={() => closeAllPopups()}
-            initial={{ opacity: 0, scale: 0.97, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 8, transition: { duration: 0.1 } }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8, transition: { duration: 0.12 } }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            style={{ transformOrigin: 'bottom right' }}
           >
             <p className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wider text-(--ink-mid)">Edit</p>
             <div className="flex flex-wrap gap-1 px-1 pb-2">
@@ -441,10 +439,10 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
           <div className="fixed inset-0" onClick={() => setHeadingPickerPos(null)} />
           <motion.div
             ref={headingPickerRef}
-            className={popupCls(headingPickerPlacement, popupPad(headingPickerPlacement))}
-            style={{ ...(headingPickerPos?.width !== undefined ? { width: headingPickerPos.width } : {}), ...headingPickerStyle, ...getPopupStyle(headingPickerPlacement) }}
+            className={popupCls('above', popupPad('above'))}
+            style={{ ...(headingPickerPos?.width !== undefined ? { width: headingPickerPos.width } : {}), ...headingPickerStyle, ...getPopupStyle('above') }}
             onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion(headingPickerPlacement)}
+            {...popupMotion('above')}
           >
             <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
               {blockType.startsWith('h') && (
@@ -520,6 +518,7 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
         onChange={applyFontColor}
         presets={TEXT_COLORS}
         storageKey="dendrite-favorite-colors"
+        padding={-8}
       />
 
       <ColorPickerPortal
@@ -530,6 +529,7 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
         presets={HIGHLIGHT_COLORS}
         storageKey="dendrite-favorite-highlights"
         fallbackColor="#fef08a"
+        padding={-8}
       />
 
       {createPortal(
@@ -539,10 +539,10 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
           <div className="fixed inset-0" onClick={() => setFontSizePos(null)} />
           <motion.div
             ref={fontSizeRef}
-            className={popupCls(fontSizePlacement, popupPad(fontSizePlacement))}
-            style={{ ...(fontSizePos?.width !== undefined ? { width: fontSizePos.width } : {}), ...fontSizeStyle, ...getPopupStyle(fontSizePlacement) }}
+            className={popupCls('above', popupPad('above'))}
+            style={{ ...(fontSizePos?.width !== undefined ? { width: fontSizePos.width } : {}), ...fontSizeStyle, ...getPopupStyle('above') }}
             onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion(fontSizePlacement)}
+            {...popupMotion('above')}
           >
             <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
               {FONT_SIZES.map((size) => (
@@ -568,10 +568,10 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
           <div className="fixed inset-0" onClick={() => setLineHeightPickerPos(null)} />
           <motion.div
             ref={lineHeightPickerRef}
-            className={popupCls(lineHeightPlacement, popupPad(lineHeightPlacement))}
-            style={{ ...(lineHeightPickerPos?.width !== undefined ? { width: lineHeightPickerPos.width } : {}), ...lineHeightStyle, ...getPopupStyle(lineHeightPlacement) }}
+            className={popupCls('above', popupPad('above'))}
+            style={{ ...(lineHeightPickerPos?.width !== undefined ? { width: lineHeightPickerPos.width } : {}), ...lineHeightStyle, ...getPopupStyle('above') }}
             onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion(lineHeightPlacement)}
+            {...popupMotion('above')}
           >
             <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
               {LINE_HEIGHTS.map((value) => (

@@ -2,11 +2,14 @@ import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { prisma } from '../index';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function getStripe(): Stripe {
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is not configured');
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+}
 
 const PRICE_IDS: Record<string, string> = {
-  writer: process.env.STRIPE_PRICE_WRITER!,
-  author: process.env.STRIPE_PRICE_AUTHOR!,
+  writer: process.env.STRIPE_PRICE_WRITER ?? '',
+  author: process.env.STRIPE_PRICE_AUTHOR ?? '',
 };
 
 const PLAN_NAMES: Record<string, string> = {
@@ -31,7 +34,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
 
   const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173';
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [{ price: PRICE_IDS[plan], quantity: 1 }],
@@ -51,7 +54,7 @@ export async function handleWebhook(req: Request, res: Response) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!

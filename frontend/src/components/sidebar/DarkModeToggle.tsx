@@ -1,4 +1,4 @@
-import { Moon, Sun } from 'lucide-react';
+﻿import { Moon, Sun } from 'lucide-react';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 interface DarkModeToggleProps {
@@ -19,14 +19,14 @@ const DarkModeToggle = ({ onMouseEnter, onMouseLeave, className }: DarkModeToggl
       onClick={toggleTheme}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={className ?? "icon-btn-md icon-btn-auth rounded-full flex items-center justify-center"}
+      className={className ?? "icon-btn-md icon-btn-auth fill-slide rounded-full flex items-center justify-center"}
       title={`Switch to ${themeMode === 'dark' ? 'light' : 'dark'} mode`}
       aria-label={`Switch to ${themeMode === 'dark' ? 'light' : 'dark'} mode`}
     >
       {themeMode === 'dark' ? (
-        <Sun className="w-4 h-4 text-current transition-colors" />
+        <Sun className="w-4 h-4 text-current" />
       ) : (
-        <Moon className="w-4 h-4 text-current transition-colors" />
+        <Moon className="w-4 h-4 text-current" />
       )}
     </button>
   );

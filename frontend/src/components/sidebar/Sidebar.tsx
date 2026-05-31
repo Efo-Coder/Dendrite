@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-import { FileText, Star, Folder, Trash2, Archive, Plus, ChevronDown, Edit, Tag as TagIcon } from 'lucide-react';
+import { FileText, Star, Folder, Trash2, Archive, Plus, ChevronDown, Edit } from 'lucide-react';
+import { Icons } from '../ui/Icons';
 import { FOLDER_ICONS } from '../../lib/folderIcons';
 import { useFolderStore } from '../../store/useFolderStore';
 import { useTagStore } from '../../store/useTagStore';
@@ -135,7 +136,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               type="button"
               onClick={() => setLibraryOpen((o) => !o)}
               title={libraryOpen ? 'Collapse' : 'Expand'}
-              style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', color: 'var(--ink-dim)', display: 'flex' }}
+              style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', display: 'flex' }}
+              className="text-(--ink-dim) hover:text-(--accent) transition-colors"
             >
               <ChevronDown style={{ width: 10, height: 10, transform: libraryOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }} />
             </button>
@@ -171,7 +173,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               type="button"
               onClick={() => setFoldersOpen((o) => !o)}
               title={foldersOpen ? 'Collapse' : 'Expand'}
-              style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', color: 'var(--ink-dim)', display: 'flex' }}
+              style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', display: 'flex' }}
+              className="text-(--ink-dim) hover:text-(--accent) transition-colors"
             >
               <ChevronDown style={{ width: 10, height: 10, transform: foldersOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }} />
             </button>
@@ -179,7 +182,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               type="button"
               onClick={() => setShowFolderModal(true)}
               title="New Folder"
-              style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', color: 'var(--ink-dim)', display: 'flex', marginLeft: '-2px' }}
+              style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', display: 'flex', marginLeft: '-2px' }}
+              className="text-(--ink-dim) hover:text-(--accent) transition-colors"
             >
               <Plus style={{ width: 10, height: 10 }} />
             </button>
@@ -221,7 +225,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               type="button"
               onClick={() => setTagsOpen((o) => !o)}
               title={tagsOpen ? 'Collapse' : 'Expand'}
-              style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', color: 'var(--ink-dim)', display: 'flex' }}
+              style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', display: 'flex' }}
+              className="text-(--ink-dim) hover:text-(--accent) transition-colors"
             >
               <ChevronDown style={{ width: 10, height: 10, transform: tagsOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }} />
             </button>
@@ -229,7 +234,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               type="button"
               onClick={() => setShowTagModal(true)}
               title="New Tag"
-              style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', color: 'var(--ink-dim)', display: 'flex', marginLeft: '-2px' }}
+              style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', display: 'flex', marginLeft: '-2px' }}
+              className="text-(--ink-dim) hover:text-(--accent) transition-colors"
             >
               <Plus style={{ width: 10, height: 10 }} />
             </button>
@@ -249,7 +255,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     onContextMenu={(e) => handleTagRightClick(e, tag)}
                     className={clsx('sidebar-tag', currentView === 'tag' && selectedTagId === tag.id && 'active')}
                   >
-                    <span className="item-icon"><TagIcon style={{ width: 14, height: 14, color: tag.color }} /></span>
+                    <span className="item-icon" style={{ color: tag.color }}><Icons.tag size={14} /></span>
                     <span className="tag-label">{tag.name}</span>
                     {(tag.notes?.length ?? 0) > 0 && <span className="item-count">{tag.notes!.length}</span>}
                   </button>

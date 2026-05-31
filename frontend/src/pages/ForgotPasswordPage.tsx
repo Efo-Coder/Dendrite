@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -77,7 +77,7 @@ const ForgotPasswordPage = () => {
 
         <Link
           to="/"
-          className="absolute top-4 left-6 z-20 icon-btn-auth icon-btn-lg rounded-full flex items-center justify-center backdrop-blur-xl"
+          className="absolute top-4 left-6 z-20 icon-btn-auth fill-slide p-2.5 rounded-full flex items-center justify-center backdrop-blur-xl"
           title="Back to home"
         >
           <Home className="w-4 h-4" />
@@ -85,7 +85,7 @@ const ForgotPasswordPage = () => {
 
         <button
           onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
-          className="absolute top-4 right-6 z-20 icon-btn-auth icon-btn-lg rounded-full flex items-center justify-center backdrop-blur-xl"
+          className="absolute top-4 right-6 z-20 icon-btn-auth fill-slide p-2.5 rounded-full flex items-center justify-center backdrop-blur-xl"
         >
           {themeMode === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>

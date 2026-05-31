@@ -146,7 +146,7 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="flex items-center justify-center space-x-2 px-4 py-6 border-2 border-dashed border-white/30 rounded-xl text-(--ink-mid) hover:border-(--accent)/50 hover:text-(--accent) hover:bg-white/10 transition-all disabled:opacity-50"
+              className="flex items-center justify-center space-x-2 px-4 py-6 border-2 border-dashed border-(--line) rounded-xl text-(--ink-mid) hover:border-(--accent) hover:text-(--accent) hover:bg-(--surface-hi) transition-all disabled:opacity-50"
             >
               <Upload className="w-5 h-5" />
               <span className="text-sm font-medium">{selectedFile ? 'Choose different file' : 'Select file'}</span>

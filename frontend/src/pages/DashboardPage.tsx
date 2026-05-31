@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+﻿import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 // @ts-ignore
 import SplitText from '../components/ui/SplitText';
@@ -13,6 +13,8 @@ import NoteList, { type SortOption } from '../components/noteList/NoteList';
 import NoteEditor from '../components/editor/NoteEditor';
 import EmptyTrashModal from '../components/modals/EmptyTrashModal';
 import SettingsModal from '../components/modals/SettingsModal';
+import UserProfileModal from '../components/modals/UserProfileModal';
+import { User } from 'lucide-react';
 import DarkModeToggle from '../components/sidebar/DarkModeToggle';
 import { Icons } from '../components/ui/Icons';
 import { LOGO_SRC } from '../config/brand';
@@ -48,6 +50,7 @@ const DashboardPage = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showEmptyTrashModal, setShowEmptyTrashModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const [showGreeting, setShowGreeting] = useState(() => !!sessionStorage.getItem('justLoggedIn'));
   const hadGreeting = useRef(!!sessionStorage.getItem('justLoggedIn'));
@@ -284,11 +287,28 @@ const DashboardPage = () => {
               )}
             </AnimatePresence>
           </div>
-          <div className="app-titlebar-actions">
-            <DarkModeToggle className="titlebar-btn icon-btn-auth" />
+          <div className="app-titlebar-actions" style={{ gap: 12 }}>
+            <AnimatePresence>
+              {sidebarCollapsed && (
+                <motion.button
+                  key="profile-btn"
+                  type="button"
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.7 }}
+                  transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                  className="icon-btn-auth fill-slide rounded-full w-7 h-7 flex items-center justify-center"
+                  onClick={() => setShowProfileModal(true)}
+                  title="Profile"
+                >
+                  <User size={13} />
+                </motion.button>
+              )}
+            </AnimatePresence>
+            <DarkModeToggle className="icon-btn-auth fill-slide rounded-full w-7 h-7 flex items-center justify-center" />
             <button
               type="button"
-              className="titlebar-btn icon-btn-auth"
+              className="icon-btn-auth fill-slide rounded-full w-7 h-7 flex items-center justify-center"
               onClick={() => setShowSettingsModal(true)}
               title="Settings"
             >
@@ -386,6 +406,7 @@ const DashboardPage = () => {
       </div>
 
       <SettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
+      <UserProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
       <EmptyTrashModal
         isOpen={showEmptyTrashModal}
         onClose={() => setShowEmptyTrashModal(false)}

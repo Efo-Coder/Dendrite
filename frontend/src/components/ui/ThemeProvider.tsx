@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 const FONTS = {
@@ -15,6 +15,16 @@ interface ThemeProviderProps {
 
 const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const { palette, themeMode, font, fontSize, dropCap, density, cursorStyle } = useSettingsStore();
+  const prevThemeMode = useRef(themeMode);
+
+  useEffect(() => {
+    if (prevThemeMode.current === themeMode) return;
+    prevThemeMode.current = themeMode;
+    const root = document.documentElement;
+    root.classList.add('is-theme-switching');
+    const timer = setTimeout(() => root.classList.remove('is-theme-switching'), 750);
+    return () => { clearTimeout(timer); };
+  }, [themeMode]);
 
   useEffect(() => {
     const root = document.documentElement;

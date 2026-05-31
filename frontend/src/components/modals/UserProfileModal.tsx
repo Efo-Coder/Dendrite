@@ -152,10 +152,10 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                   className="w-14 h-14 rounded-full object-cover"
                 />
               ) : (
-                <div style={{
+                <div className="avatar-initials" style={{
                   width: '100%', height: '100%', borderRadius: '50%',
                   background: 'linear-gradient(135deg, var(--accent), var(--accent-deep))',
-                  color: 'var(--bg-deep)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontFamily: 'var(--serif-display)', fontWeight: 600, fontSize: '20px',
                   boxShadow: '0 0 0 0.5px var(--line)',
                 }}>

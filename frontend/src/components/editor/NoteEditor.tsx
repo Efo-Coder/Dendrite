@@ -99,6 +99,25 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const [isCompact, setIsCompact] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
   const [focusWritingMode, setFocusWritingMode] = useState(false);
+  const [showExitBtn, setShowExitBtn] = useState(false);
+  const exitBtnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleEditorMouseMove = useCallback(() => {
+    if (!focusWritingMode) return;
+    setShowExitBtn(true);
+    if (exitBtnTimerRef.current) clearTimeout(exitBtnTimerRef.current);
+    exitBtnTimerRef.current = setTimeout(() => setShowExitBtn(false), 2000);
+  }, [focusWritingMode]);
+
+  useEffect(() => {
+    if (focusWritingMode) {
+      setShowExitBtn(true);
+      exitBtnTimerRef.current = setTimeout(() => setShowExitBtn(false), 2000);
+    } else {
+      setShowExitBtn(false);
+      if (exitBtnTimerRef.current) clearTimeout(exitBtnTimerRef.current);
+    }
+  }, [focusWritingMode]);
   const [showToolbarTagModal, setShowToolbarTagModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -579,6 +598,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.18, ease: 'easeOut' }}
+      onMouseMove={handleEditorMouseMove}
     >
       <motion.div
         className={clsx(
@@ -668,16 +688,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               <div className="flex items-center gap-1">
                 {!isInTrash && (
                   <button
-                    type="button"
-                    onClick={() => setFocusWritingMode((v) => !v)}
-                    className="icon-btn-md rounded-lg transition-colors"
-                    title={focusWritingMode ? 'Exit focus mode' : 'Focus mode'}
-                  >
-                    {focusWritingMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                  </button>
-                )}
-                {!isInTrash && (
-                  <button
                     onClick={openExportMenu}
                     className={clsx(
                       'icon-btn-md rounded-lg transition-colors',
@@ -698,6 +708,16 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 <button onClick={handleClose} className="icon-btn-md rounded-lg transition-colors" title="Close note">
                   <X className="w-4 h-4" />
                 </button>
+                {!isInTrash && (
+                  <button
+                    type="button"
+                    onClick={() => setFocusWritingMode((v) => !v)}
+                    className="icon-btn-md rounded-lg transition-colors"
+                    title="Focus mode"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -715,7 +735,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
       <div
         className={clsx(
-          'absolute right-6 top-3 z-60 sm:right-12 transition-[opacity,transform] duration-500 ease-out',
+          'absolute top-3.75 z-60 sm:right-12 transition-[opacity,transform] duration-500 ease-out',
               focusWritingMode ? 'pointer-events-auto' : 'pointer-events-none'
             )}
           >
@@ -723,13 +743,13 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               type="button"
               onClick={() => setFocusWritingMode(false)}
               className={clsx(
-                'font-medium rounded-full border border-[color-mix(in_srgb,var(--line)_50%,transparent)] bg-[color-mix(in_srgb,var(--surface-hi)_58%,transparent)] px-3 py-1.5 text-sm shadow-lg transition-[opacity,transform,color] duration-500 ease-out hover:bg-(--surface-hi)',
-                focusWritingMode ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+                'font-medium rounded-full border border-[color-mix(in_srgb,var(--line)_50%,transparent)] bg-[color-mix(in_srgb,var(--surface-hi)_58%,transparent)] p-2 shadow-lg transition-opacity duration-300 ease-out hover:bg-(--surface-hi)',
+                showExitBtn ? 'opacity-100' : 'opacity-0'
               )}
               aria-hidden={!focusWritingMode}
               tabIndex={focusWritingMode ? 0 : -1}
             >
-              Exit focus
+              <Minimize2 className="w-3.5 h-3.5" />
             </button>
           </div>
 
