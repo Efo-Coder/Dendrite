@@ -95,7 +95,20 @@ export function AboutSection() {
         <Link
           ref={ctaRef as React.RefObject<HTMLAnchorElement>}
           to="/register"
-          className="inline-flex items-center justify-center mt-8 px-6 py-3 rounded-full bg-foreground text-background text-lg tracking-tight font-medium transition-opacity hover:opacity-80"
+          className="inline-flex items-center justify-center mt-8 px-6 py-3 rounded-full text-lg tracking-tight font-medium"
+          style={{
+            background: 'var(--ink)',
+            color: 'var(--bg)',
+            transition: 'background 0.25s ease, transform 0.2s ease',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLElement).style.background = 'var(--ink-mid)';
+            (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.background = 'var(--ink)';
+            (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+          }}
         >
           Start for Free
         </Link>

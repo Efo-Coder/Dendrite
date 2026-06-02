@@ -86,7 +86,20 @@ export function SocialProofSection() {
           </h2>
           <Link
             to="/register"
-            className="hidden sm:inline-flex items-center justify-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium transition-opacity hover:opacity-80"
+            className="hidden sm:inline-flex items-center justify-center px-6 py-3 rounded-full text-sm font-medium"
+            style={{
+              background: 'var(--ink)',
+              color: 'var(--bg)',
+              transition: 'background 0.25s ease, transform 0.2s ease',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.background = 'var(--ink-mid)';
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.background = 'var(--ink)';
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+            }}
           >
             Start for Free
           </Link>

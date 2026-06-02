@@ -72,7 +72,7 @@ function ServiceItem({ title, index }: { title: string; index: number }) {
             color="var(--accent-deep)"
             shineColor="var(--accent-hi)"
             speed={4}
-            delay={1}
+            delay={0.3}
             spread={120}
           />
         </span>
@@ -88,6 +88,8 @@ export function ServicesSection() {
 
   useEffect(() => {
     if (!titleRef.current || !sectionRef.current || !contentRef.current) return;
+
+    ScrollTrigger.normalizeScroll(true);
 
     const title = titleRef.current;
     const chars = title.querySelectorAll(".char");
@@ -106,22 +108,23 @@ export function ServicesSection() {
           trigger: section,
           start: "top top",
           end: "+=150%",
-          scrub: true,
+          scrub: 1.5,
           pin: content,
           pinType: "transform",
-          anticipatePin: 1,
+          invalidateOnRefresh: true,
         },
       }
     );
 
     return () => {
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+      ScrollTrigger.normalizeScroll(false);
     };
   }, []);
 
   return (
     <section ref={sectionRef} id="services" className="services relative bg-background overflow-hidden">
-      <div ref={contentRef} className="flex min-h-screen items-center justify-center px-6 sm:px-12 lg:px-24">
+      <div ref={contentRef} className="flex min-h-dvh items-center justify-center px-6 sm:px-12 lg:px-24">
         <h2
           ref={titleRef}
           className="text-center text-[clamp(2.5rem,7vw,7rem)] font-medium leading-[1.1] tracking-tight text-foreground max-w-350"
