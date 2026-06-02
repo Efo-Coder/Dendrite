@@ -334,20 +334,26 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
         <div className="modal-form-ft" style={{ flexDirection: 'column' }}>
           <button
             onClick={handleLogout}
-            className="btn fill-slide w-full flex items-center gap-2 text-(--ink) hover:text-red-500"
+            className="btn group relative w-full flex items-center gap-2 text-(--ink) hover:text-red-500"
             type="button"
           >
             <LogOut className="w-4 h-4" />
-            <span>Sign out</span>
+            <span className="relative">
+              Sign out
+              <span className="absolute bottom-0 left-0 w-0 group-hover:w-full" style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
+            </span>
           </button>
 
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="btn fill-slide w-full flex items-center gap-2 text-(--ink) hover:text-red-500"
+            className="btn group relative w-full flex items-center gap-2 text-(--ink) hover:text-red-500"
             type="button"
           >
             <Trash2 className="w-4 h-4" />
-            <span>Delete account</span>
+            <span className="relative">
+              Delete account
+              <span className="absolute bottom-0 left-0 w-0 group-hover:w-full" style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
+            </span>
           </button>
         </div>
 
