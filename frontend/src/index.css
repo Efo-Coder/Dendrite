@@ -203,6 +203,8 @@ html.is-theme-switching {
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
 
+  button, a { transition: opacity 0.18s ease; }
+
   html {
     font-family: var(--font-user, var(--font-sans));
     @apply font-sans;
@@ -972,6 +974,7 @@ html .auth-inputs .input:focus { outline: none; border-color: color-mix(in oklch
   font-family: var(--serif-display); font-weight: 600; letter-spacing: 0.03em;
   text-decoration: none; cursor: pointer;
   box-shadow: 0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
+  transition: opacity 0.18s ease, transform 0.1s ease;
 }
 .btn.primary::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
