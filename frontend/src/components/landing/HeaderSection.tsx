@@ -44,56 +44,59 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
       }}
     >
       <div
-        className="mx-auto flex items-center"
-        style={{ maxWidth: '1400px', padding: '0 clamp(24px, 5vw, 80px)', height: '64px', gap: '8px' }}
+        className="w-full flex items-center justify-between flex-nowrap"
+        style={{ padding: '0 clamp(16px, 4vw, 80px)', height: '64px' }}
       >
-        {/* Logo */}
-        <a
-          href="#hero"
-          className="flex items-center gap-2.5 shrink-0"
-          style={{ textDecoration: 'none' }}
-        >
-          <img
-            src={LOGO_SRC}
-            alt=""
-            style={{ width: '24px', height: '24px', opacity: 0.85 }}
-          />
-          <span style={{
-            fontFamily: 'var(--serif-display)',
-            fontSize: '19px',
-            fontWeight: 500,
-            fontStyle: 'italic',
-            color: 'var(--ink)',
-            letterSpacing: '0.01em',
-          }}>
-            Dendrite
-          </span>
-          <BetaBadge style={{ transform: 'translate(-3px, -3px)' }} />
-        </a>
+        {/* Left: Logo + Nav */}
+        <div className="flex items-center shrink-0">
+          <a
+            href="#hero"
+            className="flex items-center gap-2 shrink-0"
+            style={{ textDecoration: 'none' }}
+          >
+            <img
+              src={LOGO_SRC}
+              alt=""
+              style={{ width: '22px', height: '22px', opacity: 0.85, flexShrink: 0 }}
+            />
+            <span style={{
+              fontFamily: 'var(--serif-display)',
+              fontSize: 'clamp(16px, 2.5vw, 19px)',
+              fontWeight: 500,
+              fontStyle: 'italic',
+              color: 'var(--ink)',
+              letterSpacing: '0.01em',
+              whiteSpace: 'nowrap',
+            }}>
+              Dendrite
+            </span>
+            <BetaBadge />
+          </a>
 
-        {/* Separator */}
-        <div style={{ width: '0.5px', height: '18px', background: 'var(--line)', margin: '0 12px', flexShrink: 0 }} className="hidden sm:block" />
+          {/* Separator */}
+          <div style={{ width: '0.5px', height: '18px', background: 'var(--line)', margin: '0 16px', flexShrink: 0 }} className="hidden sm:block" />
 
-        {/* Nav links — desktop */}
-        <nav className="hidden sm:flex items-center flex-1" style={{ gap: '30px' }}>
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="relative group transition-colors duration-150 text-(--ink-mid) hover:text-(--ink)"
-              style={{ fontFamily: 'var(--serif-body)', fontSize: '14px', letterSpacing: '-0.005em', padding: '6px 0', textDecoration: 'none' }}
-            >
-              {link.label}
-              <span
-                className="absolute bottom-0 left-0 w-0 group-hover:w-full"
-                style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }}
-              />
-            </a>
-          ))}
-        </nav>
+          {/* Nav links — desktop */}
+          <nav className="hidden sm:flex items-center" style={{ gap: 'clamp(14px, 2vw, 30px)' }}>
+            {navLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="relative group transition-colors duration-150 text-(--ink-mid) hover:text-(--ink) shrink-0"
+                style={{ fontFamily: 'var(--serif-body)', fontSize: '14px', letterSpacing: '-0.005em', padding: '6px 0', textDecoration: 'none', whiteSpace: 'nowrap' }}
+              >
+                {link.label}
+                <span
+                  className="absolute bottom-0 left-0 w-0 group-hover:w-full"
+                  style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }}
+                />
+              </a>
+            ))}
+          </nav>
+        </div>
 
-        {/* Actions */}
-        <div className="ml-auto flex items-center gap-2">
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 shrink-0">
           {onToggleDark && (
             <button
               onClick={onToggleDark}

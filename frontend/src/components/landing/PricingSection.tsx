@@ -118,7 +118,7 @@ function PricingCard({ plan }: { plan: Plan }) {
   if (plan.highlighted) {
     return (
       <div
-        className="relative rounded-2xl p-8 flex flex-col"
+        className="relative rounded-2xl p-5 md:p-6 lg:p-8 flex flex-col"
         data-locked={locked || undefined}
         style={{ background: 'var(--ink)', color: 'var(--bg)', pointerEvents: locked ? 'none' : undefined }}
       >
@@ -174,7 +174,7 @@ function PricingCard({ plan }: { plan: Plan }) {
 
   return (
     <div
-      className="rounded-2xl p-8 flex flex-col"
+      className="rounded-2xl p-5 md:p-6 lg:p-8 flex flex-col"
       data-locked={locked || undefined}
       style={{
         background: 'var(--surface)',

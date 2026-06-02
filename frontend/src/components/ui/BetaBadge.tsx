@@ -1,4 +1,4 @@
-export function BetaBadge({ style }: { style?: React.CSSProperties }) {
+export function BetaBadge() {
   return (
     <span style={{
       display: 'inline-flex',
@@ -11,11 +11,10 @@ export function BetaBadge({ style }: { style?: React.CSSProperties }) {
       color: 'var(--accent)',
       border: '0.5px solid color-mix(in oklch, var(--accent) 40%, transparent)',
       background: 'color-mix(in oklch, var(--accent) 10%, transparent)',
-      padding: '3px 6px 1px',
+      padding: '2px 6px',
       borderRadius: '4px',
       lineHeight: 1,
       flexShrink: 0,
-      ...style,
     }}>
       Beta
     </span>

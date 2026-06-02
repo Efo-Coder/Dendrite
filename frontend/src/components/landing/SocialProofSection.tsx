@@ -96,18 +96,18 @@ export function SocialProofSection() {
           ref={gridRef}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:grid-rows-[minmax(220px,auto)_minmax(220px,auto)_minmax(180px,auto)]"
         >
-          {/* Image column */}
-          <div className="row-span-2 flex flex-col gap-4">
-            <div className="relative flex-1 w-full overflow-hidden rounded-2xl">
+          {/* Image column — hidden on mobile to avoid layout issues */}
+          <div className="hidden md:flex lg:row-span-2 flex-col gap-4">
+            <div className="relative flex-1 min-h-50 w-full overflow-hidden rounded-2xl">
               <img src="/img/mock-project1.webp" alt="Feature showcase" className="w-full h-full object-cover" />
             </div>
-            <div className="relative flex-1 w-full overflow-hidden rounded-full">
+            <div className="relative flex-1 min-h-45 w-full overflow-hidden rounded-full">
               <img src="/img/mock-project2.webp" alt="Feature showcase" className="w-full h-full object-cover" />
             </div>
           </div>
 
           {/* Main testimonial */}
-          <div className="lg:col-span-2 row-span-2 bg-muted/50 rounded-2xl p-8 flex flex-col">
+          <div className="md:col-span-1 lg:col-span-2 lg:row-span-2 bg-muted/50 rounded-2xl p-8 flex flex-col">
             <div>
               <QuoteIcon className="w-10 h-10 text-foreground/20 mb-6" />
               <blockquote className="text-2xl lg:text-3xl font-medium leading-snug text-foreground">

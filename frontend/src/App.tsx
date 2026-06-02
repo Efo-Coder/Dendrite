@@ -15,6 +15,8 @@ import DashboardPage from './pages/DashboardPage';
 import SharedNotePage from './pages/SharedNotePage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 // Components
 import PrivateRoute from './components/ui/PrivateRoute';
 
@@ -42,6 +44,8 @@ function RouterContent() {
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         <Route path="/shared/:token" element={<SharedNotePage />} />
         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
 <Route
           path="/*"
           element={

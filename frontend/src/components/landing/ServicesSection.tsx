@@ -65,7 +65,7 @@ function ServiceItem({ title, index }: { title: string; index: number }) {
 
   return (
     <div ref={itemRef} className="border-t border-foreground/10">
-      <div className="flex items-center px-6 py-8 sm:px-12 md:py-10 lg:px-24">
+      <div className="flex items-center justify-center px-6 py-8 sm:px-12 md:py-10 lg:px-24">
         <span className="text-[clamp(1.5rem,4vw,4rem)] font-light tracking-tight">
           <ShinyText
             text={title}

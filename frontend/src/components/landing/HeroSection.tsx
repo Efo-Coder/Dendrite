@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { BetaBanner } from "./BetaBanner";
-import DarkVeil from "./DarkVeil";
 
 function DashboardMockup() {
   return (
@@ -213,19 +212,6 @@ export function HeroSection() {
     >
       <BetaBanner />
 
-      {/* DarkVeil background */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <DarkVeil
-          hueShift={-165}
-          noiseIntensity={0}
-          scanlineIntensity={0}
-          speed={0.5}
-          scanlineFrequency={0}
-          warpAmount={0}
-          resolutionScale={1.2}
-        />
-      </div>
-
       {/* Ambient radial glow */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -243,13 +229,13 @@ export function HeroSection() {
         style={{
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: 'clamp(136px, calc(14vh + 36px), 180px) clamp(24px, 5vw, 80px) clamp(60px, 10vh, 100px)',
+          padding: 'clamp(120px, calc(14vh + 36px), 180px) clamp(16px, 5vw, 80px) clamp(60px, 10vh, 100px)',
         }}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 items-center" style={{ gap: 'clamp(48px, 7vw, 100px)' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 items-center" style={{ gap: 'clamp(40px, 7vw, 100px)' }}>
 
           {/* Left: editorial text */}
-          <div>
+          <div className="lg:col-span-1">
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -354,7 +340,7 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* Right: dashboard mockup — desktop only */}
+          {/* Right: dashboard mockup — large screens only */}
           <motion.div
             className="hidden lg:block"
             initial={{ opacity: 0, y: 28, scale: 0.97 }}

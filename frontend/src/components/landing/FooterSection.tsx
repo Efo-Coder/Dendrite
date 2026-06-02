@@ -20,11 +20,11 @@ export function FooterSection() {
   return (
     <footer
       id="contact"
-      className="lg:sticky lg:bottom-0 lg:z-0"
-      style={{ background: 'var(--ink)', color: 'var(--bg)', minHeight: '100dvh' }}
+      className="lg:sticky lg:bottom-0 lg:z-0 lg:min-h-screen flex flex-col"
+      style={{ background: 'var(--ink)', color: 'var(--bg)' }}
     >
       {/* CTA */}
-      <div className="px-6 sm:px-12 lg:px-24 pt-20 lg:pt-28 pb-8 lg:pb-8 max-w-360 mx-auto">
+      <div className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-24 max-w-360 mx-auto w-full py-20 lg:py-0">
         <p
           style={{
             fontFamily: 'var(--mono)',
@@ -63,7 +63,7 @@ export function FooterSection() {
         </p>
         <Link
           to="/register"
-          className="inline-flex items-center justify-center hover:opacity-90 transition-opacity"
+          className="self-start inline-flex items-center justify-center hover:opacity-90 transition-opacity"
           style={{
             padding: '11px 28px',
             borderRadius: '10px',
@@ -78,8 +78,9 @@ export function FooterSection() {
         </Link>
       </div>
 
+      <div className="mt-auto w-full">
       {/* Divider */}
-      <div className="px-6 sm:px-12 lg:px-24 mt-4 lg:mt-10 max-w-360 mx-auto">
+      <div className="px-6 sm:px-12 lg:px-24 max-w-360 mx-auto">
         <div style={{ borderTop: '1px solid color-mix(in oklch, var(--bg) 12%, transparent)' }} />
       </div>
 
@@ -255,6 +256,7 @@ export function FooterSection() {
             </Link>
           </div>
         </div>
+      </div>
       </div>
     </footer>
   );

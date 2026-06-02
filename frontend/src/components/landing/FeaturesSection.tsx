@@ -393,7 +393,7 @@ export function FeaturesSection() {
       <FeatureOverlay feature={selectedFeature} onClose={handleClose} />
 
       <div className="pb-16">
-        <VelocityText baseVelocity={80} className="text-[clamp(4rem,12vw,14rem)] font-medium italic tracking-tight text-foreground uppercase px-8">
+        <VelocityText baseVelocity={80} className="text-[clamp(2.5rem,10vw,14rem)] font-medium italic tracking-tight text-foreground uppercase px-8">
           Selected <span className="font-serif font-thin">Features</span>&nbsp;
         </VelocityText>
       </div>
