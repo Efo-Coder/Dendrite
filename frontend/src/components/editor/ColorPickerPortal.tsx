@@ -18,6 +18,8 @@ interface ColorPickerPortalProps {
   fallbackColor?: string;
   padding?: number;
   onPlacementChange?: (p: 'above' | 'below') => void;
+  canFavorite?: boolean;
+  canCustomColor?: boolean;
 }
 
 const ColorPickerPortal = ({
@@ -30,6 +32,8 @@ const ColorPickerPortal = ({
   fallbackColor = '#000000',
   padding = 8,
   onPlacementChange,
+  canFavorite = true,
+  canCustomColor = true,
 }: ColorPickerPortalProps) => {
   const [inputMode, setInputMode] = useState<'hex' | 'rgb' | 'hsl'>('hex');
   const popupRef = useRef<HTMLDivElement>(null);
@@ -136,107 +140,113 @@ const ColorPickerPortal = ({
               </div>
             ))}
             <button
-              onClick={addToFavorites}
-              title="Add current color to favorites"
+              onClick={canFavorite ? addToFavorites : undefined}
+              disabled={!canFavorite}
+              title={canFavorite ? 'Add current color to favorites' : 'Favorites — Writer plan required'}
+              data-plan-locked={!canFavorite || undefined}
               className={clsx(
                 'w-6 h-6 rounded-md ring-1 ring-(--ink-low) flex items-center justify-center transition-colors shrink-0',
-                canAdd
-                  ? 'text-(--ink-low) hover:text-(--ink) hover:ring-(--ink)'
-                  : 'text-(--ink-low) opacity-30 pointer-events-none'
+                !canFavorite
+                  ? 'text-(--ink-low) opacity-30'
+                  : canAdd
+                    ? 'text-(--ink-low) hover:text-(--ink) hover:ring-(--ink)'
+                    : 'text-(--ink-low) opacity-30 pointer-events-none'
               )}
             >
               <Plus className="w-3 h-3" />
             </button>
           </div>
 
-          <HexColorPicker
-            color={safeHex}
-            onChange={onChange}
-            style={{ width: '100%', height: '140px' }}
-          />
-
-          <div className="flex items-center gap-1 relative rounded-lg overflow-hidden">
-            {(['hex', 'rgb', 'hsl'] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setInputMode(mode)}
-                className={clsx(
-                  'flex-1 h-8 rounded text-xs font-medium uppercase tracking-wide transition-colors relative z-10',
-                  inputMode === mode ? 'text-(--ink)' : 'text-(--ink-low) hover:text-(--ink)'
-                )}
-              >
-                {mode}
-              </button>
-            ))}
-            <button
-              onClick={openEyeDropper}
-              title="Eyedropper"
-              className={clsx(
-                'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 shrink-0',
-                !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-(--ink-low)' : 'text-(--ink-low) hover:text-(--ink)'
-              )}
-            >
-              <Pipette className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {inputMode === 'hex' && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-lg pb-2 text-(--ink-low) select-none">#</span>
-              <HexColorInput
+          <div data-plan-locked={!canCustomColor || undefined} style={!canCustomColor ? { pointerEvents: 'none', opacity: 0.35 } : undefined}>
+              <HexColorPicker
                 color={safeHex}
                 onChange={onChange}
-                className="input text-xs h-7 px-2 flex-1"
-                style={{ minWidth: 0, fontFamily: 'Inter' }}
+                style={{ width: '100%', height: '140px' }}
               />
-            </div>
-          )}
 
-          {inputMode === 'rgb' && (() => {
-            const rgb = hexToRgb(safeHex) ?? { r: 0, g: 0, b: 0 };
-            return (
-              <div className="grid grid-cols-3 gap-1">
-                {(['r', 'g', 'b'] as const).map((ch) => (
-                  <div key={ch} className="flex flex-col items-center gap-0.5">
-                    <span className="text-[10px] text-(--ink-low) uppercase">{ch}</span>
-                    <input
-                      type="number" min={0} max={255}
-                      value={rgb[ch]}
-                      onChange={(e) => {
-                        const v = Math.max(0, Math.min(255, Number(e.target.value)));
-                        onChange(rgbToHex(ch === 'r' ? v : rgb.r, ch === 'g' ? v : rgb.g, ch === 'b' ? v : rgb.b));
-                      }}
-                      className="input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                      style={{ fontFamily: 'Inter' }}
-                    />
-                  </div>
+              <div className="flex items-center gap-1 relative rounded-lg overflow-hidden">
+                {(['hex', 'rgb', 'hsl'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setInputMode(mode)}
+                    className={clsx(
+                      'flex-1 h-8 rounded text-xs font-medium uppercase tracking-wide transition-colors relative z-10',
+                      inputMode === mode ? 'text-(--ink)' : 'text-(--ink-low) hover:text-(--ink)'
+                    )}
+                  >
+                    {mode}
+                  </button>
                 ))}
+                <button
+                  onClick={openEyeDropper}
+                  title="Eyedropper"
+                  className={clsx(
+                    'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 shrink-0',
+                    !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-(--ink-low)' : 'text-(--ink-low) hover:text-(--ink)'
+                  )}
+                >
+                  <Pipette className="w-3.5 h-3.5" />
+                </button>
               </div>
-            );
-          })()}
 
-          {inputMode === 'hsl' && (() => {
-            const hsl = hexToHsl(safeHex);
-            return (
-              <div className="grid grid-cols-3 gap-1">
-                {([['h', hsl.h, 360], ['s', hsl.s, 100], ['l', hsl.l, 100]] as const).map(([ch, val, max]) => (
-                  <div key={ch} className="flex flex-col items-center gap-0.5">
-                    <span className="text-[10px] text-(--ink-low) uppercase">{ch}</span>
-                    <input
-                      type="number" min={0} max={max}
-                      value={val}
-                      onChange={(e) => {
-                        const v = Math.max(0, Math.min(max, Number(e.target.value)));
-                        onChange(hslToHex(ch === 'h' ? v : hsl.h, ch === 's' ? v : hsl.s, ch === 'l' ? v : hsl.l));
-                      }}
-                      className="input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                      style={{ fontFamily: 'Inter' }}
-                    />
+              {inputMode === 'hex' && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg pb-2 text-(--ink-low) select-none">#</span>
+                  <HexColorInput
+                    color={safeHex}
+                    onChange={onChange}
+                    className="input text-xs h-7 px-2 flex-1"
+                    style={{ minWidth: 0, fontFamily: 'Inter' }}
+                  />
+                </div>
+              )}
+
+              {inputMode === 'rgb' && (() => {
+                const rgb = hexToRgb(safeHex) ?? { r: 0, g: 0, b: 0 };
+                return (
+                  <div className="grid grid-cols-3 gap-1">
+                    {(['r', 'g', 'b'] as const).map((ch) => (
+                      <div key={ch} className="flex flex-col items-center gap-0.5">
+                        <span className="text-[10px] text-(--ink-low) uppercase">{ch}</span>
+                        <input
+                          type="number" min={0} max={255}
+                          value={rgb[ch]}
+                          onChange={(e) => {
+                            const v = Math.max(0, Math.min(255, Number(e.target.value)));
+                            onChange(rgbToHex(ch === 'r' ? v : rgb.r, ch === 'g' ? v : rgb.g, ch === 'b' ? v : rgb.b));
+                          }}
+                          className="input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          style={{ fontFamily: 'Inter' }}
+                        />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            );
-          })()}
+                );
+              })()}
+
+              {inputMode === 'hsl' && (() => {
+                const hsl = hexToHsl(safeHex);
+                return (
+                  <div className="grid grid-cols-3 gap-1">
+                    {([['h', hsl.h, 360], ['s', hsl.s, 100], ['l', hsl.l, 100]] as const).map(([ch, val, max]) => (
+                      <div key={ch} className="flex flex-col items-center gap-0.5">
+                        <span className="text-[10px] text-(--ink-low) uppercase">{ch}</span>
+                        <input
+                          type="number" min={0} max={max}
+                          value={val}
+                          onChange={(e) => {
+                            const v = Math.max(0, Math.min(max, Number(e.target.value)));
+                            onChange(hslToHex(ch === 'h' ? v : hsl.h, ch === 's' ? v : hsl.s, ch === 'l' ? v : hsl.l));
+                          }}
+                          className="input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          style={{ fontFamily: 'Inter' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+          </div>
         </div>
       </motion.div>
       </>)}

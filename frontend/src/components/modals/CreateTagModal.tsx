@@ -2,6 +2,8 @@
 import Modal from './Modal';
 import { MagicInput } from '../ui/MagicInput';
 import { useTagStore } from '../../store/useTagStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { canAccess } from '../../lib/planFeatures';
 import ColorPickerInline from '../editor/ColorPickerInline';
 
 interface CreateTagModalProps {
@@ -18,6 +20,7 @@ const presets = [
 
 const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) => {
   const { createTag } = useTagStore();
+  const { user } = useAuthStore();
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#10b981');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,6 +93,8 @@ const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) 
             onChange={setSelectedColor}
             storageKey="dendrite-tag-folder-favorites"
             presets={presets}
+            canFavorite={canAccess(user?.plan, 'colorFavorites')}
+            canCustomColor={canAccess(user?.plan, 'customColor')}
           />
         </div>
 

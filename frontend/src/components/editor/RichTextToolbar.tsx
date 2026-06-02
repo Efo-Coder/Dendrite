@@ -30,6 +30,8 @@ import {
   Palette, Highlighter, Type, ListChevronsUpDown,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { useAuthStore } from '../../store/useAuthStore';
+import { canAccess } from '../../lib/planFeatures';
 
 
 const LANG_ICONS: Record<string, IconType> = {
@@ -137,6 +139,7 @@ type ToolbarBtn = {
 
 
 const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome = false }: RichTextToolbarProps) => {
+  const { user } = useAuthStore();
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const toolbarState = useToolbarState(minimalChrome, moreMenuRef);
   const {
@@ -401,20 +404,29 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
             <div className="flex flex-wrap gap-1 px-1 pb-1">
               {buttonGroups[1].buttons.map((btn, bi) => renderBtn(btn, bi + 100))}
               {(() => {
-                const LangIcon = blockType === 'code' ? LANG_ICONS[codeLanguage] : undefined;
+                const canLang = canAccess(user?.plan, 'syntaxHighlighting');
+                const LangIcon = (canLang && blockType === 'code') ? LANG_ICONS[codeLanguage] : undefined;
                 return (
                   <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={(e) => blockType === 'code' ? openCodeLangPicker(e) : formatCode()}
+                    onClick={(e) => {
+                      if (blockType === 'code' && canLang) {
+                        openCodeLangPicker(e);
+                      } else if (blockType !== 'code') {
+                        formatCode(canLang ? undefined : 'plain');
+                      } else {
+                        formatCode();
+                      }
+                    }}
                     onMouseEnter={onMoreEnter} onMouseLeave={onMoreLeave}
                     disabled={disabled}
                     className={menuBtnCls(codeBtnActive)}
-                    title={blockType === 'code' ? `Language: ${getLanguageFriendlyName(codeLanguage)}` : 'Code'}
+                    title="Code"
                   >
                     {LangIcon
                       ? <LangIcon className="w-4 h-4" />
-                      : blockType === 'code'
+                      : (canLang && blockType === 'code')
                         ? <span className="font-mono text-[10px] leading-none px-0.5">{getLanguageFriendlyName(codeLanguage).slice(0, 4).toUpperCase()}</span>
                         : <CodeXml className="w-4 h-4" />
                     }
@@ -537,6 +549,8 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
         presets={TEXT_COLORS}
         storageKey="dendrite-favorite-colors"
         padding={-8}
+        canFavorite={canAccess(user?.plan, 'colorFavorites')}
+        canCustomColor={canAccess(user?.plan, 'customColor')}
       />
 
       <ColorPickerPortal
@@ -548,6 +562,8 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
         storageKey="dendrite-favorite-highlights"
         fallbackColor="#fef08a"
         padding={-8}
+        canFavorite={canAccess(user?.plan, 'colorFavorites')}
+        canCustomColor={canAccess(user?.plan, 'customColor')}
       />
 
       {createPortal(
@@ -733,16 +749,23 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
               <ListChecks className="w-4 h-4 shrink-0" />
               Checkbox
             </button>
-            <button
-              onClick={() => {
-                setChecklistDropdownPos(null);
-                openTimerModal();
-              }}
-              className={pickerItemCls(blockType === 'timer-checkbox', 'flex items-center gap-2 px-3 w-full')}
-            >
-              <ClockCheck className="w-4 h-4 shrink-0" />
-              Timer-Checkbox
-            </button>
+            {(() => {
+              const canTimer = canAccess(user?.plan, 'timerChecklist');
+              return (
+                <button
+                  onClick={canTimer ? () => { setChecklistDropdownPos(null); openTimerModal(); } : undefined}
+                  className={pickerItemCls(blockType === 'timer-checkbox', clsx('flex items-center gap-2 px-3 w-full', !canTimer && 'opacity-40 cursor-not-allowed'))}
+                >
+                  <ClockCheck className="w-4 h-4 shrink-0" />
+                  <span className="flex-1">Timer-Checkbox</span>
+                  {!canTimer && (
+                    <span style={{ fontSize: '9px', fontFamily: 'var(--mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', opacity: 0.85, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '1px 4px', borderRadius: '3px' }}>
+                      Writer
+                    </span>
+                  )}
+                </button>
+              );
+            })()}
           </motion.div>
           </>)}
         </AnimatePresence>,

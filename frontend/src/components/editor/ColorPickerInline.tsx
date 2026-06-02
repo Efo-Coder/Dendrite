@@ -9,9 +9,11 @@ interface ColorPickerInlineProps {
   onChange: (color: string) => void;
   storageKey?: string;
   presets?: string[];
+  canFavorite?: boolean;
+  canCustomColor?: boolean;
 }
 
-const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favorites', presets = [] }: ColorPickerInlineProps) => {
+const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favorites', presets = [], canFavorite = true, canCustomColor = true }: ColorPickerInlineProps) => {
   const [inputMode, setInputMode] = useState<'hex' | 'rgb' | 'hsl'>('hex');
   const [favorites, setFavorites] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); }
@@ -58,7 +60,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
               title={preset}
               className={clsx(
                 'w-8 h-8 rounded-lg transition-transform hover:scale-110 shrink-0',
-                color === preset ? 'ring-2 ring-(--accent)' : 'ring-1 ring-white/19'
+                color === preset ? 'ring-2 ring-(--accent)' : 'ring-1 ring-(--line)'
               )}
               style={{ backgroundColor: preset }}
             />
@@ -92,111 +94,117 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
         ))}
         <button
           type="button"
-          onClick={addToFavorites}
-          title="Add current color to favorites"
+          onClick={canFavorite ? addToFavorites : undefined}
+          disabled={!canFavorite}
+          title={canFavorite ? 'Add current color to favorites' : 'Favorites — Writer plan required'}
+          data-plan-locked={!canFavorite || undefined}
           className={clsx(
             'w-8 h-8 rounded-lg ring-1 ring-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] flex items-center justify-center transition-colors shrink-0',
-            canAdd
-              ? 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink) hover:ring-(--ink)'
-              : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] opacity-30 pointer-events-none'
+            !canFavorite
+              ? 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] opacity-30'
+              : canAdd
+                ? 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink) hover:ring-(--ink)'
+                : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] opacity-30 pointer-events-none'
           )}
         >
           <Plus className="w-3 h-3" />
         </button>
       </div>
 
-      <HexColorPicker
-        color={safeHex}
-        onChange={onChange}
-        style={{ width: '100%', height: '160px' }}
-      />
-
-      {/* Format tabs + eyedropper */}
-      <div className="flex items-center gap-1 relative rounded-lg overflow-hidden">
-        {(['hex', 'rgb', 'hsl'] as const).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            onClick={() => setInputMode(mode)}
-            className={clsx(
-              'flex-1 h-8 rounded text-base font-medium uppercase tracking-wide transition-colors relative z-10',
-              inputMode === mode ? 'text-(--ink)' : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink)'
-            )}
-          >
-            {mode}
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={openEyeDropper}
-          title="Eyedropper"
-          className={clsx(
-            'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 shrink-0',
-            !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-(--ink-mid)' : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink)'
-          )}
-        >
-          <Pipette className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Format inputs */}
-      {inputMode === 'hex' && (
-        <div className="flex items-center gap-1.5">
-          <span className="text-xl pb-2 text-(--ink-dim) select-none">#</span>
-          <HexColorInput
+      <div data-plan-locked={!canCustomColor || undefined} style={!canCustomColor ? { pointerEvents: 'none', opacity: 0.35 } : undefined}>
+          <HexColorPicker
             color={safeHex}
             onChange={onChange}
-            className="modal-input text-sm h-8 px-2 flex-1"
-            style={{ minWidth: 0, fontFamily: 'Inter' }}
+            style={{ width: '100%', height: '160px' }}
           />
-        </div>
-      )}
 
-      {inputMode === 'rgb' && (() => {
-        const rgb = hexToRgb(safeHex) ?? { r: 0, g: 0, b: 0 };
-        return (
-          <div className="grid grid-cols-3 gap-1">
-            {(['r', 'g', 'b'] as const).map((ch) => (
-              <div key={ch} className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] text-(--ink-dim) uppercase">{ch}</span>
-                <input
-                  type="number" min={0} max={255}
-                  value={rgb[ch]}
-                  onChange={(e) => {
-                    const v = Math.max(0, Math.min(255, Number(e.target.value)));
-                    onChange(rgbToHex(ch === 'r' ? v : rgb.r, ch === 'g' ? v : rgb.g, ch === 'b' ? v : rgb.b));
-                  }}
-                  className="modal-input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  style={{ fontFamily: 'Inter' }}
-                />
-              </div>
+          {/* Format tabs + eyedropper */}
+          <div className="flex items-center gap-1 relative rounded-lg overflow-hidden">
+            {(['hex', 'rgb', 'hsl'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setInputMode(mode)}
+                className={clsx(
+                  'flex-1 h-8 rounded text-base font-medium uppercase tracking-wide transition-colors relative z-10',
+                  inputMode === mode ? 'text-(--ink)' : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink)'
+                )}
+              >
+                {mode}
+              </button>
             ))}
+            <button
+              type="button"
+              onClick={openEyeDropper}
+              title="Eyedropper"
+              className={clsx(
+                'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 shrink-0',
+                !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-(--ink-mid)' : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink)'
+              )}
+            >
+              <Pipette className="w-4 h-4" />
+            </button>
           </div>
-        );
-      })()}
 
-      {inputMode === 'hsl' && (() => {
-        const hsl = hexToHsl(safeHex);
-        return (
-          <div className="grid grid-cols-3 gap-1">
-            {([['h', hsl.h, 360], ['s', hsl.s, 100], ['l', hsl.l, 100]] as const).map(([ch, val, max]) => (
-              <div key={ch} className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] text-(--ink-dim) uppercase">{ch}</span>
-                <input
-                  type="number" min={0} max={max}
-                  value={val}
-                  onChange={(e) => {
-                    const v = Math.max(0, Math.min(max, Number(e.target.value)));
-                    onChange(hslToHex(ch === 'h' ? v : hsl.h, ch === 's' ? v : hsl.s, ch === 'l' ? v : hsl.l));
-                  }}
-                  className="modal-input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  style={{ fontFamily: 'Inter' }}
-                />
+          {/* Format inputs */}
+          {inputMode === 'hex' && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl pb-2 text-(--ink-dim) select-none">#</span>
+              <HexColorInput
+                color={safeHex}
+                onChange={onChange}
+                className="modal-input text-sm h-8 px-2 flex-1"
+                style={{ minWidth: 0, fontFamily: 'Inter' }}
+              />
+            </div>
+          )}
+
+          {inputMode === 'rgb' && (() => {
+            const rgb = hexToRgb(safeHex) ?? { r: 0, g: 0, b: 0 };
+            return (
+              <div className="grid grid-cols-3 gap-1">
+                {(['r', 'g', 'b'] as const).map((ch) => (
+                  <div key={ch} className="flex flex-col items-center gap-0.5">
+                    <span className="text-[10px] text-(--ink-dim) uppercase">{ch}</span>
+                    <input
+                      type="number" min={0} max={255}
+                      value={rgb[ch]}
+                      onChange={(e) => {
+                        const v = Math.max(0, Math.min(255, Number(e.target.value)));
+                        onChange(rgbToHex(ch === 'r' ? v : rgb.r, ch === 'g' ? v : rgb.g, ch === 'b' ? v : rgb.b));
+                      }}
+                      className="modal-input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      style={{ fontFamily: 'Inter' }}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        );
-      })()}
+            );
+          })()}
+
+          {inputMode === 'hsl' && (() => {
+            const hsl = hexToHsl(safeHex);
+            return (
+              <div className="grid grid-cols-3 gap-1">
+                {([['h', hsl.h, 360], ['s', hsl.s, 100], ['l', hsl.l, 100]] as const).map(([ch, val, max]) => (
+                  <div key={ch} className="flex flex-col items-center gap-0.5">
+                    <span className="text-[10px] text-(--ink-dim) uppercase">{ch}</span>
+                    <input
+                      type="number" min={0} max={max}
+                      value={val}
+                      onChange={(e) => {
+                        const v = Math.max(0, Math.min(max, Number(e.target.value)));
+                        onChange(hslToHex(ch === 'h' ? v : hsl.h, ch === 's' ? v : hsl.s, ch === 'l' ? v : hsl.l));
+                      }}
+                      className="modal-input text-xs h-7 px-1 text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      style={{ fontFamily: 'Inter' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+      </div>
     </div>
   );
 };

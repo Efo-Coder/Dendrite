@@ -512,7 +512,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     });
   };
 
-  const formatCode = () => {
+  const formatCode = (language?: string) => {
     editor.update(() => {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return;
@@ -522,7 +522,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
         const collapsed = $createRangeSelection();
         collapsed.anchor.set(selection.anchor.key, selection.anchor.offset, selection.anchor.type);
         collapsed.focus.set(selection.anchor.key, selection.anchor.offset, selection.anchor.type);
-        $setBlocksType(collapsed, () => $createCodeNode());
+        $setBlocksType(collapsed, () => $createCodeNode(language));
       } else {
         $setBlocksType(selection, () => $createParagraphNode());
       }

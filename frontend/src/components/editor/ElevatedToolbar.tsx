@@ -25,6 +25,8 @@ import type { IconType } from 'react-icons';
 import clsx from 'clsx';
 import ColorPickerPortal from './ColorPickerPortal';
 import { useToolbarStateContext } from './ToolbarStateContext';
+import { useAuthStore } from '../../store/useAuthStore';
+import { canAccess } from '../../lib/planFeatures';
 
 const FONT_SIZES = ['10', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48'];
 const LINE_HEIGHTS = ['1', '1.25', '1.5', '1.75', '2', '2.5'];
@@ -79,6 +81,7 @@ interface ElevatedToolbarProps {
 
 export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarProps) {
   const [editor] = useLexicalComposerContext();
+  const { user } = useAuthStore();
   const {
     isBold, isItalic, isUnderline, isStrikethrough, isSuperscript, isSubscript,
     blockType, codeLanguage,
@@ -248,9 +251,9 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
     }
   }, [visible]);
 
-  const handleFormatCode = () => {
+  const handleFormatCode = (language?: string) => {
     codeFormattingRef.current = true;
-    contextFormatCode();
+    contextFormatCode(language);
     setTimeout(() => { codeFormattingRef.current = false; }, 300);
   };
 
@@ -393,18 +396,28 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
       {btn((_e) => formatBulletList(), 'Bullet list', <List className="w-4 h-4" />, blockType === 'bullet')}
       {btn((_e) => formatNumberedList(), 'Numbered list', <ListOrdered className="w-4 h-4" />, blockType === 'number')}
       {btn((_e) => formatCheckList(), 'Checklist', <ListChecks className="w-4 h-4" />, blockType === 'check')}
-      {btn((_e) => openTimerModal(), 'Timer checklist', <ClockCheck className="w-4 h-4" />, blockType === 'timer-checkbox' || showTimerModal)}
+      {btn(
+        (_e) => openTimerModal(),
+        canAccess(user?.plan, 'timerChecklist') ? 'Timer checklist' : 'Timer checklist — Writer plan required',
+        <ClockCheck className="w-4 h-4" />,
+        blockType === 'timer-checkbox' || showTimerModal,
+        !canAccess(user?.plan, 'timerChecklist'),
+      )}
       {btn((_e) => formatQuote(), 'Quote', <Quote className="w-4 h-4" />, blockType === 'quote')}
       {(() => {
-        const LangIcon = blockType === 'code' ? LANG_ICONS[codeLanguage] : undefined;
+        const canLang = canAccess(user?.plan, 'syntaxHighlighting');
+        const LangIcon = (canLang && blockType === 'code') ? LANG_ICONS[codeLanguage] : undefined;
         const codeIcon = LangIcon
           ? <LangIcon className="w-4 h-4" />
-          : blockType === 'code'
+          : (canLang && blockType === 'code')
             ? <span className="font-mono text-[10px] leading-none px-0.5">{getLanguageFriendlyName(codeLanguage).slice(0, 4).toUpperCase()}</span>
             : <CodeXml className="w-4 h-4" />;
         return btn(
           (e) => {
             if (blockType !== 'code') {
+              closeAll();
+              handleFormatCode(canLang ? undefined : 'plain');
+            } else if (!canLang) {
               closeAll();
               handleFormatCode();
             } else {
@@ -639,6 +652,8 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         presets={TEXT_COLORS}
         storageKey="dendrite-favorite-colors"
         padding={0}
+        canFavorite={canAccess(user?.plan, 'colorFavorites')}
+        canCustomColor={canAccess(user?.plan, 'customColor')}
       />
 
       <ColorPickerPortal
@@ -650,6 +665,8 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         storageKey="dendrite-favorite-highlights"
         fallbackColor="#fef08a"
         padding={0}
+        canFavorite={canAccess(user?.plan, 'colorFavorites')}
+        canCustomColor={canAccess(user?.plan, 'customColor')}
       />
     </>,
     getModalPortalRoot(),

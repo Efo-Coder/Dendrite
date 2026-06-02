@@ -605,14 +605,15 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 .win .notelist-count    { font-family: var(--mono); font-size: 10px; color: var(--ink-dim); letter-spacing: 0.14em; text-transform: uppercase; }
 
 /* Search bar */
+.win .notelist-search-wrapper { background: var(--line-soft); transition: background .15s; }
+.win .notelist-search-wrapper:focus-within { background: color-mix(in oklch, var(--accent) 50%, transparent); }
 .win .notelist-search {
   position: relative; display: flex; align-items: center; gap: 2px;
-  background: var(--surface); border: 0.5px solid var(--line-soft);
+  background: var(--surface);
   border-radius: 8px; padding: 0 6px 0 32px;
-  transition: border-color .15s, background .15s;
+  transition: background .15s;
 }
 .win .notelist-search:focus-within {
-  border-color: color-mix(in oklch, var(--accent) 50%, transparent);
   background: var(--surface-hi);
 }
 .win .notelist-search input {
@@ -1322,6 +1323,7 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
   }
 
   html body .feature-image-area, html body .feature-image-area * { cursor: none !important; }
+  html [data-plan-locked] { cursor: not-allowed !important; }
 
   html .resize-handle-ew.resize-handle-ew     { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Cpath d='M4 6H20M4 6L8 3M4 6L8 9M20 6L16 3M20 6L16 9' stroke='%233a2008' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3Cpath d='M4 6H20M4 6L8 3M4 6L8 9M20 6L16 3M20 6L16 9' stroke='%23b8891a' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3C/svg%3E") 12 6, ew-resize !important; }
   html .resize-handle-ns.resize-handle-ns     { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='24' viewBox='0 0 12 24'%3E%3Cpath d='M6 4V20M6 4L3 8M6 4L9 8M6 20L3 16M6 20L9 16' stroke='%233a2008' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3Cpath d='M6 4V20M6 4L3 8M6 4L9 8M6 20L3 16M6 20L9 16' stroke='%23b8891a' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3C/svg%3E") 6 12, ns-resize !important; }

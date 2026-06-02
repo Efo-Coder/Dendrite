@@ -84,7 +84,8 @@ const NoteList = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [listTab, setListTab] = useState<ListTab>('all');
-  const [hoveredTab, setHoveredTab] = useState<ListTab | null>(null);
+  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [sortFieldMenuOpen, setSortFieldMenuOpen] = useState(false);
   const [sortMenuAnchor, setSortMenuAnchor] = useState<PopupAnchor | null>(null);
   const [searchHovered, setSearchHovered] = useState(false);
@@ -197,6 +198,12 @@ const NoteList = ({
     setDragNotes(null);
     setIsDragging(false);
   }, [contextType, contextId]);
+
+  useLayoutEffect(() => {
+    const idx = listTabs.findIndex(t => t.id === listTab);
+    const el = tabRefs.current[idx];
+    if (el) setPillStyle({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [listTab]);
 
   // Close sort popup on outside click
   useEffect(() => {
@@ -392,7 +399,7 @@ const NoteList = ({
         onMouseLeave={() => setSearchHovered(false)}
         onFocusCapture={() => setSearchFocused(true)}
         onBlurCapture={() => setSearchFocused(false)}
-        className="p-px"
+        className="p-px notelist-search-wrapper"
       >
         <motion.div
           animate={{ opacity: searchGlowActive ? 1 : 0 }}
@@ -435,34 +442,48 @@ const NoteList = ({
       </div>
       </div>
       {!isTrash && (
-        <div style={{ display: 'flex', gap: '4px', marginTop: '10px' }}>
-          {listTabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setListTab(t.id)}
-              onMouseEnter={() => setHoveredTab(t.id)}
-              onMouseLeave={() => setHoveredTab(null)}
-              className={clsx('transition-colors', listTab === t.id ? 'text-(--accent)' : 'text-(--ink-low) hover:text-(--ink)')}
+        <div style={{ position: 'relative', marginTop: '10px' }}>
+          <div style={{ position: 'relative', display: 'flex', gap: '4px' }}>
+            <div
               style={{
-                fontFamily: 'var(--mono)',
-                fontSize: '9px',
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                padding: '3px 10px',
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: pillStyle.left,
+                width: pillStyle.width,
+                background: 'color-mix(in oklch, var(--accent) 12%, transparent)',
+                border: '0.5px solid color-mix(in oklch, var(--accent) 40%, transparent)',
                 borderRadius: '20px',
-                border: listTab === t.id
-                  ? '0.5px solid color-mix(in oklch, var(--accent) 40%, transparent)'
-                  : hoveredTab === t.id
-                  ? '0.5px solid var(--ink)'
-                  : '0.5px solid var(--line-soft)',
-                background: listTab === t.id ? 'color-mix(in oklch, var(--accent) 12%, transparent)' : 'transparent',
-                cursor: 'pointer',
+                transition: 'left 0.22s cubic-bezier(0.23, 1, 0.32, 1), width 0.22s cubic-bezier(0.23, 1, 0.32, 1)',
+                pointerEvents: 'none',
               }}
-            >
-              {t.label}
-            </button>
-          ))}
+            />
+            {listTabs.map((t, i) => (
+              <button
+                key={t.id}
+                ref={el => { tabRefs.current[i] = el; }}
+                type="button"
+                onClick={() => setListTab(t.id)}
+                style={{
+                  fontFamily: 'var(--mono)',
+                  fontSize: '9px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase' as const,
+                  padding: '3px 10px',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  zIndex: 1,
+                  color: listTab === t.id ? 'var(--accent)' : 'var(--ink-low)',
+                  transition: 'color 0.22s, border-color 0.22s',
+                  background: 'transparent',
+                  border: listTab === t.id ? '0.5px solid transparent' : '0.5px solid color-mix(in oklch, var(--ink-low) 40%, transparent)',
+                  borderRadius: '20px',
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

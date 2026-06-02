@@ -280,7 +280,7 @@ const DashboardPage = () => {
               ) : (
                 <motion.span
                   key="title"
-                  style={{ display: 'inline-block' }}
+                  style={{ display: 'inline-block', textTransform: 'uppercase' }}
                   initial={hadGreeting.current ? { opacity: 0, y: 8 } : false}
                   animate={{ opacity: 1, y: 0, transition: { duration: 0.38, ease: [0.4, 0, 0.2, 1] } }}
                 >

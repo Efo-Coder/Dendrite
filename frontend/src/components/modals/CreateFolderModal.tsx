@@ -2,6 +2,8 @@
 import Modal from './Modal';
 import { MagicInput } from '../ui/MagicInput';
 import { useFolderStore } from '../../store/useFolderStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { canAccess } from '../../lib/planFeatures';
 import ColorPickerInline from '../editor/ColorPickerInline';
 import { FOLDER_ICONS } from '../../lib/folderIcons';
 import clsx from 'clsx';
@@ -20,6 +22,7 @@ const presets = [
 
 const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderModalProps) => {
   const { createFolder } = useFolderStore();
+  const { user } = useAuthStore();
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#10b981');
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
@@ -107,6 +110,8 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
             onChange={setSelectedColor}
             storageKey="dendrite-tag-folder-favorites"
             presets={presets}
+            canFavorite={canAccess(user?.plan, 'colorFavorites')}
+            canCustomColor={canAccess(user?.plan, 'customColor')}
           />
         </div>
 

@@ -300,7 +300,17 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
           </button>
           <div className="sidebar-user">
             <span className="sidebar-username">{user?.name || user?.email || 'Profile'}</span>
-            <span className="sidebar-role">{user?.plan || 'free'}</span>
+            <span
+              className="sidebar-role"
+              style={(() => {
+                const p = (user?.plan || 'free').toLowerCase();
+                if (p === 'author') return { color: '#c9a45a', background: 'color-mix(in srgb, #c9a45a 14%, transparent)', padding: '1px 5px', borderRadius: '3px' };
+                if (p === 'writer') return { color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 12%, transparent)', padding: '1px 5px', borderRadius: '3px' };
+                return {};
+              })()}
+            >
+              {(user?.plan || 'free').toLowerCase()}
+            </span>
           </div>
         </div>
         </div>{/* end sidebar-inner */}

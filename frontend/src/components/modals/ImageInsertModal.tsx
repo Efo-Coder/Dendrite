@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Upload, X, Image } from 'lucide-react';
 import Modal from './Modal';
+import { MagicInput } from '../ui/MagicInput';
 import { attachmentService } from '../../services/attachment.service';
 import clsx from 'clsx';
 
@@ -18,6 +19,7 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const prevHeightRef = useRef<number>(0);
+  const transitionEndRef = useRef<(() => void) | null>(null);
 
   const handleModeChange = (mode: 'url' | 'upload') => {
     if (contentRef.current) {
@@ -32,18 +34,29 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
     const newHeight = el.scrollHeight;
     if (Math.abs(newHeight - prevHeightRef.current) < 2) return;
 
+    if (transitionEndRef.current) {
+      el.removeEventListener('transitionend', transitionEndRef.current);
+      transitionEndRef.current = null;
+    }
+
     el.style.transition = 'none';
     el.style.height = `${prevHeightRef.current}px`;
     el.style.overflow = 'hidden';
 
     requestAnimationFrame(() => {
-      el.style.transition = 'height .3s cubic-bezier(.2,.8,.2,1)';
-      el.style.height = `${newHeight}px`;
-      el.addEventListener('transitionend', () => {
-        el.style.height = '';
-        el.style.transition = '';
-        el.style.overflow = '';
-      }, { once: true });
+      requestAnimationFrame(() => {
+        el.style.transition = 'height .3s cubic-bezier(.2,.8,.2,1)';
+        el.style.height = `${newHeight}px`;
+
+        const onEnd = () => {
+          el.style.height = '';
+          el.style.transition = '';
+          el.style.overflow = '';
+          transitionEndRef.current = null;
+        };
+        transitionEndRef.current = onEnd;
+        el.addEventListener('transitionend', onEnd, { once: true });
+      });
     });
   }, [imageMode]);
 
@@ -99,32 +112,27 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
       isConfirming={isUploading}
     >
       <div ref={contentRef}>
-      <div className="flex space-x-1 -mt-2 mb-5 p-1">
+      <div className="grid grid-cols-2 -mt-2 mb-5">
         {(['url', 'upload'] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => handleModeChange(mode)}
-            disabled={isUploading}
-            className={clsx(
-              'flex-1 px-4 py-2 text-sm font-medium transition-all relative group disabled:opacity-50',
-              imageMode === mode ? 'text-(--accent)' : 'text-(--ink-mid)',
-            )}
-          >
-            <span className="relative">{mode === 'url' ? 'URL' : 'Upload'}</span>
-            <span className={clsx(
-              'absolute bottom-0 left-0 right-0 h-0.5 transition-opacity',
-              imageMode === mode
-                ? 'bg-linear-to-r from-transparent via-brand-primary to-transparent opacity-100'
-                : 'bg-linear-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100',
-            )} />
-          </button>
+          <div key={mode} className="flex justify-center">
+            <button
+              onClick={() => handleModeChange(mode)}
+              disabled={isUploading}
+              className={clsx(
+                'px-4 py-2 text-sm font-medium transition-all relative group disabled:opacity-50',
+                imageMode === mode ? 'text-(--accent)' : 'text-(--ink-mid)',
+              )}
+            >
+              <span className="nav-underline">{mode === 'url' ? 'URL' : 'Upload'}</span>
+            </button>
+          </div>
         ))}
       </div>
 
       {imageMode === 'url' && (
         <div className="mb-5">
           <label className="modal-label block mb-2">Image URL</label>
-          <input
+          <MagicInput
             type="url"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
