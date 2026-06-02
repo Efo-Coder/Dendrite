@@ -256,7 +256,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               onChange={(e) => setName(e.target.value)}
               placeholder="Display name"
               className="modal-input"
-              style={{ width: 'auto' }}
+              style={{ width: '100%' }}
               wrapperStyle={{ flex: 1, borderRadius: '10px' }}
             />
             <button
