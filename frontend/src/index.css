@@ -361,12 +361,12 @@ html.is-theme-switching {
   background-position: -100% -100%, 0 0; transition: 800ms ease;
 }
 
-.hover-shimmer:hover::before,
-.btn.primary:hover::before,
-.win .notelist-new-btn:hover::before,
-.win .notelist-trash-btn:hover::before,
-.modal-overlay .btn.primary:hover::before,
-.modal-overlay .btn.danger:hover::before {
+.hover-shimmer:not(:disabled):hover::before,
+.btn.primary:not(:disabled):hover::before,
+.win .notelist-new-btn:not(:disabled):hover::before,
+.win .notelist-trash-btn:not(:disabled):hover::before,
+.modal-overlay .btn.primary:not(:disabled):hover::before,
+.modal-overlay .btn.danger:not(:disabled):hover::before {
   background-position: 100% 100%, 0 0;
 }
 

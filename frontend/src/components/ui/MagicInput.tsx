@@ -7,7 +7,7 @@ interface MagicInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const MagicInput = React.forwardRef<HTMLInputElement, MagicInputProps>(
-  ({ className, wrapperClassName, wrapperStyle, type, style, onFocus, onBlur, disabled, ...props }, ref) => {
+  ({ className, wrapperClassName, wrapperStyle, type, style, onFocus, onBlur, ...props }, ref) => {
     const [hovered, setHovered] = useState(false);
     const [focused, setFocused] = useState(false);
     const mouseX = useMotionValue(0);
@@ -25,7 +25,7 @@ export const MagicInput = React.forwardRef<HTMLInputElement, MagicInputProps>(
       transparent 80%
     )`;
 
-    const glowActive = hovered && !focused && !disabled;
+    const glowActive = hovered && !focused;
 
     return (
       <div
@@ -55,7 +55,6 @@ export const MagicInput = React.forwardRef<HTMLInputElement, MagicInputProps>(
           type={type}
           className={className}
           ref={ref}
-          disabled={disabled}
           style={{ position: 'relative', zIndex: 1, ...style }}
           onFocus={(e) => { setFocused(true); onFocus?.(e); }}
           onBlur={(e) => { setFocused(false); onBlur?.(e); }}
