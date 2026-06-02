@@ -28,6 +28,7 @@ const USER_SELECT = {
   name: true,
   avatarUrl: true,
   plan: true,
+  provider: true,
   twoFactorEnabled: true,
   createdAt: true,
   updatedAt: true,
