@@ -264,7 +264,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               disabled={nameLoading || !name.trim()}
               className="btn group relative disabled:opacity-50"
             >
-              <span className="relative">
+              <span className="relative inline-block">
                 {nameLoading ? '...' : 'Save'}
                 <span className="absolute bottom-0 left-0 w-0 group-hover:w-full" style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
               </span>
@@ -328,7 +328,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
               className="btn group relative w-full disabled:opacity-50"
             >
-              <span className="relative">
+              <span className="relative inline-block">
                 {passwordLoading ? 'Changing...' : 'Change password'}
                 <span className="absolute bottom-0 left-0 w-0 group-hover:w-full" style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
               </span>
@@ -344,7 +344,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             type="button"
           >
             <LogOut className="w-4 h-4" />
-            <span className="relative">
+            <span className="relative inline-block">
               Sign out
               <span className="absolute bottom-0 left-0 w-0 group-hover:w-full" style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
             </span>
@@ -356,7 +356,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             type="button"
           >
             <Trash2 className="w-4 h-4" />
-            <span className="relative">
+            <span className="relative inline-block">
               Delete account
               <span className="absolute bottom-0 left-0 w-0 group-hover:w-full" style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
             </span>
