@@ -302,6 +302,22 @@ html.is-theme-switching {
     color: oklch(0.15 0.020 60); border-color: color-mix(in oklch, var(--accent-deep) 90%, transparent);
   }
 
+  /* Social login buttons */
+  .social-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 10px 16px; border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--bg-panel, var(--surface));
+    color: var(--ink);
+    font-family: var(--serif-body); font-size: 14px;
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .social-btn:hover {
+    background: var(--surface-hi);
+    border-color: var(--ink-dim);
+  }
+
   /* Auth icon button — home + theme toggle on auth pages */
   .icon-btn-auth {
     color: var(--ink-low);
