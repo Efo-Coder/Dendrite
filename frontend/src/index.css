@@ -372,18 +372,20 @@ html.is-theme-switching {
   background-position: 100% 100%, 0 0;
 }
 
-/* Nav-style underline hover — text-width only, background-size animation */
-.nav-underline {
-  padding-bottom: 2px;
-  background-image: linear-gradient(currentColor, currentColor);
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 0 0.5px;
-  transition: background-size 0.4s cubic-bezier(.2,.7,.2,1);
+/* Nav-style underline hover */
+.nav-underline { display: inline-block; overflow: hidden; padding-bottom: 3px; }
+.nav-underline::after {
+  content: '';
+  display: block;
+  height: 0.5px;
+  margin-top: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(.2,.7,.2,1);
 }
-.group:not(:disabled):hover .nav-underline {
-  background-size: 100% 0.5px;
-}
+.group:hover .nav-underline::after { transform: scaleX(1); }
+button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
    APP SHELL  —  .app-stage › .win › .app-titlebar + .app-row
@@ -1310,18 +1312,18 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
   html .resize-handle-nwse.resize-handle-nwse { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M4 4L16 16M4 4L4 9M4 4L9 4M16 16L11 16M16 16L16 11' stroke='%233a2008' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3Cpath d='M4 4L16 16M4 4L4 9M4 4L9 4M16 16L11 16M16 16L16 11' stroke='%23b8891a' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3C/svg%3E") 10 10, nwse-resize !important; }
 
   /* Pointer — gold pointing hand for clickable elements */
-  html button:not(:disabled),
-  html input[type=button]:not(:disabled),
-  html input[type=submit]:not(:disabled),
-  html input[type=reset]:not(:disabled),
-  html a[href],
-  html [role="button"],
-  html [role="option"],
-  html [role="menuitem"],
-  html [role="tab"],
+  html button:not(:disabled), html button:not(:disabled) *,
+  html input[type=button]:not(:disabled), html input[type=button]:not(:disabled) *,
+  html input[type=submit]:not(:disabled), html input[type=submit]:not(:disabled) *,
+  html input[type=reset]:not(:disabled), html input[type=reset]:not(:disabled) *,
+  html a[href], html a[href] *,
+  html [role="button"], html [role="button"] *,
+  html [role="option"], html [role="option"] *,
+  html [role="menuitem"], html [role="menuitem"] *,
+  html [role="tab"], html [role="tab"] *,
   html select,
-  html label[for],
-  html [tabindex]:not([tabindex="-1"]),
+  html label[for], html label[for] *,
+  html [tabindex]:not([tabindex="-1"]), html [tabindex]:not([tabindex="-1"]) *,
   html .editor-link,
   html .swatch {
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='18' viewBox='0 0 448 512'%3E%3Cpath d='M128 40c0-22.1 17.9-40 40-40s40 17.9 40 40l0 148.2c8.5-7.6 19.7-12.2 32-12.2c20.6 0 38.2 13 45 31.2c8.8-9.3 21.2-15.2 35-15.2c25.3 0 46 19.5 47.9 44.3c8.5-7.7 19.8-12.3 32.1-12.3c26.5 0 48 21.5 48 48l0 48 0 16 0 48c0 70.7-57.3 128-128 128l-16 0-64 0-.1 0-5.2 0c-5 0-9.9-.3-14.7-1c-55.3-5.6-106.2-34-140-79L8 336c-13.3-17.7-9.7-42.7 8-56s42.7-9.7 56 8l56 74.7L128 40zM240 304c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 96c0 8.8 7.2 16 16 16s16-7.2 16-16l0-96zm48-16c-8.8 0-16 7.2-16 16l0 96c0 8.8 7.2 16 16 16s16-7.2 16-16l0-96c0-8.8-7.2-16-16-16zm80 16c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 96c0 8.8 7.2 16 16 16s16-7.2 16-16l0-96z' fill='%23c8a87a' stroke='%233a2008' stroke-width='16'/%3E%3C/svg%3E") 7 0, pointer !important;
