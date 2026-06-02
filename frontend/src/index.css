@@ -372,6 +372,18 @@ html.is-theme-switching {
   background-position: 100% 100%, 0 0;
 }
 
+/* Nav-style underline hover — text-width only, background-size animation */
+.nav-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 calc(100% + 2px);
+  background-size: 0 0.5px;
+  transition: background-size 0.4s cubic-bezier(.2,.7,.2,1);
+}
+.group:not(:disabled):hover .nav-underline {
+  background-size: 100% 0.5px;
+}
+
 /* ══════════════════════════════════════════════════════════════════════════════
    APP SHELL  —  .app-stage › .win › .app-titlebar + .app-row
 ══════════════════════════════════════════════════════════════════════════════ */

@@ -264,10 +264,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               disabled={nameLoading || !name.trim() || name.trim() === (user?.name ?? '')}
               className="btn group relative disabled:opacity-50"
             >
-              <span className="relative inline-block">
-                {nameLoading ? '...' : 'Save'}
-                <span className="absolute left-0 w-0 group-hover:w-full group-disabled:hidden" style={{ bottom: '-2px', height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
-              </span>
+              <span className="nav-underline">{nameLoading ? '...' : 'Save'}</span>
             </button>
           </form>
         </div>
@@ -328,10 +325,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
               className="btn group relative w-full disabled:opacity-50"
             >
-              <span className="relative inline-block">
-                {passwordLoading ? 'Changing...' : 'Change password'}
-                <span className="absolute left-0 w-0 group-hover:w-full group-disabled:hidden" style={{ bottom: '-2px', height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
-              </span>
+              <span className="nav-underline">{passwordLoading ? 'Changing...' : 'Change password'}</span>
             </button>
           </form>
         </div>}
@@ -344,10 +338,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             type="button"
           >
             <LogOut className="w-4 h-4" />
-            <span className="relative inline-block">
-              Sign out
-              <span className="absolute left-0 w-0 group-hover:w-full group-disabled:hidden" style={{ bottom: '-2px', height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
-            </span>
+            <span className="nav-underline">Sign out</span>
           </button>
 
           <button
@@ -356,10 +347,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             type="button"
           >
             <Trash2 className="w-4 h-4" />
-            <span className="relative inline-block">
-              Delete account
-              <span className="absolute left-0 w-0 group-hover:w-full group-disabled:hidden" style={{ bottom: '-2px', height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
-            </span>
+            <span className="nav-underline">Delete account</span>
           </button>
         </div>
 
