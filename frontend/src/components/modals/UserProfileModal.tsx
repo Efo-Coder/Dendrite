@@ -262,9 +262,12 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             <button
               type="submit"
               disabled={nameLoading || !name.trim()}
-              className="btn disabled:opacity-50"
+              className="btn group relative disabled:opacity-50"
             >
-              {nameLoading ? '...' : 'Save'}
+              <span className="relative">
+                {nameLoading ? '...' : 'Save'}
+                <span className="absolute bottom-0 left-0 w-0 group-hover:w-full" style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
+              </span>
             </button>
           </form>
         </div>
@@ -323,9 +326,12 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             <button
               type="submit"
               disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
-              className="btn w-full disabled:opacity-50"
+              className="btn group relative w-full disabled:opacity-50"
             >
-              {passwordLoading ? 'Changing...' : 'Change password'}
+              <span className="relative">
+                {passwordLoading ? 'Changing...' : 'Change password'}
+                <span className="absolute bottom-0 left-0 w-0 group-hover:w-full" style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }} />
+              </span>
             </button>
           </form>
         </div>}
