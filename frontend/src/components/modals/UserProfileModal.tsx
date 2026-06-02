@@ -261,7 +261,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             />
             <button
               type="submit"
-              disabled={nameLoading || !name.trim()}
+              disabled={nameLoading || !name.trim() || name.trim() === (user?.name ?? '')}
               className="btn group relative disabled:opacity-50"
             >
               <span className="relative inline-block">
