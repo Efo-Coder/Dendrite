@@ -6,7 +6,8 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { LogOut, KeyRound, Pencil, Trash2, Eye, EyeOff, Camera, X } from 'lucide-react';
 import { useToast } from '../ui/ToastContainer';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || '';
+const resolveAvatar = (url: string) => url.startsWith('http') ? url : `${API_URL}${url}`;
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -148,9 +149,10 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             >
               {user?.avatarUrl ? (
                 <img
-                  src={`${API_URL}${user.avatarUrl}`}
+                  src={resolveAvatar(user.avatarUrl)}
                   alt="Avatar"
                   className="w-14 h-14 rounded-full object-cover"
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                 />
               ) : (
                 <div className="avatar-initials" style={{

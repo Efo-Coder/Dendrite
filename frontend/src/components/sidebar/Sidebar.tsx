@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useMagicHover } from '../../hooks/useMagicHover';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || '';
+const resolveAvatar = (url: string) => url.startsWith('http') ? url : `${API_URL}${url}`;
 import { FileText, Star, Folder, Trash2, Archive, Plus, ChevronDown, Edit } from 'lucide-react';
 import { Icons } from '../ui/Icons';
 import { FOLDER_ICONS } from '../../lib/folderIcons';
@@ -287,7 +288,12 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
             style={{ fontSize: '13px', fontWeight: 600 }}
           >
             {user?.avatarUrl ? (
-              <img src={`${API_URL}${user.avatarUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img
+                src={resolveAvatar(user.avatarUrl)}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
             ) : (
               displayInitial
             )}
