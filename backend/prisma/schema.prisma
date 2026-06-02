@@ -13,7 +13,9 @@ datasource db {
 model User {
   id                          String    @id @default(uuid())
   email                       String    @unique
-  password                    String
+  password                    String?
+  provider                    String?
+  providerId                  String?
   name                        String?
   avatarUrl                   String?
   plan                        String    @default("free")
@@ -33,6 +35,8 @@ model User {
   folders     Folder[]
   tags        Tag[]
   noteOrders  NoteOrder[]
+
+  @@unique([provider, providerId])
 }
 
 model Folder {

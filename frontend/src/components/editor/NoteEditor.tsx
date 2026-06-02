@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { useMagicHover } from '../../hooks/useMagicHover';
 import TurndownService from 'turndown';
 import { motion } from 'motion/react';
 import { createPortal } from 'react-dom';
@@ -96,6 +97,10 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
   // Toolbar overflow
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const leftGroupRef = useRef<HTMLDivElement>(null);
+  const rightGroupRef = useRef<HTMLDivElement>(null);
+  const { onItemEnter: onLeftEnter, onItemLeave: onLeftLeave, Indicator: LeftIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: leftGroupRef });
+  const { onItemEnter: onRightEnter, onItemLeave: onRightLeave, Indicator: RightIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: rightGroupRef });
   const [isCompact, setIsCompact] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
   const [focusWritingMode, setFocusWritingMode] = useState(false);
@@ -558,6 +563,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const folderButton = () => (
     <button
       onClick={openFolderMenu}
+      onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
       className={clsx(
         'icon-btn-md rounded-lg transition-colors',
         folderMenuPos ? 'text-(--ink)' : ''
@@ -571,6 +577,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const tagButton = () => (
     <button
       onClick={openTagMenu}
+      onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
       className={clsx(
         'icon-btn-md rounded-lg transition-colors',
         tagMenuPos ? 'text-(--accent)' : ''
@@ -614,11 +621,13 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               className="relative flex h-11 items-center justify-between bg-transparent px-6 sm:px-12 pb-5"
             >
               {/* Left side */}
-              <div className="flex items-center gap-1">
+              <div ref={leftGroupRef} className="relative flex items-center gap-1 magic-hover">
+                {LeftIndicator}
                 {onToggleSidebar && (
                   <button
                     type="button"
                     onClick={onToggleSidebar}
+                    onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
                     className={clsx('icon-btn-md rounded-lg transition-colors', sidebarCollapsed && 'text-(--accent)')}
                     title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
                   >
@@ -629,6 +638,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                   <>
                     <button
                       onClick={async () => { await togglePin(note.id); toast.success(note.isPinned ? 'Unpinned' : 'Note pinned'); }}
+                      onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
                       className={clsx(
                         'icon-btn-md rounded-lg transition-colors',
                         note.isPinned ? 'text-(--accent)' : ''
@@ -639,6 +649,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                     </button>
                     <button
                       onClick={async () => { await toggleFavorite(note.id); toast.info(note.isFavorite ? 'Removed from favorites' : 'Added to favorites'); }}
+                      onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
                       className="icon-btn-md rounded-lg transition-colors"
                       style={note.isFavorite ? { color: 'var(--accent)' } : undefined}
                       title="Add to favorites"
@@ -647,6 +658,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                     </button>
                     <button
                       onClick={handleArchive}
+                      onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
                       className="icon-btn-md rounded-lg transition-colors"
                       title="Archive"
                     >
@@ -661,6 +673,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                     ) : (
                       <button
                         onClick={() => setShowOverflow(v => !v)}
+                        onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
                         className={clsx(
                           'icon-btn-md rounded-lg transition-colors shrink-0 mr-2',
                           showOverflow ? 'text-(--accent)' : ''
@@ -674,21 +687,23 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 )}
 
                 {isArchived && (
-                  <button onClick={handleRestore} className="icon-btn-md rounded-lg transition-colors" title="Restore from archive">
+                  <button onClick={handleRestore} onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave} className="icon-btn-md rounded-lg transition-colors" title="Restore from archive">
                     <ArchiveRestore className="w-4 h-4" />
                   </button>
                 )}
                 {isInTrash && (
-                  <button onClick={handleRestore} className="icon-btn-md rounded-lg transition-colors" title="Restore">
+                  <button onClick={handleRestore} onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave} className="icon-btn-md rounded-lg transition-colors" title="Restore">
                     <RotateCcw className="w-4 h-4" />
                   </button>
                 )}
               </div>
 
-              <div className="flex items-center gap-1">
+              <div ref={rightGroupRef} className="relative flex items-center gap-1 magic-hover">
+                {RightIndicator}
                 {!isInTrash && (
                   <button
                     onClick={openExportMenu}
+                    onMouseEnter={onRightEnter} onMouseLeave={onRightLeave}
                     className={clsx(
                       'icon-btn-md rounded-lg transition-colors',
                       exportMenuPos ? 'text-(--accent)' : ''
@@ -700,18 +715,20 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 )}
                 <button
                   onClick={handleDelete}
+                  onMouseEnter={onRightEnter} onMouseLeave={onRightLeave}
                   className="icon-btn-md rounded-lg hover:text-red-500"
                   title={isInTrash ? 'Delete permanently' : 'Move to trash'}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
-                <button onClick={handleClose} className="icon-btn-md rounded-lg transition-colors" title="Close note">
+                <button onClick={handleClose} onMouseEnter={onRightEnter} onMouseLeave={onRightLeave} className="icon-btn-md rounded-lg transition-colors" title="Close note">
                   <X className="w-4 h-4" />
                 </button>
                 {!isInTrash && (
                   <button
                     type="button"
                     onClick={() => setFocusWritingMode((v) => !v)}
+                    onMouseEnter={onRightEnter} onMouseLeave={onRightLeave}
                     className="icon-btn-md rounded-lg transition-colors"
                     title="Focus mode"
                   >

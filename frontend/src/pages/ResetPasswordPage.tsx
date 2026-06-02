@@ -7,6 +7,7 @@ import Logo from '../components/ui/Logo';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
 import { Eye, EyeOff, Moon, Sun, Home, CheckCircle } from 'lucide-react';
 import { authService } from '../services/auth.service';
+import { MagicInput } from '../components/ui/MagicInput';
 
 function getPasswordStrength(password: string): { level: 0 | 1 | 2 | 3; label: string; color: string } {
   if (!password) return { level: 0, label: '', color: 'transparent' };
@@ -213,7 +214,7 @@ const ResetPasswordPage = () => {
                       New password
                     </label>
                     <div style={{ position: 'relative' }}>
-                      <input
+                      <MagicInput
                         id="password"
                         type={showPassword ? 'text' : 'password'}
                         value={password}
@@ -264,7 +265,7 @@ const ResetPasswordPage = () => {
                       Confirm password
                     </label>
                     <div style={{ position: 'relative' }}>
-                      <input
+                      <MagicInput
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
                         value={confirmPassword}

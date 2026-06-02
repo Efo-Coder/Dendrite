@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { MagicInput } from '../ui/MagicInput';
 import { useTagStore } from '../../store/useTagStore';
 import { Tag } from '../../types';
 import ColorPickerInline from '../editor/ColorPickerInline';
@@ -73,7 +74,7 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
 
         <div className="modal-field">
           <label htmlFor="tag-name" className="modal-label">Name</label>
-          <input
+          <MagicInput
             id="tag-name"
             type="text"
             value={name}
@@ -82,6 +83,7 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
             placeholder="e.g. Important, Idea, Todo"
             autoFocus
             required
+            wrapperStyle={{ borderRadius: '10px' }}
           />
         </div>
 

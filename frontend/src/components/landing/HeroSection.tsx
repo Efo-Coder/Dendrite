@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { BetaBanner } from "./BetaBanner";
+import DarkVeil from "./DarkVeil";
 
 function DashboardMockup() {
   return (
@@ -211,6 +212,20 @@ export function HeroSection() {
       style={{ minHeight: '100dvh', background: 'var(--bg)' }}
     >
       <BetaBanner />
+
+      {/* DarkVeil background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <DarkVeil
+          hueShift={-165}
+          noiseIntensity={0}
+          scanlineIntensity={0}
+          speed={0.5}
+          scanlineFrequency={0}
+          warpAmount={0}
+          resolutionScale={1.2}
+        />
+      </div>
+
       {/* Ambient radial glow */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -289,7 +304,7 @@ export function HeroSection() {
                     display: 'block',
                   }}
                 >
-                  matters.
+                  endures.
                 </motion.span>
               </span>
             </h1>

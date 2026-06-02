@@ -79,6 +79,8 @@ export interface ReorderNoteItemProps {
   onRightClick?: (e: React.MouseEvent, note: Note) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  onMouseEnter?: (e: React.MouseEvent<HTMLElement>) => void;
+  onMouseLeave?: () => void;
 }
 
 const ReorderNoteItem = ({
@@ -90,6 +92,8 @@ const ReorderNoteItem = ({
   onRightClick,
   onDragStart,
   onDragEnd,
+  onMouseEnter,
+  onMouseLeave,
 }: ReorderNoteItemProps) => {
   const controls = useDragControls();
 
@@ -104,6 +108,8 @@ const ReorderNoteItem = ({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onContextMenu={(e: React.MouseEvent) => onRightClick?.(e, note)}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       className={clsx('note-card', isSelected && 'active')}
       style={{ listStyle: 'none', position: 'relative' }}
     >

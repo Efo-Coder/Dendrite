@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { register, login, verifyEmail, resendVerification, forgotPassword, resetPassword, setup2FA, enable2FA, disable2FA, verify2FA, getMe, updateProfile, changePassword, deleteAccount, uploadAvatar, deleteAvatar } from '../controllers/auth.controller';
+import { redirectToGoogle, handleGoogleCallback, redirectToGithub, handleGithubCallback, redirectToMicrosoft, handleMicrosoftCallback } from '../controllers/oauth.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 import { upload } from '../config/multer.config';
 
@@ -25,6 +26,14 @@ router.post('/2fa/setup', authenticateToken, setup2FA);
 router.post('/2fa/enable', authenticateToken, enable2FA);
 router.post('/2fa/disable', authenticateToken, disable2FA);
 router.post('/2fa/verify', verify2FA);
+// OAuth
+router.get('/google', redirectToGoogle);
+router.get('/google/callback', handleGoogleCallback);
+router.get('/github', redirectToGithub);
+router.get('/github/callback', handleGithubCallback);
+router.get('/microsoft', redirectToMicrosoft);
+router.get('/microsoft/callback', handleMicrosoftCallback);
+
 router.get('/me', authenticateToken, getMe);
 router.put('/profile', authenticateToken, updateProfile);
 router.put('/password', authenticateToken, changePassword);

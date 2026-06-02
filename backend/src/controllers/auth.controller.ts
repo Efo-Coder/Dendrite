@@ -82,7 +82,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
+    if (!user || !user.password) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -143,6 +143,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
 
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
     if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user.password) return res.status(400).json({ error: 'This account uses social login. Password cannot be changed.' });
 
     const isValid = await bcrypt.compare(currentPassword, user.password);
     if (!isValid) return res.status(401).json({ error: 'Current password is incorrect' });
@@ -366,6 +367,7 @@ export const disable2FA = async (req: AuthRequest, res: Response) => {
 
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
     if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user.password) return res.status(400).json({ error: 'This account uses social login.' });
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ error: 'Incorrect password' });

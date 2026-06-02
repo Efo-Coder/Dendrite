@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useMagicHover } from '../../hooks/useMagicHover';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSmartPopupStyle, type PopupAnchor } from '../../hooks/useSmartPopupStyle';
 import { createPortal } from 'react-dom';
@@ -92,6 +93,18 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
     applyFontColor, applyHighlight, applyFontSize, applyLineHeight,
   } = useToolbarStateContext();
 
+  const floatingBarRef = useRef<HTMLDivElement>(null);
+  const headingPickerRef = useRef<HTMLDivElement>(null);
+  const fontSizeRef = useRef<HTMLDivElement>(null);
+  const lineHeightRef = useRef<HTMLDivElement>(null);
+  const codeLangRef = useRef<HTMLDivElement>(null);
+
+  const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: floatingBarRef });
+  const { onItemEnter: onHEnter, onItemLeave: onHLeave, Indicator: HIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: headingPickerRef });
+  const { onItemEnter: onFSEnter, onItemLeave: onFSLeave, Indicator: FSIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: fontSizeRef });
+  const { onItemEnter: onLHEnter, onItemLeave: onLHLeave, Indicator: LHIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: lineHeightRef });
+  const { onItemEnter: onCLEnter, onItemLeave: onCLLeave, Indicator: CLIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: codeLangRef });
+
   const [visible, setVisible] = useState(false);
   const [scrolledOut, setScrolledOut] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -110,12 +123,6 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
   const codeFormattingRef = useRef(false);
   const isMouseSelectingRef = useRef(false);
   const toolbarWidthRef = useRef(320);
-
-  const floatingBarRef = useRef<HTMLDivElement>(null);
-  const fontSizeRef = useRef<HTMLDivElement>(null);
-  const lineHeightRef = useRef<HTMLDivElement>(null);
-  const codeLangRef = useRef<HTMLDivElement>(null);
-  const headingPickerRef = useRef<HTMLDivElement>(null);
 
   const { style: headingStyle, placement: headingPlacement } = useSmartPopupStyle(headingPos, headingPickerRef, 0);
   const { style: fontSizeStyle, placement: fontSizePlacement } = useSmartPopupStyle(fontSizePos, fontSizeRef, 0);
@@ -289,7 +296,8 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(e); }}
-      onMouseEnter={() => {}}
+      onMouseEnter={onItemEnter}
+      onMouseLeave={onItemLeave}
       disabled={btnDisabled}
       title={title}
       className={clsx(
@@ -425,7 +433,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
       <div
         ref={floatingBarRef}
         className={clsx(
-          'fixed flex items-center gap-0.5 px-1.5 py-1 z-50',
+          'fixed flex items-center gap-0.5 px-1.5 py-1 z-50 magic-hover',
           'border border-[color-mix(in_srgb,var(--line)_55%,transparent)]',
           'shadow-[0_12px_40px_color-mix(in_srgb,#000_35%,transparent),0_0_0_1px_color-mix(in_srgb,var(--accent)_8%,transparent)]',
           'rounded-2xl',
@@ -443,6 +451,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         }}
         onMouseDown={(e) => e.preventDefault()}
       >
+        {Indicator}
         <div className="overflow-hidden" style={{ width: PAGE_W }}>
           <div
             className="flex transition-transform duration-200 ease-in-out"
@@ -466,6 +475,8 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
           }}
           title="More options"
           className="icon-btn-md rounded-lg transition-colors shrink-0"
+          onMouseEnter={onItemEnter}
+          onMouseLeave={onItemLeave}
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -478,17 +489,19 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
           <div className="fixed inset-0" onClick={() => setHeadingPos(null)} />
           <motion.div
             ref={headingPickerRef}
-            className={popupCls(headingPlacement, popupPad(headingPlacement))}
+            className={clsx(popupCls(headingPlacement, popupPad(headingPlacement)), 'magic-hover')}
             style={{ ...headingStyle, ...getPopupStyle(headingPlacement) }}
             onMouseDown={(e) => e.preventDefault()}
             {...popupMotion(headingPlacement)}
           >
+            {HIndicator}
             <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
               {blockType.startsWith('h') && (
                 <button
                   type="button"
                   onClick={() => { removeHeading(); setHeadingPos(null); }}
-                  className="flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors text-red-500 hover:bg-(--surface-hi) shrink-0"
+                  onMouseEnter={onHEnter} onMouseLeave={onHLeave}
+                  className="flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors text-red-500 shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -498,7 +511,8 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
                   key={tag}
                   type="button"
                   onClick={() => { formatHeading(tag); setHeadingPos(null); }}
-                  className={clsx('flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors shrink-0 hover:bg-(--surface-hi)', blockType === tag ? 'text-(--accent)' : 'text-(--ink)')}
+                  onMouseEnter={onHEnter} onMouseLeave={onHLeave}
+                  className={clsx('flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors shrink-0', blockType === tag ? 'text-(--accent)' : 'text-(--ink)')}
                 >
                   <Icon className="w-4 h-4" />
                 </button>
@@ -517,16 +531,18 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
           <div className="fixed inset-0" onClick={() => setFontSizePos(null)} />
           <motion.div
             ref={fontSizeRef}
-            className={popupCls(fontSizePlacement, popupPad(fontSizePlacement))}
+            className={clsx(popupCls(fontSizePlacement, popupPad(fontSizePlacement)), 'magic-hover')}
             style={{ ...fontSizeStyle, ...getPopupStyle(fontSizePlacement) }}
             onMouseDown={(e) => e.preventDefault()}
             {...popupMotion(fontSizePlacement)}
           >
+            {FSIndicator}
             <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
               {FONT_SIZES.map((size) => (
                 <button key={size} type="button"
                   onClick={() => { applyFontSize(size); setFontSizePos(null); }}
-                  className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap hover:bg-(--surface-hi)', fontSize === size ? 'text-(--accent)' : 'text-(--ink)')}
+                  onMouseEnter={onFSEnter} onMouseLeave={onFSLeave}
+                  className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap', fontSize === size ? 'text-(--accent)' : 'text-(--ink)')}
                 >
                   {size}
                 </button>
@@ -545,16 +561,18 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
           <div className="fixed inset-0" onClick={() => setLineHeightPickerPos(null)} />
           <motion.div
             ref={lineHeightRef}
-            className={popupCls(lineHeightPlacement, popupPad(lineHeightPlacement))}
+            className={clsx(popupCls(lineHeightPlacement, popupPad(lineHeightPlacement)), 'magic-hover')}
             style={{ ...(lineHeightPickerPos?.width !== undefined ? { width: lineHeightPickerPos.width } : {}), ...lineHeightStyle, ...getPopupStyle(lineHeightPlacement) }}
             onMouseDown={(e) => e.preventDefault()}
             {...popupMotion(lineHeightPlacement)}
           >
+            {LHIndicator}
             <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
               {LINE_HEIGHTS.map((value) => (
                 <button key={value} type="button"
                   onClick={() => { applyLineHeight(value); setLineHeightPickerPos(null); }}
-                  className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap hover:bg-(--surface-hi)', (lineHeight === value || (value === '1.5' && !lineHeight)) ? 'text-(--accent)' : 'text-(--ink)')}
+                  onMouseEnter={onLHEnter} onMouseLeave={onLHLeave}
+                  className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap', (lineHeight === value || (value === '1.5' && !lineHeight)) ? 'text-(--accent)' : 'text-(--ink)')}
                 >
                   {value}×
                 </button>
@@ -573,16 +591,18 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
           <div className="fixed inset-0" onClick={() => setCodeLangPickerPos(null)} />
           <motion.div
             ref={codeLangRef}
-            className={popupCls(codeLangPlacement, popupPad(codeLangPlacement))}
+            className={clsx(popupCls(codeLangPlacement, popupPad(codeLangPlacement)), 'magic-hover')}
             style={{ ...codeLangStyle, ...getPopupStyle(codeLangPlacement) }}
             onMouseDown={(e) => e.preventDefault()}
             {...popupMotion(codeLangPlacement)}
           >
+            {CLIndicator}
             <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
               <button
                 type="button"
                 onClick={() => { handleFormatCode(); setCodeLangPickerPos(null); }}
-                className="flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors text-red-500 hover:bg-(--surface-hi) shrink-0"
+                onMouseEnter={onCLEnter} onMouseLeave={onCLLeave}
+                className="flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors text-red-500 shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -593,7 +613,8 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
                     key={lang}
                     type="button"
                     onClick={() => { setCodeNodeLanguage(lang); setCodeLangPickerPos(null); }}
-                    className={clsx('flex items-center gap-1.5 px-2.5 py-1 text-sm rounded-lg transition-colors shrink-0 hover:bg-(--surface-hi)', isPickerActive(lang, codeLanguage, 'js') ? 'text-(--accent)' : 'text-(--ink)')}
+                    onMouseEnter={onCLEnter} onMouseLeave={onCLLeave}
+                    className={clsx('flex items-center gap-1.5 px-2.5 py-1 text-sm rounded-lg transition-colors shrink-0', isPickerActive(lang, codeLanguage, 'js') ? 'text-(--accent)' : 'text-(--ink)')}
                   >
                     {LangIcon
                       ? <LangIcon className="w-3.5 h-3.5 shrink-0" />

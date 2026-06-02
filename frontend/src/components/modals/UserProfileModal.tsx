@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import Modal from './Modal';
+import { MagicInput } from '../ui/MagicInput';
 import ConfirmAccountDeletionModal from './ConfirmAccountDeletionModal';
 import { useAuthStore } from '../../store/useAuthStore';
 import { LogOut, KeyRound, Pencil, Trash2, Eye, EyeOff, Camera, X } from 'lucide-react';
@@ -201,13 +202,14 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             <Pencil className="w-3 h-3" /> Change name
           </label>
           <form onSubmit={handleUpdateName} className="flex gap-2">
-            <input
+            <MagicInput
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Display name"
               className="modal-input"
-              style={{ flex: 1, width: 'auto' }}
+              style={{ width: 'auto' }}
+              wrapperStyle={{ flex: 1, borderRadius: '10px' }}
             />
             <button
               type="submit"
@@ -226,13 +228,14 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
           </label>
           <form onSubmit={handleChangePassword} className="space-y-2">
             <div className="relative">
-              <input
+              <MagicInput
                 type={showCurrent ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Current password"
                 className="modal-input"
                 style={{ paddingRight: '40px' }}
+                wrapperStyle={{ borderRadius: '10px' }}
               />
               <button type="button" onClick={() => setShowCurrent(!showCurrent)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors no-press">
@@ -240,13 +243,14 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               </button>
             </div>
             <div className="relative">
-              <input
+              <MagicInput
                 type={showNew ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="New password"
                 className="modal-input"
                 style={{ paddingRight: '40px' }}
+                wrapperStyle={{ borderRadius: '10px' }}
               />
               <button type="button" onClick={() => setShowNew(!showNew)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors no-press">
@@ -254,13 +258,14 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               </button>
             </div>
             <div className="relative">
-              <input
+              <MagicInput
                 type={showConfirm ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
                 className="modal-input"
                 style={{ paddingRight: '40px' }}
+                wrapperStyle={{ borderRadius: '10px' }}
               />
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors no-press">

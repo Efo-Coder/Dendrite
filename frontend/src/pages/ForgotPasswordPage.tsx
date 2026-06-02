@@ -6,6 +6,7 @@ import Logo from '../components/ui/Logo';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
 import { Moon, Sun, Home, Mail } from 'lucide-react';
 import { authService } from '../services/auth.service';
+import { MagicInput } from '../components/ui/MagicInput';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
@@ -177,7 +178,7 @@ const ForgotPasswordPage = () => {
                     }}>
                       Email
                     </label>
-                    <input
+                    <MagicInput
                       id="email"
                       type="email"
                       value={email}

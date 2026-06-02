@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import Modal from './Modal';
+import { MagicInput } from '../ui/MagicInput';
 import { useTagStore } from '../../store/useTagStore';
 import ColorPickerInline from '../editor/ColorPickerInline';
 
@@ -68,7 +69,7 @@ const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) 
               {name.length}/20
             </span>
           </label>
-          <input
+          <MagicInput
             id="tag-name"
             type="text"
             value={name}
@@ -78,6 +79,7 @@ const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) 
             maxLength={20}
             autoFocus
             required
+            wrapperStyle={{ borderRadius: '10px' }}
           />
         </div>
 

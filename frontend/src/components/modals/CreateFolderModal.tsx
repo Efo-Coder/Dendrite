@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import Modal from './Modal';
+import { MagicInput } from '../ui/MagicInput';
 import { useFolderStore } from '../../store/useFolderStore';
 import ColorPickerInline from '../editor/ColorPickerInline';
 import { FOLDER_ICONS } from '../../lib/folderIcons';
@@ -64,7 +65,7 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
 
         <div className="modal-field">
           <label htmlFor="folder-name" className="modal-label">Name</label>
-          <input
+          <MagicInput
             id="folder-name"
             type="text"
             value={name}
@@ -73,6 +74,7 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
             placeholder="e.g. Work, Personal, Projects"
             autoFocus
             required
+            wrapperStyle={{ borderRadius: '10px' }}
           />
         </div>
 

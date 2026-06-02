@@ -462,7 +462,7 @@ html.is-theme-switching {
 .win .sidebar-scroll > .sidebar-section:first-child h4 { margin-top: 4px; }
 
 /* Scrollable nav area */
-.win .sidebar-scroll { flex: 1; overflow-y: auto; min-height: 0; scroll-behavior: smooth; }
+.win .sidebar-scroll { flex: 1; overflow-y: auto; min-height: 0; scroll-behavior: smooth; position: relative; }
 .win .sidebar-scroll::-webkit-scrollbar       { width: 4px; }
 .win .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
 .win .sidebar-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 55%, transparent); border-radius: 9999px; }
@@ -478,12 +478,12 @@ html.is-theme-switching {
   padding: calc(7px * var(--density)) 12px;
   border-radius: 7px;
   font-family: var(--serif-body); font-size: 14.5px;
-  color: var(--ink-mid); cursor: default; position: relative;
-  transition: background .12s, color .12s;
+  color: var(--ink-mid); cursor: default; position: relative; z-index: 1;
+  transition: color .12s;
   width: 100%; border: 0; background: transparent; text-align: left;
 }
 .win .sidebar-item:hover,
-.win .sidebar-tag:hover { background: var(--surface); color: var(--ink); transform: none; }
+.win .sidebar-tag:hover { color: var(--ink); }
 
 .win .sidebar-item.active,
 .win .sidebar-tag.active {
@@ -576,12 +576,11 @@ html.is-theme-switching {
   position: relative; display: flex; align-items: center; gap: 2px;
   background: var(--surface); border: 0.5px solid var(--line-soft);
   border-radius: 8px; padding: 0 6px 0 32px;
-  transition: border-color .15s, background .15s, box-shadow .15s;
+  transition: border-color .15s, background .15s;
 }
 .win .notelist-search:focus-within {
   border-color: color-mix(in oklch, var(--accent) 50%, transparent);
   background: var(--surface-hi);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 14%, transparent);
 }
 .win .notelist-search input {
   flex: 1; min-width: 0; appearance: none; border: 0; outline: none;
@@ -611,14 +610,19 @@ html.is-theme-switching {
   padding: calc(13px * var(--density)) 14px;
   border-radius: 9px; cursor: default; position: relative;
   display: flex; flex-direction: column; gap: 5px;
-  transition: background .12s; border: 0.5px solid transparent;
+  transition: background 400ms ease, border-color 400ms ease, box-shadow 400ms ease;
+  border: 0.5px solid transparent;
+  box-shadow: 0 4px 16px rgba(0,0,0,0), 0 0 0 0.5px transparent inset;
   will-change: transform;
 }
-.win .note-card:hover { background: var(--surface); }
+.win .note-card:hover { background: transparent; }
+.magic-hover button { position: relative; }
+.magic-hover button:hover { background-color: transparent; }
 .win .note-card.active {
   background: linear-gradient(180deg, var(--surface-hi), color-mix(in oklch, var(--surface) 80%, transparent));
   border-color: color-mix(in oklch, var(--accent) 28%, transparent);
   box-shadow: 0 4px 16px rgba(0,0,0,.18), 0 0 0 0.5px color-mix(in oklch, var(--accent) 24%, transparent) inset;
+  transition: background 350ms ease, border-color 350ms ease, box-shadow 350ms ease;
 }
 
 .win .note-card-head    { display: flex; align-items: baseline; gap: 8px; }
@@ -854,21 +858,21 @@ html[data-theme="dark"] .image-size-indicator { background: rgba(28, 28, 28, 0.9
 
 .input {
   width: 100%; padding: 0.5rem 1rem; border-radius: 0.75rem;
-  transition: all 200ms; background: var(--surface);
+  transition: border-color 400ms ease; background: var(--surface);
   border: 1px solid rgba(0, 0, 0, 0.08); color: var(--ink);
 }
 html[data-theme="dark"] .input {
   background: color-mix(in srgb, var(--surface) 65%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
-.input:focus { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent); }
+.input:focus { outline: none; border-color: color-mix(in oklch, var(--accent) 55%, transparent); }
 
 /* Inputs on the dark NightTransition background (landing/auth pages) */
 html .auth-inputs .input {
   background: color-mix(in srgb, black 55%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.12); color: white;
 }
-html .auth-inputs .input:focus { outline: none; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.30); }
+html .auth-inputs .input:focus { outline: none; border-color: color-mix(in oklch, var(--accent) 55%, transparent); }
 .auth-inputs .input:-webkit-autofill,
 .auth-inputs .input:-webkit-autofill:hover,
 .auth-inputs .input:-webkit-autofill:focus {
@@ -885,7 +889,6 @@ html .auth-inputs .input:focus { outline: none; box-shadow: 0 0 0 2px rgba(255, 
 .auth-panel .input:focus {
   outline: none;
   border-color: color-mix(in oklch, var(--accent) 55%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 14%, transparent);
 }
 .auth-panel .input:-webkit-autofill,
 .auth-panel .input:-webkit-autofill:hover,
@@ -902,7 +905,7 @@ html .auth-inputs .input:focus { outline: none; box-shadow: 0 0 0 2px rgba(255, 
 .modal-overlay {
   position: fixed; inset: 0; z-index: 9999;
   display: flex; align-items: center; justify-content: center;
-  background: color-mix(in oklch, var(--bg-deep) 70%, transparent);
+  background: color-mix(in oklch, var(--bg-deep) 90%, transparent);
   backdrop-filter: blur(8px) saturate(120%); -webkit-backdrop-filter: blur(8px) saturate(120%);
   animation: scrim-in .2s ease;
 }
@@ -912,7 +915,7 @@ html .auth-inputs .input:focus { outline: none; box-shadow: 0 0 0 2px rgba(255, 
 /* Modal card */
 .modal-overlay .modal {
   background: var(--surface); border: 0.5px solid var(--line);
-  border-radius: 14px; box-shadow: var(--shadow-deep);
+  border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,.20);
   width: min(520px, 90%); max-height: min(640px, calc(100dvh - 80px));
   overflow: hidden; display: flex; flex-direction: column;
   color: var(--ink); font-family: var(--serif-body);
@@ -939,8 +942,8 @@ html .auth-inputs .input:focus { outline: none; box-shadow: 0 0 0 2px rgba(255, 
 .modal-overlay .modal-hd h3 {
   font-family: var(--serif-display); font-weight: 500; font-style: italic;
   font-size: 26px; margin: 0; color: var(--ink); letter-spacing: 0.01em;
-  animation: view-in .2s ease;
 }
+.modal-overlay .modal-hd h3.animated { animation: view-in .2s ease; }
 .modal-overlay .modal-hd p {
   font-family: var(--serif-body); font-size: 14px;
   color: var(--ink-low); margin: 6px 0 0; font-style: italic;
@@ -1014,8 +1017,9 @@ html .auth-inputs .input:focus { outline: none; box-shadow: 0 0 0 2px rgba(255, 
   border-radius: 8px; padding: 10px 12px;
   font-family: var(--serif-display); font-size: 18px; color: var(--ink);
   outline: none; width: 100%;
+  transition: border-color 400ms ease;
 }
-.modal-overlay .modal-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 14%, transparent); }
+.modal-overlay .modal-input:focus { border-color: var(--accent); }
 .modal-overlay .modal-input::placeholder { color: var(--ink-dim); font-style: italic; }
 .modal-overlay .modal-error {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
@@ -1057,7 +1061,8 @@ html .auth-inputs .input:focus { outline: none; box-shadow: 0 0 0 2px rgba(255, 
   color: var(--accent-hi); border-left-color: var(--accent);
   background: color-mix(in oklch, var(--accent) 10%, transparent);
 }
-.modal-overlay .settings-pane { padding: 22px 26px; overflow-y: auto; min-height: 0; animation: view-in .2s ease; }
+.modal-overlay .settings-pane { padding: 22px 26px; overflow-y: auto; min-height: 0; }
+.modal-overlay .settings-pane.animated { animation: view-in .2s ease; }
 .modal-overlay .settings-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 0; border-bottom: 0.5px solid var(--line-soft);
@@ -1256,8 +1261,15 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='m4 4 7.07 17 2.51-7.39L21 11.07z' fill='%23c8a87a' stroke='%233a2008' stroke-width='1.5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") 4 4, default !important;
   }
 
-  [data-draggable], [data-draggable] * { cursor: grab !important; }
-  [data-draggable]:active, [data-draggable] *:active { cursor: grabbing !important; }
+  /* Grab / grabbing — Font Awesome Solid filled shapes */
+  html [data-draggable],
+  html [data-draggable] * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 512 512'%3E%3Cpath d='M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 208c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-176c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 272c0 1.5 0 3.1 .1 4.6L67.6 283c-16-15.2-41.3-14.6-56.6 1.4s-14.6 41.3 1.4 56.6L124.8 448c43.1 41.1 100.4 64 160 64l19.2 0c97.2 0 176-78.8 176-176l0-208c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 112c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-176c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 176c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-208z' fill='%23c8a87a' stroke='%233a2008' stroke-width='20'/%3E%3C/svg%3E") 8 8, grab !important;
+  }
+  html [data-draggable]:active,
+  html [data-draggable] *:active {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='18' viewBox='0 0 448 512'%3E%3Cpath d='M192 0c17.7 0 32 14.3 32 32l0 112-64 0 0-112c0-17.7 14.3-32 32-32zM64 64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 80-64 0 0-80zm192 0c0-17.7 14.3-32 32-32s32 14.3 32 32l0 96c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-96zm96 64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 64c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-64zm-96 88l0-.6c9.4 5.4 20.3 8.6 32 8.6c13.2 0 25.4-4 35.6-10.8c8.7 24.9 32.5 42.8 60.4 42.8c11.7 0 22.6-3.1 32-8.6l0 8.6c0 52.3-25.1 98.8-64 128l0 96c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-78.4c-17.3-7.9-33.2-18.8-46.9-32.5L69.5 357.5C45.5 333.5 32 300.9 32 267l0-27c0-35.3 28.7-64 64-64l88 0c22.1 0 40 17.9 40 40s-17.9 40-40 40l-56 0c-8.8 0-16 7.2-16 16s7.2 16 16 16l56 0c39.8 0 72-32.2 72-72z' fill='%23c8a87a' stroke='%233a2008' stroke-width='16'/%3E%3C/svg%3E") 8 10, grabbing !important;
+  }
 
   /* Text cursor — dark mode */
   html input:not([type=button]):not([type=submit]):not([type=reset]):not([type=checkbox]):not([type=radio]):not([type=range]),
@@ -1280,5 +1292,23 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
   html .resize-handle-ew.resize-handle-ew     { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Cpath d='M4 6H20M4 6L8 3M4 6L8 9M20 6L16 3M20 6L16 9' stroke='%233a2008' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3Cpath d='M4 6H20M4 6L8 3M4 6L8 9M20 6L16 3M20 6L16 9' stroke='%23b8891a' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3C/svg%3E") 12 6, ew-resize !important; }
   html .resize-handle-ns.resize-handle-ns     { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='24' viewBox='0 0 12 24'%3E%3Cpath d='M6 4V20M6 4L3 8M6 4L9 8M6 20L3 16M6 20L9 16' stroke='%233a2008' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3Cpath d='M6 4V20M6 4L3 8M6 4L9 8M6 20L3 16M6 20L9 16' stroke='%23b8891a' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3C/svg%3E") 6 12, ns-resize !important; }
   html .resize-handle-nwse.resize-handle-nwse { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M4 4L16 16M4 4L4 9M4 4L9 4M16 16L11 16M16 16L16 11' stroke='%233a2008' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3Cpath d='M4 4L16 16M4 4L4 9M4 4L9 4M16 16L11 16M16 16L16 11' stroke='%23b8891a' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter' fill='none'/%3E%3C/svg%3E") 10 10, nwse-resize !important; }
+
+  /* Pointer — gold pointing hand for clickable elements */
+  html button:not(:disabled),
+  html input[type=button]:not(:disabled),
+  html input[type=submit]:not(:disabled),
+  html input[type=reset]:not(:disabled),
+  html a[href],
+  html [role="button"],
+  html [role="option"],
+  html [role="menuitem"],
+  html [role="tab"],
+  html select,
+  html label[for],
+  html [tabindex]:not([tabindex="-1"]),
+  html .editor-link,
+  html .swatch {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='18' viewBox='0 0 448 512'%3E%3Cpath d='M128 40c0-22.1 17.9-40 40-40s40 17.9 40 40l0 148.2c8.5-7.6 19.7-12.2 32-12.2c20.6 0 38.2 13 45 31.2c8.8-9.3 21.2-15.2 35-15.2c25.3 0 46 19.5 47.9 44.3c8.5-7.7 19.8-12.3 32.1-12.3c26.5 0 48 21.5 48 48l0 48 0 16 0 48c0 70.7-57.3 128-128 128l-16 0-64 0-.1 0-5.2 0c-5 0-9.9-.3-14.7-1c-55.3-5.6-106.2-34-140-79L8 336c-13.3-17.7-9.7-42.7 8-56s42.7-9.7 56 8l56 74.7L128 40zM240 304c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 96c0 8.8 7.2 16 16 16s16-7.2 16-16l0-96zm48-16c-8.8 0-16 7.2-16 16l0 96c0 8.8 7.2 16 16 16s16-7.2 16-16l0-96c0-8.8-7.2-16-16-16zm80 16c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 96c0 8.8 7.2 16 16 16s16-7.2 16-16l0-96z' fill='%23c8a87a' stroke='%233a2008' stroke-width='16'/%3E%3C/svg%3E") 7 0, pointer !important;
+  }
 
 }

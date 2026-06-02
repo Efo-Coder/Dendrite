@@ -138,6 +138,8 @@ export default function DarkVeil({
       const w = parent.clientWidth;
       const h = parent.clientHeight;
       renderer.setSize(w * resolutionScale, h * resolutionScale);
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
       program.uniforms.uResolution.value.set(w, h);
     };
 

@@ -8,6 +8,7 @@ import { LOGO_SRC } from '../../config/brand';
 import { modKey } from '../../lib/platform';
 import ToggleSwitch from '../ui/ToggleSwitch';
 import RangeSlider from '../ui/RangeSlider';
+import { MagicInput } from '../ui/MagicInput';
 import Counter from '../ui/Counter';
 
 const PALETTES: { id: PaletteId; name: string; color: string }[] = [
@@ -64,6 +65,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   } = useSettingsStore();
 
   const [tab, setTab] = useState<'appearance' | 'editor' | 'sync' | 'shortcuts' | 'about'>('appearance');
+  const [tabSwitched, setTabSwitched] = useState(false);
   const [visible, setVisible] = useState(isOpen);
   const [closing, setClosing] = useState(false);
   const visibleRef = useRef(visible);
@@ -150,7 +152,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       <div className="modal settings-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-hd">
           <div className="ornament">— · settings · —</div>
-          <h3 key={tab}>{{
+          <h3 key={tabSwitched ? tab : undefined} className={tabSwitched ? 'animated' : ''}>{{
             appearance: 'Appearance',
             editor: 'Editor',
             sync: 'Sync & Backup',
@@ -165,7 +167,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               <button
                 key={t}
                 className={tab === t ? 'active' : ''}
-                onClick={() => setTab(t)}
+                onClick={() => { setTab(t); setTabSwitched(true); }}
               >
                 {t === 'appearance' ? 'Appearance'
                  : t === 'editor' ? 'Editor'
@@ -176,7 +178,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
             ))}
           </div>
 
-          <div key={tab} className="settings-pane">
+          <div key={tab} className={`settings-pane${tabSwitched ? ' animated' : ''}`}>
             {tab === 'appearance' && (
               <>
                 <div className="settings-row">
@@ -347,14 +349,15 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     </p>
                     <img src={twoFASetup.qrCode} alt="QR Code" style={{ width: '160px', height: '160px', borderRadius: '8px', alignSelf: 'center' }} />
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <input
+                      <MagicInput
                         type="text"
                         inputMode="numeric"
                         value={twoFACode}
                         onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         className="input"
                         placeholder="000000"
-                        style={{ flex: 1, letterSpacing: '0.2em', textAlign: 'center' }}
+                        style={{ letterSpacing: '0.2em', textAlign: 'center' }}
+                        wrapperStyle={{ flex: 1 }}
                         maxLength={6}
                       />
                       <button
@@ -382,13 +385,13 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                       Enter your password to disable two-factor authentication.
                     </p>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <input
+                      <MagicInput
                         type="password"
                         value={disablePassword}
                         onChange={(e) => setDisablePassword(e.target.value)}
                         className="input"
                         placeholder="Your password"
-                        style={{ flex: 1 }}
+                        wrapperStyle={{ flex: 1 }}
                       />
                       <button
                         className="btn-ghost"

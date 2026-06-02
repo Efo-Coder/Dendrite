@@ -1,9 +1,10 @@
 import { startOfDay, startOfWeek, startOfMonth } from 'date-fns';
+import { useMagicHover } from '../../hooks/useMagicHover';
 import { Note } from '../../types';
 import { Plus, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react';
 import clsx from 'clsx';
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Fragment } from 'react';
-import { AnimatePresence, motion, Reorder, MotionConfig } from 'motion/react';
+import { AnimatePresence, motion, Reorder, MotionConfig, useMotionValue, useMotionTemplate } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { noteService } from '../../services/note.service';
 import { useNoteStore } from '../../store/useNoteStore';
@@ -58,6 +59,8 @@ const NoteList = ({
 
   // ── State ──────────────────────────────────────────────────────────────────
 
+  const { containerRef: noteListRef, onItemEnter: onCardEnter, onItemLeave: onCardLeave, Indicator: NoteIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface)', borderRadius: 9 });
+
   // Only non-null while the user is actively drag-reordering
   const [dragNotes, setDragNotes] = useState<Note[] | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -84,6 +87,12 @@ const NoteList = ({
   const [hoveredTab, setHoveredTab] = useState<ListTab | null>(null);
   const [sortFieldMenuOpen, setSortFieldMenuOpen] = useState(false);
   const [sortMenuAnchor, setSortMenuAnchor] = useState<PopupAnchor | null>(null);
+  const [searchHovered, setSearchHovered] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchMouseX = useMotionValue(0);
+  const searchMouseY = useMotionValue(0);
+  const searchGradient = useMotionTemplate`radial-gradient(120px circle at ${searchMouseX}px ${searchMouseY}px, var(--accent), transparent 80%)`;
+  const searchGlowActive = searchHovered && !searchFocused;
 
   // ── Refs ───────────────────────────────────────────────────────────────────
 
@@ -377,6 +386,20 @@ const NoteList = ({
         <span className="notelist-count">{displayCount} {displayCount === 1 ? 'note' : 'notes'}</span>
       </div>
       <div
+        style={{ position: 'relative', borderRadius: sortFieldMenuOpen ? '9px 9px 0 0' : '9px' }}
+        onMouseMove={({ currentTarget, clientX, clientY }) => { const { left, top } = currentTarget.getBoundingClientRect(); searchMouseX.set(clientX - left); searchMouseY.set(clientY - top); }}
+        onMouseEnter={() => setSearchHovered(true)}
+        onMouseLeave={() => setSearchHovered(false)}
+        onFocusCapture={() => setSearchFocused(true)}
+        onBlurCapture={() => setSearchFocused(false)}
+        className="p-px"
+      >
+        <motion.div
+          animate={{ opacity: searchGlowActive ? 1 : 0 }}
+          transition={{ duration: searchGlowActive ? 0.25 : 0.55, ease: "easeOut" }}
+          style={{ position: 'absolute', inset: 0, background: searchGradient, borderRadius: 'inherit', pointerEvents: 'none' }}
+        />
+      <div
         ref={listSearchRef}
         className="notelist-search"
         style={sortFieldMenuOpen ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : undefined}
@@ -409,6 +432,7 @@ const NoteList = ({
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
         </button>
+      </div>
       </div>
       {!isTrash && (
         <div style={{ display: 'flex', gap: '4px', marginTop: '10px' }}>
@@ -553,7 +577,8 @@ const NoteList = ({
       <>
         {header}
         <MotionConfig transition={isDragging ? { layout: { duration: 0.2 } } : { layout: { duration: 0 } }}>
-          <div key={contextType + (contextId ?? '')} className="notelist-scroll" style={{ position: 'relative' }}>
+          <div key={contextType + (contextId ?? '')} ref={noteListRef} className="notelist-scroll" style={{ position: 'relative' }}>
+            {NoteIndicator}
             <AnimatePresence initial={false}>
               {localNotes.map((note) => (
                 <motion.div
@@ -562,6 +587,8 @@ const NoteList = ({
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.15 }}
                   onContextMenu={(e) => handleNoteRightClick(e, note)}
+                  onMouseEnter={onCardEnter}
+                  onMouseLeave={onCardLeave}
                   className={clsx('note-card', currentNote?.id === note.id && 'active')}
                 >
                   <NoteItemContent
@@ -586,7 +613,8 @@ const NoteList = ({
     <>
       {header}
       <MotionConfig transition={isDragging ? { layout: { duration: 0.2 } } : { layout: { duration: 0 } }}>
-        <div key={contextType + (contextId ?? '')} className="notelist-scroll" style={{ position: 'relative' }}>
+        <div key={contextType + (contextId ?? '')} ref={noteListRef} className="notelist-scroll" style={{ position: 'relative' }}>
+          {NoteIndicator}
           {groups.map((group) => (
             <Fragment key={group.label}>
               <div className="notelist-group-label">{group.label}</div>
@@ -608,6 +636,8 @@ const NoteList = ({
                       onRightClick={handleNoteRightClick}
                       onDragStart={handleReorderDragStart}
                       onDragEnd={handleReorderDragEnd}
+                      onMouseEnter={onCardEnter}
+                      onMouseLeave={onCardLeave}
                     />
                   ))}
                 </AnimatePresence>

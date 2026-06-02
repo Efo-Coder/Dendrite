@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { MagicInput } from '../ui/MagicInput';
 import { useFolderStore } from '../../store/useFolderStore';
 import { Folder } from '../../types';
 import ColorPickerInline from '../editor/ColorPickerInline';
@@ -78,7 +79,7 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
 
         <div className="modal-field">
           <label htmlFor="folder-name" className="modal-label">Name</label>
-          <input
+          <MagicInput
             id="folder-name"
             type="text"
             value={name}
@@ -87,6 +88,7 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
             placeholder="e.g. Work, Personal, Projects"
             autoFocus
             required
+            wrapperStyle={{ borderRadius: '10px' }}
           />
         </div>
 

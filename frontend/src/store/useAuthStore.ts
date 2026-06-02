@@ -12,6 +12,7 @@ interface AuthState {
   tempToken: string | null;
 
   login: (email: string, password: string) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   verifyTwoFactor: (code: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
@@ -46,6 +47,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error: any) {
       set({ error: error.response?.data?.error || 'Login failed', isLoading: false });
       throw error;
+    }
+  },
+
+  loginWithToken: async (token: string) => {
+    authService.setToken(token);
+    try {
+      const user = await authService.getMe();
+      set({ user, token, isAuthenticated: true, isLoading: false });
+    } catch {
+      authService.logout();
+      set({ user: null, token: null, isAuthenticated: false });
+      throw new Error('Failed to load user');
     }
   },
 

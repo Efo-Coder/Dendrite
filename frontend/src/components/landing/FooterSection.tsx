@@ -109,7 +109,7 @@ export function FooterSection() {
                 color: 'color-mix(in oklch, var(--bg) 45%, transparent)',
               }}
             >
-              Think clearly. Write beautifully.
+              Write what endures.
             </p>
           </div>
 

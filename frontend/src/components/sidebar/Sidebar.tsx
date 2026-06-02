@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useMagicHover } from '../../hooks/useMagicHover';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 import { FileText, Star, Folder, Trash2, Archive, Plus, ChevronDown, Edit } from 'lucide-react';
@@ -46,6 +47,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   const [foldersOpen, setFoldersOpen] = useState(true);
   const [tagsOpen, setTagsOpen] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const { containerRef: scrollRef, onItemEnter, onItemLeave, Indicator } = useMagicHover({ inset: 10 });
 
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
@@ -127,7 +130,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
     <>
       <aside className={clsx('sidebar', collapsed && 'collapsed')}>
         <div className="sidebar-inner">
-        <div className="sidebar-scroll">
+        <div className="sidebar-scroll" ref={scrollRef}>
+          {Indicator}
         {/* Library */}
         <div className="sidebar-section">
           <h4>
@@ -139,7 +143,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', display: 'flex' }}
               className="text-(--ink-dim) hover:text-(--accent) transition-colors"
             >
-              <ChevronDown style={{ width: 10, height: 10, transform: libraryOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }} />
+              <ChevronDown style={{ width: 10, height: 10, transform: libraryOpen ? 'none' : 'rotate(-180deg)', transition: 'transform .2s' }} />
             </button>
           </h4>
         </div>
@@ -152,6 +156,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                   <li key={item.view} style={{ listStyle: 'none' }}>
                     <button
                       onClick={item.onClick}
+                      onMouseEnter={onItemEnter}
+                      onMouseLeave={onItemLeave}
                       className={clsx('sidebar-item', currentView === item.view && 'active')}
                     >
                       <span className="item-icon"><Icon style={{ width: 15, height: 15 }} /></span>
@@ -176,7 +182,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', display: 'flex' }}
               className="text-(--ink-dim) hover:text-(--accent) transition-colors"
             >
-              <ChevronDown style={{ width: 10, height: 10, transform: foldersOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }} />
+              <ChevronDown style={{ width: 10, height: 10, transform: foldersOpen ? 'none' : 'rotate(-180deg)', transition: 'transform .2s' }} />
             </button>
             <button
               type="button"
@@ -200,6 +206,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                 <li key={folder.id} style={{ listStyle: 'none' }}>
                   <button
                     onClick={() => onViewChange('folder', folder.id)}
+                    onMouseEnter={onItemEnter}
+                    onMouseLeave={onItemLeave}
                     onContextMenu={(e) => handleFolderRightClick(e, folder)}
                     className={clsx('sidebar-item', currentView === 'folder' && selectedFolderId === folder.id && 'active')}
                   >
@@ -228,7 +236,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
               style={{ background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', display: 'flex' }}
               className="text-(--ink-dim) hover:text-(--accent) transition-colors"
             >
-              <ChevronDown style={{ width: 10, height: 10, transform: tagsOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }} />
+              <ChevronDown style={{ width: 10, height: 10, transform: tagsOpen ? 'none' : 'rotate(-180deg)', transition: 'transform .2s' }} />
             </button>
             <button
               type="button"
@@ -252,6 +260,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                 <li key={tag.id} style={{ listStyle: 'none' }}>
                   <button
                     onClick={() => onViewChange('tag', tag.id)}
+                    onMouseEnter={onItemEnter}
+                    onMouseLeave={onItemLeave}
                     onContextMenu={(e) => handleTagRightClick(e, tag)}
                     className={clsx('sidebar-tag', currentView === 'tag' && selectedTagId === tag.id && 'active')}
                   >
