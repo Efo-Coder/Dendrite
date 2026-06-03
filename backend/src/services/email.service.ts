@@ -130,7 +130,7 @@ function buildEmail(opts: {
           <table id="u_content_heading_1" style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:30px 10px;font-family:arial,helvetica,sans-serif;" align="left">
               <!--[if mso]><table role="presentation" width="100%"><tr><td><![endif]-->
-              <h1 style="margin:0;color:#ffffff;line-height:140%;text-align:center;word-wrap:break-word;font-family:'Montserrat',sans-serif;font-size:31px;font-weight:700;">${heading}</h1>
+              <h1 style="margin:0;color:#ffffff;line-height:140%;text-align:center;word-wrap:break-word;font-family:'Montserrat',sans-serif;font-size:31px;font-weight:400;"><strong>${heading}</strong></h1>
               <!--[if mso]></td></tr></table><![endif]-->
             </td></tr></tbody>
           </table>
