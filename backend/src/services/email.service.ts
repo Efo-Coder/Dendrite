@@ -176,9 +176,9 @@ function buildEmail(opts: {
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 20px;font-family:arial,helvetica,sans-serif;background-color:#fbfbfb;" bgcolor="#fbfbfb" align="left">
               <!--[if mso]><style>.v-button {background:transparent!important;}</style><![endif]-->
               <div align="center">
-                <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${buttonUrl}" style="height:62px;v-text-anchor:middle;width:278px;" arcsize="35.5%" stroke="f" fillcolor="#ed8b03"><w:anchorlock/><center style="color:#ffffff;"><![endif]-->
+                <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${buttonUrl}" style="height:62px;v-text-anchor:middle;width:278px;" arcsize="35.5%" stroke="f" fillcolor="#c6a43c"><w:anchorlock/><center style="color:#ffffff;"><![endif]-->
                 <a href="${buttonUrl}" target="_blank"
-                   style="box-sizing:border-box;display:inline-block;text-decoration:none;text-size-adjust:none;text-align:center;color:#ffffff;background:#ed8b03;border-radius:22px;width:48%;max-width:100%;word-break:break-word;overflow-wrap:break-word;font-size:14px;line-height:inherit;">
+                   style="box-sizing:border-box;display:inline-block;text-decoration:none;text-size-adjust:none;text-align:center;color:#ffffff;background:#c6a43c;border-radius:22px;width:48%;max-width:100%;word-break:break-word;overflow-wrap:break-word;font-size:14px;line-height:inherit;">
                   <span style="display:block;padding:23px 30px 22px;line-height:120%;"><strong><span style="font-size:14px;line-height:16.8px;font-family:'Montserrat',sans-serif;">${buttonText}</span></strong></span>
                 </a>
                 <!--[if mso]></center></v:roundrect><![endif]-->
