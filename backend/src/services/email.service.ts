@@ -118,7 +118,9 @@ export async function sendVerificationEmail(email: string, token: string) {
     from,
     to: email,
     subject: 'Dendrite – Verify your email',
+    text: `Verify your email\n\nClick this link to complete your registration (valid for 24 hours):\n${verifyUrl}\n\nIf you didn't create an account, ignore this email.\n\n© ${new Date().getFullYear()} Dendrite`,
     html: emailShell(content),
+    headers: { 'X-Mailin-Track-Open': '0', 'X-Mailin-Track-Click': '0' },
   });
 }
 
@@ -161,6 +163,8 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     from,
     to: email,
     subject: 'Dendrite – Reset your password',
+    text: `Reset your password\n\nClick this link to set a new password (valid for 1 hour):\n${resetUrl}\n\nIf you didn't request a password reset, ignore this email.\n\n© ${new Date().getFullYear()} Dendrite`,
     html: emailShell(content),
+    headers: { 'X-Mailin-Track-Open': '0', 'X-Mailin-Track-Click': '0' },
   });
 }
