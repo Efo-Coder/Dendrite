@@ -113,6 +113,7 @@ const RegisterPage = () => {
     ]);
     setResendLoading(false);
     setResendDone(true);
+    setTimeout(() => setResendDone(false), 3000);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -419,21 +420,19 @@ const RegisterPage = () => {
                       </button>
                     </div>
                     {/* Password strength indicator */}
-                    {password && (
-                      <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ flex: 1, height: '3px', borderRadius: '2px', background: 'var(--line)', overflow: 'hidden' }}>
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(strength.level / 3) * 100}%` }}
-                            transition={{ duration: 0.3 }}
-                            style={{ height: '100%', background: strength.color, borderRadius: '2px' }}
-                          />
-                        </div>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: strength.color, minWidth: '40px' }}>
-                          {strength.label}
-                        </span>
+                    <div style={{ marginTop: '8px', marginLeft: '4px', display: 'flex', alignItems: 'center', gap: '8px', visibility: password ? 'visible' : 'hidden' }}>
+                      <div style={{ flex: 1, height: '3px', borderRadius: '2px', background: 'var(--line)', overflow: 'hidden' }}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(strength.level / 3) * 100}%` }}
+                          transition={{ duration: 0.3 }}
+                          style={{ height: '100%', background: strength.color, borderRadius: '2px' }}
+                        />
                       </div>
-                    )}
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: strength.color, minWidth: '40px' }}>
+                        {strength.label || ' '}
+                      </span>
+                    </div>
                   </div>
 
                   <div>

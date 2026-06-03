@@ -104,6 +104,7 @@ const LoginPage = () => {
       setResendDone(true);
     } finally {
       setResendLoading(false);
+      setTimeout(() => setResendDone(false), 3000);
     }
   };
 
