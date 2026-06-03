@@ -93,10 +93,10 @@ export function SocialProofSection() {
           {/* Image column — hidden on mobile to avoid layout issues */}
           <div className="hidden md:flex lg:row-span-2 flex-col gap-4">
             <div className="relative flex-1 min-h-50 w-full overflow-hidden rounded-2xl">
-              <img src="/dendrite-mock.webp" alt="Feature showcase" className="w-full h-full object-cover" />
+              <img src="/img/branding/ink.webp" alt="Feature showcase" className="w-full h-full object-cover" />
             </div>
             <div className="relative flex-1 min-h-45 w-full overflow-hidden rounded-full">
-              <img src="/img/mock-project2.webp" alt="Feature showcase" className="w-full h-full object-cover" />
+              <img src="/img/mock/mock-project2.webp" alt="Feature showcase" className="w-full h-full object-cover" />
             </div>
           </div>
 

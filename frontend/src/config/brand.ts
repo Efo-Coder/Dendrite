@@ -1,1 +1,1 @@
-export const LOGO_SRC = '/Dendrite-Logo-New-svg.svg';
+export const LOGO_SRC = '/logo/logo.svg';

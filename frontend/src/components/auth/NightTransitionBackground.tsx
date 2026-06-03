@@ -35,7 +35,7 @@ const NightTransitionMaterial = shaderMaterial(
 
 extend({ NightTransitionMaterial });
 
-useTexture.preload(['/dendrite-forest.webp', '/dendrite-forest-dark.webp']);
+useTexture.preload(['/img/backgrounds/forest.webp', '/img/backgrounds/forest-dark.webp']);
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
@@ -48,8 +48,8 @@ function BackgroundMesh({ isDark, onReady }: { isDark: boolean; onReady?: () => 
   const matRef = useRef<any>(null);
   const { viewport, size } = useThree();
   const [dayTex, nightTex] = useTexture([
-    '/dendrite-forest.webp',
-    '/dendrite-forest-dark.webp',
+    '/img/backgrounds/forest.webp',
+    '/img/backgrounds/forest-dark.webp',
   ]);
   const initialized = useRef(false);
 
@@ -100,7 +100,7 @@ function StaticFallback({ isDark }: { isDark: boolean }) {
       style={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: `url('${isDark ? '/dendrite-forest-dark.webp' : '/dendrite-forest.webp'}')`,
+        backgroundImage: `url('${isDark ? '/img/backgrounds/forest-dark.webp' : '/img/backgrounds/forest.webp'}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}

@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { BetaBanner } from "./BetaBanner";
+import { LOGO_SRC } from "../../config/brand";
 
 function DashboardMockup() {
   return (
@@ -49,7 +50,7 @@ function DashboardMockup() {
             alignItems: 'center',
             gap: '7px',
           }}>
-            <img src="/Dendrite-Logo-New-svg.svg" alt="" style={{ width: '18px', height: '18px' }} />
+            <img src={LOGO_SRC} alt="" style={{ width: '18px', height: '18px' }} />
             <span style={{ fontFamily: 'var(--serif-display)', fontSize: '14px', fontWeight: 500, color: 'var(--ink)' }}>
               Dendrite
             </span>

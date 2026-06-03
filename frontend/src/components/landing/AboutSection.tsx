@@ -79,7 +79,7 @@ export function AboutSection() {
       <div className="px-6 sm:px-12 lg:px-24 flex flex-col items-center max-w-360 mx-auto">
         <div ref={imageRef} className="relative aspect-21/9 lg:aspect-3/1 w-full overflow-hidden rounded-full mb-16">
           <img
-            src="/dendrite-mood.webp"
+            src="/img/branding/mood.webp"
             alt="Dendrite note-taking app"
             className="w-full h-full object-cover"
           />
