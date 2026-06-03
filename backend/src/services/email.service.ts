@@ -35,7 +35,7 @@ function buildEmail(opts: {
   <meta name="color-scheme" content="light" />
   <meta name="supported-color-schemes" content="light" />
   <style type="text/css">
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
     :root { color-scheme: light only; }
     @media only screen and (min-width: 620px) {
       .u-row { width: 600px !important; }
@@ -276,11 +276,11 @@ function buildEmail(opts: {
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 50px;font-family:arial,helvetica,sans-serif;" align="left">
               <div style="font-size:14px;color:#ffffff;line-height:190%;text-align:center;word-wrap:break-word;">
                 <p style="font-size:14px;line-height:190%;margin:0;">
-                  <span style="font-family:'Montserrat',sans-serif;font-size:14px;line-height:26.6px;">If you have any questions, feel free message us at <a href="mailto:support@dendrite-notes.com" target="_blank" style="color:#fdc71b;text-decoration:underline;line-height:inherit;"><span style="text-decoration:underline;font-size:14px;line-height:26.6px;">support@dendrite-notes.com</span></a>.&nbsp;</span><br>
-                  <span style="font-family:'Montserrat',sans-serif;font-size:14px;line-height:26.6px;">All right reserved. Update email preferences or unsubscribe.</span><br>
-                  <span style="font-family:'Montserrat',sans-serif;font-size:14px;line-height:26.6px;">123-456-7890</span><br>
-                  <span style="font-family:'Montserrat',sans-serif;font-size:14px;line-height:26.6px;">San Francisco, CA. United States</span><br>
-                  <span style="font-family:'Montserrat',sans-serif;font-size:14px;line-height:26.6px;">Terms of use | Privacy Policy</span>
+                  <span style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:300;line-height:26.6px;">If you have any questions, feel free message us at <a href="mailto:support@dendrite-notes.com" target="_blank" style="color:#fdc71b;text-decoration:underline;line-height:inherit;"><span style="text-decoration:underline;font-size:14px;line-height:26.6px;">support@dendrite-notes.com</span></a>.&nbsp;</span><br>
+                  <span style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:300;line-height:26.6px;">All right reserved. Update email preferences or unsubscribe.</span><br>
+                  <span style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:300;line-height:26.6px;">123-456-7890</span><br>
+                  <span style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:300;line-height:26.6px;">San Francisco, CA. United States</span><br>
+                  <span style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:300;line-height:26.6px;">Terms of use | Privacy Policy</span>
                 </p>
               </div>
             </td></tr></tbody>
