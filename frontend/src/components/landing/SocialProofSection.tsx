@@ -84,25 +84,6 @@ export function SocialProofSection() {
           <h2 className="text-3xl lg:text-4xl font-medium tracking-tight text-foreground">
             Loved by thinkers & creators
           </h2>
-          <Link
-            to="/register"
-            className="hidden sm:inline-flex items-center justify-center px-6 py-3 rounded-full text-sm font-medium"
-            style={{
-              background: 'var(--ink)',
-              color: 'var(--bg)',
-              transition: 'background 0.25s ease, transform 0.2s ease',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.background = 'var(--ink-mid)';
-              (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.background = 'var(--ink)';
-              (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-            }}
-          >
-            Start for Free
-          </Link>
         </div>
 
         <div
@@ -112,7 +93,7 @@ export function SocialProofSection() {
           {/* Image column — hidden on mobile to avoid layout issues */}
           <div className="hidden md:flex lg:row-span-2 flex-col gap-4">
             <div className="relative flex-1 min-h-50 w-full overflow-hidden rounded-2xl">
-              <img src="/img/mock-project1.webp" alt="Feature showcase" className="w-full h-full object-cover" />
+              <img src="/dendrite-mock.webp" alt="Feature showcase" className="w-full h-full object-cover" />
             </div>
             <div className="relative flex-1 min-h-45 w-full overflow-hidden rounded-full">
               <img src="/img/mock-project2.webp" alt="Feature showcase" className="w-full h-full object-cover" />
@@ -127,8 +108,8 @@ export function SocialProofSection() {
                 Dendrite changed how I capture ideas. It&apos;s the first notes app that feels as thoughtful as the ideas I&apos;m trying to preserve.
               </blockquote>
               <div className="mt-6">
-                <p className="font-semibold text-foreground">Maya Torres</p>
-                <p className="text-sm text-foreground/60">Product Designer · Beta User</p>
+                <p className="font-semibold text-foreground">Mariah Carey</p>
+                <p className="text-sm text-foreground/60">Psychotherapist · Beta User</p>
               </div>
             </div>
             <div className="flex items-center justify-between mt-auto pt-8">

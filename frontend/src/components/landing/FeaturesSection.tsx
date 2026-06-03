@@ -186,15 +186,14 @@ function FeatureOverlay({ feature, onClose }: { feature: Feature | null; onClose
     <AnimatePresence>
       {feature && (
         <motion.div
-          className="fixed inset-0"
-          style={{ zIndex: 9999 }}
+          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', zIndex: 9999 }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
           <motion.div
-            className="absolute inset-0"
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
             exit={{ scale: 1.05 }}
@@ -259,6 +258,7 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
   const yTo = useRef<gsap.QuickToFunc | null>(null);
   const scaleTo = useRef<gsap.QuickToFunc | null>(null);
   const inEllipseRef = useRef(false);
+  const lastMousePos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!canvasWrapperRef.current) return;
@@ -266,6 +266,31 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
     yTo.current = gsap.quickTo(canvasWrapperRef.current, "y", { duration: 0.8, ease: "power3.out" });
     scaleTo.current = gsap.quickTo(canvasWrapperRef.current, "scale", { duration: 0.6, ease: "power2.out" });
   }, []);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => { lastMousePos.current = { x: e.clientX, y: e.clientY }; };
+    const onScroll = () => {
+      const rect = imageContainerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const dx = lastMousePos.current.x - rect.left - rect.width / 2;
+      const dy = lastMousePos.current.y - rect.top - rect.height / 2;
+      const stillInEllipse = (dx / (rect.width / 2)) ** 2 + (dy / (rect.height / 2)) ** 2 <= 1;
+      if (!stillInEllipse && inEllipseRef.current) {
+        inEllipseRef.current = false;
+        onHover(false);
+        imageContainerRef.current?.classList.remove('feature-image-area');
+        xTo.current?.(0);
+        yTo.current?.(0);
+        scaleTo.current?.(1.15);
+      }
+    };
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [onHover]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = imageContainerRef.current?.getBoundingClientRect();
@@ -338,16 +363,16 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
     <div
       ref={containerRef}
       className="group py-16 md:py-24"
-      onClick={onClick}
     >
       <div className="mx-auto max-w-360 px-6 sm:px-12 lg:px-24">
         <div className={`flex flex-col gap-8 ${isEven ? "md:flex-row" : "md:flex-row-reverse"} md:items-center md:gap-16`}>
           <div
             ref={imageContainerRef}
-            className="relative aspect-4/3 w-full overflow-hidden rounded-full md:w-3/5"
+            className="relative aspect-4/3 w-full overflow-hidden rounded-full md:w-3/5 cursor-pointer"
             onMouseMove={handleMouseMove}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            onClick={() => { if (inEllipseRef.current) onClick(); }}
           >
             <div
               ref={canvasWrapperRef}
@@ -379,6 +404,7 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
 export function FeaturesSection() {
   const [isCursorVisible, setIsCursorVisible] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<Feature | null>(null);
+
 
   const handleFeatureClick = (feature: Feature) => {
     setIsCursorVisible(false);

@@ -79,7 +79,7 @@ export function AboutSection() {
       <div className="px-6 sm:px-12 lg:px-24 flex flex-col items-center max-w-360 mx-auto">
         <div ref={imageRef} className="relative aspect-21/9 lg:aspect-3/1 w-full overflow-hidden rounded-full mb-16">
           <img
-            src="/img/mock-project2.webp"
+            src="/dendrite-mood.webp"
             alt="Dendrite note-taking app"
             className="w-full h-full object-cover"
           />
@@ -95,20 +95,8 @@ export function AboutSection() {
         <Link
           ref={ctaRef as React.RefObject<HTMLAnchorElement>}
           to="/register"
-          className="inline-flex items-center justify-center mt-8 px-6 py-3 rounded-full text-lg tracking-tight font-medium"
-          style={{
-            background: 'var(--ink)',
-            color: 'var(--bg)',
-            transition: 'background 0.25s ease, transform 0.2s ease',
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.background = 'var(--ink-mid)';
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.background = 'var(--ink)';
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-          }}
+          className="btn primary mt-8"
+          style={{ padding: '12px 28px', borderRadius: '9999px', fontSize: '1rem' }}
         >
           Start for Free
         </Link>

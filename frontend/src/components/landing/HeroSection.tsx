@@ -308,7 +308,7 @@ export function HeroSection() {
                 margin: '28px 0 0',
               }}
             >
-              A refined note-taking app for people who think deeply. Rich editing, smart organization, and a design that stays out of your way.
+              Writing is thinking made visible. Dendrite gives that process the space it deserves — no noise, no friction, just you and your thoughts.
             </motion.p>
 
             <motion.div
