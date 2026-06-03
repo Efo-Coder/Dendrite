@@ -73,7 +73,7 @@ function buildEmail(opts: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr><td style="padding:0;" align="center">
                   <a href="${frontendUrl}" target="_blank" style="color:#fdc71b;text-decoration:underline;line-height:inherit;">
-                    <img align="center" border="0" src="${img('image-1.png')}" alt="Logo" title="Logo"
+                    <img align="center" border="0" src="${img('logo.png')}" alt="" title=""
                          style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:inline-block!important;border:none;height:auto;float:none;width:18%;max-width:104.4px;"
                          width="104.4" height="104" />
                   </a>
@@ -102,7 +102,7 @@ function buildEmail(opts: {
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:0;font-family:arial,helvetica,sans-serif;font-size:0;line-height:0;" align="left">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr><td style="padding:0;font-size:0;line-height:0;" align="center">
-                  <img align="center" border="0" src="${img('image-2.webp')}" alt="Hero Image" title="Hero Image"
+                  <img align="center" border="0" src="${img('notebook.webp')}" alt="" title=""
                        style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;width:100%;max-width:600px;"
                        width="600" />
                 </td></tr>
@@ -195,20 +195,7 @@ function buildEmail(opts: {
             </td></tr></tbody>
           </table>
 
-          <!-- Wave separator -->
-          <table style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-            <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:0;font-family:arial,helvetica,sans-serif;font-size:0;line-height:0;" align="left">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td style="padding:0;font-size:0;line-height:0;" align="center">
-                  <img align="center" border="0" src="${img('image-3.png')}" alt="border" title="border"
-                       style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;width:100%;max-width:600px;"
-                       width="600" height="142" />
-                </td></tr>
-              </table>
-            </td></tr></tbody>
-          </table>
-
-          <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
+<!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
         </div>
       </div>
       <!--[if (mso)|(IE)]></td></tr></table></td></tr></table><![endif]-->
@@ -237,7 +224,7 @@ function buildEmail(opts: {
                   <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width:32px!important;height:32px!important;display:inline-block;border-collapse:collapse;table-layout:fixed;border-spacing:0;vertical-align:top;margin-right:11px">
                     <tbody><tr style="vertical-align:top"><td valign="middle" style="word-break:break-word;border-collapse:collapse!important;vertical-align:top">
                       <a href="${frontendUrl}" title="Twitter" target="_blank" style="color:#fdc71b;text-decoration:underline;line-height:inherit;">
-                        <img src="${img('image-4.png')}" alt="Twitter" title="Twitter" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important">
+                        <img src="${img('social/twitter.png')}" alt="Twitter" title="Twitter" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important">
                       </a>
                     </td></tr></tbody>
                   </table>
@@ -245,7 +232,7 @@ function buildEmail(opts: {
                   <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width:32px!important;height:32px!important;display:inline-block;border-collapse:collapse;table-layout:fixed;border-spacing:0;vertical-align:top;margin-right:11px">
                     <tbody><tr style="vertical-align:top"><td valign="middle" style="word-break:break-word;border-collapse:collapse!important;vertical-align:top">
                       <a href="${frontendUrl}" title="LinkedIn" target="_blank" style="color:#fdc71b;text-decoration:underline;line-height:inherit;">
-                        <img src="${img('image-5.png')}" alt="LinkedIn" title="LinkedIn" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important">
+                        <img src="${img('social/linkedin.png')}" alt="LinkedIn" title="LinkedIn" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important">
                       </a>
                     </td></tr></tbody>
                   </table>
@@ -253,7 +240,7 @@ function buildEmail(opts: {
                   <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width:32px!important;height:32px!important;display:inline-block;border-collapse:collapse;table-layout:fixed;border-spacing:0;vertical-align:top;margin-right:11px">
                     <tbody><tr style="vertical-align:top"><td valign="middle" style="word-break:break-word;border-collapse:collapse!important;vertical-align:top">
                       <a href="mailto:support@dendrite-notes.com" title="Email" target="_blank" style="color:#fdc71b;text-decoration:underline;line-height:inherit;">
-                        <img src="${img('image-6.png')}" alt="Email" title="Email" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important">
+                        <img src="${img('social/mail.png')}" alt="Email" title="Email" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important">
                       </a>
                     </td></tr></tbody>
                   </table>
@@ -261,7 +248,7 @@ function buildEmail(opts: {
                   <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width:32px!important;height:32px!important;display:inline-block;border-collapse:collapse;table-layout:fixed;border-spacing:0;vertical-align:top;margin-right:0">
                     <tbody><tr style="vertical-align:top"><td valign="middle" style="word-break:break-word;border-collapse:collapse!important;vertical-align:top">
                       <a href="${frontendUrl}" title="Instagram" target="_blank" style="color:#fdc71b;text-decoration:underline;line-height:inherit;">
-                        <img src="${img('image-7.png')}" alt="Instagram" title="Instagram" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important">
+                        <img src="${img('social/instagram.png')}" alt="Instagram" title="Instagram" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important">
                       </a>
                     </td></tr></tbody>
                   </table>
