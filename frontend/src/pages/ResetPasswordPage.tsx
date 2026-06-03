@@ -319,7 +319,7 @@ const ResetPasswordPage = () => {
                       transition: 'transform .1s, opacity .12s',
                     }}
                   >
-                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Set new password'}
+                    {isLoading ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Updating...</span> : 'Set new password'}
                   </button>
                 </form>
 

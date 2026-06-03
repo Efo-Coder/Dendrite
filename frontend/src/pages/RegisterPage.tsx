@@ -539,7 +539,7 @@ const RegisterPage = () => {
                       transition: 'transform .1s, opacity .12s',
                     }}
                   >
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Create account'}
+                    {submitting ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Creating account...</span> : 'Create account'}
                   </button>
                 </form>
 

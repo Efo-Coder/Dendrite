@@ -287,7 +287,7 @@ const LoginPage = () => {
                       transition: 'transform .1s, opacity .12s',
                     }}
                   >
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Verify'}
+                    {submitting ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Verifying...</span> : 'Verify'}
                   </button>
                 </form>
               </>
@@ -481,7 +481,7 @@ const LoginPage = () => {
                     transition: 'transform .1s, opacity .12s',
                   }}
                 >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Sign in'}
+                  {submitting ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Signing in...</span> : 'Sign in'}
                 </button>
               </form>
             </div>
