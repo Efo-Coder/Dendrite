@@ -190,7 +190,7 @@ function buildEmail(opts: {
           <table style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" bgcolor="#fbfbfb">
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:0 40px 24px;font-family:arial,helvetica,sans-serif;background-color:#fbfbfb;" bgcolor="#fbfbfb" align="left">
               <div style="font-size:11px;color:#999999;line-height:160%;font-family:arial,helvetica,sans-serif;">
-                <p style="margin:0;">Button not working? Copy this link: <span style="word-break:break-all;">${buttonUrl}</span></p>
+                <p style="margin:0;">Having trouble with the button? <a href="${buttonUrl}" target="_blank" style="color:#c6a43c;text-decoration:underline;word-break:break-all;line-height:inherit;">${buttonUrl}</a></p>
               </div>
             </td></tr></tbody>
           </table>
