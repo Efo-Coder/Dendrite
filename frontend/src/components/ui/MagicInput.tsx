@@ -29,7 +29,7 @@ export const MagicInput = React.forwardRef<HTMLInputElement, MagicInputProps>(
 
     return (
       <div
-        style={{ position: 'relative', borderRadius: "calc(0.75rem + 1px)", ...wrapperStyle }}
+        style={{ position: 'relative', borderRadius: "calc(0.75rem + 1px)", isolation: 'isolate', ...wrapperStyle }}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
