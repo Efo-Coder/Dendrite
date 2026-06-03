@@ -5,7 +5,7 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { useToast } from '../components/ui/ToastContainer';
 import Logo from '../components/ui/Logo';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
-import { Eye, EyeOff, Moon, Sun, Home, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Moon, Sun, Home, CheckCircle, Loader2 } from 'lucide-react';
 import { authService } from '../services/auth.service';
 import { MagicInput } from '../components/ui/MagicInput';
 
@@ -316,7 +316,7 @@ const ResetPasswordPage = () => {
                       transition: 'transform .1s, opacity .12s',
                     }}
                   >
-                    {isLoading ? 'Updating…' : 'Set new password'}
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Set new password'}
                   </button>
                 </form>
 

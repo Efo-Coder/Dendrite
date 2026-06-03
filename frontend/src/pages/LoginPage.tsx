@@ -7,7 +7,7 @@ import { useToast } from '../components/ui/ToastContainer';
 import Logo from '../components/ui/Logo';
 import { BetaBadge } from '../components/ui/BetaBadge';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
-import { Eye, EyeOff, Moon, Sun, Send, Home } from 'lucide-react';
+import { Eye, EyeOff, Moon, Sun, Send, Home, Loader2 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -276,7 +276,7 @@ const LoginPage = () => {
                       transition: 'transform .1s, opacity .12s',
                     }}
                   >
-                    {isLoading ? 'Verifying…' : 'Verify'}
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Verify'}
                   </button>
                 </form>
               </>
@@ -470,7 +470,7 @@ const LoginPage = () => {
                     transition: 'transform .1s, opacity .12s',
                   }}
                 >
-                  {isLoading ? 'Signing in...' : 'Sign in'}
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Sign in'}
                 </button>
               </form>
             </div>

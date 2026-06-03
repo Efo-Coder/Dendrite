@@ -7,7 +7,7 @@ import { useToast } from '../components/ui/ToastContainer';
 import Logo from '../components/ui/Logo';
 import { BetaBadge } from '../components/ui/BetaBadge';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
-import { Eye, EyeOff, Moon, Sun, Mail, Home } from 'lucide-react';
+import { Eye, EyeOff, Moon, Sun, Mail, Home, Loader2 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -281,14 +281,17 @@ const RegisterPage = () => {
                         type="button"
                         onClick={handleResend}
                         disabled={resendLoading}
-                        className={`no-press hover:opacity-75 transition-opacity ${resendLoading ? 'opacity-50' : 'opacity-100'}`}
+                        className="hover:opacity-75"
                         style={{
                           fontFamily: 'var(--serif-body)',
                           fontSize: '14px',
                           color: 'var(--accent)',
                           background: 'none',
                           border: 'none',
+                          padding: 0,
                           cursor: resendLoading ? 'default' : 'pointer',
+                          opacity: resendLoading ? 0.5 : 1,
+                          transition: 'opacity .15s',
                         }}
                       >
                         {resendLoading ? 'Sending…' : 'Resend email'}
@@ -529,7 +532,7 @@ const RegisterPage = () => {
                       transition: 'transform .1s, opacity .12s',
                     }}
                   >
-                    {isLoading ? 'Creating account…' : 'Create account'}
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Create account'}
                   </button>
                 </form>
 

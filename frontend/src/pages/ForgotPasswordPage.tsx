@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import Logo from '../components/ui/Logo';
 import NightTransitionBackground from '../components/auth/NightTransitionBackground';
-import { Moon, Sun, Home, Mail } from 'lucide-react';
+import { Moon, Sun, Home, Mail, Loader2 } from 'lucide-react';
 import { authService } from '../services/auth.service';
 import { MagicInput } from '../components/ui/MagicInput';
 
@@ -211,7 +211,7 @@ const ForgotPasswordPage = () => {
                       transition: 'transform .1s, opacity .12s',
                     }}
                   >
-                    {isLoading ? 'Sending…' : 'Send reset link'}
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Send reset link'}
                   </button>
                 </form>
 
