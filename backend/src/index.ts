@@ -131,6 +131,24 @@ httpServer.on('upgrade', async (request, socket: Duplex, head: Buffer) => {
   });
 });
 
+// ─── Cleanup: unverified accounts ────────────────────────────────────────────
+
+async function deleteExpiredUnverifiedAccounts() {
+  try {
+    const result = await prisma.user.deleteMany({
+      where: {
+        isVerified: false,
+        verificationTokenExpiresAt: { lt: new Date() },
+      },
+    });
+    if (result.count > 0) console.log(`Cleanup: ${result.count} unverified account(s) deleted`);
+  } catch (err) {
+    console.error('Cleanup error:', err);
+  }
+}
+
+setInterval(deleteExpiredUnverifiedAccounts, 60 * 60 * 1000); // stündlich
+
 // ─── Startup ─────────────────────────────────────────────────────────────────
 
 process.on('SIGTERM', async () => {
