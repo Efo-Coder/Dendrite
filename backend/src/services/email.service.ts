@@ -88,7 +88,7 @@ function buildEmail(opts: {
 
 <!-- ═══ HERO IMAGE ═══ -->
 <div class="u-row-container" style="padding:0;background-color:transparent;">
-  <div class="u-row" style="margin:0 auto;min-width:320px;max-width:600px;background-color:transparent;">
+  <div class="u-row" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#2f3031;">
     <div style="border-collapse:collapse;display:table;width:100%;height:100%;background-color:transparent;">
       <!--[if (mso)|(IE)]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;background-color:transparent;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr style="background-color:transparent;"><![endif]-->
       <!--[if (mso)|(IE)]><td align="center" width="600" style="width:600px;border:0;border-radius:0;" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;"><![endif]-->
@@ -96,11 +96,11 @@ function buildEmail(opts: {
         <div style="height:100%;width:100%!important;">
           <!--[if (!mso)&(!IE)]><!--><div style="box-sizing:border-box;height:100%;padding:0;border:0;"><!--<![endif]-->
           <table style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-            <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:0;font-family:arial,helvetica,sans-serif;" align="left">
+            <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:0;font-family:arial,helvetica,sans-serif;font-size:0;line-height:0;" align="left">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td style="padding:0;" align="center">
+                <tr><td style="padding:0;font-size:0;line-height:0;" align="center">
                   <img align="center" border="0" src="${img('image-2.webp')}" alt="Hero Image" title="Hero Image"
-                       style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:inline-block!important;border:none;height:auto;float:none;width:100%;max-width:600px;"
+                       style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;width:100%;max-width:600px;"
                        width="600" />
                 </td></tr>
               </table>
@@ -194,11 +194,11 @@ function buildEmail(opts: {
 
           <!-- Wave separator -->
           <table style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-            <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:0;font-family:arial,helvetica,sans-serif;" align="left">
+            <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:0;font-family:arial,helvetica,sans-serif;font-size:0;line-height:0;" align="left">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td style="padding:0;" align="center">
+                <tr><td style="padding:0;font-size:0;line-height:0;" align="center">
                   <img align="center" border="0" src="${img('image-3.png')}" alt="border" title="border"
-                       style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:inline-block!important;border:none;height:auto;float:none;width:100%;max-width:600px;"
+                       style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;width:100%;max-width:600px;"
                        width="600" height="142" />
                 </td></tr>
               </table>
