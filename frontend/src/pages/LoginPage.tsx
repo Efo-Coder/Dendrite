@@ -462,7 +462,7 @@ const LoginPage = () => {
 
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={submitting}
                   style={{
                     marginTop: '4px',
                     width: '100%',
@@ -475,8 +475,8 @@ const LoginPage = () => {
                     fontWeight: 600,
                     fontSize: '15px',
                     letterSpacing: '0.03em',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    opacity: isLoading ? 0.6 : 1,
+                    cursor: submitting ? 'not-allowed' : 'pointer',
+                    opacity: submitting ? 0.6 : 1,
                     boxShadow: '0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent)',
                     transition: 'transform .1s, opacity .12s',
                   }}
