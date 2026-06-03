@@ -87,10 +87,40 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const secondsLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 1000);
+      const minutesLeft = Math.ceil(secondsLeft / 60);
+      const timeMsg = secondsLeft < 60 ? `${secondsLeft} seconds` : `${minutesLeft} minutes`;
+      return res.status(429).json({ error: `Account temporarily locked. Try again in ${timeMsg}.` });
+    }
+
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
+      const newAttempts = user.failedLoginAttempts + 1;
+      let lockedUntil: Date | null = null;
+
+      if (newAttempts >= 20) {
+        lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
+      } else if (newAttempts >= 15) {
+        lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+      } else if (newAttempts >= 10) {
+        lockedUntil = new Date(Date.now() + 5 * 60 * 1000);
+      } else if (newAttempts >= 5) {
+        lockedUntil = new Date(Date.now() + 1 * 60 * 1000);
+      }
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: newAttempts, lockedUntil },
+      });
+
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { failedLoginAttempts: 0, lockedUntil: null },
+    });
 
     if (!user.isVerified) {
       return res.status(403).json({ error: 'Please verify your email address first.' });
