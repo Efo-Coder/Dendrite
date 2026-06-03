@@ -32,8 +32,8 @@ function buildEmail(opts: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="x-apple-disable-message-reformatting">
   <!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]-->
-  <meta name="color-scheme" content="light dark" />
-  <meta name="supported-color-schemes" content="light dark" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
   <style type="text/css">
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
     @media only screen and (min-width: 620px) {
@@ -52,26 +52,6 @@ function buildEmail(opts: {
     .ie-container table, .mso-container table { table-layout: fixed; }
     * { line-height: inherit; }
     a[x-apple-data-detectors=true] { color: inherit !important; text-decoration: none !important; }
-    @media (prefers-color-scheme: dark) {
-      .es-l  { background-color: #1c1915 !important; }
-      .es-d  { background-color: #f5f3ee !important; }
-      .es-ht { color: #f0ece2 !important; }
-      .es-bt { color: #f0ece2 !important; }
-      .es-mt { color: rgba(240,236,226,0.55) !important; }
-      .es-dt { color: rgba(240,236,226,0.38) !important; }
-      .es-ft { color: #f0ece2 !important; }
-      .es-fl { color: #f0ece2 !important; }
-      .es-ic { filter: brightness(0) invert(1) !important; }
-    }
-    [data-ogsc] .es-l  { background-color: #1c1915 !important; }
-    [data-ogsc] .es-d  { background-color: #f5f3ee !important; }
-    [data-ogsc] .es-ht { color: #f0ece2 !important; }
-    [data-ogsc] .es-bt { color: #f0ece2 !important; }
-    [data-ogsc] .es-mt { color: rgba(240,236,226,0.55) !important; }
-    [data-ogsc] .es-dt { color: rgba(240,236,226,0.38) !important; }
-    [data-ogsc] .es-ft { color: #f0ece2 !important; }
-    [data-ogsc] .es-fl { color: #f0ece2 !important; }
-    [data-ogsc] .es-ic { filter: brightness(0) invert(1) !important; }
   </style>
 </head>
 <body style="margin:0;padding:0;background-color:#ffffff;color:#000000;">
@@ -80,8 +60,8 @@ function buildEmail(opts: {
 
 <!-- ═══ HEADER: dark + logo ═══ -->
 <div class="u-row-container" style="padding:0;background-color:transparent;">
-  <div class="u-row es-l" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#f5f3ee;">
-    <div class="es-l" style="border-collapse:collapse;display:table;width:100%;height:100%;background-color:#f5f3ee;">
+  <div class="u-row" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#f5f3ee;">
+    <div style="border-collapse:collapse;display:table;width:100%;height:100%;background-color:#f5f3ee;">
       <!--[if (mso)|(IE)]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;background-color:#f5f3ee;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#f5f3ee"><tr style="background-color:#f5f3ee;"><![endif]-->
       <!--[if (mso)|(IE)]><td align="center" width="600" style="width:600px;border:0;border-radius:0;" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;"><![endif]-->
       <div class="u-col u-col-100" style="max-width:320px;min-width:600px;display:table-cell;vertical-align:top;">
@@ -110,7 +90,7 @@ function buildEmail(opts: {
 
 <!-- ═══ HERO IMAGE ═══ -->
 <div class="u-row-container" style="padding:0;background-color:transparent;">
-  <div class="u-row es-l" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#f5f3ee;">
+  <div class="u-row" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#f5f3ee;">
     <div style="border-collapse:collapse;display:table;width:100%;height:100%;background-color:transparent;">
       <!--[if (mso)|(IE)]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;background-color:transparent;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr style="background-color:transparent;"><![endif]-->
       <!--[if (mso)|(IE)]><td align="center" width="600" style="width:600px;border:0;border-radius:0;" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;"><![endif]-->
@@ -139,7 +119,7 @@ function buildEmail(opts: {
 <!-- ═══ HEADING: dark ═══ -->
 <!--[if gte mso 9]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600"><tr><td valign="top"><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;"><v:fill type="frame" src="" /><v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0"><![endif]-->
 <div class="u-row-container" style="padding:0;background-color:transparent;">
-  <div class="u-row es-l" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#f5f3ee;">
+  <div class="u-row" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#f5f3ee;">
     <div style="border-collapse:collapse;display:table;width:100%;height:100%;background-color:transparent;">
       <!--[if (mso)|(IE)]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;background-color:transparent;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#f5f3ee"><tr style="background-color:#f5f3ee;"><![endif]-->
       <!--[if (mso)|(IE)]><td align="center" width="600" style="width:600px;border:0;border-radius:0;" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;"><![endif]-->
@@ -149,7 +129,7 @@ function buildEmail(opts: {
           <table id="u_content_heading_1" style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:30px 10px;font-family:arial,helvetica,sans-serif;" align="left">
               <!--[if mso]><table role="presentation" width="100%"><tr><td><![endif]-->
-              <h1 class="es-ht" style="margin:0;color:#1c1915;line-height:140%;text-align:center;word-wrap:break-word;font-family:'Montserrat',sans-serif;font-size:31px;font-weight:400;"><strong>${heading}</strong></h1>
+              <h1 style="margin:0;color:#1c1915;line-height:140%;text-align:center;word-wrap:break-word;font-family:'Montserrat',sans-serif;font-size:31px;font-weight:400;"><strong>${heading}</strong></h1>
               <!--[if mso]></td></tr></table><![endif]-->
             </td></tr></tbody>
           </table>
@@ -164,18 +144,18 @@ function buildEmail(opts: {
 
 <!-- ═══ CONTENT: light ═══ -->
 <div class="u-row-container" style="padding:0;background-color:transparent;">
-  <div class="u-row es-d" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#1c1915;">
-    <div class="es-d" style="border-collapse:collapse;display:table;width:100%;height:100%;background-color:#1c1915;">
+  <div class="u-row" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#1c1915;">
+    <div style="border-collapse:collapse;display:table;width:100%;height:100%;background-color:#1c1915;">
       <!--[if (mso)|(IE)]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;background-color:#1c1915;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#1c1915"><tr style="background-color:#1c1915;"><![endif]-->
       <!--[if (mso)|(IE)]><td align="center" width="600" style="width:600px;border:0;border-radius:0;background-color:#1c1915;" bgcolor="#1c1915" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;background-color:#1c1915;" bgcolor="#1c1915"><![endif]-->
-      <div class="u-col u-col-100 es-d" style="max-width:320px;min-width:600px;display:table-cell;vertical-align:top;background-color:#1c1915;">
-        <div class="es-d" style="height:100%;width:100%!important;background-color:#1c1915;">
-          <!--[if (!mso)&(!IE)]><!--><div class="es-d" style="box-sizing:border-box;height:100%;padding:0;border:0;background-color:#1c1915;"><!--<![endif]-->
+      <div class="u-col u-col-100" style="max-width:320px;min-width:600px;display:table-cell;vertical-align:top;background-color:#1c1915;">
+        <div style="height:100%;width:100%!important;background-color:#1c1915;">
+          <!--[if (!mso)&(!IE)]><!--><div style="box-sizing:border-box;height:100%;padding:0;border:0;background-color:#1c1915;"><!--<![endif]-->
 
           <!-- Body text -->
           <table id="u_content_text_1" style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" bgcolor="#1c1915">
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:50px 40px 10px;font-family:arial,helvetica,sans-serif;background-color:#1c1915;" bgcolor="#1c1915" align="left">
-              <div class="es-bt" style="font-size:16px;color:#f0ece2;line-height:180%;text-align:left;word-wrap:break-word;font-family:'EB Garamond','Garamond',Georgia,serif;">
+              <div style="font-size:16px;color:#f0ece2;line-height:180%;text-align:left;word-wrap:break-word;font-family:'EB Garamond','Garamond',Georgia,serif;">
                 ${body}
               </div>
             </td></tr></tbody>
@@ -184,7 +164,7 @@ function buildEmail(opts: {
           <!-- Disclaimer -->
           <table id="u_content_text_2" style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" bgcolor="#1c1915">
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:8px 40px 16px;font-family:arial,helvetica,sans-serif;background-color:#1c1915;" bgcolor="#1c1915" align="left">
-              <div class="es-mt" style="font-size:14px;color:rgba(240,236,226,0.55);line-height:180%;text-align:left;word-wrap:break-word;font-family:'Montserrat',sans-serif;">
+              <div style="font-size:14px;color:rgba(240,236,226,0.55);line-height:180%;text-align:left;word-wrap:break-word;font-family:'Montserrat',sans-serif;">
                 <p style="line-height:180%;margin:0;">${disclaimer}</p>
               </div>
             </td></tr></tbody>
@@ -208,7 +188,7 @@ function buildEmail(opts: {
           <!-- Fallback link -->
           <table style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" bgcolor="#1c1915">
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:0 40px 24px;font-family:arial,helvetica,sans-serif;background-color:#1c1915;" bgcolor="#1c1915" align="left">
-              <div class="es-dt" style="font-size:11px;color:rgba(240,236,226,0.38);line-height:160%;font-family:arial,helvetica,sans-serif;">
+              <div style="font-size:11px;color:rgba(240,236,226,0.38);line-height:160%;font-family:arial,helvetica,sans-serif;">
                 <p style="margin:0;">If the button doesn't work, use the following URL: <a href="${buttonUrl}" target="_blank" style="color:#c6a43c;text-decoration:underline;word-break:break-all;line-height:inherit;">${buttonUrl}</a></p>
               </div>
             </td></tr></tbody>
@@ -225,7 +205,7 @@ function buildEmail(opts: {
 <!-- ═══ FOOTER: dark + social icons ═══ -->
 <!--[if gte mso 9]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600"><tr><td valign="top"><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;"><v:fill type="frame" src="" /><v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0"><![endif]-->
 <div class="u-row-container" style="padding:0;background-color:transparent;">
-  <div class="u-row es-l" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#f5f3ee;">
+  <div class="u-row" style="margin:0 auto;min-width:320px;max-width:600px;background-color:#f5f3ee;">
     <div style="border-collapse:collapse;display:table;width:100%;height:100%;background-color:transparent;">
       <!--[if (mso)|(IE)]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;background-color:transparent;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#f5f3ee"><tr style="background-color:#f5f3ee;"><![endif]-->
       <!--[if (mso)|(IE)]><td align="center" width="600" style="width:600px;border:0;border-radius:0;" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;"><![endif]-->
@@ -243,7 +223,7 @@ function buildEmail(opts: {
                   <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width:32px!important;height:32px!important;display:inline-block;border-collapse:collapse;table-layout:fixed;border-spacing:0;vertical-align:top;margin-right:11px">
                     <tbody><tr style="vertical-align:top"><td valign="middle" style="word-break:break-word;border-collapse:collapse!important;vertical-align:top">
                       <a href="${frontendUrl}" title="Twitter" target="_blank" style="color:#c6a43c;text-decoration:underline;line-height:inherit;">
-                        <img src="${img('social/twitter.png')}" alt="Twitter" title="Twitter" width="32" class="es-ic" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important;filter:brightness(0);">
+                        <img src="${img('social/twitter.png')}" alt="Twitter" title="Twitter" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important;filter:brightness(0);">
                       </a>
                     </td></tr></tbody>
                   </table>
@@ -251,7 +231,7 @@ function buildEmail(opts: {
                   <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width:32px!important;height:32px!important;display:inline-block;border-collapse:collapse;table-layout:fixed;border-spacing:0;vertical-align:top;margin-right:11px">
                     <tbody><tr style="vertical-align:top"><td valign="middle" style="word-break:break-word;border-collapse:collapse!important;vertical-align:top">
                       <a href="${frontendUrl}" title="LinkedIn" target="_blank" style="color:#c6a43c;text-decoration:underline;line-height:inherit;">
-                        <img src="${img('social/linkedin.png')}" alt="LinkedIn" title="LinkedIn" width="32" class="es-ic" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important;filter:brightness(0);">
+                        <img src="${img('social/linkedin.png')}" alt="LinkedIn" title="LinkedIn" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important;filter:brightness(0);">
                       </a>
                     </td></tr></tbody>
                   </table>
@@ -259,7 +239,7 @@ function buildEmail(opts: {
                   <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width:32px!important;height:32px!important;display:inline-block;border-collapse:collapse;table-layout:fixed;border-spacing:0;vertical-align:top;margin-right:11px">
                     <tbody><tr style="vertical-align:top"><td valign="middle" style="word-break:break-word;border-collapse:collapse!important;vertical-align:top">
                       <a href="mailto:support@dendrite-notes.com" title="Email" target="_blank" style="color:#c6a43c;text-decoration:underline;line-height:inherit;">
-                        <img src="${img('social/mail.png')}" alt="Email" title="Email" width="32" class="es-ic" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important;filter:brightness(0);">
+                        <img src="${img('social/mail.png')}" alt="Email" title="Email" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important;filter:brightness(0);">
                       </a>
                     </td></tr></tbody>
                   </table>
@@ -267,7 +247,7 @@ function buildEmail(opts: {
                   <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width:32px!important;height:32px!important;display:inline-block;border-collapse:collapse;table-layout:fixed;border-spacing:0;vertical-align:top;margin-right:0">
                     <tbody><tr style="vertical-align:top"><td valign="middle" style="word-break:break-word;border-collapse:collapse!important;vertical-align:top">
                       <a href="${frontendUrl}" title="Instagram" target="_blank" style="color:#c6a43c;text-decoration:underline;line-height:inherit;">
-                        <img src="${img('social/instagram.png')}" alt="Instagram" title="Instagram" width="32" class="es-ic" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important;filter:brightness(0);">
+                        <img src="${img('social/instagram.png')}" alt="Instagram" title="Instagram" width="32" style="outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;clear:both;display:block!important;border:none;height:auto;float:none;max-width:32px!important;filter:brightness(0);">
                       </a>
                     </td></tr></tbody>
                   </table>
@@ -280,7 +260,7 @@ function buildEmail(opts: {
           <!-- Footer text -->
           <table style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:8px 10px 28px;font-family:arial,helvetica,sans-serif;" align="left">
-              <div class="es-ft" style="font-size:14px;color:#1c1915;line-height:190%;text-align:center;word-wrap:break-word;">
+              <div style="font-size:14px;color:#1c1915;line-height:190%;text-align:center;word-wrap:break-word;">
                 <p style="font-size:14px;line-height:190%;margin:0;">
                   <span style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:300;line-height:26.6px;">If you have any questions, feel free message us at <a href="mailto:support@dendrite-notes.com" target="_blank" style="color:#c6a43c;text-decoration:underline;line-height:inherit;"><span style="text-decoration:underline;font-size:14px;line-height:26.6px;">support@dendrite-notes.com</span></a>.&nbsp;</span><br>
                   <span style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:300;line-height:26.6px;">All right reserved. Update email preferences or unsubscribe.</span><br>

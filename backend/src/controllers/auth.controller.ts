@@ -236,6 +236,17 @@ export const resendVerification = async (req: Request, res: Response) => {
   }
 };
 
+export const checkVerified = async (req: Request, res: Response) => {
+  const { email } = req.query as { email?: string };
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  try {
+    const user = await prisma.user.findUnique({ where: { email }, select: { isVerified: true } });
+    return res.json({ verified: user?.isVerified ?? false });
+  } catch {
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+
 export const verifyEmail = async (req: Request, res: Response) => {
   const { token } = req.query as { token?: string };
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';

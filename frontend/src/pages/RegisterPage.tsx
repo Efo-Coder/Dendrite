@@ -1,5 +1,5 @@
-﻿import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -71,8 +71,10 @@ const RegisterPage = () => {
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const { register, error, isLoading, clearError } = useAuthStore();
   const toast = useToast();
+  const navigate = useNavigate();
   const prevError = useRef<string | null>(null);
   const isMounted = useRef(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const plan = sessionStorage.getItem('pending_plan');
@@ -102,6 +104,20 @@ const RegisterPage = () => {
 
   const strength = getPasswordStrength(password);
   const confirmMismatch = confirmTouched && confirmPassword !== '' && confirmPassword !== password;
+
+  useEffect(() => {
+    if (!emailSent || !email) return;
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await api.get(`/auth/check-verified?email=${encodeURIComponent(email)}`);
+        if (res.data.verified) {
+          clearInterval(pollRef.current!);
+          navigate('/login?verified=true');
+        }
+      } catch {}
+    }, 2500);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [emailSent, email, navigate]);
 
   const handleResend = async () => {
     if (resendLoading) return;
@@ -204,9 +220,17 @@ const RegisterPage = () => {
         <div className="relative z-10 flex-1 flex items-center justify-center" style={{ padding: '64px 40px' }}>
           <div style={{ width: '100%', maxWidth: '360px' }}>
 
+            <AnimatePresence mode="wait" initial={false}>
             {emailSent ? (
               /* Success state */
-              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <motion.div
+                key="email-sent"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -18 }}
+                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+              >
                 <div style={{
                   width: '56px', height: '56px', borderRadius: '16px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -279,9 +303,15 @@ const RegisterPage = () => {
                     Back to sign in
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             ) : (
-              <>
+              <motion.div
+                key="register-form"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -18 }}
+                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+              >
                 {/* Logo + heading */}
                 <div style={{ marginBottom: '40px', textAlign: 'center' }}>
                   <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
@@ -513,8 +543,9 @@ const RegisterPage = () => {
                     Sign in
                   </Link>
                 </p>
-              </>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

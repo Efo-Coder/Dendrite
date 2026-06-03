@@ -202,6 +202,7 @@ export const deleteNote = async (req: AuthRequest, res: Response) => {
 
     const existingNote = await prisma.note.findFirst({
       where: { id, userId: req.userId },
+      include: { attachments: true },
     });
 
     if (!existingNote) {
@@ -211,6 +212,8 @@ export const deleteNote = async (req: AuthRequest, res: Response) => {
     if (existingNote.content) {
       deleteFiles(extractUploadUrls(existingNote.content));
     }
+
+    deleteFiles(existingNote.attachments.map(a => a.url));
 
     await prisma.note.delete({ where: { id } });
 
