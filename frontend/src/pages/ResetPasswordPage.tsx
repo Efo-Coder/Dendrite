@@ -65,11 +65,14 @@ const ResetPasswordPage = () => {
     if (!token) return;
 
     setIsLoading(true);
+    const minDelay = new Promise<void>(res => setTimeout(res, 600));
     try {
       await authService.resetPassword(token, password);
+      await minDelay;
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2500);
     } catch (err: any) {
+      await minDelay;
       setError(err?.response?.data?.error || 'Invalid or expired reset link');
     } finally {
       setIsLoading(false);

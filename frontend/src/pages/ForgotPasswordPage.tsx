@@ -18,14 +18,12 @@ const ForgotPasswordPage = () => {
     e.preventDefault();
     if (!email || isLoading) return;
     setIsLoading(true);
-    try {
-      await authService.forgotPassword(email);
-    } catch {
-      // intentionally silent — always show success to prevent enumeration
-    } finally {
-      setSent(true);
-      setIsLoading(false);
-    }
+    await Promise.allSettled([
+      authService.forgotPassword(email),
+      new Promise(res => setTimeout(res, 600)),
+    ]);
+    setSent(true);
+    setIsLoading(false);
   };
 
   return (

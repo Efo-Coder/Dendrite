@@ -50,6 +50,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
@@ -110,8 +111,11 @@ const LoginPage = () => {
 
   const handleTwoFactorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
+    const minDelay = new Promise<void>(res => setTimeout(res, 600));
     try {
       await verifyTwoFactor(twoFactorCode);
+      await minDelay;
       sessionStorage.setItem('justLoggedIn', '1');
       const pendingPlan = sessionStorage.getItem('pending_plan');
       if (pendingPlan === 'writer' || pendingPlan === 'author') {
@@ -127,14 +131,18 @@ const LoginPage = () => {
         navigate('/dashboard');
       }
     } catch {
-      // Error handled by store
+      await minDelay;
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
+    const minDelay = new Promise<void>(res => setTimeout(res, 600));
     try {
-      await login(email, password);
+      await Promise.all([login(email, password), minDelay]);
 
       if (rememberMe) {
         localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
@@ -158,7 +166,10 @@ const LoginPage = () => {
         navigate('/dashboard');
       }
     } catch {
+      await minDelay;
       // Error handled by store
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -276,7 +287,7 @@ const LoginPage = () => {
                       transition: 'transform .1s, opacity .12s',
                     }}
                   >
-                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Verify'}
+                    {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Verify'}
                   </button>
                 </form>
               </>
@@ -470,7 +481,7 @@ const LoginPage = () => {
                     transition: 'transform .1s, opacity .12s',
                   }}
                 >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Sign in'}
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Sign in'}
                 </button>
               </form>
             </div>

@@ -65,6 +65,7 @@ const RegisterPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [confirmTouched, setConfirmTouched] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
@@ -143,11 +144,17 @@ const RegisterPage = () => {
       setLocalError('Password must be at least 8 characters long');
       return;
     }
+    setSubmitting(true);
+    const minDelay = new Promise<void>(res => setTimeout(res, 600));
     try {
       await register(email, password, name);
+      await minDelay;
       setEmailSent(true);
     } catch {
+      await minDelay;
       // Error handled by store
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -532,7 +539,7 @@ const RegisterPage = () => {
                       transition: 'transform .1s, opacity .12s',
                     }}
                   >
-                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Create account'}
+                    {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Create account'}
                   </button>
                 </form>
 
