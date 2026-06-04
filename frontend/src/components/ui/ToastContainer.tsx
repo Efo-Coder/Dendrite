@@ -1,4 +1,5 @@
 ﻿import { createContext, useContext, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Toast, { ToastType } from './Toast';
 
 interface ToastData {
@@ -62,19 +63,22 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
     <ToastContext.Provider value={{ showToast, success, error, info, warning }}>
       {children}
 
-      {/* Toast Container */}
-      <div className="fixed top-4 right-4 flex flex-col gap-2 z-9999">
-        {toasts.map((toast) => (
-          <Toast
-            key={toast.id}
-            id={toast.id}
-            type={toast.type}
-            message={toast.message}
-            duration={toast.duration}
-            onClose={removeToast}
-          />
-        ))}
-      </div>
+      {/* Portal zu document.body → immer über allen Stacking-Contexts */}
+      {createPortal(
+        <div className="fixed top-4 right-4 flex flex-col gap-2" style={{ zIndex: 99999 }}>
+          {toasts.map((toast) => (
+            <Toast
+              key={toast.id}
+              id={toast.id}
+              type={toast.type}
+              message={toast.message}
+              duration={toast.duration}
+              onClose={removeToast}
+            />
+          ))}
+        </div>,
+        document.body
+      )}
     </ToastContext.Provider>
   );
 };
