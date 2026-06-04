@@ -4,6 +4,7 @@ import {
   inviteCollaborator,
   listCollaborators,
   removeCollaborator,
+  updateCollaboratorRole,
   getInvitations,
   acceptInvitation,
   declineInvitation,
@@ -16,6 +17,7 @@ const router = Router();
 router.post('/notes/:id/invite', authenticateToken, inviteCollaborator);
 router.get('/notes/:id/collaborators', authenticateToken, listCollaborators);
 router.delete('/notes/:id/collaborators/:userId', authenticateToken, removeCollaborator);
+router.patch('/notes/:id/collaborators/:userId', authenticateToken, updateCollaboratorRole);
 
 // Invited-user operations
 router.get('/invitations', authenticateToken, getInvitations);

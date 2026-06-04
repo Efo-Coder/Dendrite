@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, X, LogOut, Loader2 } from 'lucide-react';
+import { UserPlus, X, LogOut, Loader2, Eye, Pencil } from 'lucide-react';
 import Modal from './Modal';
+import { MagicInput } from '../ui/MagicInput';
 import { Collaborator } from '../../types';
 import { collaborationService } from '../../services/collaboration.service';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -9,14 +10,26 @@ import { useToast } from '../ui/ToastContainer';
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
 
+type Role = 'editor' | 'viewer';
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   noteId: string;
-  /** Wird aufgerufen wenn sich die Kollaboratoren-Liste ändert */
   onCollaboratorsChange?: () => void;
   isOwner: boolean;
 }
+
+const RoleBadge = ({ role }: { role: Role }) =>
+  role === 'viewer' ? (
+    <span className="flex items-center gap-1 text-xs text-(--ink-dim)">
+      <Eye className="w-3 h-3" /> View only
+    </span>
+  ) : (
+    <span className="flex items-center gap-1 text-xs text-(--accent)">
+      <Pencil className="w-3 h-3" /> Editor
+    </span>
+  );
 
 const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChange, isOwner }: Props) => {
   const { user } = useAuthStore();
@@ -24,10 +37,10 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
 
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [input, setInput] = useState('');
+  const [inviteRole, setInviteRole] = useState<Role>('editor');
   const [loading, setLoading] = useState(false);
   const [inviting, setInviting] = useState(false);
 
-  // Load collaborators when modal opens
   useEffect(() => {
     if (!isOpen || !isOwner) return;
     setLoading(true);
@@ -43,7 +56,7 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
     if (!trimmed) return;
     setInviting(true);
     try {
-      const collab = await collaborationService.invite(noteId, trimmed);
+      const collab = await collaborationService.invite(noteId, trimmed, inviteRole);
       setCollaborators(prev => [...prev, collab]);
       setInput('');
       toast.success('Invitation sent');
@@ -66,6 +79,16 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
     }
   };
 
+  const handleRoleToggle = async (collab: Collaborator) => {
+    const newRole: Role = collab.role === 'editor' ? 'viewer' : 'editor';
+    try {
+      await collaborationService.updateRole(noteId, collab.userId, newRole);
+      setCollaborators(prev => prev.map(c => c.id === collab.id ? { ...c, role: newRole } : c));
+    } catch {
+      toast.error('Failed to update role');
+    }
+  };
+
   const handleLeave = async () => {
     try {
       await collaborationService.leave(noteId);
@@ -84,21 +107,36 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
     <Modal isOpen={isOpen} onClose={onClose} title="Collaborate">
       <div className="flex flex-col gap-4">
 
+        {/* Invite row */}
         {isOwner && (
           <div className="flex gap-2">
-            <input
+            <MagicInput
               type="text"
-              className="flex-1 rounded-lg border border-(--line) bg-(--surface) px-3 py-2 text-sm text-(--ink) placeholder:text-(--ink-dim) focus:outline-none focus:border-(--accent)"
+              className="w-full rounded-xl border border-(--line) bg-(--surface) px-3 py-2 text-sm text-(--ink) placeholder:text-(--ink-dim) focus:outline-none"
               placeholder="Email or username"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleInvite()}
               disabled={inviting}
             />
+
+            {/* Role toggle pill */}
+            <button
+              type="button"
+              onClick={() => setInviteRole(r => r === 'editor' ? 'viewer' : 'editor')}
+              className="shrink-0 flex items-center gap-1.5 rounded-xl border border-(--line) bg-(--surface) px-3 py-2 text-xs text-(--ink-mid) hover:text-(--ink) transition-colors"
+              title="Toggle role"
+            >
+              {inviteRole === 'editor'
+                ? <><Pencil className="w-3 h-3 text-(--accent)" /> Editor</>
+                : <><Eye className="w-3 h-3" /> Viewer</>
+              }
+            </button>
+
             <button
               onClick={handleInvite}
               disabled={inviting || !input.trim()}
-              className="flex items-center gap-1.5 rounded-lg bg-(--accent) px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="shrink-0 flex items-center gap-1.5 rounded-xl bg-(--accent) px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {inviting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
               Invite
@@ -106,6 +144,7 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
           </div>
         )}
 
+        {/* Collaborator list */}
         {loading ? (
           <div className="flex justify-center py-4">
             <Loader2 className="w-4 h-4 animate-spin text-(--ink-dim)" />
@@ -115,17 +154,18 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
             No collaborators yet. Enter an email or username above.
           </p>
         ) : (
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-1">
             {collaborators.map(c => (
-              <li key={c.id} className="flex items-center gap-2.5 rounded-lg p-2 hover:bg-(--surface-hi)">
+              <li key={c.id} className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-(--surface-hi)">
+                {/* Avatar */}
                 <div className="w-7 h-7 rounded-full bg-(--surface-hi) flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
-                  {c.user.avatarUrl ? (
-                    <img src={resolveAvatar(c.user.avatarUrl)} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    avatarInitial(c)
-                  )}
+                  {c.user.avatarUrl
+                    ? <img src={resolveAvatar(c.user.avatarUrl)} alt="" className="w-full h-full object-cover" />
+                    : avatarInitial(c)
+                  }
                 </div>
 
+                {/* Name */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm truncate text-(--ink)">{c.user.name || c.user.email}</p>
                   {c.status === 'pending' && (
@@ -133,6 +173,25 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
                   )}
                 </div>
 
+                {/* Role toggle (owner only, accepted collabs) */}
+                {isOwner && c.status === 'accepted' && (
+                  <button
+                    onClick={() => handleRoleToggle(c)}
+                    className="shrink-0 rounded-lg border border-(--line) px-2 py-1 hover:border-(--accent) hover:text-(--accent) transition-colors"
+                    title="Click to toggle role"
+                  >
+                    <RoleBadge role={c.role as Role} />
+                  </button>
+                )}
+
+                {/* Role label for pending */}
+                {isOwner && c.status === 'pending' && (
+                  <span className="shrink-0 opacity-50">
+                    <RoleBadge role={c.role as Role} />
+                  </span>
+                )}
+
+                {/* Remove (owner) or Leave (self) */}
                 {isOwner ? (
                   <button
                     onClick={() => handleRemove(c.userId, c.status === 'pending')}
@@ -157,7 +216,7 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
         )}
 
         <p className="text-xs text-(--ink-dim) border-t border-(--line) pt-3">
-          All collaborators can edit this note live at the same time.
+          Editors can write. Viewers can read but not edit.
         </p>
       </div>
     </Modal>

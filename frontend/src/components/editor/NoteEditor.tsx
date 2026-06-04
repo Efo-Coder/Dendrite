@@ -779,12 +779,15 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             const isCollaborator = note.userId !== user?.id;
             const isCollaborative = hasCollaborators || isCollaborator;
             const jwtToken = localStorage.getItem('token') ?? '';
+            // Viewer-Kollaboratoren dürfen nicht editieren
+            const myEntry = collaborators.find(c => c.userId === user?.id);
+            const isViewer = isCollaborator && myEntry?.role === 'viewer';
             return (
           <LexicalEditorWrapper
             content={note.content}
             onChange={handleContentChange}
             placeholder="Start writing..."
-            disabled={isInTrash}
+            disabled={isInTrash || isViewer}
             headerSlot={titleHeader}
             collaboration={isCollaborative ? {
               noteId: note.id,

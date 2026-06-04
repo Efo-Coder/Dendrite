@@ -37,8 +37,10 @@ export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
       return res.json({ collaborator: updated });
     }
 
+    const role = req.body.role === 'viewer' ? 'viewer' : 'editor';
+
     const collab = await prisma.noteCollaborator.create({
-      data: { noteId, userId: invitee.id, role: 'editor', status: 'pending' },
+      data: { noteId, userId: invitee.id, role, status: 'pending' },
       include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
     });
 
@@ -149,6 +151,31 @@ export const declineInvitation = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('DeclineInvitation error:', error);
     return res.status(500).json({ error: 'Failed to decline invitation' });
+  }
+};
+
+export const updateCollaboratorRole = async (req: AuthRequest, res: Response) => {
+  try {
+    const noteId = req.params.id as string;
+    const targetUserId = req.params.userId as string;
+    const { role } = req.body;
+
+    if (role !== 'editor' && role !== 'viewer') {
+      return res.status(400).json({ error: 'Role must be "editor" or "viewer"' });
+    }
+
+    const note = await prisma.note.findFirst({ where: { id: noteId, userId: req.userId } });
+    if (!note) return res.status(404).json({ error: 'Note not found' });
+
+    const updated = await prisma.noteCollaborator.updateMany({
+      where: { noteId, userId: targetUserId },
+      data: { role },
+    });
+
+    return res.json({ updated: updated.count });
+  } catch (error) {
+    console.error('UpdateCollaboratorRole error:', error);
+    return res.status(500).json({ error: 'Failed to update role' });
   }
 };
 
