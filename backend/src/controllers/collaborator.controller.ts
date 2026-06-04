@@ -8,31 +8,26 @@ export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
     const { emailOrUsername } = req.body;
 
     if (!emailOrUsername) {
-      return res.status(400).json({ error: 'E-Mail oder Benutzername erforderlich' });
+      return res.status(400).json({ error: 'Email or username is required' });
     }
 
     const note = await prisma.note.findFirst({ where: { id: noteId, userId: req.userId } });
-    if (!note) return res.status(404).json({ error: 'Notiz nicht gefunden' });
+    if (!note) return res.status(404).json({ error: 'Note not found' });
 
     const invitee = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: emailOrUsername },
-          { name: emailOrUsername },
-        ],
-      },
+      where: { OR: [{ email: emailOrUsername }, { name: emailOrUsername }] },
     });
 
-    if (!invitee) return res.status(404).json({ error: 'Benutzer nicht gefunden' });
-    if (invitee.id === req.userId) return res.status(400).json({ error: 'Du kannst dich nicht selbst einladen' });
+    if (!invitee) return res.status(404).json({ error: 'User not found' });
+    if (invitee.id === req.userId) return res.status(400).json({ error: 'You cannot invite yourself' });
 
     const existing = await prisma.noteCollaborator.findUnique({
       where: { noteId_userId: { noteId, userId: invitee.id } },
     });
 
     if (existing) {
-      if (existing.status === 'accepted') return res.status(400).json({ error: 'Benutzer ist bereits Kollaborator' });
-      if (existing.status === 'pending') return res.status(400).json({ error: 'Einladung bereits gesendet' });
+      if (existing.status === 'accepted') return res.status(400).json({ error: 'User is already a collaborator' });
+      if (existing.status === 'pending') return res.status(400).json({ error: 'Invitation already sent' });
       // declined → re-invite
       const updated = await prisma.noteCollaborator.update({
         where: { noteId_userId: { noteId, userId: invitee.id } },
@@ -50,7 +45,7 @@ export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
     return res.status(201).json({ collaborator: collab });
   } catch (error) {
     console.error('InviteCollaborator error:', error);
-    return res.status(500).json({ error: 'Fehler beim Einladen' });
+    return res.status(500).json({ error: 'Failed to send invitation' });
   }
 };
 
@@ -59,7 +54,7 @@ export const listCollaborators = async (req: AuthRequest, res: Response) => {
     const noteId = req.params.id as string;
 
     const note = await prisma.note.findFirst({ where: { id: noteId, userId: req.userId } });
-    if (!note) return res.status(404).json({ error: 'Notiz nicht gefunden' });
+    if (!note) return res.status(404).json({ error: 'Note not found' });
 
     const collaborators = await prisma.noteCollaborator.findMany({
       where: { noteId },
@@ -70,7 +65,7 @@ export const listCollaborators = async (req: AuthRequest, res: Response) => {
     return res.json({ collaborators });
   } catch (error) {
     console.error('ListCollaborators error:', error);
-    return res.status(500).json({ error: 'Fehler beim Laden der Kollaboratoren' });
+    return res.status(500).json({ error: 'Failed to load collaborators' });
   }
 };
 
@@ -80,14 +75,14 @@ export const removeCollaborator = async (req: AuthRequest, res: Response) => {
     const targetUserId = req.params.userId as string;
 
     const note = await prisma.note.findFirst({ where: { id: noteId, userId: req.userId } });
-    if (!note) return res.status(404).json({ error: 'Notiz nicht gefunden' });
+    if (!note) return res.status(404).json({ error: 'Note not found' });
 
     await prisma.noteCollaborator.deleteMany({ where: { noteId, userId: targetUserId } });
 
-    return res.json({ message: 'Kollaborator entfernt' });
+    return res.json({ message: 'Collaborator removed' });
   } catch (error) {
     console.error('RemoveCollaborator error:', error);
-    return res.status(500).json({ error: 'Fehler beim Entfernen' });
+    return res.status(500).json({ error: 'Failed to remove collaborator' });
   }
 };
 
@@ -96,7 +91,7 @@ export const getInvitations = async (req: AuthRequest, res: Response) => {
     const invitations = await prisma.noteCollaborator.findMany({
       where: { userId: req.userId!, status: 'pending' },
       include: {
-        // Note-Inhalt + Note-Owner in einer Query
+        // Fetch note content + note owner in a single query
         note: { select: { id: true, title: true, content: true, user: { select: { id: true, name: true, email: true, avatarUrl: true } } } },
         user: { select: { id: true, name: true, email: true, avatarUrl: true } },
       },
@@ -112,7 +107,7 @@ export const getInvitations = async (req: AuthRequest, res: Response) => {
     return res.json({ invitations: result });
   } catch (error) {
     console.error('GetInvitations error:', error);
-    return res.status(500).json({ error: 'Fehler beim Laden der Einladungen' });
+    return res.status(500).json({ error: 'Failed to load invitations' });
   }
 };
 
@@ -124,7 +119,7 @@ export const acceptInvitation = async (req: AuthRequest, res: Response) => {
       where: { id, userId: req.userId!, status: 'pending' },
     });
 
-    if (!collab) return res.status(404).json({ error: 'Einladung nicht gefunden' });
+    if (!collab) return res.status(404).json({ error: 'Invitation not found' });
 
     const updated = await prisma.noteCollaborator.update({
       where: { id },
@@ -134,7 +129,7 @@ export const acceptInvitation = async (req: AuthRequest, res: Response) => {
     return res.json({ collaborator: updated });
   } catch (error) {
     console.error('AcceptInvitation error:', error);
-    return res.status(500).json({ error: 'Fehler beim Annehmen' });
+    return res.status(500).json({ error: 'Failed to accept invitation' });
   }
 };
 
@@ -146,14 +141,14 @@ export const declineInvitation = async (req: AuthRequest, res: Response) => {
       where: { id, userId: req.userId!, status: 'pending' },
     });
 
-    if (!collab) return res.status(404).json({ error: 'Einladung nicht gefunden' });
+    if (!collab) return res.status(404).json({ error: 'Invitation not found' });
 
     await prisma.noteCollaborator.delete({ where: { id } });
 
-    return res.json({ message: 'Einladung abgelehnt' });
+    return res.json({ message: 'Invitation declined' });
   } catch (error) {
     console.error('DeclineInvitation error:', error);
-    return res.status(500).json({ error: 'Fehler beim Ablehnen' });
+    return res.status(500).json({ error: 'Failed to decline invitation' });
   }
 };
 
@@ -161,13 +156,11 @@ export const leaveCollaboration = async (req: AuthRequest, res: Response) => {
   try {
     const noteId = req.params.id as string;
 
-    await prisma.noteCollaborator.deleteMany({
-      where: { noteId, userId: req.userId! },
-    });
+    await prisma.noteCollaborator.deleteMany({ where: { noteId, userId: req.userId! } });
 
-    return res.json({ message: 'Kollaboration verlassen' });
+    return res.json({ message: 'Left collaboration' });
   } catch (error) {
     console.error('LeaveCollaboration error:', error);
-    return res.status(500).json({ error: 'Fehler beim Verlassen' });
+    return res.status(500).json({ error: 'Failed to leave collaboration' });
   }
 };

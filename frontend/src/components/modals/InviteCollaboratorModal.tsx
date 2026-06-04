@@ -27,14 +27,14 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
   const [loading, setLoading] = useState(false);
   const [inviting, setInviting] = useState(false);
 
-  // Kollaboratoren laden wenn Modal öffnet
+  // Load collaborators when modal opens
   useEffect(() => {
     if (!isOpen || !isOwner) return;
     setLoading(true);
     collaborationService
       .listCollaborators(noteId)
       .then(setCollaborators)
-      .catch(() => toast.error('Fehler beim Laden'))
+      .catch(() => toast.error('Failed to load collaborators'))
       .finally(() => setLoading(false));
   }, [isOpen, noteId, isOwner]);
 
@@ -46,10 +46,10 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
       const collab = await collaborationService.invite(noteId, trimmed);
       setCollaborators(prev => [...prev, collab]);
       setInput('');
-      toast.success('Einladung gesendet');
+      toast.success('Invitation sent');
       onCollaboratorsChange?.();
     } catch (e: any) {
-      toast.error(e?.response?.data?.error || 'Fehler beim Einladen');
+      toast.error(e?.response?.data?.error || 'Failed to send invitation');
     } finally {
       setInviting(false);
     }
@@ -59,21 +59,21 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
     try {
       await collaborationService.remove(noteId, userId);
       setCollaborators(prev => prev.filter(c => c.userId !== userId));
-      toast.info(isPending ? 'Einladung zurückgezogen' : 'Kollaborator entfernt');
+      toast.info(isPending ? 'Invitation withdrawn' : 'Collaborator removed');
       onCollaboratorsChange?.();
     } catch {
-      toast.error('Fehler beim Entfernen');
+      toast.error('Failed to remove');
     }
   };
 
   const handleLeave = async () => {
     try {
       await collaborationService.leave(noteId);
-      toast.info('Kollaboration verlassen');
+      toast.info('Left collaboration');
       onClose();
       onCollaboratorsChange?.();
     } catch {
-      toast.error('Fehler');
+      toast.error('Something went wrong');
     }
   };
 
@@ -81,16 +81,15 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
     (c.user.name || c.user.email || '?').charAt(0).toUpperCase();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Zusammenarbeiten">
+    <Modal isOpen={isOpen} onClose={onClose} title="Collaborate">
       <div className="flex flex-col gap-4">
 
-        {/* Einladen (nur Owner) */}
         {isOwner && (
           <div className="flex gap-2">
             <input
               type="text"
               className="flex-1 rounded-lg border border-(--line) bg-(--surface) px-3 py-2 text-sm text-(--ink) placeholder:text-(--ink-dim) focus:outline-none focus:border-(--accent)"
-              placeholder="E-Mail oder Benutzername"
+              placeholder="Email or username"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleInvite()}
@@ -102,25 +101,23 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
               className="flex items-center gap-1.5 rounded-lg bg-(--accent) px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {inviting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
-              Einladen
+              Invite
             </button>
           </div>
         )}
 
-        {/* Kollaboratoren-Liste */}
         {loading ? (
           <div className="flex justify-center py-4">
             <Loader2 className="w-4 h-4 animate-spin text-(--ink-dim)" />
           </div>
         ) : collaborators.length === 0 && isOwner ? (
           <p className="text-sm text-(--ink-dim) text-center py-2">
-            Noch keine Eingeladenen. Gib oben eine E-Mail oder einen Nutzernamen ein.
+            No collaborators yet. Enter an email or username above.
           </p>
         ) : (
           <ul className="flex flex-col gap-1.5">
             {collaborators.map(c => (
               <li key={c.id} className="flex items-center gap-2.5 rounded-lg p-2 hover:bg-(--surface-hi)">
-                {/* Avatar */}
                 <div className="w-7 h-7 rounded-full bg-(--surface-hi) flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
                   {c.user.avatarUrl ? (
                     <img src={resolveAvatar(c.user.avatarUrl)} alt="" className="w-full h-full object-cover" />
@@ -129,20 +126,18 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
                   )}
                 </div>
 
-                {/* Name + Status */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm truncate text-(--ink)">{c.user.name || c.user.email}</p>
                   {c.status === 'pending' && (
-                    <p className="text-xs text-(--ink-dim)">Ausstehend</p>
+                    <p className="text-xs text-(--ink-dim)">Pending</p>
                   )}
                 </div>
 
-                {/* Entfernen-Button (Owner) oder Verlassen (eigener Eintrag) */}
                 {isOwner ? (
                   <button
                     onClick={() => handleRemove(c.userId, c.status === 'pending')}
                     className="p-1 rounded hover:text-red-400 transition-colors text-(--ink-dim)"
-                    title="Entfernen"
+                    title="Remove"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -150,10 +145,10 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
                   <button
                     onClick={handleLeave}
                     className="flex items-center gap-1 text-xs text-(--ink-dim) hover:text-red-400 transition-colors"
-                    title="Kollaboration verlassen"
+                    title="Leave collaboration"
                   >
                     <LogOut className="w-3.5 h-3.5" />
-                    Verlassen
+                    Leave
                   </button>
                 ) : null}
               </li>
@@ -161,9 +156,8 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
           </ul>
         )}
 
-        {/* Hinweis auf Live-Editing */}
         <p className="text-xs text-(--ink-dim) border-t border-(--line) pt-3">
-          Alle Eingeladenen können die Notiz live gleichzeitig bearbeiten.
+          All collaborators can edit this note live at the same time.
         </p>
       </div>
     </Modal>
