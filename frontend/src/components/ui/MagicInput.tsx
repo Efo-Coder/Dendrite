@@ -35,6 +35,7 @@ export const MagicInput = React.forwardRef<HTMLInputElement, MagicInputProps>(
         onMouseLeave={() => setHovered(false)}
         className={"w-full p-px" + (wrapperClassName ? " " + wrapperClassName : "")}
       >
+        {/* Hover-Glow: gradient folgt der Maus */}
         <motion.div
           animate={{ opacity: glowActive ? 1 : 0 }}
           transition={{ duration: glowActive ? 0.25 : 0.55, ease: "easeOut" }}
@@ -49,6 +50,15 @@ export const MagicInput = React.forwardRef<HTMLInputElement, MagicInputProps>(
             maskOrigin: 'content-box, border-box',
             maskClip: 'content-box, border-box',
             maskComposite: 'subtract',
+          }}
+        />
+        {/* Focus-Ring: solider Accent-Rahmen wenn aktiv */}
+        <motion.div
+          animate={{ opacity: focused ? 1 : 0 }}
+          transition={{ duration: focused ? 0.15 : 0.3, ease: "easeOut" }}
+          style={{
+            position: 'absolute', inset: 0, borderRadius: 'inherit', pointerEvents: 'none',
+            border: '1px solid var(--accent)',
           }}
         />
         <input
