@@ -52,6 +52,21 @@ export const register = async (req: Request, res: Response) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const isDev = process.env.NODE_ENV !== 'production';
+
+    if (isDev) {
+      await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name: name || null,
+          isVerified: true,
+        },
+      });
+      console.log(`[DEV] User registered and auto-verified: ${email}`);
+      return res.status(201).json({ message: 'Registration successful. Please verify your email address.' });
+    }
+
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 

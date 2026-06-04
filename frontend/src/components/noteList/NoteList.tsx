@@ -60,6 +60,8 @@ const NoteList = ({
   // ── State ──────────────────────────────────────────────────────────────────
 
   const { containerRef: noteListRef, onItemEnter: onCardEnter, onItemLeave: onCardLeave, Indicator: NoteIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface)', borderRadius: 9 });
+  const sortMenuInnerRef = useRef<HTMLDivElement>(null);
+  const { onItemEnter: onSortEnter, onItemLeave: onSortLeave, Indicator: SortIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 6, ref: sortMenuInnerRef });
 
   // Only non-null while the user is actively drag-reordering
   const [dragNotes, setDragNotes] = useState<Note[] | null>(null);
@@ -408,7 +410,7 @@ const NoteList = ({
         />
       <div
         ref={listSearchRef}
-        className="notelist-search"
+        className="notelist-search input"
         style={sortFieldMenuOpen ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : undefined}
       >
         <Search className="search-icon w-3.5 h-3.5" />
@@ -464,6 +466,7 @@ const NoteList = ({
                 ref={el => { tabRefs.current[i] = el; }}
                 type="button"
                 onClick={() => setListTab(t.id)}
+                className="notelist-tab-btn"
                 style={{
                   fontFamily: 'var(--mono)',
                   fontSize: '9px',
@@ -474,9 +477,9 @@ const NoteList = ({
                   position: 'relative',
                   zIndex: 1,
                   color: listTab === t.id ? 'var(--accent)' : 'var(--ink-low)',
-                  transition: 'color 0.22s, border-color 0.22s',
+                  transition: 'color 0.22s, background 0.15s',
                   background: 'transparent',
-                  border: listTab === t.id ? '0.5px solid transparent' : '0.5px solid color-mix(in oklch, var(--ink-low) 40%, transparent)',
+                  border: '0.5px solid color-mix(in oklch, var(--ink-low) 40%, transparent)',
                   borderRadius: '20px',
                 }}
               >
@@ -510,13 +513,16 @@ const NoteList = ({
           exit={{ opacity: 0, scaleY: 0.96, y: -4, transition: { duration: 0.1 } }}
           transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] }}
         >
-          <div className="pt-2 pb-4">
+          <div ref={sortMenuInnerRef} className="pt-2 pb-4 relative">
+            {SortIndicator}
             {(Object.entries(sortLabels) as [SortOption, string][]).map(([value, label]) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => { onSortChange(value, sortOrder); setSortFieldMenuOpen(false); setSortMenuAnchor(null); }}
-                className={clsx('w-full px-3 py-2 text-left text-sm transition-colors hover:bg-(--surface-hi)', sortBy === value ? 'text-(--accent)' : '')}
+                onMouseEnter={onSortEnter}
+                onMouseLeave={onSortLeave}
+                className={clsx('w-full px-3 py-2 text-left text-sm relative z-10', sortBy === value ? 'text-(--accent)' : '')}
               >
                 {label}
               </button>
@@ -561,7 +567,7 @@ const NoteList = ({
 
   const emptyTrashFooter = onEmptyTrash ? (
     <div className="notelist-footer">
-      <button type="button" onClick={onEmptyTrash} className="notelist-trash-btn">
+      <button type="button" onClick={onEmptyTrash} disabled={notes.length === 0} className="notelist-trash-btn">
         <Trash2 style={{ width: 13, height: 13, flexShrink: 0 }} />
         Empty Trash
       </button>
@@ -575,7 +581,6 @@ const NoteList = ({
       <>
         {header}
         <div className="notelist-empty">
-          <span className="mark">❧</span>
           <p>{isTrash ? 'Trash is empty' : 'No notes'}</p>
         </div>
         {onCreateNote && (

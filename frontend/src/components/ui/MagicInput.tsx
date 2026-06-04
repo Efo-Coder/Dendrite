@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useMotionTemplate, useMotionValue, motion } from "motion/react";
+import React, { useState, useEffect } from "react";
+import { useMotionTemplate, useMotionValue, motion, animate } from "motion/react";
 
 interface MagicInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   wrapperClassName?: string;
@@ -19,53 +19,31 @@ export const MagicInput = React.forwardRef<HTMLInputElement, MagicInputProps>(
       mouseY.set(clientY - top);
     }
 
-    const background = useMotionTemplate`radial-gradient(
-      120px circle at ${mouseX}px ${mouseY}px,
-      var(--accent),
-      transparent 80%
-    )`;
-
     const glowActive = hovered && !focused;
+    const opacity = useMotionValue(0);
+    const gradientBackground = useMotionTemplate`radial-gradient(100px circle at ${mouseX}px ${mouseY}px, var(--accent), transparent 80%)`;
+
+    useEffect(() => {
+      animate(opacity, glowActive ? 1 : 0, {
+        duration: glowActive ? 0.3 : 0.5,
+        ease: "easeOut",
+      });
+    }, [glowActive]);
 
     return (
       <div
-        style={{ position: 'relative', borderRadius: "calc(0.75rem + 1px)", isolation: 'isolate', ...wrapperStyle }}
+        style={{ position: "relative", isolation: "isolate", borderRadius: "calc(0.75rem + 1px)", padding: "1px", ...wrapperStyle }}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className={"w-full p-px" + (wrapperClassName ? " " + wrapperClassName : "")}
+        className={"w-full" + (wrapperClassName ? " " + wrapperClassName : "")}
       >
-        {/* Hover-Glow: gradient folgt der Maus */}
-        <motion.div
-          animate={{ opacity: glowActive ? 1 : 0 }}
-          transition={{ duration: glowActive ? 0.25 : 0.55, ease: "easeOut" }}
-          style={{
-            position: 'absolute', inset: 0, background, borderRadius: 'inherit', pointerEvents: 'none',
-            padding: '1px',
-            WebkitMaskImage: 'linear-gradient(#000 0 0), linear-gradient(#000 0 0)',
-            WebkitMaskOrigin: 'content-box, border-box',
-            WebkitMaskClip: 'content-box, border-box',
-            WebkitMaskComposite: 'destination-out',
-            maskImage: 'linear-gradient(#000 0 0), linear-gradient(#000 0 0)',
-            maskOrigin: 'content-box, border-box',
-            maskClip: 'content-box, border-box',
-            maskComposite: 'subtract',
-          }}
-        />
-        {/* Focus-Ring: solider Accent-Rahmen wenn aktiv */}
-        <motion.div
-          animate={{ opacity: focused ? 1 : 0 }}
-          transition={{ duration: focused ? 0.15 : 0.3, ease: "easeOut" }}
-          style={{
-            position: 'absolute', inset: 0, borderRadius: 'inherit', pointerEvents: 'none',
-            border: '1px solid var(--accent)',
-          }}
-        />
+        <motion.div style={{ position: "absolute", inset: 0, borderRadius: "inherit", background: gradientBackground, opacity, pointerEvents: "none" }} />
         <input
           type={type}
           className={className}
           ref={ref}
-          style={{ position: 'relative', zIndex: 1, ...style }}
+          style={{ position: "relative", zIndex: 1, ...style }}
           onFocus={(e) => { setFocused(true); onFocus?.(e); }}
           onBlur={(e) => { setFocused(false); onBlur?.(e); }}
           {...props}

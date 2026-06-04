@@ -166,7 +166,7 @@ const features: Feature[] = [
     id: "3",
     titleUp: "Calm",
     titleDown: "by Design",
-    image: "/img/backgrounds/forest.webp",
+    image: "/img/branding/calm.webp",
     description: "A writing space that feels as good as the words you put into it. Every detail is considered so your mind doesn't have to be.",
   },
 ];

@@ -663,7 +663,7 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
                 value={fontSearch}
                 onChange={(e) => setFontSearch(e.target.value)}
                 placeholder="Search font..."
-                className="w-full outline-none border-solid border-(--line) focus:border-(--accent)"
+                className="w-full input border-(--line)"
                 style={{
                   background: 'var(--bg)',
                   borderWidth: '0.5px',

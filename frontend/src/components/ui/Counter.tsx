@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { motion, useSpring, useTransform } from 'motion/react';
-import './Counter.css';
 
 interface NumberProps {
   mv: ReturnType<typeof useSpring>;

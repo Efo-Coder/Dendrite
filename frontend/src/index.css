@@ -345,6 +345,15 @@ html.is-theme-switching {
     border-color: color-mix(in oklch, var(--accent) 35%, transparent);
   }
 
+  /* Animated digit counter (Counter.tsx) */
+  .counter-container { position: relative; display: inline-block; }
+  .counter-counter   { display: flex; overflow: hidden; line-height: 1; }
+  .counter-digit     { position: relative; width: 1ch; font-variant-numeric: tabular-nums; }
+  .counter-number    { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: center; }
+  .gradient-container { pointer-events: none; position: absolute; top: 0; bottom: 0; left: 0; right: 0; }
+  .top-gradient      { position: absolute; top: 0; width: 100%; }
+  .bottom-gradient   { position: absolute; bottom: 0; width: 100%; }
+
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -488,6 +497,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 /* Section headings (Library, Folders, Tags) */
 .win .sidebar-section { margin: 8px 0 4px; padding: 0 22px; }
 .win .sidebar-section h4 {
+  position: relative; z-index: 1;
   margin: 14px 0 8px; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--ink-dim); font-family: var(--mono); font-weight: 500;
   display: flex; align-items: center; gap: 8px;
@@ -604,18 +614,15 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 }
 .win .notelist-title em { font-style: italic; color: var(--accent); font-weight: 400; }
 .win .notelist-count    { font-family: var(--mono); font-size: 10px; color: var(--ink-dim); letter-spacing: 0.14em; text-transform: uppercase; }
+.win .notelist-tab-btn:hover { background: color-mix(in oklch, var(--ink-low) 8%, transparent) !important; }
 
 /* Search bar */
-.win .notelist-search-wrapper { background: var(--line-soft); transition: background .15s; }
-.win .notelist-search-wrapper:focus-within { background: color-mix(in oklch, var(--accent) 50%, transparent); }
+.win .notelist-search-wrapper { transition: background .15s; }
 .win .notelist-search {
   position: relative; display: flex; align-items: center; gap: 2px;
   background: var(--surface);
   border-radius: 8px; padding: 0 6px 0 32px;
   transition: background .15s;
-}
-.win .notelist-search:focus-within {
-  background: var(--surface-hi);
 }
 .win .notelist-search input {
   flex: 1; min-width: 0; appearance: none; border: 0; outline: none;
@@ -634,6 +641,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 
 /* Date group separator */
 .win .notelist-group-label {
+  position: relative; z-index: 1;
   font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em;
   text-transform: uppercase; color: var(--ink-dim);
   padding: 14px 12px 8px 12px; display: flex; align-items: center; gap: 10px;
@@ -682,6 +690,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   display: flex; align-items: center; gap: 8px;
   font-family: var(--mono); font-size: 9.5px; color: var(--ink-dim);
   letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px;
+  overflow: hidden; white-space: nowrap;
 }
 .win .note-card-meta .tag-pill { font-family: var(--serif-body); font-size: 11px; font-style: italic; letter-spacing: 0; text-transform: none; color: var(--accent); display: inline-block; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; line-height: 1; }
 .win .note-card-meta .tag-pill::before { content: "#"; opacity: 0.6; }
@@ -727,6 +736,10 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   transition: box-shadow .12s; width: calc(100% - 36px);
   position: relative; overflow: hidden;
 }
+.win .notelist-trash-btn:disabled {
+  opacity: 0.38; cursor: not-allowed;
+  box-shadow: 0 0 0 0.5px #922b21;
+}
 
 /* ══════════════════════════════════════════════════════════════════════════════
    EDITOR PANEL
@@ -761,11 +774,23 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   display: flex; align-items: center; gap: 14px;
   font-family: var(--mono); font-size: 10px; color: var(--ink-dim);
   letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 24px;
+  white-space: nowrap; overflow: hidden;
 }
-.win .editor-meta .editor-breadcrumb { color: var(--accent); }
-.win .editor-meta .editor-sep        { width: 3px; height: 3px; border-radius: 50%; background: var(--ink-dim); }
+.win .editor-meta .editor-breadcrumb { background: none; border: none; padding: 0; color: var(--accent); cursor: pointer; font-family: inherit; font-size: inherit; font-weight: inherit; letter-spacing: inherit; text-transform: inherit; transition: opacity .12s; }
+.win .editor-meta .editor-breadcrumb:hover { opacity: 0.7; }
+.win .editor-meta .editor-breadcrumb:disabled { cursor: default; opacity: 1; }
+.win .editor-meta .editor-sep        { font-family: var(--serif-display); font-size: 25px; color: var(--ink-dim); line-height: 0; letter-spacing: 0; text-transform: none; position: relative; top: -3px; margin: 0 -6px; }
 .win .editor-meta .editor-save-status { margin-left: auto; display: flex; align-items: center; gap: 6px; }
-.win .editor-meta .editor-save-dot    { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.win .editor-meta .editor-save-dot         { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: save-glow 2.4s ease-in-out infinite; }
+.win .editor-meta .editor-save-dot.saving  { animation: save-pulse 1.2s ease-in-out infinite; }
+@keyframes save-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+@keyframes save-glow {
+  0%, 100% { box-shadow: 0 0 4px 0px var(--accent); }
+  50%       { box-shadow: 0 0 4px 1px var(--accent); }
+}
 
 /* Title textarea */
 .win .editor-title {
@@ -841,7 +866,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 /* Drop-cap on first letter when enabled via Settings */
 .drop-cap .win .editor-body p:first-child::first-letter {
   font-family: var(--serif-display); font-size: 3.4em; line-height: 0.9;
-  float: left; padding: 0.04em 0.08em 0 0; color: var(--accent); font-weight: 500;
+  float: left; padding: 0.04em 0.08em 0 0; color: var(--accent); font-weight: 500; text-transform: uppercase;
 }
 .drop-cap .win .editor-body li.editor-listitem { display: flow-root; }
 
@@ -900,14 +925,14 @@ html[data-theme="dark"] .input {
   background: color-mix(in srgb, var(--surface) 65%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
-.input:focus { outline: none; border-color: color-mix(in oklch, var(--accent) 55%, transparent); }
+html .input:focus, html .input:focus-within { outline: none; border-color: var(--accent); }
 
 /* Inputs on the dark NightTransition background (landing/auth pages) */
 html .auth-inputs .input {
   background: color-mix(in srgb, black 55%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.12); color: white;
 }
-html .auth-inputs .input:focus { outline: none; border-color: color-mix(in oklch, var(--accent) 55%, transparent); }
+
 .auth-inputs .input:-webkit-autofill,
 .auth-inputs .input:-webkit-autofill:hover,
 .auth-inputs .input:-webkit-autofill:focus {
@@ -921,10 +946,7 @@ html .auth-inputs .input:focus { outline: none; border-color: color-mix(in oklch
   background: var(--surface-hi); border: 0.5px solid var(--line);
   color: var(--ink); font-family: var(--serif-body); font-size: 15px;
 }
-.auth-panel .input:focus {
-  outline: none;
-  border-color: color-mix(in oklch, var(--accent) 55%, transparent);
-}
+
 .auth-panel .input:-webkit-autofill,
 .auth-panel .input:-webkit-autofill:hover,
 .auth-panel .input:-webkit-autofill:focus {

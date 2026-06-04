@@ -2,7 +2,7 @@
 import { BetaBadge } from '../components/ui/BetaBadge';
 import { motion, AnimatePresence } from 'motion/react';
 // @ts-ignore
-import SplitText from '../components/ui/SplitText';
+import SplitText from '../components/ui/GreetingAnimation';
 import { useNoteStore } from '../store/useNoteStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
@@ -404,7 +404,6 @@ const DashboardPage = () => {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.14 }}
                 >
-                  <div className="glyph">❦</div>
                   <h3>Select a note</h3>
                   <p>Open a note from the list or create a new one.</p>
                 </motion.div>

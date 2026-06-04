@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
+import { useMagicHover } from '../../hooks/useMagicHover';
 import clsx from 'clsx';
 
 export interface ContextMenuItem {
@@ -21,6 +22,7 @@ interface ContextMenuProps {
 
 const ContextMenu = ({ isOpen, position, onClose, items, minWidth = '160px' }: ContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
+  const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 6, ref: menuRef });
 
   useLayoutEffect(() => {
     if (!isOpen || !menuRef.current) return;
@@ -70,14 +72,17 @@ const ContextMenu = ({ isOpen, position, onClose, items, minWidth = '160px' }: C
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
       className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
-      style={{ left: position.x, top: position.y, minWidth, transformOrigin: 'top left' }}
+      style={{ left: position.x, top: position.y, minWidth, transformOrigin: 'top left', position: 'fixed' }}
     >
+      {Indicator}
       {items.map((item, i) => (
         <button
           key={i}
           onClick={() => { item.onClick(); onClose(); }}
+          onMouseEnter={onItemEnter}
+          onMouseLeave={onItemLeave}
           className={clsx(
-            'w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)',
+            'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-10',
             item.variant === 'danger' ? 'text-red-400' : 'text-(--ink)'
           )}
         >

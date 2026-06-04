@@ -112,7 +112,7 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
           <div className="flex gap-2">
             <MagicInput
               type="text"
-              className="modal-input"
+              className="w-full rounded-xl border border-(--line) bg-(--surface) px-3 py-2 text-sm text-(--ink) placeholder:text-(--ink-dim) focus:outline-none"
               placeholder="Email or username"
               value={input}
               onChange={e => setInput(e.target.value)}

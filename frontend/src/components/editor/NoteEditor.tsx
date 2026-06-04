@@ -1,7 +1,7 @@
-﻿import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { useMagicHover } from '../../hooks/useMagicHover';
 import TurndownService from 'turndown';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { getNoteTitle } from '../noteList/noteListUtils';
@@ -25,7 +25,6 @@ import {
   ArchiveRestore,
   RotateCcw,
   X,
-  MoreHorizontal,
   Check,
   Maximize2,
   Minimize2,
@@ -70,6 +69,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const [addingTag, setAddingTag] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  const [inlineTagPopupPos, setInlineTagPopupPos] = useState<{ x: number; y: number } | null>(null);
 
   const [title, setTitle] = useState(note.title ?? '');
   const titleRef = useRef(note.title ?? '');
@@ -93,17 +93,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     setIsSaving(true);
   }, []);
   const [folderMenuPos, setFolderMenuPos] = useState<{ x: number; y: number; anchorTop: number } | null>(null);
-  const [tagMenuPos, setTagMenuPos] = useState<{ x: number; y: number; anchorTop: number } | null>(null);
   const [exportMenuPos, setExportMenuPos] = useState<{ x: number; y: number; anchorTop: number } | null>(null);
 
-  // Toolbar overflow
-  const toolbarRef = useRef<HTMLDivElement>(null);
   const leftGroupRef = useRef<HTMLDivElement>(null);
   const rightGroupRef = useRef<HTMLDivElement>(null);
   const { onItemEnter: onLeftEnter, onItemLeave: onLeftLeave, Indicator: LeftIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: leftGroupRef });
   const { onItemEnter: onRightEnter, onItemLeave: onRightLeave, Indicator: RightIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: rightGroupRef });
-  const [isCompact, setIsCompact] = useState(false);
-  const [showOverflow, setShowOverflow] = useState(false);
   const [focusWritingMode, setFocusWritingMode] = useState(false);
   const [showExitBtn, setShowExitBtn] = useState(false);
   const exitBtnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,9 +125,13 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   // Lokale Kollaboratoren-Liste – wird nach Einladungen aktualisiert
   const [collaborators, setCollaborators] = useState(note.collaborators ?? []);
 
-  const overflowPopupRef = useRef<HTMLDivElement>(null);
   const folderMenuRef = useRef<HTMLDivElement>(null);
-  const tagMenuRef = useRef<HTMLDivElement>(null);
+  const tagInputWrapperRef = useRef<HTMLDivElement>(null);
+  const inlineTagPopupRef = useRef<HTMLDivElement>(null);
+  const prevInlineTagHeightRef = useRef<number>(0);
+  const inlineTagTransitionEndRef = useRef<(() => void) | null>(null);
+  const { onItemEnter: onFolderEnter, onItemLeave: onFolderLeave, Indicator: FolderIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 6, ref: folderMenuRef });
+  const { onItemEnter: onInlineTagEnter, onItemLeave: onInlineTagLeave, Indicator: InlineTagIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 6, ref: inlineTagPopupRef });
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -157,30 +156,67 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     setCollaborators(note.collaborators ?? []);
   }, [note.id]);
 
-  // ResizeObserver: two breakpoints for left and right overflow
-  useEffect(() => {
-    const el = toolbarRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver(([entry]) => {
-      const w = entry.contentRect.width;
-      setIsCompact(w < 480);
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   // Close menus on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setFolderMenuPos(null);
-        setTagMenuPos(null);
         setExportMenuPos(null);
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, []);
+
+  useEffect(() => {
+    if (addingTag && tagInputWrapperRef.current) {
+      const rect = tagInputWrapperRef.current.getBoundingClientRect();
+      setInlineTagPopupPos({ x: rect.left, y: rect.bottom + 6 });
+    } else {
+      setInlineTagPopupPos(null);
+    }
+  }, [addingTag]);
+
+  useLayoutEffect(() => {
+    const el = inlineTagPopupRef.current;
+    if (!el || !prevInlineTagHeightRef.current) return;
+    const newHeight = el.scrollHeight;
+    if (Math.abs(newHeight - prevInlineTagHeightRef.current) < 2) return;
+
+    if (inlineTagTransitionEndRef.current) {
+      el.removeEventListener('transitionend', inlineTagTransitionEndRef.current);
+      inlineTagTransitionEndRef.current = null;
+    }
+
+    el.style.transition = 'none';
+    el.style.height = `${prevInlineTagHeightRef.current}px`;
+    el.style.overflow = 'hidden';
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.style.transition = 'height .3s cubic-bezier(.2,.8,.2,1)';
+        el.style.height = `${newHeight}px`;
+
+        const onEnd = () => {
+          el.style.height = '';
+          el.style.transition = '';
+          el.style.overflow = '';
+          inlineTagTransitionEndRef.current = null;
+        };
+        inlineTagTransitionEndRef.current = onEnd;
+        el.addEventListener('transitionend', onEnd, { once: true });
+      });
+    });
+  }, [newTag]);
+
+  const inlineTagSuggestions = useMemo(() =>
+    tags.filter(t =>
+      !note.tags?.some(nt => nt.id === t.id) &&
+      (newTag.length === 0 || t.name.toLowerCase().startsWith(newTag.toLowerCase()))
+    ),
+    [tags, note.tags, newTag]
+  );
 
   // Combined auto-save: sends content + title together to avoid race conditions
   useEffect(() => {
@@ -367,22 +403,13 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
   const openFolderMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setTagMenuPos(null);
     setExportMenuPos(null);
     setFolderMenuPos(prev => prev ? null : { x: rect.left, y: rect.bottom + 4, anchorTop: rect.top });
-  };
-
-  const openTagMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setFolderMenuPos(null);
-    setExportMenuPos(null);
-    setTagMenuPos(prev => prev ? null : { x: rect.left, y: rect.bottom + 4, anchorTop: rect.top });
   };
 
   const openExportMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setFolderMenuPos(null);
-    setTagMenuPos(null);
     setExportMenuPos(prev => prev ? null : { x: rect.right - 220, y: rect.bottom + 4, anchorTop: rect.top });
   };
 
@@ -403,22 +430,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     menu.style.top  = `${finalY}px`;
     menu.style.left = `${finalX}px`;
   }, [folderMenuPos]);
-
-  useLayoutEffect(() => {
-    if (!tagMenuPos || !tagMenuRef.current) return;
-    const menu = tagMenuRef.current;
-    const { width, height } = menu.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const finalY = tagMenuPos.y + height > vh - MENU_MARGIN
-      ? Math.max(MENU_MARGIN, tagMenuPos.anchorTop - height - 4)
-      : tagMenuPos.y;
-    const finalX = tagMenuPos.x + width > vw - MENU_MARGIN
-      ? Math.max(MENU_MARGIN, vw - MENU_MARGIN - width)
-      : tagMenuPos.x;
-    menu.style.top  = `${finalY}px`;
-    menu.style.left = `${finalX}px`;
-  }, [tagMenuPos]);
 
   useLayoutEffect(() => {
     if (!exportMenuPos || !exportMenuRef.current) return;
@@ -444,13 +455,13 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const titleHeader = (
     <>
       <div className="editor-meta">
-        {currentFolder && <span className="editor-breadcrumb">{currentFolder.name}</span>}
-        {currentFolder && <span className="editor-sep" />}
+        <button className="editor-breadcrumb" onClick={openFolderMenu} disabled={isInTrash}>{currentFolder ? currentFolder.name : 'All Notes'}</button>
+        <span className="editor-sep">·</span>
         <span>{formatRelativeDate(note.updatedAt)}</span>
         {!isInTrash && (
           <span className="editor-save-status">
             {isSaving
-              ? <><span className="editor-save-dot" style={{ background: 'var(--ink-dim)', boxShadow: 'none' }} /> Saving…</>
+              ? <><span className="editor-save-dot saving" style={{ background: 'var(--ink-dim)', boxShadow: 'none' }} /> Saving…</>
               : <><span className="editor-save-dot" /> Saved</>
             }
           </span>
@@ -490,68 +501,46 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             </span>
           ))}
 {!isInTrash && (note.tags?.length ?? 0) < 4 && (
-            addingTag ? (() => {
-              const tagSuggestions = newTag.length > 0
-                ? tags.filter(t =>
-                    !note.tags?.some(nt => nt.id === t.id) &&
-                    t.name.toLowerCase().startsWith(newTag.toLowerCase())
-                  )
-                : [];
-              return (
-                <div className="editor-tag-wrapper">
-                  <input
-                    autoFocus
-                    className="editor-tag-input"
-                    value={newTag}
-                    maxLength={20}
-                    onChange={e => { setNewTag(e.target.value); setActiveSuggestion(-1); }}
-                    onBlur={submitInlineTag}
-                    onKeyDown={e => {
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        setActiveSuggestion(i => Math.min(i + 1, tagSuggestions.length - 1));
-                      } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        setActiveSuggestion(i => Math.max(i - 1, -1));
-                      } else if (e.key === 'Tab' && tagSuggestions.length > 0) {
-                        e.preventDefault();
-                        setNewTag(tagSuggestions[0].name);
-                        setActiveSuggestion(-1);
-                      } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (activeSuggestion >= 0 && tagSuggestions[activeSuggestion]) {
-                          submitInlineTagWithName(tagSuggestions[activeSuggestion].name);
-                        } else {
-                          submitInlineTag();
-                        }
-                      } else if (e.key === 'Escape') {
-                        setAddingTag(false);
-                        setNewTag('');
-                        setActiveSuggestion(-1);
+            addingTag ? (
+              <div ref={tagInputWrapperRef} className="editor-tag-wrapper">
+                <input
+                  autoFocus
+                  className="editor-tag-input"
+                  value={newTag}
+                  maxLength={20}
+                  onChange={e => {
+                    if (inlineTagPopupRef.current) prevInlineTagHeightRef.current = inlineTagPopupRef.current.offsetHeight;
+                    setNewTag(e.target.value);
+                    setActiveSuggestion(-1);
+                  }}
+                  onBlur={submitInlineTag}
+                  onKeyDown={e => {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setActiveSuggestion(i => Math.min(i + 1, inlineTagSuggestions.length - 1));
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setActiveSuggestion(i => Math.max(i - 1, -1));
+                    } else if (e.key === 'Tab' && inlineTagSuggestions.length > 0) {
+                      e.preventDefault();
+                      setNewTag(inlineTagSuggestions[0].name);
+                      setActiveSuggestion(-1);
+                    } else if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (activeSuggestion >= 0 && inlineTagSuggestions[activeSuggestion]) {
+                        submitInlineTagWithName(inlineTagSuggestions[activeSuggestion].name);
+                      } else {
+                        submitInlineTag();
                       }
-                    }}
-                  />
-                  {tagSuggestions.length > 0 && (
-                    <div className="editor-tag-suggestions">
-                      {tagSuggestions.map((tag, i) => (
-                        <button
-                          key={tag.id}
-                          tabIndex={-1}
-                          className={clsx('editor-tag-suggestion', i === activeSuggestion && 'active')}
-                          onMouseDown={e => {
-                            e.preventDefault();
-                            submitInlineTagWithName(tag.name);
-                          }}
-                        >
-                          <TagIcon style={{ width: 10, height: 10, color: tag.color, flexShrink: 0 }} />
-                          {tag.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })() : (
+                    } else if (e.key === 'Escape') {
+                      setAddingTag(false);
+                      setNewTag('');
+                      setActiveSuggestion(-1);
+                    }
+                  }}
+                />
+              </div>
+            ) : (
               <button type="button" className="editor-tag-add" onClick={() => setAddingTag(true)}>
                 + Add tag
               </button>
@@ -560,35 +549,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         </div>
       </div>
     </>
-  );
-
-  // Reusable button renderers (just the trigger, menu rendered via portal)
-  const folderButton = () => (
-    <button
-      onClick={openFolderMenu}
-      onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
-      className={clsx(
-        'icon-btn-md rounded-lg transition-colors',
-        folderMenuPos ? 'text-(--ink)' : ''
-      )}
-      title="Move to folder"
-    >
-      <FolderOpen className="w-4 h-4" />
-    </button>
-  );
-
-  const tagButton = () => (
-    <button
-      onClick={openTagMenu}
-      onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
-      className={clsx(
-        'icon-btn-md rounded-lg transition-colors',
-        tagMenuPos ? 'text-(--accent)' : ''
-      )}
-      title="Add tag"
-    >
-      <TagIcon className="w-4 h-4" />
-    </button>
   );
 
   const handleToolbarTags = async (tagIds: string[]) => {
@@ -620,7 +580,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         transition={{ duration: 0.18, ease: 'easeOut' }}
       >
             <div
-              ref={toolbarRef}
               className="relative flex h-11 items-center justify-between bg-transparent px-6 sm:px-12 pb-5"
             >
               {/* Left side */}
@@ -668,24 +627,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                       <Archive className="w-4 h-4" />
                     </button>
 
-                    {!isCompact ? (
-                      <>
-                        {folderButton()}
-                        {tagButton()}
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => setShowOverflow(v => !v)}
-                        onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
-                        className={clsx(
-                          'icon-btn-md rounded-lg transition-colors shrink-0 mr-2',
-                          showOverflow ? 'text-(--accent)' : ''
-                        )}
-                        title="More options"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    )}
                   </>
                 )}
 
@@ -741,16 +682,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               </div>
             </div>
 
-            {/* Compact overflow popup */}
-            {isCompact && !isInTrash && !isArchived && showOverflow && (
-              <>
-                <div className="fixed inset-0" onClick={() => setShowOverflow(false)} />
-                <div ref={overflowPopupRef} className="absolute top-full left-10 mt-1 glass-popup rounded-xl shadow-xl p-2 z-50 flex gap-1">
-                  {folderButton()}
-                  {tagButton()}
-                </div>
-              </>
-            )}
       </motion.div>
 
       <div
@@ -806,18 +737,28 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
           })()}
 
       {/* Folder context menu — portal to document.body */}
-      {folderMenuPos && createPortal(
+      {createPortal(
         <>
-          <div className="fixed inset-0" onClick={() => setFolderMenuPos(null)} />
-          <div
+          {folderMenuPos && <div className="fixed inset-0" onClick={() => setFolderMenuPos(null)} />}
+          <AnimatePresence>
+            {folderMenuPos && (
+          <motion.div
+            key="folder-popup"
             ref={folderMenuRef}
+            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -4 }}
+            transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
             className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
-            style={{ left: folderMenuPos.x, top: folderMenuPos.y, minWidth: '200px' }}
+            style={{ left: folderMenuPos.x, top: folderMenuPos.y, minWidth: '200px', transformOrigin: 'top left' }}
           >
+            {FolderIndicator}
             <button
               onClick={() => handleMoveToFolder(null)}
+              onMouseEnter={onFolderEnter}
+              onMouseLeave={onFolderLeave}
               className={clsx(
-                'w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)',
+                'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-10',
                 !note.folderId ? 'text-(--ink)' : ''
               )}
             >
@@ -829,8 +770,10 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               <button
                 key={folder.id}
                 onClick={() => handleMoveToFolder(folder.id)}
+                onMouseEnter={onFolderEnter}
+                onMouseLeave={onFolderLeave}
                 className={clsx(
-                  'w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)',
+                  'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-10',
                   note.folderId === folder.id ? 'text-(--ink)' : ''
                 )}
               >
@@ -839,7 +782,9 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 {note.folderId === folder.id && <Check className="w-3 h-3 text-(--accent) shrink-0" />}
               </button>
             ))}
-          </div>
+          </motion.div>
+            )}
+          </AnimatePresence>
         </>,
         getModalPortalRoot()
       )}
@@ -944,35 +889,40 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         getModalPortalRoot()
       )}
 
-      {tagMenuPos && createPortal(
-        <>
-          <div className="fixed inset-0" onClick={() => setTagMenuPos(null)} />
-          <div
-            ref={tagMenuRef}
-            className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
-            style={{ left: tagMenuPos.x, top: tagMenuPos.y, minWidth: '200px' }}
-          >
-            {tags.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-(--ink-mid) italic">No tags available</div>
-            ) : tags.map((tag) => {
-              const isSelected = note.tags?.some(t => t.id === tag.id);
-              return (
+
+      {createPortal(
+        <AnimatePresence>
+          {inlineTagPopupPos && addingTag && inlineTagSuggestions.length > 0 && (
+            <motion.div
+              key="inline-tag-popup"
+              ref={inlineTagPopupRef}
+              initial={{ opacity: 0, scale: 0.95, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -4 }}
+              transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
+              style={{ left: inlineTagPopupPos.x, top: inlineTagPopupPos.y, minWidth: '180px', zIndex: 50, transformOrigin: 'top left' }}
+            >
+              {InlineTagIndicator}
+              {inlineTagSuggestions.map((tag, i) => (
                 <button
                   key={tag.id}
-                  onClick={() => handleToggleTag(tag.id)}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => submitInlineTagWithName(tag.name)}
+                  onMouseEnter={onInlineTagEnter}
+                  onMouseLeave={onInlineTagLeave}
                   className={clsx(
-                    'w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)',
-                    isSelected ? 'text-(--ink)' : ''
+                    'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-10',
+                    i === activeSuggestion ? 'text-(--ink)' : ''
                   )}
                 >
                   <TagIcon className="w-4 h-4 shrink-0" style={{ color: tag.color }} />
                   <span className="flex-1 text-left">{tag.name}</span>
-                  {isSelected && <Check className="w-3 h-3 text-(--accent) shrink-0" />}
                 </button>
-              );
-            })}
-          </div>
-        </>,
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>,
         getModalPortalRoot()
       )}
     </motion.div>
