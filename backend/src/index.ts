@@ -17,7 +17,7 @@ import folderRoutes from './routes/folder.routes';
 import tagRoutes from './routes/tag.routes';
 import attachmentRoutes from './routes/attachment.routes';
 import uploadRoutes from './routes/upload.routes';
-import shareRoutes from './routes/share.routes';
+import collaboratorRoutes from './routes/collaborator.routes';
 import checkoutRoutes from './routes/checkout.routes';
 import { handleWebhook } from './controllers/checkout.controller';
 
@@ -67,7 +67,7 @@ app.use('/api/folders', folderRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/attachments', attachmentRoutes);
 app.use('/api/upload', uploadRoutes);
-app.use('/api', shareRoutes);
+app.use('/api', collaboratorRoutes);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
@@ -110,14 +110,19 @@ httpServer.on('upgrade', async (request, socket: Duplex, head: Buffer) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    // Owner check
     const note = await prisma.note.findFirst({ where: { id: noteId, userId: decoded.userId } });
-    if (note) authorized = true;
-  } catch {
-    // Not a valid JWT – try share token
-    const share = await prisma.noteShare.findUnique({ where: { token } });
-    if (share && share.noteId === noteId) {
-      if (!share.expiresAt || share.expiresAt > new Date()) authorized = true;
+    if (note) {
+      authorized = true;
+    } else {
+      // Accepted collaborator check
+      const collab = await prisma.noteCollaborator.findFirst({
+        where: { noteId, userId: decoded.userId, status: 'accepted' },
+      });
+      if (collab) authorized = true;
     }
+  } catch {
+    // Invalid JWT → no access
   }
 
   if (!authorized) {

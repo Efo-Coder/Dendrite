@@ -344,6 +344,7 @@ html.is-theme-switching {
     background: var(--surface-hi); color: var(--accent);
     border-color: color-mix(in oklch, var(--accent) 35%, transparent);
   }
+
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -1279,6 +1280,12 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 .react-colorful__saturation { border-radius: 6px; border-bottom: none; }
 .react-colorful__hue { height: 10px; border-radius: 9999px; margin-top: 8px; }
 .react-colorful__pointer { width: 16px; height: 16px; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LANDING PAGE
+══════════════════════════════════════════════════════════════════════════════ */
+
+.shiny-text { display: inline-block; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
    CUSTOM CURSOR  —  only on pointer devices (desktop)

@@ -9,6 +9,7 @@ export const noteService = {
     favorite?: boolean;
     archived?: boolean;
     deleted?: boolean;
+    shared?: boolean;
   }): Promise<Note[]> {
     const params = new URLSearchParams();
     if (filters?.folderId) params.append('folderId', filters.folderId);
@@ -17,6 +18,7 @@ export const noteService = {
     if (filters?.favorite !== undefined) params.append('favorite', String(filters.favorite));
     if (filters?.archived !== undefined) params.append('archived', String(filters.archived));
     if (filters?.deleted !== undefined) params.append('deleted', String(filters.deleted));
+    if (filters?.shared) params.append('shared', 'true');
 
     const response = await api.get<{ notes: Note[] }>(`/notes?${params.toString()}`);
     return response.data.notes;

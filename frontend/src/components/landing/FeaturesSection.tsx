@@ -158,7 +158,8 @@ const features: Feature[] = [
     id: "2",
     titleUp: "Smart",
     titleDown: "Organization",
-    image: "/img/branding/dendrites.webp",
+    image: "/img/branding/mood.webp",
+    offset: [0.13, -0.1],
     description: "The more you write, the more you need structure. Dendrite keeps every note findable before it becomes noise.",
   },
   {
@@ -172,8 +173,15 @@ const features: Feature[] = [
 
 function FeatureOverlay({ feature, onClose }: { feature: Feature | null; onClose: () => void }) {
   useEffect(() => {
-    document.body.style.overflow = feature ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (!feature) return;
+    const y = window.scrollY;
+    document.documentElement.style.overflowY = "scroll";
+    Object.assign(document.body.style, { position: "fixed", top: `-${y}px`, width: "100%" });
+    return () => {
+      document.documentElement.style.overflowY = "";
+      Object.assign(document.body.style, { position: "", top: "", width: "" });
+      window.scrollTo(0, y);
+    };
   }, [feature]);
 
   useEffect(() => {
@@ -202,7 +210,7 @@ function FeatureOverlay({ feature, onClose }: { feature: Feature | null; onClose
             <img
               src={feature.image}
               alt={`${feature.titleUp} ${feature.titleDown}`}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-fill"
             />
             <div className="absolute inset-0 bg-black/40" />
           </motion.div>

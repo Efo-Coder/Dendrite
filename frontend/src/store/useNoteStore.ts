@@ -51,7 +51,7 @@ export const useNoteStore = create<NoteState>((set) => ({
   currentNote: null,
   isLoading: false,
   error: null,
-  noteCounts: { all: 0, favorites: 0, archive: 0, trash: 0 },
+  noteCounts: { all: 0, favorites: 0, archive: 0, trash: 0, shared: 0, pendingInvitations: 0 },
 
   fetchNoteCounts: async () => {
     try {

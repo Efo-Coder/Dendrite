@@ -93,10 +93,10 @@ export function SocialProofSection() {
           {/* Image column — hidden on mobile to avoid layout issues */}
           <div className="hidden md:flex lg:row-span-2 flex-col gap-4">
             <div className="relative flex-1 min-h-50 w-full overflow-hidden rounded-2xl">
-              <img src="/img/branding/ink.webp" alt="Feature showcase" className="w-full h-full object-cover" />
+              <img src="/img/branding/notebook.webp" alt="Feature showcase" className="w-full h-full object-cover" />
             </div>
             <div className="relative flex-1 min-h-45 w-full overflow-hidden rounded-full">
-              <img src="/img/mock/mock-project2.webp" alt="Feature showcase" className="w-full h-full object-cover" />
+              <img src="/img/branding/testimonials.webp" alt="Feature showcase" className="w-full h-full object-cover" />
             </div>
           </div>
 
@@ -108,12 +108,12 @@ export function SocialProofSection() {
                 Dendrite changed how I capture ideas. It&apos;s the first notes app that feels as thoughtful as the ideas I&apos;m trying to preserve.
               </blockquote>
               <div className="mt-6">
-                <p className="font-semibold text-foreground">Mariah Carey</p>
-                <p className="text-sm text-foreground/60">Psychotherapist · Beta User</p>
+                <p className="font-semibold text-foreground">Ryan Mitchell</p>
+                <p className="text-sm text-foreground/60">Product Designer · Beta User</p>
               </div>
             </div>
             <div className="flex items-center justify-between mt-auto pt-8">
-              <span className="text-xl font-semibold text-foreground">dendrite</span>
+              <span className="text-xl font-semibold text-foreground">Dendrite</span>
               <Link
                 to="/register"
                 className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center hover:bg-foreground hover:text-background transition-colors"
@@ -176,7 +176,7 @@ export function SocialProofSection() {
               Dendrite gives your ideas structure, speed, and a home they deserve — all in one beautifully crafted app.
             </p>
             <div className="flex items-center justify-between mt-auto pt-6">
-              <span className="text-xl font-semibold text-foreground">dendrite · 2026</span>
+              <span className="text-xl font-semibold text-foreground">Dendrite · 2026</span>
               <Link
                 to="/register"
                 className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center hover:bg-foreground hover:text-background transition-colors"

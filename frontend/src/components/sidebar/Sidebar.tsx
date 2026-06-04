@@ -3,7 +3,7 @@ import { useMagicHover } from '../../hooks/useMagicHover';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url: string) => url.startsWith('http') ? url : `${API_URL}${url}`;
-import { FileText, Star, Folder, Trash2, Archive, Plus, ChevronDown, Edit } from 'lucide-react';
+import { FileText, Star, Folder, Trash2, Archive, Plus, ChevronDown, Edit, Users } from 'lucide-react';
 import { Icons } from '../ui/Icons';
 import { FOLDER_ICONS } from '../../lib/folderIcons';
 import { useFolderStore } from '../../store/useFolderStore';
@@ -121,10 +121,12 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   };
 
   const menuItems = [
-    { icon: FileText, label: 'All Notes',  view: 'all'       as ViewType, onClick: () => onViewChange('all'),       count: noteCounts.all },
-    { icon: Star,     label: 'Favorites',  view: 'favorites' as ViewType, onClick: () => onViewChange('favorites'), count: noteCounts.favorites },
-    { icon: Archive,  label: 'Archive',    view: 'archive'   as ViewType, onClick: () => onViewChange('archive'),   count: noteCounts.archive },
-    { icon: Trash2,   label: 'Trash',      view: 'trash'     as ViewType, onClick: () => onViewChange('trash'),     count: noteCounts.trash },
+    { icon: FileText, label: 'All Notes',         view: 'all'       as ViewType, onClick: () => onViewChange('all'),       count: noteCounts.all,       badge: 0 },
+    { icon: Star,     label: 'Favorites',          view: 'favorites' as ViewType, onClick: () => onViewChange('favorites'), count: noteCounts.favorites,  badge: 0 },
+    { icon: Archive,  label: 'Archive',            view: 'archive'   as ViewType, onClick: () => onViewChange('archive'),   count: noteCounts.archive,    badge: 0 },
+    { icon: Trash2,   label: 'Trash',              view: 'trash'     as ViewType, onClick: () => onViewChange('trash'),     count: noteCounts.trash,      badge: 0 },
+    // Einladungs-Badge zeigt offene Einladungen an
+    { icon: Users,    label: 'Shared with me',     view: 'shared'    as ViewType, onClick: () => onViewChange('shared'),    count: noteCounts.shared,     badge: noteCounts.pendingInvitations },
   ];
 
   return (
@@ -163,7 +165,13 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
                     >
                       <span className="item-icon"><Icon style={{ width: 15, height: 15 }} /></span>
                       {item.label}
-                      {item.count > 0 && <span className="item-count">{item.count}</span>}
+                      {/* Einladungs-Badge (offene Einladungen) */}
+                      {item.badge > 0 && (
+                        <span style={{ marginLeft: 'auto', minWidth: 16, height: 16, borderRadius: 8, background: 'var(--accent)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                          {item.badge}
+                        </span>
+                      )}
+                      {item.badge === 0 && item.count > 0 && <span className="item-count">{item.count}</span>}
                     </button>
                   </li>
                 );

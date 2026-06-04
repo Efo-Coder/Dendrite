@@ -12,7 +12,6 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
-import SharedNotePage from './pages/SharedNotePage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import PrivacyPage from './pages/PrivacyPage';
@@ -42,7 +41,6 @@ function RouterContent() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-        <Route path="/shared/:token" element={<SharedNotePage />} />
         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />

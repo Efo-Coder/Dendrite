@@ -7,6 +7,10 @@ const NOTE_INCLUDE = {
   folder: true,
   attachments: true,
   noteTags: { include: { tag: true }, orderBy: { createdAt: 'asc' as const } },
+  collaborators: {
+    where: { status: 'accepted' },
+    select: { id: true, userId: true, role: true, status: true, user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+  },
 };
 
 function transformNote(note: any) {
@@ -14,9 +18,21 @@ function transformNote(note: any) {
   return { ...rest, tags: (noteTags ?? []).map((nt: any) => nt.tag) };
 }
 
+
 export const getAllNotes = async (req: AuthRequest, res: Response) => {
   try {
-    const { folderId, tagId, pinned, favorite, archived, deleted } = req.query;
+    const { folderId, tagId, pinned, favorite, archived, deleted, shared } = req.query;
+
+    // Shared-with-me view
+    if (shared === 'true') {
+      const collabs = await prisma.noteCollaborator.findMany({
+        where: { userId: req.userId!, status: 'accepted' },
+        include: { note: { include: NOTE_INCLUDE } },
+        orderBy: { acceptedAt: 'desc' },
+      });
+      const notes = collabs.map((c: any) => transformNote(c.note));
+      return res.json({ notes });
+    }
 
     const where: any = { userId: req.userId };
 
@@ -90,13 +106,15 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
 export const getNoteCounts = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId;
-    const [all, favorites, archive, trash] = await Promise.all([
+    const [all, favorites, archive, trash, shared, pendingInvitations] = await Promise.all([
       prisma.note.count({ where: { userId, isArchived: false, isDeleted: false } }),
       prisma.note.count({ where: { userId, isFavorite: true, isArchived: false, isDeleted: false } }),
       prisma.note.count({ where: { userId, isArchived: true, isDeleted: false } }),
       prisma.note.count({ where: { userId, isDeleted: true } }),
+      prisma.noteCollaborator.count({ where: { userId: userId!, status: 'accepted' } }),
+      prisma.noteCollaborator.count({ where: { userId: userId!, status: 'pending' } }),
     ]);
-    return res.json({ all, favorites, archive, trash });
+    return res.json({ all, favorites, archive, trash, shared, pendingInvitations });
   } catch (error) {
     return res.status(500).json({ error: 'Fehler beim Abrufen der Counts' });
   }
@@ -107,7 +125,13 @@ export const getNoteById = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
 
     const raw = await prisma.note.findFirst({
-      where: { id, userId: req.userId },
+      where: {
+        id,
+        OR: [
+          { userId: req.userId },
+          { collaborators: { some: { userId: req.userId!, status: 'accepted' } } },
+        ],
+      },
       include: NOTE_INCLUDE,
     });
 
@@ -153,12 +177,20 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
     const { title, content, folderId, tags } = req.body;
 
     const existingNote = await prisma.note.findFirst({
-      where: { id, userId: req.userId },
+      where: {
+        id,
+        OR: [
+          { userId: req.userId },
+          { collaborators: { some: { userId: req.userId!, status: 'accepted' } } },
+        ],
+      },
     });
 
     if (!existingNote) {
       return res.status(404).json({ error: 'Notiz nicht gefunden' });
     }
+
+    const isOwner = existingNote.userId === req.userId;
 
     if (content !== undefined && existingNote.content) {
       const oldUrls = extractUploadUrls(existingNote.content);
@@ -167,7 +199,7 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
       deleteFiles(removed);
     }
 
-    if (tags !== undefined) {
+    if (isOwner && tags !== undefined) {
       const existing = await prisma.noteTag.findMany({ where: { noteId: id }, select: { tagId: true } });
       const existingIds = existing.map(e => e.tagId);
       const toAdd = (tags as string[]).filter(tid => !existingIds.includes(tid));
@@ -184,7 +216,7 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
       data: {
         title: title !== undefined ? title : existingNote.title,
         content: content !== undefined ? content : existingNote.content,
-        folderId: folderId !== undefined ? folderId : existingNote.folderId,
+        folderId: isOwner && folderId !== undefined ? folderId : existingNote.folderId,
       },
       include: NOTE_INCLUDE,
     });

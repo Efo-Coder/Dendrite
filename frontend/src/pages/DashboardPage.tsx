@@ -13,6 +13,7 @@ import Sidebar from '../components/sidebar/Sidebar';
 import NoteList, { type SortOption } from '../components/noteList/NoteList';
 import NoteEditor from '../components/editor/NoteEditor';
 import EmptyTrashModal from '../components/modals/EmptyTrashModal';
+import InvitationsPanel from '../components/modals/InvitationsPanel';
 import SettingsModal from '../components/modals/SettingsModal';
 import UserProfileModal from '../components/modals/UserProfileModal';
 import { User } from 'lucide-react';
@@ -38,6 +39,7 @@ function buildFilters(view: ViewType, folderId?: string, tagId?: string): NoteFi
     case 'trash':     return { deleted: true };
     case 'folder':    return { folderId, archived: false, deleted: false };
     case 'tag':       return { tagId, archived: false, deleted: false };
+    case 'shared':    return { shared: true } as any;
   }
 }
 
@@ -92,6 +94,7 @@ const DashboardPage = () => {
       case 'trash':     return 'Trash';
       case 'folder':    return folders.find(f => f.id === selectedFolderId)?.name || 'Folder';
       case 'tag':       return tags.find(t => t.id === selectedTagId)?.name || 'Tag';
+      case 'shared':    return 'Shared with me';
     }
   }, [currentView, selectedFolderId, selectedTagId, folders, tags]);
 
@@ -102,6 +105,7 @@ const DashboardPage = () => {
       currentView === 'favorites' ? 'favorites' :
       currentView === 'archive' ? 'archive' :
       currentView === 'trash' ? 'trash' :
+      currentView === 'shared' ? 'shared' :
       'all';
     const contextId =
       currentView === 'folder' ? selectedFolderId :
@@ -337,6 +341,10 @@ const DashboardPage = () => {
             className={clsx('notelist-panel', 'transition-opacity duration-300')}
             style={{ opacity: isTransitioning ? 0 : 1 }}
           >
+            {/* Einladungs-Panel im Shared-View */}
+            {currentView === 'shared' && (
+              <InvitationsPanel onChanged={refreshCurrentView} />
+            )}
             <NoteList
               notes={notes}
               currentNote={currentNote}
@@ -362,8 +370,7 @@ const DashboardPage = () => {
               onSortChange={handleSortChange}
               onCreateNote={
                 (currentView === 'all' || currentView === 'folder' || currentView === 'tag')
-                  ? handleCreateNote
-                  : undefined
+                  ? handleCreateNote : undefined
               }
               isCreating={isCreating}
               onEmptyTrash={currentView === 'trash' ? () => setShowEmptyTrashModal(true) : undefined}

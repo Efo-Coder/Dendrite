@@ -1,10 +1,37 @@
-export type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag';
+export type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag' | 'shared';
 
 export interface NoteCounts {
   all: number;
   favorites: number;
   archive: number;
   trash: number;
+  shared: number;
+  pendingInvitations: number;
+}
+
+export interface Collaborator {
+  id: string;
+  userId: string;
+  role: string;
+  status: string;
+  invitedAt: string;
+  acceptedAt?: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl: string | null;
+  };
+}
+
+export interface Invitation {
+  id: string;
+  noteId: string;
+  userId: string;
+  status: string;
+  invitedAt: string;
+  note: { id: string; title?: string; content: string };
+  noteOwner: { id: string; name: string | null; email: string; avatarUrl: string | null } | null;
 }
 
 export interface User {
@@ -35,6 +62,7 @@ export interface Note {
   folder?: Folder;
   tags?: Tag[];
   attachments?: Attachment[];
+  collaborators?: Collaborator[];
 }
 
 export interface Folder {

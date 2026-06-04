@@ -14,7 +14,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useToast } from '../ui/ToastContainer';
 import RichTextToolbar from './RichTextToolbar';
 import LexicalEditorWrapper from './LexicalEditorWrapper';
-import ShareNoteModal from '../modals/ShareNoteModal';
+import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
 import { Icons } from '../ui/Icons';
 import {
   Pin,
@@ -126,8 +126,9 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   }, [focusWritingMode]);
   const [showToolbarTagModal, setShowToolbarTagModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  // Lokale Kollaboratoren-Liste – wird nach Einladungen aktualisiert
+  const [collaborators, setCollaborators] = useState(note.collaborators ?? []);
 
   const overflowPopupRef = useRef<HTMLDivElement>(null);
   const folderMenuRef = useRef<HTMLDivElement>(null);
@@ -147,12 +148,13 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   }, [note.id]);
 
   useEffect(() => {
-    // Also reset refs so rapid switches don't carry stale data into the next cleanup.
+    // Refs und State bei Notiz-Wechsel zurücksetzen
     contentRef.current = note.content;
     setContent(note.content);
     titleRef.current = note.title ?? '';
     lastSavedTitleRef.current = note.title ?? '';
     setTitle(note.title ?? '');
+    setCollaborators(note.collaborators ?? []);
   }, [note.id]);
 
   // ResizeObserver: two breakpoints for left and right overflow
@@ -771,16 +773,23 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             </button>
           </div>
 
+          {/* Kollaboration aktiv wenn es akzeptierte Kollaboratoren gibt ODER der User selbst Kollaborator ist */}
+          {(() => {
+            const hasCollaborators = collaborators.some(c => c.status === 'accepted');
+            const isCollaborator = note.userId !== user?.id;
+            const isCollaborative = hasCollaborators || isCollaborator;
+            const jwtToken = localStorage.getItem('token') ?? '';
+            return (
           <LexicalEditorWrapper
             content={note.content}
             onChange={handleContentChange}
             placeholder="Start writing..."
             disabled={isInTrash}
             headerSlot={titleHeader}
-            collaboration={shareToken ? {
+            collaboration={isCollaborative ? {
               noteId: note.id,
-              token: shareToken,
-              username: user?.name || user?.email || 'Anonymous',
+              token: jwtToken,
+              username: user?.name || user?.email || 'Anonym',
               cursorColor: 'var(--accent)',
             } : null}
             toolbar={
@@ -793,6 +802,8 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               />
             }
           />
+            );
+          })()}
 
       {/* Folder context menu — portal to document.body */}
       {folderMenuPos && createPortal(
@@ -841,11 +852,19 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         currentTagIds={note.tags?.map((t) => t.id) || []}
       />
 
-      <ShareNoteModal
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
+      <InviteCollaboratorModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
         noteId={note.id}
-        onShareChange={setShareToken}
+        isOwner={note.userId === user?.id}
+        onCollaboratorsChange={async () => {
+          // Aktuelle Kollaboratoren neu laden und State aktualisieren
+          const { collaborationService } = await import('../../services/collaboration.service');
+          try {
+            const list = await collaborationService.listCollaborators(note.id);
+            setCollaborators(list);
+          } catch { /* ignorieren */ }
+        }}
       />
 
       <Modal isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} title={getNoteTitle(note) || 'Note'}>
@@ -870,13 +889,13 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             style={{ left: exportMenuPos.x, top: exportMenuPos.y, minWidth: '220px' }}
           >
             <button
-              onClick={() => { setShowShareModal(true); setExportMenuPos(null); }}
+              onClick={() => { setShowInviteModal(true); setExportMenuPos(null); }}
               className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)"
             >
               <Users className="w-4 h-4 shrink-0 text-(--accent)" />
               <span className="flex-1 text-left">
                 Share note
-                {shareToken && <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-(--accent) align-middle" />}
+                {collaborators.some(c => c.status === 'accepted') && <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-(--accent) align-middle" />}
               </span>
             </button>
             <div className="my-1 mx-2 border-t border-[color-mix(in_srgb,var(--line)_50%,transparent)]" />

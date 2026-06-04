@@ -33,10 +33,11 @@ model User {
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
 
-  notes       Note[]
-  folders     Folder[]
-  tags        Tag[]
-  noteOrders  NoteOrder[]
+  notes         Note[]
+  folders       Folder[]
+  tags          Tag[]
+  noteOrders    NoteOrder[]
+  collaborations NoteCollaborator[]
 
   @@unique([provider, providerId])
 }
@@ -75,11 +76,11 @@ model Note {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  folder      Folder?     @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  noteTags    NoteTag[]
-  attachments Attachment[]
-  shares      NoteShare[]
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder        Folder?          @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  noteTags      NoteTag[]
+  attachments   Attachment[]
+  collaborators NoteCollaborator[]
 
   @@index([userId])
   @@index([folderId])
@@ -132,16 +133,22 @@ model Attachment {
   @@index([noteId])
 }
 
-model NoteShare {
-  id        String    @id @default(uuid())
-  token     String    @unique @default(uuid())
-  noteId    String
-  note      Note      @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  expiresAt DateTime?
-  createdAt DateTime  @default(now())
+model NoteCollaborator {
+  id          String    @id @default(uuid())
+  noteId      String
+  userId      String
+  role        String    @default("editor")
+  status      String    @default("pending")
+  invitedAt   DateTime  @default(now())
+  acceptedAt  DateTime?
 
+  note        Note      @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, userId])
+  @@index([userId])
   @@index([noteId])
-  @@map("note_shares")
+  @@map("note_collaborators")
 }
 
 model NoteOrder {
