@@ -69,6 +69,12 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
     fetchNoteCounts();
   }, [fetchFolders, fetchTags, fetchNoteCounts, refreshTrigger]);
 
+  // Pending-Einladungen alle 30s prüfen → Badge erscheint live
+  useEffect(() => {
+    const id = setInterval(fetchNoteCounts, 30_000);
+    return () => clearInterval(id);
+  }, [fetchNoteCounts]);
+
   const displayInitial = (user?.name || user?.email || '?').trim().charAt(0).toUpperCase();
 
   const handleTagRightClick = (e: React.MouseEvent, tag: TagType) => {
