@@ -773,13 +773,10 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             </button>
           </div>
 
-          {/* Kollaboration aktiv wenn es akzeptierte Kollaboratoren gibt ODER der User selbst Kollaborator ist */}
+          {/* CollaborationPlugin ist immer aktiv — jede Notiz hat einen Yjs-Room.
+              So joinen Owner und Kollaboratoren denselben Room ohne Verzögerung. */}
           {(() => {
-            const hasCollaborators = collaborators.some(c => c.status === 'accepted');
             const isCollaborator = note.userId !== user?.id;
-            const isCollaborative = hasCollaborators || isCollaborator;
-            const jwtToken = localStorage.getItem('token') ?? '';
-            // Viewer-Kollaboratoren dürfen nicht editieren
             const myEntry = collaborators.find(c => c.userId === user?.id);
             const isViewer = isCollaborator && myEntry?.role === 'viewer';
             return (
@@ -789,12 +786,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             placeholder="Start writing..."
             disabled={isInTrash || isViewer}
             headerSlot={titleHeader}
-            collaboration={isCollaborative ? {
+            collaboration={{
               noteId: note.id,
-              token: jwtToken,
+              token: localStorage.getItem('token') ?? '',
               username: user?.name || user?.email || 'Anonym',
               cursorColor: 'var(--accent)',
-            } : null}
+            }}
             toolbar={
               <RichTextToolbar
                 disabled={isInTrash}
