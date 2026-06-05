@@ -574,6 +574,12 @@ const LexicalEditorWrapper = ({
       doc,
       { params: { token: collab.token }, connect: false },
     ) as any;
+    provider.on('sync', (isSynced: boolean) => {
+      console.log('[WS] sync event, isSynced=', isSynced, 'noteId=', id, 'doc._xmlText._length=', (doc.get('root') as any)?._length ?? 'n/a', 'doc.isEmpty=', doc.toJSON());
+    });
+    provider.on('status', ({ status }: { status: string }) => {
+      console.log('[WS] status=', status, 'noteId=', id);
+    });
     provider.awareness.on('change', () => {
       const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
       const others = states
