@@ -531,6 +531,17 @@ function CheckListIndentPlugin(): null {
   return null;
 }
 
+function BindingDebugPlugin({ active }: { active: boolean }) {
+  const [editor] = useLexicalComposerContext();
+  useEffect(() => {
+    if (!active) return;
+    return editor.registerUpdateListener(({ tags, dirtyElements, dirtyLeaves }) => {
+      console.log(`[LexicalUpdate] tags=[${[...tags].join(',')}] dirty=${dirtyElements.size}el+${dirtyLeaves.size}lv`);
+    });
+  }, [editor, active]);
+  return null;
+}
+
 // Bootstrappt den Yjs-Doc wenn er nach WS-Sync leer ist (erster User der eine Notiz öffnet).
 // InitialContentPlugin lädt DB-Inhalt in den Lexical-Editor, aber das Binding verpasst dieses
 // Update (useLayoutEffect läuft vor dem Binding-useEffect). Dieses Plugin markiert nach dem
@@ -679,6 +690,7 @@ const LexicalEditorWrapper = ({
         <div className="flex h-full min-h-0 flex-1 flex-col">
           <InitialContentPlugin content={content} />
           <ChangePlugin onChange={onChange} />
+          <BindingDebugPlugin active={!!collaboration} />
           <MultilineQuotePlugin />
           <CheckListIndentPlugin />
           <TabIndentPlugin />
