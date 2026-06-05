@@ -864,7 +864,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   line-height: 1.62; color: var(--ink); letter-spacing: 0.002em;
 }
 /* Drop-cap on first letter when enabled via Settings */
-.drop-cap .win .editor-body p:first-child::first-letter {
+.drop-cap .win .editor-body p:first-of-type::first-letter {
   font-family: var(--serif-display); font-size: 3.4em; line-height: 0.9;
   float: left; padding: 0.04em 0.08em 0 0; color: var(--accent); font-weight: 500; text-transform: uppercase;
 }

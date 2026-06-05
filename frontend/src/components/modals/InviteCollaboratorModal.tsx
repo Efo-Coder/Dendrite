@@ -42,14 +42,14 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
   const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
-    if (!isOpen || !isOwner) return;
+    if (!isOpen) return;
     setLoading(true);
     collaborationService
       .listCollaborators(noteId)
       .then(setCollaborators)
       .catch(() => toast.error('Failed to load collaborators'))
       .finally(() => setLoading(false));
-  }, [isOpen, noteId, isOwner]);
+  }, [isOpen, noteId]);
 
   const handleInvite = async () => {
     const trimmed = input.trim();

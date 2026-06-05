@@ -55,7 +55,15 @@ export const listCollaborators = async (req: AuthRequest, res: Response) => {
   try {
     const noteId = req.params.id as string;
 
-    const note = await prisma.note.findFirst({ where: { id: noteId, userId: req.userId } });
+    const note = await prisma.note.findFirst({
+      where: {
+        id: noteId,
+        OR: [
+          { userId: req.userId },
+          { collaborators: { some: { userId: req.userId!, status: 'accepted' } } },
+        ],
+      },
+    });
     if (!note) return res.status(404).json({ error: 'Note not found' });
 
     const collaborators = await prisma.noteCollaborator.findMany({

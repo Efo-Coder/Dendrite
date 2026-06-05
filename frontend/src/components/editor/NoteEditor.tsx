@@ -13,7 +13,7 @@ import { useTagStore } from '../../store/useTagStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToast } from '../ui/ToastContainer';
 import RichTextToolbar from './RichTextToolbar';
-import LexicalEditorWrapper from './LexicalEditorWrapper';
+import LexicalEditorWrapper, { ActiveUser } from './LexicalEditorWrapper';
 import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
 import { Icons } from '../ui/Icons';
 import {
@@ -45,6 +45,13 @@ interface NoteEditorProps {
   onNoteUpdate?: () => void;
   onToggleSidebar?: () => void;
   sidebarCollapsed?: boolean;
+}
+
+const CURSOR_PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'];
+function userCursorColor(userId: string): string {
+  let h = 0;
+  for (const c of userId) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return CURSOR_PALETTE[h % CURSOR_PALETTE.length];
 }
 
 function formatRelativeDate(dateString: string): string {
@@ -124,6 +131,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const [showInviteModal, setShowInviteModal] = useState(false);
   // Lokale Kollaboratoren-Liste – wird nach Einladungen aktualisiert
   const [collaborators, setCollaborators] = useState(note.collaborators ?? []);
+  const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
 
   const folderMenuRef = useRef<HTMLDivElement>(null);
   const tagInputWrapperRef = useRef<HTMLDivElement>(null);
@@ -147,13 +155,13 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   }, [note.id]);
 
   useEffect(() => {
-    // Refs und State bei Notiz-Wechsel zurücksetzen
     contentRef.current = note.content;
     setContent(note.content);
     titleRef.current = note.title ?? '';
     lastSavedTitleRef.current = note.title ?? '';
     setTitle(note.title ?? '');
     setCollaborators(note.collaborators ?? []);
+    setActiveUsers([]);
   }, [note.id]);
 
 
@@ -642,6 +650,29 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 )}
               </div>
 
+              {activeUsers.length > 0 && (
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                  <div className="flex -space-x-2">
+                    {activeUsers.slice(0, 5).map(u => (
+                      <div
+                        key={u.clientID}
+                        title={u.name}
+                        style={{ backgroundColor: u.color, borderColor: 'var(--bg)' }}
+                        className="w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                      >
+                        {(u.name || '?').charAt(0).toUpperCase()}
+                      </div>
+                    ))}
+                  </div>
+                  {activeUsers.length === 1 && (
+                    <span className="text-[11px] text-(--ink-dim) whitespace-nowrap">{activeUsers[0].name}</span>
+                  )}
+                  {activeUsers.length > 1 && (
+                    <span className="text-[11px] text-(--ink-dim) whitespace-nowrap">{activeUsers.length} editing</span>
+                  )}
+                </div>
+              )}
+
               <div ref={rightGroupRef} className="relative flex items-center gap-1 magic-hover">
                 {RightIndicator}
                 {!isInTrash && (
@@ -712,6 +743,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             const isViewer = isCollaborator && myEntry?.role === 'viewer';
             return (
           <LexicalEditorWrapper
+            key={note.id}
             content={note.content}
             onChange={handleContentChange}
             placeholder="Start writing..."
@@ -721,8 +753,9 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               noteId: note.id,
               token: localStorage.getItem('token') ?? '',
               username: user?.name || user?.email || 'Anonym',
-              cursorColor: 'var(--accent)',
+              cursorColor: userCursorColor(user?.id ?? ''),
             }}
+            onUsersChange={setActiveUsers}
             toolbar={
               <RichTextToolbar
                 disabled={isInTrash}

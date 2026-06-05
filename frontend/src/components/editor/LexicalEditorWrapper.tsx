@@ -64,6 +64,12 @@ export interface CollaborationConfig {
   cursorColor: string;
 }
 
+export interface ActiveUser {
+  clientID: number;
+  name: string;
+  color: string;
+}
+
 interface LexicalEditorWrapperProps {
   content: string;
   onChange: (content: string) => void;
@@ -73,6 +79,7 @@ interface LexicalEditorWrapperProps {
   headerSlot?: ReactNode;
   key?: string;
   collaboration?: CollaborationConfig | null;
+  onUsersChange?: (users: ActiveUser[]) => void;
 }
 
 // Custom span importer: Lexical's default applyTextFormatFromStyle ignores color,
@@ -532,9 +539,12 @@ const LexicalEditorWrapper = ({
   toolbar,
   headerSlot,
   collaboration = null,
+  onUsersChange,
 }: LexicalEditorWrapperProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const checkIconRef = useRef<HTMLDivElement>(null);
+  const onUsersChangeRef = useRef(onUsersChange);
+  useLayoutEffect(() => { onUsersChangeRef.current = onUsersChange; });
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -629,15 +639,25 @@ const LexicalEditorWrapper = ({
                       yjsDocMap.set(id, doc);
                       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
                       const wsBase = apiUrl.replace(/^http/, 'ws');
-                      // WebsocketProvider implements the Provider interface at runtime;
-                      // cast needed because yjs awareness generics differ.
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      return new WebsocketProvider(
+                      const provider = new WebsocketProvider(
                         `${wsBase}/collaboration`,
                         id,
                         doc,
                         { params: { token: collaboration.token } },
                       ) as any;
+                      provider.awareness.on('change', () => {
+                        const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
+                        const others = states
+                          .filter(([cid]: [number, any]) => cid !== provider.awareness.clientID)
+                          .map(([cid, state]: [number, any]) => ({
+                            clientID: cid,
+                            name: state.name ?? 'Anonym',
+                            color: state.color ?? '#888',
+                          }));
+                        onUsersChangeRef.current?.(others);
+                      });
+                      return provider;
                     }}
                     username={collaboration.username}
                     cursorColor={collaboration.cursorColor}
