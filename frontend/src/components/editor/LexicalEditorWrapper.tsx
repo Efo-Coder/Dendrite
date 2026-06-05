@@ -608,6 +608,9 @@ const LexicalEditorWrapper = ({
       { params: { token: collab.token } },
     ) as any;
     providerRef.current = provider;
+    provider.on('sync', (isSynced: boolean) => console.log(`[Yjs] sync event isSynced=${isSynced} room=${id}`));
+    provider.on('status', ({ status }: { status: string }) => console.log(`[Yjs] status=${status} room=${id}`));
+    doc.on('update', (_update: Uint8Array, origin: unknown) => console.log(`[Yjs] doc.update origin=${origin === provider ? 'remote' : 'local'} room=${id}`));
     provider.awareness.on('change', () => {
       const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
       const others = states
