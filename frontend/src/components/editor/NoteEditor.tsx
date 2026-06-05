@@ -95,6 +95,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   useEffect(() => { noteRef.current = note; });
 
   const handleContentChange = useCallback((html: string) => {
+    console.log('[Save] handleContentChange aufgerufen, html.length=', html.length, html.slice(0, 80));
     contentRef.current = html;
     setContent(html);
     setIsSaving(true);
@@ -231,6 +232,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     const timer = setTimeout(async () => {
       const shouldSaveContent = content !== note.content;
       const shouldSaveTitle = title !== lastSavedTitleRef.current;
+      console.log('[Save] Timer fired, shouldSaveContent=', shouldSaveContent, 'shouldSaveTitle=', shouldSaveTitle, 'content.length=', content.length, 'note.content.length=', note.content?.length);
       if (!shouldSaveContent && !shouldSaveTitle) { setIsSaving(false); return; }
       const updates: { content?: string; title?: string } = {};
       if (shouldSaveContent) updates.content = content;

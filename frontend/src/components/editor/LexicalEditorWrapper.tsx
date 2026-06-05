@@ -30,7 +30,6 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { TRANSFORMERS } from '@lexical/markdown';
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import {
@@ -55,7 +54,7 @@ import {
 } from 'lexical';
 
 // Provides the onChange callback to decorator nodes (e.g. ImageComponent) so they
-// can push content updates synchronously without going through OnChangePlugin.
+// can push content updates synchronously without going through ChangePlugin.
 export const LexicalOnChangeContext = createContext<((html: string) => void) | null>(null);
 
 export interface CollaborationConfig {
@@ -294,13 +293,20 @@ function InitialContentPlugin({ content }: { content: string }) {
 function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
   const [editor] = useLexicalComposerContext();
 
-  const handleChange = () => {
-    editor.read(() => {
-      onChange($generateHtmlFromNodes(editor));
+  useEffect(() => {
+    console.log('[ChangePlugin] Listener registriert');
+    return editor.registerUpdateListener(({ dirtyElements, dirtyLeaves, prevEditorState, tags }) => {
+      if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
+      if (tags.has('history-merge')) return;
+      if (prevEditorState.isEmpty()) return;
+      console.log('[ChangePlugin] Update erkannt, dirty leaves=', dirtyLeaves.size, 'elements=', dirtyElements.size, 'isEmpty=', prevEditorState.isEmpty());
+      editor.read(() => {
+        onChange($generateHtmlFromNodes(editor));
+      });
     });
-  };
+  }, [editor, onChange]);
 
-  return <OnChangePlugin onChange={handleChange} ignoreSelectionChange />;
+  return null;
 }
 
 // Plugin to enable multiline blockquotes
@@ -543,6 +549,7 @@ const LexicalEditorWrapper = ({
   collaboration = null,
   onUsersChange,
 }: LexicalEditorWrapperProps) => {
+  console.log('[LexicalEditorWrapper] render, collaboration=', !!collaboration);
   const scrollRef = useRef<HTMLDivElement>(null);
   const checkIconRef = useRef<HTMLDivElement>(null);
   const onUsersChangeRef = useRef(onUsersChange);
@@ -565,7 +572,7 @@ const LexicalEditorWrapper = ({
       `${wsBase}/collaboration`,
       id,
       doc,
-      { params: { token: collab.token } },
+      { params: { token: collab.token }, connect: false },
     ) as any;
     provider.awareness.on('change', () => {
       const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
