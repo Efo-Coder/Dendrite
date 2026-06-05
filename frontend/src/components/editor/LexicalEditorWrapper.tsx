@@ -49,7 +49,6 @@ import {
   COMMAND_PRIORITY_NORMAL,
   INDENT_CONTENT_COMMAND,
   OUTDENT_CONTENT_COMMAND,
-  LexicalEditor,
   LexicalNode,
 } from 'lexical';
 
@@ -294,17 +293,40 @@ function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    console.log('[ChangePlugin] Listener registriert');
     return editor.registerUpdateListener(({ dirtyElements, dirtyLeaves, prevEditorState, tags }) => {
       if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
       if (tags.has('history-merge')) return;
       if (prevEditorState.isEmpty()) return;
-      console.log('[ChangePlugin] Update erkannt, dirty leaves=', dirtyLeaves.size, 'elements=', dirtyElements.size, 'isEmpty=', prevEditorState.isEmpty());
       editor.read(() => {
         onChange($generateHtmlFromNodes(editor));
       });
     });
   }, [editor, onChange]);
+
+  return null;
+}
+
+function BootstrapPlugin({
+  bootstrapRef,
+  contentRef,
+}: {
+  bootstrapRef: React.MutableRefObject<(() => void) | null>;
+  contentRef: React.MutableRefObject<string>;
+}) {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    bootstrapRef.current = () => {
+      editor.update(() => {
+        const parser = new DOMParser();
+        const dom = parser.parseFromString(contentRef.current || '<p></p>', 'text/html');
+        const nodes = $generateNodesFromDOM(editor, dom);
+        $getRoot().clear();
+        $insertNodes(nodes);
+      }, { tag: 'history-merge' });
+    };
+    return () => { bootstrapRef.current = null; };
+  }, [editor, bootstrapRef, contentRef]);
 
   return null;
 }
@@ -558,6 +580,8 @@ const LexicalEditorWrapper = ({
   const contentRef = useRef(content);
   useLayoutEffect(() => { contentRef.current = content; });
 
+  const bootstrapRef = useRef<(() => void) | null>(null);
+
   // Stable providerFactory — muss sich NIE ändern solange dieselbe Notiz offen ist.
   const collaborationRef = useRef(collaboration);
   useLayoutEffect(() => { collaborationRef.current = collaboration; });
@@ -575,10 +599,13 @@ const LexicalEditorWrapper = ({
       { params: { token: collab.token }, connect: false },
     ) as any;
     provider.on('sync', (isSynced: boolean) => {
-      console.log('[WS] sync event, isSynced=', isSynced, 'noteId=', id, 'doc._xmlText._length=', (doc.get('root') as any)?._length ?? 'n/a', 'doc.isEmpty=', doc.toJSON());
-    });
-    provider.on('status', ({ status }: { status: string }) => {
-      console.log('[WS] status=', status, 'noteId=', id);
+      if (!isSynced) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rootXmlText = doc.get('root') as any;
+      const isYjsEmpty = !rootXmlText || rootXmlText._length === 0;
+      if (isYjsEmpty) {
+        bootstrapRef.current?.();
+      }
     });
     provider.awareness.on('change', () => {
       const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
@@ -595,17 +622,6 @@ const LexicalEditorWrapper = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Stable initialEditorState — wird von CollaborationPlugin aufgerufen wenn Yjs leer ist.
-  // Liest content über contentRef damit keine neue Referenz bei jedem Render entsteht.
-  const initialEditorState = useCallback((editor: LexicalEditor) => {
-    console.log('[initialEditorState] aufgerufen, contentRef.length=', contentRef.current?.length, contentRef.current?.slice(0, 60));
-    const parser = new DOMParser();
-    const dom = parser.parseFromString(contentRef.current || '<p></p>', 'text/html');
-    const nodes = $generateNodesFromDOM(editor, dom);
-    $getRoot().clear();
-    $insertNodes(nodes);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -693,14 +709,16 @@ const LexicalEditorWrapper = ({
                   ErrorBoundary={LexicalErrorBoundary}
                 />
                 {collaboration ? (
-                  <CollaborationPlugin
-                    id={collaboration.noteId}
-                    providerFactory={stableProviderFactory}
-                    username={collaboration.username}
-                    cursorColor={collaboration.cursorColor}
-                    shouldBootstrap
-                    initialEditorState={initialEditorState}
-                  />
+                  <>
+                    <BootstrapPlugin bootstrapRef={bootstrapRef} contentRef={contentRef} />
+                    <CollaborationPlugin
+                      id={collaboration.noteId}
+                      providerFactory={stableProviderFactory}
+                      username={collaboration.username}
+                      cursorColor={collaboration.cursorColor}
+                      shouldBootstrap={false}
+                    />
+                  </>
                 ) : (
                   <HistoryPlugin />
                 )}
