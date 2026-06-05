@@ -1,4 +1,4 @@
-﻿import { ReactNode, useRef, useEffect, useLayoutEffect, createContext } from 'react';
+﻿import { ReactNode, useRef, useEffect, useLayoutEffect, createContext, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import * as Y from 'yjs';
@@ -546,6 +546,39 @@ const LexicalEditorWrapper = ({
   const onUsersChangeRef = useRef(onUsersChange);
   useLayoutEffect(() => { onUsersChangeRef.current = onUsersChange; });
 
+  // Stable providerFactory — muss sich NIE ändern solange dieselbe Notiz offen ist.
+  // Inline-Funktionen würden bei jedem Re-render (z.B. Tastendruck) eine neue Referenz
+  // erzeugen, CollaborationPlugin würde dann seinen Cleanup (provider.disconnect()) ausführen.
+  const collaborationRef = useRef(collaboration);
+  useLayoutEffect(() => { collaborationRef.current = collaboration; });
+  const stableProviderFactory = useCallback((id: string, yjsDocMap: Map<string, Y.Doc>) => {
+    const collab = collaborationRef.current!;
+    const doc = new Y.Doc();
+    yjsDocMap.set(id, doc);
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const wsBase = apiUrl.replace(/^http/, 'ws');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const provider = new WebsocketProvider(
+      `${wsBase}/collaboration`,
+      id,
+      doc,
+      { params: { token: collab.token } },
+    ) as any;
+    provider.awareness.on('change', () => {
+      const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
+      const others = states
+        .filter(([cid]: [number, any]) => cid !== provider.awareness.clientID)
+        .map(([cid, state]: [number, any]) => ({
+          clientID: cid,
+          name: state.name ?? 'Anonym',
+          color: state.color ?? '#888',
+        }));
+      onUsersChangeRef.current?.(others);
+    });
+    return provider;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // leere Deps: stabil für die gesamte Lebensdauer des Editors (key={note.id} erzwingt Remount bei Notiz-Wechsel)
+
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       if (scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -634,31 +667,7 @@ const LexicalEditorWrapper = ({
                 {collaboration ? (
                   <CollaborationPlugin
                     id={collaboration.noteId}
-                    providerFactory={(id, yjsDocMap) => {
-                      const doc = new Y.Doc();
-                      yjsDocMap.set(id, doc);
-                      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-                      const wsBase = apiUrl.replace(/^http/, 'ws');
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const provider = new WebsocketProvider(
-                        `${wsBase}/collaboration`,
-                        id,
-                        doc,
-                        { params: { token: collaboration.token } },
-                      ) as any;
-                      provider.awareness.on('change', () => {
-                        const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
-                        const others = states
-                          .filter(([cid]: [number, any]) => cid !== provider.awareness.clientID)
-                          .map(([cid, state]: [number, any]) => ({
-                            clientID: cid,
-                            name: state.name ?? 'Anonym',
-                            color: state.color ?? '#888',
-                          }));
-                        onUsersChangeRef.current?.(others);
-                      });
-                      return provider;
-                    }}
+                    providerFactory={stableProviderFactory}
                     username={collaboration.username}
                     cursorColor={collaboration.cursorColor}
                     shouldBootstrap
