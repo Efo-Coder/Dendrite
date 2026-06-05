@@ -51,6 +51,7 @@ import {
   INDENT_CONTENT_COMMAND,
   OUTDENT_CONTENT_COMMAND,
   LexicalNode,
+  LexicalEditor,
 } from 'lexical';
 
 // Provides the onChange callback to decorator nodes (e.g. ImageComponent) so they
@@ -546,9 +547,11 @@ const LexicalEditorWrapper = ({
   const onUsersChangeRef = useRef(onUsersChange);
   useLayoutEffect(() => { onUsersChangeRef.current = onUsersChange; });
 
+  // Snapshot des initialen Inhalts (bei Mount gesetzt, danach nie geändert).
+  // Wird von stableInitialEditorState zum Bootstrap des leeren Yjs-Docs verwendet.
+  const initialContentSnapshot = useRef(content);
+
   // Stable providerFactory — muss sich NIE ändern solange dieselbe Notiz offen ist.
-  // Inline-Funktionen würden bei jedem Re-render (z.B. Tastendruck) eine neue Referenz
-  // erzeugen, CollaborationPlugin würde dann seinen Cleanup (provider.disconnect()) ausführen.
   const collaborationRef = useRef(collaboration);
   useLayoutEffect(() => { collaborationRef.current = collaboration; });
   const stableProviderFactory = useCallback((id: string, yjsDocMap: Map<string, Y.Doc>) => {
@@ -578,6 +581,19 @@ const LexicalEditorWrapper = ({
     return provider;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // leere Deps: stabil für die gesamte Lebensdauer des Editors (key={note.id} erzwingt Remount bei Notiz-Wechsel)
+
+  // Wird von CollaborationPlugin.shouldBootstrap aufgerufen wenn der Yjs-Doc leer ist
+  // (erster User der eine Notiz öffnet). Lädt den initialen DB-Inhalt in den Editor
+  // und bootstrappt damit den Yjs-Doc — so sehen alle weiteren User den richtigen Inhalt.
+  const stableInitialEditorState = useCallback((_editor: LexicalEditor) => {
+    const parser = new DOMParser();
+    const dom = parser.parseFromString(initialContentSnapshot.current || '<p></p>', 'text/html');
+    const nodes = $generateNodesFromDOM(_editor, dom);
+    $getRoot().clear();
+    $insertNodes(nodes);
+    $getRoot().selectEnd();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // stabil — liest initialen Content aus Ref
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -630,7 +646,7 @@ const LexicalEditorWrapper = ({
       <LexicalCollaboration>
       <LexicalComposer initialConfig={initialConfig}>
         <div className="flex h-full min-h-0 flex-1 flex-col">
-          <InitialContentPlugin content={content} />
+          {!collaboration && <InitialContentPlugin content={content} />}
           <ChangePlugin onChange={onChange} />
           <MultilineQuotePlugin />
           <CheckListIndentPlugin />
@@ -671,6 +687,7 @@ const LexicalEditorWrapper = ({
                     username={collaboration.username}
                     cursorColor={collaboration.cursorColor}
                     shouldBootstrap
+                    initialEditorState={stableInitialEditorState}
                   />
                 ) : (
                   <HistoryPlugin />
