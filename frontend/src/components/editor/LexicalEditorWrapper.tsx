@@ -49,6 +49,7 @@ import {
   COMMAND_PRIORITY_NORMAL,
   INDENT_CONTENT_COMMAND,
   OUTDENT_CONTENT_COMMAND,
+  LexicalEditor,
   LexicalNode,
 } from 'lexical';
 
@@ -660,6 +661,15 @@ const LexicalEditorWrapper = ({
       LinkNode,
       ImageNode,
     ],
+    ...(collaboration && {
+      editorState: (editor: LexicalEditor) => {
+        const parser = new DOMParser();
+        const dom = parser.parseFromString(content || '<p></p>', 'text/html');
+        const nodes = $generateNodesFromDOM(editor, dom);
+        $getRoot().clear();
+        $insertNodes(nodes);
+      },
+    }),
   };
 
   return (
