@@ -240,6 +240,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
       setIsSaving(true);
       try {
         await updateNote(note.id, updates);
+        console.log('[Save] updateNote erfolgreich');
         if (shouldSaveTitle) lastSavedTitleRef.current = title;
       } catch (error) {
         console.error('Fehler beim Speichern:', error);

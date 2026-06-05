@@ -592,6 +592,7 @@ const LexicalEditorWrapper = ({
   // Stable initialEditorState — wird von CollaborationPlugin aufgerufen wenn Yjs leer ist.
   // Liest content über contentRef damit keine neue Referenz bei jedem Render entsteht.
   const initialEditorState = useCallback((editor: LexicalEditor) => {
+    console.log('[initialEditorState] aufgerufen, contentRef.length=', contentRef.current?.length, contentRef.current?.slice(0, 60));
     const parser = new DOMParser();
     const dom = parser.parseFromString(contentRef.current || '<p></p>', 'text/html');
     const nodes = $generateNodesFromDOM(editor, dom);
