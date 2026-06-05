@@ -32,7 +32,8 @@ const ForestHeroMaterial = shaderMaterial(
 
      // bright depth = near object → zooms faster (fly-forward illusion)
      float depth = texture2D(uDepthTex, baseUv).r;
-     float zoom = clamp(uScroll * depth * 0.42, 0.0, 0.42);
+     float eased = uScroll * uScroll * uScroll;
+     float zoom = clamp(eased * depth * 0.6, 0.0, 0.55);
      vec2 focal = uOffset + uRepeat * 0.5;
      vec2 sampledUv = focal + (baseUv - focal) * (1.0 - zoom);
 
