@@ -45,17 +45,13 @@ function toUint8Array(raw: Buffer | ArrayBuffer | Buffer[]): Uint8Array {
   return new Uint8Array(raw);
 }
 
-let _connCounter = 0;
-
 export function setupYjsConnection(ws: WebSocket, docName: string): void {
   ws.binaryType = 'arraybuffer';
 
-  const connId = ++_connCounter;
   const entry = getDoc(docName);
   const { doc, awareness, conns } = entry;
   conns.add(ws);
 
-  console.log(`[Yjs] +conn #${connId} doc="${docName}" total=${conns.size}`);
 
   // Send sync step 1
   const enc1 = encoding.createEncoder();
@@ -105,11 +101,6 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
         encoding.writeVarUint(enc, MSG_SYNC);
         syncProtocol.readSyncMessage(decoder, enc, doc, ws);
         if (encoding.length(enc) > 1) ws.send(encoding.toUint8Array(enc));
-        // Log update broadcasts
-        const recipients = [...conns].filter(c => c !== ws && c.readyState === WebSocket.OPEN).length;
-        if (recipients > 0) {
-          console.log(`[Yjs] conn #${connId} update → broadcast to ${recipients} other(s) in "${docName}"`);
-        }
       } else if (type === MSG_AWARENESS) {
         awarenessProtocol.applyAwarenessUpdate(
           awareness,
@@ -125,7 +116,6 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
   ws.on('close', () => {
     conns.delete(ws);
     awareness.off('update', onAwareness);
-    console.log(`[Yjs] -conn #${connId} doc="${docName}" remaining=${conns.size}`);
     if (conns.size === 0) {
       setTimeout(() => {
         if (docs.get(docName)?.conns.size === 0) docs.delete(docName);

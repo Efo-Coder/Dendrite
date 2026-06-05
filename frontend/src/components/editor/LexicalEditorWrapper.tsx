@@ -1,10 +1,14 @@
-﻿import { ReactNode, useRef, useEffect, useLayoutEffect, createContext, useCallback } from 'react';
+﻿import { ReactNode, useRef, useEffect, useLayoutEffect, createContext } from 'react';
 import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { CollaborationPlugin } from '@lexical/react/LexicalCollaborationPlugin';
-import { LexicalCollaboration } from '@lexical/react/LexicalCollaborationContext';
+import {
+  createBinding,
+  syncLexicalUpdateToYjs,
+  syncYjsChangesToLexical,
+  initLocalState,
+} from '@lexical/yjs';
 import { TimerCheckboxPlugin } from './CheckResetOverlay';
 import { TimerListItemNode } from './TimerListItemNode';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
@@ -49,7 +53,7 @@ import {
   COMMAND_PRIORITY_NORMAL,
   INDENT_CONTENT_COMMAND,
   OUTDENT_CONTENT_COMMAND,
-  LexicalEditor,
+  SKIP_COLLAB_TAG,
   LexicalNode,
 } from 'lexical';
 
@@ -307,27 +311,118 @@ function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
   return null;
 }
 
-function BootstrapPlugin({
-  bootstrapRef,
+function YjsSyncPlugin({
+  noteId,
+  token,
+  username,
+  cursorColor,
   contentRef,
+  onUsersChangeRef,
 }: {
-  bootstrapRef: React.MutableRefObject<(() => void) | null>;
+  noteId: string;
+  token: string;
+  username: string;
+  cursorColor: string;
   contentRef: React.MutableRefObject<string>;
+  onUsersChangeRef: React.MutableRefObject<((users: ActiveUser[]) => void) | undefined>;
 }) {
   const [editor] = useLexicalComposerContext();
+  const usernameRef = useRef(username);
+  const cursorColorRef = useRef(cursorColor);
+  const tokenRef = useRef(token);
+  useLayoutEffect(() => {
+    usernameRef.current = username;
+    cursorColorRef.current = cursorColor;
+    tokenRef.current = token;
+  });
 
   useEffect(() => {
-    bootstrapRef.current = () => {
-      editor.update(() => {
-        const parser = new DOMParser();
-        const dom = parser.parseFromString(contentRef.current || '<p></p>', 'text/html');
-        const nodes = $generateNodesFromDOM(editor, dom);
-        $getRoot().clear();
-        $insertNodes(nodes);
-      }, { tag: 'history-merge' });
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const wsBase = apiUrl.replace(/^http/, 'ws');
+    const doc = new Y.Doc();
+    const docMap = new Map<string, Y.Doc>([[noteId, doc]]);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const provider = new WebsocketProvider(
+      `${wsBase}/collaboration`,
+      noteId,
+      doc,
+      { params: { token: tokenRef.current }, connect: false },
+    ) as any;
+
+    const binding = createBinding(editor, provider, noteId, doc, docMap);
+
+    initLocalState(
+      provider,
+      usernameRef.current,
+      cursorColorRef.current,
+      document.activeElement === editor.getRootElement(),
+      {},
+    );
+
+    const onYjsTreeChanges = (events: Y.YEvent<Y.AbstractType<unknown>>[], transaction: Y.Transaction) => {
+      if (transaction.origin !== binding) {
+        const isFromUndoManager = transaction.origin instanceof Y.UndoManager;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        syncYjsChangesToLexical(binding, provider, events as any, isFromUndoManager);
+      }
     };
-    return () => { bootstrapRef.current = null; };
-  }, [editor, bootstrapRef, contentRef]);
+    binding.root.getSharedType().observeDeep(onYjsTreeChanges);
+
+    const unregisterUpdate = editor.registerUpdateListener(({
+      prevEditorState, editorState, dirtyElements, dirtyLeaves, normalizedNodes, tags,
+    }) => {
+      if (!tags.has(SKIP_COLLAB_TAG)) {
+        syncLexicalUpdateToYjs(
+          binding, provider, prevEditorState, editorState,
+          dirtyElements, dirtyLeaves, normalizedNodes, tags,
+        );
+      }
+    });
+
+    const onSync = (isSynced: boolean) => {
+      if (!isSynced) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sharedType = binding.root.getSharedType() as any;
+      if (sharedType._length === 0) {
+        editor.update(() => {
+          const parser = new DOMParser();
+          const dom = parser.parseFromString(contentRef.current || '<p></p>', 'text/html');
+          const nodes = $generateNodesFromDOM(editor, dom);
+          $getRoot().clear();
+          $insertNodes(nodes);
+        }, { tag: 'history-merge' });
+      }
+    };
+    provider.on('sync', onSync);
+
+    const onAwarenessChange = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
+      const others = states
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter(([cid]: [number, any]) => cid !== provider.awareness.clientID)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map(([cid, state]: [number, any]) => ({
+          clientID: cid,
+          name: state.name ?? 'Anonym',
+          color: state.color ?? '#888',
+        }));
+      onUsersChangeRef.current?.(others);
+    };
+    provider.awareness.on('update', onAwarenessChange);
+
+    provider.connect();
+
+    return () => {
+      unregisterUpdate();
+      binding.root.getSharedType().unobserveDeep(onYjsTreeChanges);
+      provider.off('sync', onSync);
+      provider.awareness.off('update', onAwarenessChange);
+      provider.disconnect();
+      provider.destroy();
+    };
+  }, [editor, noteId]); // stable deps — kein Reconnect-Cycle
 
   return null;
 }
@@ -572,7 +667,6 @@ const LexicalEditorWrapper = ({
   collaboration = null,
   onUsersChange,
 }: LexicalEditorWrapperProps) => {
-  console.log('[LexicalEditorWrapper] render, collaboration=', !!collaboration);
   const scrollRef = useRef<HTMLDivElement>(null);
   const checkIconRef = useRef<HTMLDivElement>(null);
   const onUsersChangeRef = useRef(onUsersChange);
@@ -580,48 +674,6 @@ const LexicalEditorWrapper = ({
 
   const contentRef = useRef(content);
   useLayoutEffect(() => { contentRef.current = content; });
-
-  const bootstrapRef = useRef<(() => void) | null>(null);
-
-  // Stable providerFactory — muss sich NIE ändern solange dieselbe Notiz offen ist.
-  const collaborationRef = useRef(collaboration);
-  useLayoutEffect(() => { collaborationRef.current = collaboration; });
-  const stableProviderFactory = useCallback((id: string, yjsDocMap: Map<string, Y.Doc>) => {
-    const collab = collaborationRef.current!;
-    const doc = new Y.Doc();
-    yjsDocMap.set(id, doc);
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const wsBase = apiUrl.replace(/^http/, 'ws');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const provider = new WebsocketProvider(
-      `${wsBase}/collaboration`,
-      id,
-      doc,
-      { params: { token: collab.token }, connect: false },
-    ) as any;
-    provider.on('sync', (isSynced: boolean) => {
-      if (!isSynced) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rootXmlText = doc.get('root') as any;
-      const isYjsEmpty = !rootXmlText || rootXmlText._length === 0;
-      if (isYjsEmpty) {
-        bootstrapRef.current?.();
-      }
-    });
-    provider.awareness.on('change', () => {
-      const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
-      const others = states
-        .filter(([cid]: [number, any]) => cid !== provider.awareness.clientID)
-        .map(([cid, state]: [number, any]) => ({
-          clientID: cid,
-          name: state.name ?? 'Anonym',
-          color: state.color ?? '#888',
-        }));
-      onUsersChangeRef.current?.(others);
-    });
-    return provider;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
 
   useEffect(() => {
@@ -661,15 +713,6 @@ const LexicalEditorWrapper = ({
       LinkNode,
       ImageNode,
     ],
-    ...(collaboration && {
-      editorState: (editor: LexicalEditor) => {
-        const parser = new DOMParser();
-        const dom = parser.parseFromString(content || '<p></p>', 'text/html');
-        const nodes = $generateNodesFromDOM(editor, dom);
-        $getRoot().clear();
-        $insertNodes(nodes);
-      },
-    }),
   };
 
   return (
@@ -681,7 +724,6 @@ const LexicalEditorWrapper = ({
         <Check size={24} strokeWidth={2.5} />
       </div>
 
-      <LexicalCollaboration>
       <LexicalComposer initialConfig={initialConfig}>
         <div className="flex h-full min-h-0 flex-1 flex-col">
           {!collaboration && <InitialContentPlugin content={content} />}
@@ -719,16 +761,14 @@ const LexicalEditorWrapper = ({
                   ErrorBoundary={LexicalErrorBoundary}
                 />
                 {collaboration ? (
-                  <>
-                    <BootstrapPlugin bootstrapRef={bootstrapRef} contentRef={contentRef} />
-                    <CollaborationPlugin
-                      id={collaboration.noteId}
-                      providerFactory={stableProviderFactory}
-                      username={collaboration.username}
-                      cursorColor={collaboration.cursorColor}
-                      shouldBootstrap={false}
-                    />
-                  </>
+                  <YjsSyncPlugin
+                    noteId={collaboration.noteId}
+                    token={collaboration.token}
+                    username={collaboration.username}
+                    cursorColor={collaboration.cursorColor}
+                    contentRef={contentRef}
+                    onUsersChangeRef={onUsersChangeRef}
+                  />
                 ) : (
                   <HistoryPlugin />
                 )}
@@ -758,7 +798,6 @@ const LexicalEditorWrapper = ({
           )}
         </div>
       </LexicalComposer>
-      </LexicalCollaboration>
     </>
     </LexicalOnChangeContext.Provider>
   );

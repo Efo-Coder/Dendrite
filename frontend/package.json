@@ -24,7 +24,7 @@
     "@lexical/selection": "^0.37.0",
     "@lexical/table": "^0.37.0",
     "@lexical/utils": "^0.37.0",
-    "@lexical/yjs": "^0.44.0",
+    "@lexical/yjs": "0.37.0",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
     "@tailwindcss/vite": "^4.3.0",
