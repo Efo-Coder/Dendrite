@@ -31,7 +31,7 @@ export function HeroSection() {
     <section
       ref={sectionRef}
       id="hero"
-      style={{ height: '200vh', position: 'relative' }}
+      style={{ height: '300vh', position: 'relative' }}
     >
       {/* Sticky viewport */}
       <div style={{ position: 'sticky', top: 0, height: '100dvh', overflow: 'hidden' }}>
