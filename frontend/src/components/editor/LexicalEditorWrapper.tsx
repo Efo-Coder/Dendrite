@@ -51,7 +51,6 @@ import {
   INDENT_CONTENT_COMMAND,
   OUTDENT_CONTENT_COMMAND,
   LexicalNode,
-  LexicalEditor,
 } from 'lexical';
 
 // Provides the onChange callback to decorator nodes (e.g. ImageComponent) so they
@@ -532,6 +531,48 @@ function CheckListIndentPlugin(): null {
   return null;
 }
 
+// Bootstrappt den Yjs-Doc wenn er nach WS-Sync leer ist (erster User der eine Notiz öffnet).
+// InitialContentPlugin lädt DB-Inhalt in den Lexical-Editor, aber das Binding verpasst dieses
+// Update (useLayoutEffect läuft vor dem Binding-useEffect). Dieses Plugin markiert nach dem
+// ersten Sync alle Editor-Nodes als dirty — das Binding sendet sie dann zu Yjs.
+function YjsBootstrapPlugin({ providerRef }: { providerRef: React.MutableRefObject<any> }) {
+  const [editor] = useLexicalComposerContext();
+  const done = useRef(false);
+
+  useEffect(() => {
+    const provider = providerRef.current;
+    if (!provider || done.current) return;
+
+    const onSync = (isSynced: boolean) => {
+      if (!isSynced || done.current) return;
+
+      // Prüfen ob Yjs-Root bereits Inhalt hat (anderer User war bereits drin)
+      try {
+        const doc = provider.doc as Y.Doc;
+        if (doc.share.has('root')) {
+          const root = doc.share.get('root') as any;
+          if (root._length > 0) return; // Yjs hat Inhalt → Binding übernimmt
+        }
+      } catch { /* ok, leerer Doc */ }
+
+      done.current = true;
+
+      // Alle Top-Level-Nodes als dirty markieren → Binding erkennt Änderungen → sendet zu Yjs
+      editor.update(() => {
+        $getRoot().getChildren().forEach(child => {
+          try { (child as any).getWritable(); } catch { /* ok */ }
+        });
+      }); // kein SKIP_COLLAB_TAG → Binding überträgt nach Yjs
+    };
+
+    provider.on('sync', onSync);
+    return () => provider.off('sync', onSync);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
+
+  return null;
+}
+
 const LexicalEditorWrapper = ({
   content,
   onChange,
@@ -547,9 +588,8 @@ const LexicalEditorWrapper = ({
   const onUsersChangeRef = useRef(onUsersChange);
   useLayoutEffect(() => { onUsersChangeRef.current = onUsersChange; });
 
-  // Snapshot des initialen Inhalts (bei Mount gesetzt, danach nie geändert).
-  // Wird von stableInitialEditorState zum Bootstrap des leeren Yjs-Docs verwendet.
-  const initialContentSnapshot = useRef(content);
+  // Ref auf den erstellten Provider — wird von YjsBootstrapPlugin genutzt.
+  const providerRef = useRef<any>(null);
 
   // Stable providerFactory — muss sich NIE ändern solange dieselbe Notiz offen ist.
   const collaborationRef = useRef(collaboration);
@@ -567,6 +607,7 @@ const LexicalEditorWrapper = ({
       doc,
       { params: { token: collab.token } },
     ) as any;
+    providerRef.current = provider;
     provider.awareness.on('change', () => {
       const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
       const others = states
@@ -580,20 +621,7 @@ const LexicalEditorWrapper = ({
     });
     return provider;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // leere Deps: stabil für die gesamte Lebensdauer des Editors (key={note.id} erzwingt Remount bei Notiz-Wechsel)
-
-  // Wird von CollaborationPlugin.shouldBootstrap aufgerufen wenn der Yjs-Doc leer ist
-  // (erster User der eine Notiz öffnet). Lädt den initialen DB-Inhalt in den Editor
-  // und bootstrappt damit den Yjs-Doc — so sehen alle weiteren User den richtigen Inhalt.
-  const stableInitialEditorState = useCallback((_editor: LexicalEditor) => {
-    const parser = new DOMParser();
-    const dom = parser.parseFromString(initialContentSnapshot.current || '<p></p>', 'text/html');
-    const nodes = $generateNodesFromDOM(_editor, dom);
-    $getRoot().clear();
-    $insertNodes(nodes);
-    $getRoot().selectEnd();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // stabil — liest initialen Content aus Ref
+  }, []);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -646,7 +674,7 @@ const LexicalEditorWrapper = ({
       <LexicalCollaboration>
       <LexicalComposer initialConfig={initialConfig}>
         <div className="flex h-full min-h-0 flex-1 flex-col">
-          {!collaboration && <InitialContentPlugin content={content} />}
+          <InitialContentPlugin content={content} />
           <ChangePlugin onChange={onChange} />
           <MultilineQuotePlugin />
           <CheckListIndentPlugin />
@@ -681,14 +709,16 @@ const LexicalEditorWrapper = ({
                   ErrorBoundary={LexicalErrorBoundary}
                 />
                 {collaboration ? (
+                  <>
                   <CollaborationPlugin
                     id={collaboration.noteId}
                     providerFactory={stableProviderFactory}
                     username={collaboration.username}
                     cursorColor={collaboration.cursorColor}
                     shouldBootstrap
-                    initialEditorState={stableInitialEditorState}
                   />
+                  <YjsBootstrapPlugin providerRef={providerRef} />
+                  </>
                 ) : (
                   <HistoryPlugin />
                 )}
