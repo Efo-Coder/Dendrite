@@ -369,12 +369,21 @@ function YjsSyncPlugin({
     };
     binding.root.getSharedType().observeDeep(onYjsTreeChanges);
 
+    // On the first sync, pretend prevEditorState is empty so that all existing
+    // Lexical nodes (created by RichTextPlugin before this binding existed) are
+    // treated as new inserts and get registered in collabNodeMap. Without this,
+    // syncChildrenFromLexical would try to splice-remove nodes it has never seen,
+    // triggering Lexical error #94.
+    let firstSync = true;
+    const emptyPrev = { _nodeMap: new Map(), _selection: null } as any;
     const unregisterUpdate = editor.registerUpdateListener(({
       prevEditorState, editorState, dirtyElements, dirtyLeaves, normalizedNodes, tags,
     }) => {
       if (!tags.has(SKIP_COLLAB_TAG)) {
+        const prev = firstSync ? emptyPrev : prevEditorState;
+        firstSync = false;
         syncLexicalUpdateToYjs(
-          binding, provider, prevEditorState, editorState,
+          binding, provider, prev, editorState,
           dirtyElements, dirtyLeaves, normalizedNodes, tags,
         );
       }
