@@ -180,16 +180,18 @@ function StaticFallback({ isDark }: { isDark: boolean }) {
 function FadingCanvas({
   isDark,
   scrollRef,
+  onReady,
 }: {
   isDark: boolean;
   scrollRef: MutableRefObject<number>;
+  onReady?: () => void;
 }) {
   const [visible, setVisible] = useState(false);
 
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: visible ? 1 : 0, transition: 'opacity 0.5s ease' }}>
       <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}>
-        <HeroMesh isDark={isDark} scrollRef={scrollRef} onReady={() => setVisible(true)} />
+        <HeroMesh isDark={isDark} scrollRef={scrollRef} onReady={() => { setVisible(true); onReady?.(); }} />
       </Canvas>
     </div>
   );
@@ -198,9 +200,11 @@ function FadingCanvas({
 export default function ForestHeroBackground({
   isDark,
   scrollRef,
+  onReady,
 }: {
   isDark: boolean;
   scrollRef: MutableRefObject<number>;
+  onReady?: () => void;
 }) {
   return (
     <div
@@ -209,7 +213,7 @@ export default function ForestHeroBackground({
     >
       <StaticFallback isDark={isDark} />
       <Suspense fallback={null}>
-        <FadingCanvas isDark={isDark} scrollRef={scrollRef} />
+        <FadingCanvas isDark={isDark} scrollRef={scrollRef} onReady={onReady} />
       </Suspense>
     </div>
   );

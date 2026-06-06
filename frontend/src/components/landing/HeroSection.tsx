@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import ForestHeroBackground from './ForestHeroBackground';
@@ -15,6 +15,13 @@ export function HeroSection() {
   const scrollProgress = useRef(0);
   const { themeMode } = useSettingsStore();
   const isDark = themeMode === 'dark';
+  const [canvasReady, setCanvasReady] = useState(false);
+
+  // Fallback: Animationen starten spätestens nach 2s falls Canvas nicht lädt
+  useEffect(() => {
+    const t = setTimeout(() => setCanvasReady(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -43,7 +50,17 @@ export function HeroSection() {
       {/* Sticky viewport */}
       <div style={{ position: 'sticky', top: 0, height: '100dvh', overflow: 'hidden' }}>
 
-        <ForestHeroBackground isDark={isDark} scrollRef={scrollProgress} />
+        <ForestHeroBackground isDark={isDark} scrollRef={scrollProgress} onReady={() => setCanvasReady(true)} />
+
+        {/* Permanente CSS-Vignette — sichtbar bevor Canvas lädt */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,0.52) 100%)',
+            pointerEvents: 'none',
+          }}
+        />
 
         {/* Subtle dark overlay for text legibility */}
         <div
@@ -74,8 +91,8 @@ export function HeroSection() {
           <div style={{ overflow: 'hidden', paddingBottom: '0.06em' }}>
             <motion.h1
               initial={{ y: '105%' }}
-              animate={{ y: 0 }}
-              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+              animate={canvasReady ? { y: 0 } : { y: '105%' }}
+              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
               style={{
                 fontFamily: 'var(--serif-display)',
                 fontSize: 'clamp(4.5rem, 11vw, 11rem)',
@@ -96,8 +113,8 @@ export function HeroSection() {
           <div style={{ overflow: 'hidden', paddingBottom: '0.1em', marginTop: '16px', marginBottom: '48px' }}>
             <motion.p
               initial={{ y: '110%' }}
-              animate={{ y: 0 }}
-              transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1], delay: 0.4 }}
+              animate={canvasReady ? { y: 0 } : { y: '110%' }}
+              transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
               style={{
                 fontFamily: 'var(--mono)',
                 fontSize: 'clamp(9px, 1.1vw, 12px)',
@@ -115,8 +132,8 @@ export function HeroSection() {
           <motion.div
             className="flex flex-wrap gap-3 justify-center"
             initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.85, ease: [0.25, 1, 0.5, 1] }}
+            animate={canvasReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+            transition={{ duration: 0.9, delay: 0.5, ease: [0.25, 1, 0.5, 1] }}
           >
             <a
               href="/register"
@@ -161,8 +178,8 @@ export function HeroSection() {
           <motion.div
             style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1.8 }}
+            animate={canvasReady ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 1, delay: 1.2 }}
           >
             <span style={{
               fontFamily: 'var(--mono)',
