@@ -45,7 +45,7 @@ const ForestHeroMaterial = shaderMaterial(
      float globalScale = 1.0 - eased * 0.46;
      vec2 focal = uOffset + uRepeat * 0.5;
      vec2 zoomedUv = focal + (baseUv - focal) * globalScale;
-     float parallax = clamp(eased * depth * 0.22, 0.0, 0.20);
+     float parallax = clamp(eased * depth * 0.08, 0.0, 0.07);
      vec2 sampledUv = focal + (zoomedUv - focal) * (1.0 - parallax);
 
      vec4 day   = texture2D(uDayTex,   sampledUv);
