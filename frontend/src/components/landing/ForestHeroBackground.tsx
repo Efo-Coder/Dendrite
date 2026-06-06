@@ -10,6 +10,7 @@ const ForestHeroMaterial = shaderMaterial(
     uDayTex: null as unknown as THREE.Texture,
     uNightTex: null as unknown as THREE.Texture,
     uDepthTex: null as unknown as THREE.Texture,
+    uDepthDarkTex: null as unknown as THREE.Texture,
     uRepeat: new THREE.Vector2(1, 1),
     uOffset: new THREE.Vector2(0, 0),
   },
@@ -22,6 +23,7 @@ const ForestHeroMaterial = shaderMaterial(
    uniform sampler2D uDayTex;
    uniform sampler2D uNightTex;
    uniform sampler2D uDepthTex;
+   uniform sampler2D uDepthDarkTex;
    uniform float uProgress;
    uniform float uScroll;
    uniform vec2 uRepeat;
@@ -32,14 +34,21 @@ const ForestHeroMaterial = shaderMaterial(
 
      float eased = pow(uScroll, 1.5);
 
-     // 4-tap blur on depth map → smooth depth transitions, no tearing
+     // 4-tap blur auf beide Depth-Maps, dann interpolieren
      float bs = 0.008;
-     float depth = (
+     float depthDay = (
        texture2D(uDepthTex, baseUv + vec2(-bs,  bs)).r +
        texture2D(uDepthTex, baseUv + vec2( bs,  bs)).r +
        texture2D(uDepthTex, baseUv + vec2(-bs, -bs)).r +
        texture2D(uDepthTex, baseUv + vec2( bs, -bs)).r
      ) * 0.25;
+     float depthNight = (
+       texture2D(uDepthDarkTex, baseUv + vec2(-bs,  bs)).r +
+       texture2D(uDepthDarkTex, baseUv + vec2( bs,  bs)).r +
+       texture2D(uDepthDarkTex, baseUv + vec2(-bs, -bs)).r +
+       texture2D(uDepthDarkTex, baseUv + vec2( bs, -bs)).r
+     ) * 0.25;
+     float depth = mix(depthDay, depthNight, uProgress);
 
      // Global zoom (artefaktfrei) + kleines Depth-Parallax obendrauf
      float globalScale = 1.0 - eased * 0.65;
@@ -71,7 +80,8 @@ extend({ ForestHeroMaterial });
 useTexture.preload([
   '/img/backgrounds/forest.webp',
   '/img/backgrounds/forest-dark.webp',
-  '/img/backgrounds/forest-depth.png',
+  '/img/backgrounds/forest-depth.webp',
+  '/img/backgrounds/forest-dark-depth.webp',
 ]);
 
 declare module '@react-three/fiber' {
@@ -92,10 +102,11 @@ function HeroMesh({
 }) {
   const matRef = useRef<any>(null);
   const { viewport, size } = useThree();
-  const [dayTex, nightTex, depthTex] = useTexture([
+  const [dayTex, nightTex, depthTex, depthDarkTex] = useTexture([
     '/img/backgrounds/forest.webp',
     '/img/backgrounds/forest-dark.webp',
-    '/img/backgrounds/forest-depth.png',
+    '/img/backgrounds/forest-depth.webp',
+    '/img/backgrounds/forest-dark-depth.webp',
   ]);
   const initialized = useRef(false);
 
@@ -146,6 +157,7 @@ function HeroMesh({
         uDayTex={dayTex}
         uNightTex={nightTex}
         uDepthTex={depthTex}
+        uDepthDarkTex={depthDarkTex}
       />
     </mesh>
   );
