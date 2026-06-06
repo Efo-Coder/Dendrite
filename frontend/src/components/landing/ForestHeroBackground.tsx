@@ -42,7 +42,7 @@ const ForestHeroMaterial = shaderMaterial(
      ) * 0.25;
 
      // Global zoom (artefaktfrei) + kleines Depth-Parallax obendrauf
-     float globalScale = 1.0 - eased * 0.46;
+     float globalScale = 1.0 - eased * 0.65;
      vec2 focal = uOffset + uRepeat * 0.5;
      vec2 zoomedUv = focal + (baseUv - focal) * globalScale;
      float parallax = clamp(eased * depth * 0.08, 0.0, 0.07);
