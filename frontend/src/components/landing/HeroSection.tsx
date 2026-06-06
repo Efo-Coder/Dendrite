@@ -4,7 +4,6 @@ import { useRef, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import ForestHeroBackground from './ForestHeroBackground';
-import { BetaBanner } from './BetaBanner';
 
 // Einzige Konstante — steuert Dauer und Zoomgeschwindigkeit automatisch
 const HERO_HEIGHT_VH = 300;
@@ -45,8 +44,6 @@ export function HeroSection() {
       <div style={{ position: 'sticky', top: 0, height: '100dvh', overflow: 'hidden' }}>
 
         <ForestHeroBackground isDark={isDark} scrollRef={scrollProgress} />
-
-        <BetaBanner />
 
         {/* Bottom gradient for text legibility */}
         <div

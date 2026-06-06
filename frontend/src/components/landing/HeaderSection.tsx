@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Moon, Sun } from "lucide-react";
 import { LOGO_SRC } from "../../config/brand";
 import { BetaBadge } from "../ui/BetaBadge";
+import { BETA_BANNER_HEIGHT } from "./BetaBanner";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -35,7 +36,7 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        position: 'fixed', top: BETA_BANNER_HEIGHT, left: 0, right: 0, zIndex: 50,
         background: scrolled ? 'color-mix(in oklch, var(--bg-deep) 85%, transparent)' : 'transparent',
         borderBottom: `0.5px solid ${scrolled ? 'var(--line)' : 'transparent'}`,
         backdropFilter: scrolled ? 'blur(20px) saturate(150%)' : 'none',

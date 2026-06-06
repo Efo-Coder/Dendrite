@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { HeaderSection } from '../components/landing/HeaderSection';
+import { BetaBanner } from '../components/landing/BetaBanner';
 import { HeroSection } from '../components/landing/HeroSection';
 import { FeaturesSection } from '../components/landing/FeaturesSection';
 import { ServicesSection } from '../components/landing/ServicesSection';
@@ -64,6 +65,7 @@ export default function LandingPage() {
     >
     <SmoothScroll>
       <div style={{ background: 'var(--bg)', color: 'var(--ink)', minHeight: '100vh' }}>
+        <BetaBanner />
         <HeaderSection dark={dark} onToggleDark={() => setThemeMode(dark ? 'light' : 'dark')} />
         <main id="main-content" style={{ position: 'relative', zIndex: 10, background: 'var(--bg)' }}>
           <HeroSection />

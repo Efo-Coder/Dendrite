@@ -3,10 +3,11 @@ export const BETA_BANNER_HEIGHT = 36;
 export function BetaBanner() {
   return (
     <div style={{
-      position: 'absolute',
-      top: 64,
+      position: 'fixed',
+      top: 0,
       left: 0,
       right: 0,
+      zIndex: 60,
       height: `${BETA_BANNER_HEIGHT}px`,
       display: 'flex',
       alignItems: 'center',
