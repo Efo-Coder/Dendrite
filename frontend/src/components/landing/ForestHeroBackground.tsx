@@ -30,12 +30,23 @@ const ForestHeroMaterial = shaderMaterial(
    void main() {
      vec2 baseUv = vUv * uRepeat + uOffset;
 
-     // bright depth = near object → zooms faster (fly-forward illusion)
-     float depth = texture2D(uDepthTex, baseUv).r;
      float eased = pow(uScroll, 2.0);
-     float zoom = clamp(eased * depth * 1.1, 0.0, 0.78);
+
+     // 4-tap blur on depth map → smooth depth transitions, no tearing
+     float bs = 0.008;
+     float depth = (
+       texture2D(uDepthTex, baseUv + vec2(-bs,  bs)).r +
+       texture2D(uDepthTex, baseUv + vec2( bs,  bs)).r +
+       texture2D(uDepthTex, baseUv + vec2(-bs, -bs)).r +
+       texture2D(uDepthTex, baseUv + vec2( bs, -bs)).r
+     ) * 0.25;
+
+     // Global zoom (artefaktfrei) + kleines Depth-Parallax obendrauf
+     float globalScale = 1.0 - eased * 0.38;
      vec2 focal = uOffset + uRepeat * 0.5;
-     vec2 sampledUv = focal + (baseUv - focal) * (1.0 - zoom);
+     vec2 zoomedUv = focal + (baseUv - focal) * globalScale;
+     float parallax = clamp(eased * depth * 0.22, 0.0, 0.20);
+     vec2 sampledUv = focal + (zoomedUv - focal) * (1.0 - parallax);
 
      vec4 day   = texture2D(uDayTex,   sampledUv);
      vec4 night = texture2D(uNightTex, sampledUv);
