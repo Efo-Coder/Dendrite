@@ -30,7 +30,7 @@ const ForestHeroMaterial = shaderMaterial(
    void main() {
      vec2 baseUv = vUv * uRepeat + uOffset;
 
-     float eased = pow(uScroll, 2.0);
+     float eased = pow(uScroll, 1.5);
 
      // 4-tap blur on depth map → smooth depth transitions, no tearing
      float bs = 0.008;
@@ -42,7 +42,7 @@ const ForestHeroMaterial = shaderMaterial(
      ) * 0.25;
 
      // Global zoom (artefaktfrei) + kleines Depth-Parallax obendrauf
-     float globalScale = 1.0 - eased * 0.38;
+     float globalScale = 1.0 - eased * 0.46;
      vec2 focal = uOffset + uRepeat * 0.5;
      vec2 zoomedUv = focal + (baseUv - focal) * globalScale;
      float parallax = clamp(eased * depth * 0.22, 0.0, 0.20);
