@@ -45,95 +45,78 @@ export function HeroSection() {
 
         <ForestHeroBackground isDark={isDark} scrollRef={scrollProgress} />
 
-        {/* Bottom gradient for text legibility */}
+        {/* Subtle dark overlay for text legibility */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.0) 100%)',
+            background: 'rgba(0,0,0,0.20)',
             pointerEvents: 'none',
           }}
         />
 
-        {/* Text + CTAs */}
+        {/* Centered text + CTAs */}
         <motion.div
           style={{
             position: 'absolute',
             inset: 0,
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'flex-end',
+            justifyContent: 'center',
+            alignItems: 'center',
+            textAlign: 'center',
             padding: 'clamp(40px, 6vw, 80px) clamp(24px, 5vw, 80px)',
             opacity: textOpacity,
             y: textY,
           }}
         >
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 1, 0.5, 1] }}
-            style={{
-              fontFamily: 'var(--mono)',
-              fontSize: '10px',
-              letterSpacing: '0.28em',
-              textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.5)',
-              margin: '0 0 20px',
-            }}
-          >
-            Dendrite · a notebook
-          </motion.p>
+          {/* Title — line reveal */}
+          <div style={{ overflow: 'hidden', paddingBottom: '0.06em' }}>
+            <motion.h1
+              initial={{ y: '105%' }}
+              animate={{ y: 0 }}
+              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+              style={{
+                fontFamily: 'var(--serif-display)',
+                fontSize: 'clamp(4.5rem, 11vw, 11rem)',
+                fontWeight: 300,
+                fontStyle: 'italic',
+                color: 'rgba(255,255,255,0.95)',
+                lineHeight: 1.0,
+                letterSpacing: '-0.02em',
+                margin: 0,
+                textShadow: '0 2px 48px rgba(0,0,0,0.35)',
+              }}
+            >
+              Dendrite
+            </motion.h1>
+          </div>
 
-          <h1 style={{ margin: '0 0 32px' }}>
-            <span className="block overflow-hidden" style={{ paddingBottom: '0.05em' }}>
-              <motion.span
-                className="block"
-                initial={{ y: '110%', opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
-                style={{
-                  fontFamily: 'var(--serif-display)',
-                  fontSize: 'clamp(3rem, 7vw, 7rem)',
-                  fontWeight: 300,
-                  fontStyle: 'italic',
-                  color: 'rgba(255,255,255,0.95)',
-                  lineHeight: 1.05,
-                  letterSpacing: '-0.02em',
-                  display: 'block',
-                  textShadow: '0 2px 32px rgba(0,0,0,0.4)',
-                }}
-              >
-                Write what
-              </motion.span>
-            </span>
-            <span className="block overflow-hidden" style={{ paddingBottom: '0.05em' }}>
-              <motion.span
-                className="block"
-                initial={{ y: '110%', opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: 0.45 }}
-                style={{
-                  fontFamily: 'var(--serif-display)',
-                  fontSize: 'clamp(3rem, 7vw, 7rem)',
-                  fontWeight: 300,
-                  fontStyle: 'italic',
-                  color: 'rgba(255,255,255,0.95)',
-                  lineHeight: 1.05,
-                  letterSpacing: '-0.02em',
-                  display: 'block',
-                  textShadow: '0 2px 32px rgba(0,0,0,0.4)',
-                }}
-              >
-                endures.
-              </motion.span>
-            </span>
-          </h1>
+          {/* Subtitle — line reveal */}
+          <div style={{ overflow: 'hidden', paddingBottom: '0.1em', marginTop: '16px', marginBottom: '48px' }}>
+            <motion.p
+              initial={{ y: '110%' }}
+              animate={{ y: 0 }}
+              transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1], delay: 0.4 }}
+              style={{
+                fontFamily: 'var(--mono)',
+                fontSize: 'clamp(9px, 1.1vw, 12px)',
+                letterSpacing: '0.35em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.45)',
+                margin: 0,
+              }}
+            >
+              A Notebook
+            </motion.p>
+          </div>
 
+          {/* CTAs */}
           <motion.div
-            className="flex flex-wrap gap-3"
-            initial={{ opacity: 0, y: 14 }}
+            className="flex flex-wrap gap-3 justify-center"
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.9, ease: [0.25, 1, 0.5, 1] }}
+            transition={{ duration: 0.9, delay: 0.85, ease: [0.25, 1, 0.5, 1] }}
           >
             <a
               href="/register"
