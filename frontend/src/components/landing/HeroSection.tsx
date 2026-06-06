@@ -6,6 +6,11 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import ForestHeroBackground from './ForestHeroBackground';
 import { BetaBanner } from './BetaBanner';
 
+// Einzige Konstante — steuert Dauer und Zoomgeschwindigkeit automatisch
+const HERO_HEIGHT_VH = 300;
+// scrollYProgress-Wert bei dem das Sticky endet (= end of visible canvas)
+const STICKY_END = (HERO_HEIGHT_VH - 100) / HERO_HEIGHT_VH;
+
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const scrollProgress = useRef(0);
@@ -17,21 +22,24 @@ export function HeroSection() {
     offset: ['start start', 'end start'],
   });
 
-  const textOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
-  const textY = useTransform(scrollYProgress, [0, 0.25], [0, -50]);
-  const hintOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
+  // Normalisiert: Shader bekommt immer 0→1, Endzoom bleibt konstant
+  const normalized = useTransform(scrollYProgress, [0, STICKY_END], [0, 1]);
+
+  const textOpacity = useTransform(normalized, [0, 0.25], [1, 0]);
+  const textY = useTransform(normalized, [0, 0.25], [0, -50]);
+  const hintOpacity = useTransform(normalized, [0, 0.12], [1, 0]);
 
   useEffect(() => {
-    return scrollYProgress.on('change', (v) => {
-      scrollProgress.current = v;
+    return normalized.on('change', (v) => {
+      scrollProgress.current = Math.min(v, 1);
     });
-  }, [scrollYProgress]);
+  }, [normalized]);
 
   return (
     <section
       ref={sectionRef}
       id="hero"
-      style={{ height: '400vh', position: 'relative' }}
+      style={{ height: `${HERO_HEIGHT_VH}vh`, position: 'relative' }}
     >
       {/* Sticky viewport */}
       <div style={{ position: 'sticky', top: 0, height: '100dvh', overflow: 'hidden' }}>
