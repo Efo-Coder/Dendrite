@@ -53,8 +53,16 @@ const ForestHeroMaterial = shaderMaterial(
 
      float brightness = dot(day.rgb, vec3(0.299, 0.587, 0.114));
      float mixFactor  = clamp((uProgress * 2.0) - brightness, 0.0, 1.0);
+     vec4 color = mix(day, night, mixFactor);
 
-     gl_FragColor = mix(day, night, mixFactor);
+     // Vignette — deckt Blur-Artefakte an den Kanten ab, wird mit Scroll stärker
+     float vx = vUv.x * 2.0 - 1.0;
+     float vy = vUv.y * 2.0 - 1.0;
+     float dist = vx * vx + vy * vy;
+     float vignette = 1.0 - dist * (0.35 + eased * 0.45);
+     vignette = clamp(vignette, 0.0, 1.0);
+
+     gl_FragColor = vec4(color.rgb * vignette, color.a);
    }`
 );
 
