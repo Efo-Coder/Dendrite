@@ -27,7 +27,11 @@ const InvitationsPanel = ({ onChanged }: Props) => {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const id = setInterval(load, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleAccept = async (inv: Invitation) => {
     try {

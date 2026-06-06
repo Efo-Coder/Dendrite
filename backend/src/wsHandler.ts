@@ -12,6 +12,7 @@ interface DocEntry {
   doc: Y.Doc;
   awareness: awarenessProtocol.Awareness;
   conns: Set<WebSocket>;
+  connToClients: Map<WebSocket, Set<number>>;
 }
 
 const docs = new Map<string, DocEntry>();
@@ -22,6 +23,7 @@ function getDoc(docName: string): DocEntry {
     const doc = new Y.Doc({ gc: true });
     const awareness = new awarenessProtocol.Awareness(doc);
     const conns: Set<WebSocket> = new Set();
+    const connToClients = new Map<WebSocket, Set<number>>();
 
     doc.on('update', (update: Uint8Array) => {
       const enc = encoding.createEncoder();
@@ -33,7 +35,7 @@ function getDoc(docName: string): DocEntry {
       });
     });
 
-    entry = { doc, awareness, conns };
+    entry = { doc, awareness, conns, connToClients };
     docs.set(docName, entry);
   }
   return entry;
@@ -49,9 +51,9 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
   ws.binaryType = 'arraybuffer';
 
   const entry = getDoc(docName);
-  const { doc, awareness, conns } = entry;
+  const { doc, awareness, conns, connToClients } = entry;
   conns.add(ws);
-
+  connToClients.set(ws, new Set());
 
   // Send sync step 1
   const enc1 = encoding.createEncoder();
@@ -59,7 +61,7 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
   syncProtocol.writeSyncStep1(enc1, doc);
   ws.send(encoding.toUint8Array(enc1));
 
-  // Send current awareness states
+  // Send current awareness states to the new client
   const awarenessStates = awareness.getStates();
   if (awarenessStates.size > 0) {
     const enc2 = encoding.createEncoder();
@@ -71,6 +73,7 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
     ws.send(encoding.toUint8Array(enc2));
   }
 
+  // Broadcast awareness changes to all OTHER connections
   const onAwareness = ({
     added,
     updated,
@@ -90,6 +93,23 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
     });
   };
   awareness.on('update', onAwareness);
+
+  // Track which clientIds belong to this WebSocket connection.
+  // Required to clean up awareness states when the connection closes,
+  // preventing "ghost users" that accumulate across reconnects.
+  const onAwarenessChange = (
+    { added, updated }: { added: number[]; updated: number[]; removed: number[] },
+    origin: unknown,
+  ) => {
+    if (origin === ws) {
+      const clients = connToClients.get(ws);
+      if (clients) {
+        added.forEach(id => clients.add(id));
+        updated.forEach(id => clients.add(id));
+      }
+    }
+  };
+  awareness.on('change', onAwarenessChange);
 
   ws.on('message', (raw: Buffer | ArrayBuffer | Buffer[]) => {
     const data = toUint8Array(raw);
@@ -116,6 +136,14 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
   ws.on('close', () => {
     conns.delete(ws);
     awareness.off('update', onAwareness);
+    awareness.off('change', onAwarenessChange);
+    // Remove this connection's awareness states so other clients
+    // don't see stale "ghost users" after reconnects.
+    const clients = connToClients.get(ws);
+    if (clients && clients.size > 0) {
+      awarenessProtocol.removeAwarenessStates(awareness, Array.from(clients), null);
+    }
+    connToClients.delete(ws);
     if (conns.size === 0) {
       setTimeout(() => {
         if (docs.get(docName)?.conns.size === 0) docs.delete(docName);

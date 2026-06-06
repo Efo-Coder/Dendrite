@@ -8,6 +8,7 @@ import {
   syncLexicalUpdateToYjs,
   syncYjsChangesToLexical,
   initLocalState,
+  setLocalStateFocus,
 } from '@lexical/yjs';
 import { TimerCheckboxPlugin } from './CheckResetOverlay';
 import { TimerListItemNode } from './TimerListItemNode';
@@ -51,6 +52,9 @@ import {
   KEY_TAB_COMMAND,
   COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_NORMAL,
+  COMMAND_PRIORITY_EDITOR,
+  FOCUS_COMMAND,
+  BLUR_COMMAND,
   INDENT_CONTENT_COMMAND,
   OUTDENT_CONTENT_COMMAND,
   SKIP_COLLAB_TAG,
@@ -318,6 +322,7 @@ function YjsSyncPlugin({
   cursorColor,
   contentRef,
   onUsersChangeRef,
+  cursorsContainerRef,
 }: {
   noteId: string;
   token: string;
@@ -325,6 +330,7 @@ function YjsSyncPlugin({
   cursorColor: string;
   contentRef: React.MutableRefObject<string>;
   onUsersChangeRef: React.MutableRefObject<((users: ActiveUser[]) => void) | undefined>;
+  cursorsContainerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const [editor] = useLexicalComposerContext();
   const usernameRef = useRef(username);
@@ -352,6 +358,11 @@ function YjsSyncPlugin({
 
     const binding = createBinding(editor, provider, noteId, doc, docMap);
 
+    if (cursorsContainerRef.current) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (binding as any).cursorsContainer = cursorsContainerRef.current;
+    }
+
     initLocalState(
       provider,
       usernameRef.current,
@@ -359,6 +370,15 @@ function YjsSyncPlugin({
       document.activeElement === editor.getRootElement(),
       {},
     );
+
+    const removeFocusCmd = editor.registerCommand(FOCUS_COMMAND, () => {
+      setLocalStateFocus(provider, usernameRef.current, cursorColorRef.current, true, {});
+      return false;
+    }, COMMAND_PRIORITY_EDITOR);
+    const removeBlurCmd = editor.registerCommand(BLUR_COMMAND, () => {
+      setLocalStateFocus(provider, usernameRef.current, cursorColorRef.current, false, {});
+      return false;
+    }, COMMAND_PRIORITY_EDITOR);
 
     const onYjsTreeChanges = (events: Y.YEvent<Y.AbstractType<unknown>>[], transaction: Y.Transaction) => {
       if (transaction.origin !== binding) {
@@ -424,6 +444,8 @@ function YjsSyncPlugin({
     provider.connect();
 
     return () => {
+      removeFocusCmd();
+      removeBlurCmd();
       unregisterUpdate();
       binding.root.getSharedType().unobserveDeep(onYjsTreeChanges);
       provider.off('sync', onSync);
@@ -678,6 +700,7 @@ const LexicalEditorWrapper = ({
 }: LexicalEditorWrapperProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const checkIconRef = useRef<HTMLDivElement>(null);
+  const cursorsContainerRef = useRef<HTMLDivElement>(null);
   const onUsersChangeRef = useRef(onUsersChange);
   useLayoutEffect(() => { onUsersChangeRef.current = onUsersChange; });
 
@@ -735,7 +758,7 @@ const LexicalEditorWrapper = ({
 
       <LexicalComposer initialConfig={initialConfig}>
         <div className="flex h-full min-h-0 flex-1 flex-col">
-          {!collaboration && <InitialContentPlugin content={content} />}
+          <InitialContentPlugin content={content} />
           <ChangePlugin onChange={onChange} />
           <MultilineQuotePlugin />
           <CheckListIndentPlugin />
@@ -763,7 +786,13 @@ const LexicalEditorWrapper = ({
                   {headerSlot}
                 </div>
               )}
-              <div className="editor-container w-full">
+              <div className="editor-container w-full" style={{ position: 'relative' }}>
+                {collaboration && (
+                  <div
+                    ref={cursorsContainerRef}
+                    style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible', zIndex: 10 }}
+                  />
+                )}
                 <RichTextPlugin
                   contentEditable={<ContentEditable className="editor-input editor-body" />}
                   placeholder={<div className="editor-placeholder">{placeholder}</div>}
@@ -777,6 +806,7 @@ const LexicalEditorWrapper = ({
                     cursorColor={collaboration.cursorColor}
                     contentRef={contentRef}
                     onUsersChangeRef={onUsersChangeRef}
+                    cursorsContainerRef={cursorsContainerRef}
                   />
                 ) : (
                   <HistoryPlugin />
