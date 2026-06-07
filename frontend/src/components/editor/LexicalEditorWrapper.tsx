@@ -304,7 +304,7 @@ function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
   useEffect(() => {
     return editor.registerUpdateListener(({ dirtyElements, dirtyLeaves, prevEditorState, tags }) => {
       if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
-      if (tags.has('history-merge')) return;
+      if (tags.has('history-merge') || tags.has(SKIP_COLLAB_TAG)) return;
       if (prevEditorState.isEmpty()) return;
       editor.read(() => {
         onChange($generateHtmlFromNodes(editor));
@@ -389,28 +389,34 @@ function YjsSyncPlugin({
     };
     binding.root.getSharedType().observeDeep(onYjsTreeChanges);
 
-    // On the first sync, pretend prevEditorState is empty so that all existing
-    // Lexical nodes (created by RichTextPlugin before this binding existed) are
-    // treated as new inserts and get registered in collabNodeMap. Without this,
-    // syncChildrenFromLexical would try to splice-remove nodes it has never seen,
-    // triggering Lexical error #94.
+    let synced = false;
     let firstSync = true;
     const emptyPrev = { _nodeMap: new Map(), _selection: null } as any;
     const unregisterUpdate = editor.registerUpdateListener(({
       prevEditorState, editorState, dirtyElements, dirtyLeaves, normalizedNodes, tags,
     }) => {
-      if (!tags.has(SKIP_COLLAB_TAG)) {
-        const prev = firstSync ? emptyPrev : prevEditorState;
+      if (tags.has(SKIP_COLLAB_TAG)) return;
+      if (tags.has('collaboration')) {
+        // Yjs→Lexical sync arrived: collabNodeMap is now populated.
         firstSync = false;
-        syncLexicalUpdateToYjs(
-          binding, provider, prev, editorState,
-          dirtyElements, dirtyLeaves, normalizedNodes, tags,
-        );
+        return;
       }
+      // Block ALL local→Yjs syncs until the WebSocket sync round-trip is done.
+      // Without this guard, premature syncLexicalUpdateToYjs calls (e.g. from
+      // FocusAtEndPlugin or Framer-Motion callbacks) create duplicate Yjs nodes
+      // in an already-populated doc and cause content doubling.
+      if (!synced) return;
+      const prev = firstSync ? emptyPrev : prevEditorState;
+      firstSync = false;
+      syncLexicalUpdateToYjs(
+        binding, provider, prev, editorState,
+        dirtyElements, dirtyLeaves, normalizedNodes, tags,
+      );
     });
 
     const onSync = (isSynced: boolean) => {
       if (!isSynced) return;
+      synced = true; // Unlock local→Yjs syncing now that we know the server state
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sharedType = binding.root.getSharedType() as any;
       if (sharedType._length === 0) {
@@ -420,7 +426,7 @@ function YjsSyncPlugin({
           const nodes = $generateNodesFromDOM(editor, dom);
           $getRoot().clear();
           $insertNodes(nodes);
-        }, { tag: 'history-merge' });
+        }, { tag: SKIP_COLLAB_TAG });
       }
     };
     provider.on('sync', onSync);
@@ -758,7 +764,7 @@ const LexicalEditorWrapper = ({
 
       <LexicalComposer initialConfig={initialConfig}>
         <div className="flex h-full min-h-0 flex-1 flex-col">
-          <InitialContentPlugin content={content} />
+          {!collaboration && <InitialContentPlugin content={content} />}
           <ChangePlugin onChange={onChange} />
           <MultilineQuotePlugin />
           <CheckListIndentPlugin />
