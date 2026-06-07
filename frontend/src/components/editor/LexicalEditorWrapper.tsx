@@ -361,6 +361,7 @@ function YjsSyncPlugin({
       (binding as any).cursorsContainer = cursorsContainerRef.current;
     }
 
+    console.log('[COLLAB] initLocalState username:', usernameRef.current);
     initLocalState(
       provider,
       usernameRef.current,
@@ -432,6 +433,7 @@ function YjsSyncPlugin({
     const onAwarenessChange = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
+      console.log('[COLLAB] awareness states:', states.map(([cid, s]) => ({ cid, name: s?.name, color: s?.color })));
       const others = states
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter(([cid]: [number, any]) => cid !== provider.awareness.clientID)
