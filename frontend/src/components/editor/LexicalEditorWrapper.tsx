@@ -349,7 +349,7 @@ function YjsSyncPlugin({
       `${wsBase}/collaboration`,
       noteId,
       doc,
-      { params: { token: tokenRef.current }, connect: false },
+      { params: { token: tokenRef.current }, connect: false, disableBc: true },
     ) as any;
 
     const binding = createBinding(editor, provider, noteId, doc, docMap);
