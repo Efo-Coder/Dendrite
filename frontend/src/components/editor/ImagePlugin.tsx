@@ -23,7 +23,7 @@ export default function ImagesPlugin(): JSX.Element | null {
         editor.update(() => {
           const imageNode = $createImageNode(payload);
           $insertNodes([imageNode]);
-        }, { discrete: true });
+        });
         return true;
       },
       COMMAND_PRIORITY_EDITOR,
