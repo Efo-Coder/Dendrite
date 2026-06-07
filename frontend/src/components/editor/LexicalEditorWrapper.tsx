@@ -433,7 +433,7 @@ function YjsSyncPlugin({
     const onAwarenessChange = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const states = Array.from(provider.awareness.getStates().entries()) as [number, any][];
-      console.log('[COLLAB] awareness states:', states.map(([cid, s]) => ({ cid, name: s?.name, color: s?.color })));
+      console.log('[COLLAB] awareness states (full):', states.map(([cid, s]) => ({ cid, state: s })));
       const others = states
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter(([cid]: [number, any]) => cid !== provider.awareness.clientID)

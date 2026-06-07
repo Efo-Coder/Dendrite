@@ -749,12 +749,16 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             placeholder="Start writing..."
             disabled={isInTrash || isViewer}
             headerSlot={titleHeader}
-            collaboration={{
-              noteId: note.id,
-              token: localStorage.getItem('token') ?? '',
-              username: user?.name || user?.email || 'Anonym',
-              cursorColor: userCursorColor(user?.id ?? ''),
-            }}
+            collaboration={(() => {
+              const cfg = {
+                noteId: note.id,
+                token: localStorage.getItem('token') ?? '',
+                username: user?.name || user?.email || 'Anonym',
+                cursorColor: userCursorColor(user?.id ?? ''),
+              };
+              console.log('[COLLAB] NoteEditor cfg:', { userId: user?.id, userName: user?.name, userEmail: user?.email, username: cfg.username, cursorColor: cfg.cursorColor });
+              return cfg;
+            })()}
             onUsersChange={setActiveUsers}
             toolbar={
               <RichTextToolbar
