@@ -4,15 +4,13 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import speakeasy from 'speakeasy';
 import qrcode from 'qrcode';
 import { prisma } from '../index';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.service';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.resolve(__dirname, '../../uploads');
+const uploadsDir = path.join(process.cwd(), 'uploads');
 
 function safeDeleteUpload(avatarUrl: string) {
   const filename = avatarUrl.split('/uploads/')[1];

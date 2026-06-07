@@ -2,11 +2,9 @@ import { Response } from 'express';
 import { prisma } from '../index';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { AuthRequest } from '../middleware/auth.middleware';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.resolve(__dirname, '../../uploads');
+const uploadsDir = path.join(process.cwd(), 'uploads');
 
 function safeDeleteUpload(url: string) {
   const filename = url.replace('/uploads/', '');
