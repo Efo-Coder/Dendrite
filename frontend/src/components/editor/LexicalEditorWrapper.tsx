@@ -304,7 +304,7 @@ function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
   useEffect(() => {
     return editor.registerUpdateListener(({ dirtyElements, dirtyLeaves, prevEditorState, tags }) => {
       if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
-      if (tags.has('history-merge') || tags.has(SKIP_COLLAB_TAG)) return;
+      if (tags.has('history-merge') || tags.has(SKIP_COLLAB_TAG) || tags.has('collaboration')) return;
       if (prevEditorState.isEmpty()) return;
       editor.read(() => {
         onChange($generateHtmlFromNodes(editor));
@@ -764,7 +764,7 @@ const LexicalEditorWrapper = ({
 
       <LexicalComposer initialConfig={initialConfig}>
         <div className="flex h-full min-h-0 flex-1 flex-col">
-          {!collaboration && <InitialContentPlugin content={content} />}
+          <InitialContentPlugin content={content} />
           <ChangePlugin onChange={onChange} />
           <MultilineQuotePlugin />
           <CheckListIndentPlugin />
