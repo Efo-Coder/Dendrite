@@ -144,6 +144,16 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
       awarenessProtocol.removeAwarenessStates(awareness, Array.from(clients), null);
     }
     connToClients.delete(ws);
+
+    // Clean up orphaned awareness entries: clients whose state arrived but whose
+    // connection was never tracked (e.g. connected with empty state before close).
+    const trackedClients = new Set<number>();
+    connToClients.forEach(set => set.forEach(id => trackedClients.add(id)));
+    const orphans = Array.from(awareness.getStates().keys())
+      .filter(id => !trackedClients.has(id));
+    if (orphans.length > 0) {
+      awarenessProtocol.removeAwarenessStates(awareness, orphans, null);
+    }
     if (conns.size === 0) {
       setTimeout(() => {
         if (docs.get(docName)?.conns.size === 0) docs.delete(docName);
