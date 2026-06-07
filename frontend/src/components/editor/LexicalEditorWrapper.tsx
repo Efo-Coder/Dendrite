@@ -59,6 +59,7 @@ import {
   OUTDENT_CONTENT_COMMAND,
   SKIP_COLLAB_TAG,
   LexicalNode,
+  LexicalEditor,
 } from 'lexical';
 
 // Provides the onChange callback to decorator nodes (e.g. ImageComponent) so they
@@ -280,23 +281,6 @@ function CodeHighlightPlugin(): null {
   return null;
 }
 
-// Plugin to load initial content on mount.
-function InitialContentPlugin({ content }: { content: string }) {
-  const [editor] = useLexicalComposerContext();
-
-  useLayoutEffect(() => {
-    editor.update(() => {
-      const parser = new DOMParser();
-      const dom = parser.parseFromString(content || '<p></p>', 'text/html');
-      const nodes = $generateNodesFromDOM(editor, dom);
-      $getRoot().clear();
-      $insertNodes(nodes);
-      $getRoot().selectEnd();
-    });
-  }, [editor]);
-
-  return null;
-}
 
 function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
   const [editor] = useLexicalComposerContext();
@@ -751,6 +735,13 @@ const LexicalEditorWrapper = ({
       LinkNode,
       ImageNode,
     ],
+    editorState: (editor: LexicalEditor) => {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(content || '<p></p>', 'text/html');
+      const nodes = $generateNodesFromDOM(editor, dom);
+      $getRoot().clear();
+      $insertNodes(nodes);
+    },
   };
 
   return (
@@ -764,7 +755,6 @@ const LexicalEditorWrapper = ({
 
       <LexicalComposer initialConfig={initialConfig}>
         <div className="flex h-full min-h-0 flex-1 flex-col">
-          <InitialContentPlugin content={content} />
           <ChangePlugin onChange={onChange} />
           <MultilineQuotePlugin />
           <CheckListIndentPlugin />
