@@ -320,11 +320,23 @@ function YjsSyncPlugin({
   const usernameRef = useRef(username);
   const cursorColorRef = useRef(cursorColor);
   const tokenRef = useRef(token);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const providerRef = useRef<any>(null);
   useLayoutEffect(() => {
     usernameRef.current = username;
     cursorColorRef.current = cursorColor;
     tokenRef.current = token;
   });
+
+  // Keep awareness name/color in sync if username or color changes after mount
+  // (e.g. async auth resolution). @lexical/yjs's setLocalStateFocus ignores
+  // name/color when localState already exists, so we update it directly.
+  useEffect(() => {
+    if (!providerRef.current) return;
+    const awareness = providerRef.current.awareness;
+    const state = awareness.getLocalState();
+    if (state) awareness.setLocalState({ ...state, name: username, color: cursorColor });
+  }, [username, cursorColor]);
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -341,6 +353,8 @@ function YjsSyncPlugin({
     ) as any;
 
     const binding = createBinding(editor, provider, noteId, doc, docMap);
+
+    providerRef.current = provider;
 
     if (cursorsContainerRef.current) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -434,6 +448,7 @@ function YjsSyncPlugin({
     provider.connect();
 
     return () => {
+      providerRef.current = null;
       removeFocusCmd();
       removeBlurCmd();
       unregisterUpdate();
