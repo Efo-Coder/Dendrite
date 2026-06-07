@@ -23,11 +23,17 @@ interface HeaderProps {
 export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const lightScrolled = scrolled && !dark;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const features = document.getElementById('features');
+    if (!features) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setScrolled(entry.isIntersecting || entry.boundingClientRect.top < 0),
+      { threshold: 0 }
+    );
+    observer.observe(features);
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -65,9 +71,10 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
               fontSize: 'clamp(16px, 2.5vw, 19px)',
               fontWeight: 500,
               fontStyle: 'italic',
-              color: 'var(--ink)',
+              color: lightScrolled ? 'var(--ink)' : 'rgba(255,255,255,0.95)',
               letterSpacing: '0.01em',
               whiteSpace: 'nowrap',
+              transition: 'color 0.3s ease',
             }}>
               Dendrite
             </span>
@@ -83,7 +90,7 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
               <a
                 key={link.label}
                 href={link.href}
-                className="relative group transition-colors duration-150 text-(--ink-mid) hover:text-(--ink) shrink-0"
+                className={`relative group transition-colors duration-300 shrink-0 ${lightScrolled ? 'text-(--ink-mid) hover:text-(--ink)' : 'text-white/60 hover:text-white/95'}`}
                 style={{ fontFamily: 'var(--serif-body)', fontSize: '14px', letterSpacing: '-0.005em', padding: '6px 0', textDecoration: 'none', whiteSpace: 'nowrap' }}
               >
                 {link.label}
@@ -101,8 +108,8 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
           {onToggleDark && (
             <button
               onClick={onToggleDark}
-              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full icon-btn-auth fill-slide"
-              style={{ cursor: 'pointer' }}
+              className={`hidden sm:flex items-center justify-center w-8 h-8 rounded-full fill-slide transition-colors duration-700 ${lightScrolled ? 'text-(--ink-mid) hover:text-(--ink)' : 'text-white/60 hover:text-[oklch(0.15_0.02_60)]'}`}
+              style={{ cursor: 'pointer', border: `0.5px solid ${lightScrolled ? 'var(--line)' : 'rgba(255,255,255,0.25)'}`, background: lightScrolled ? 'transparent' : 'rgba(255,255,255,0.08)', transition: 'color 0.7s ease, border-color 0.3s ease, background 0.3s ease' }}
               title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -112,16 +119,18 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
 
           <Link
             to="/login"
-            className="btn-ghost fill-slide hidden sm:inline-flex text-(--ink-mid) hover:text-(--ink)"
-            style={{ padding: '7px 16px',
+            className={`fill-slide hidden sm:inline-flex transition-colors duration-700 ${lightScrolled ? 'text-(--ink-mid) hover:text-(--ink)' : 'text-white/60 hover:text-[oklch(0.15_0.02_60)]'}`}
+            style={{
+              padding: '7px 16px',
               fontSize: '14px',
               fontWeight: 500,
               borderRadius: '8px',
               fontFamily: 'var(--serif-body)',
-              textTransform: 'none',
-              letterSpacing: 'normal',
-              border: '0.5px solid var(--line)',
-              }}
+              border: `0.5px solid ${lightScrolled ? 'var(--line)' : 'rgba(255,255,255,0.25)'}`,
+              background: lightScrolled ? 'transparent' : 'rgba(255,255,255,0.08)',
+              textDecoration: 'none',
+              transition: 'color 0.7s ease, border-color 0.3s ease, background 0.3s ease',
+            }}
           >
             Sign in
           </Link>

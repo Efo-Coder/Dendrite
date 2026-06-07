@@ -34,20 +34,16 @@ const ForestHeroMaterial = shaderMaterial(
 
      float eased = pow(uScroll, 1.5);
 
-     // 4-tap blur auf beide Depth-Maps, dann interpolieren
+     // 2-tap blur auf beide Depth-Maps, dann interpolieren
      float bs = 0.008;
      float depthDay = (
-       texture2D(uDepthTex, baseUv + vec2(-bs,  bs)).r +
-       texture2D(uDepthTex, baseUv + vec2( bs,  bs)).r +
-       texture2D(uDepthTex, baseUv + vec2(-bs, -bs)).r +
+       texture2D(uDepthTex, baseUv + vec2(-bs, bs)).r +
        texture2D(uDepthTex, baseUv + vec2( bs, -bs)).r
-     ) * 0.25;
+     ) * 0.5;
      float depthNight = (
-       texture2D(uDepthDarkTex, baseUv + vec2(-bs,  bs)).r +
-       texture2D(uDepthDarkTex, baseUv + vec2( bs,  bs)).r +
-       texture2D(uDepthDarkTex, baseUv + vec2(-bs, -bs)).r +
+       texture2D(uDepthDarkTex, baseUv + vec2(-bs, bs)).r +
        texture2D(uDepthDarkTex, baseUv + vec2( bs, -bs)).r
-     ) * 0.25;
+     ) * 0.5;
      float depth = mix(depthDay, depthNight, uProgress);
 
      // Global zoom (artefaktfrei) + kleines Depth-Parallax obendrauf
@@ -131,7 +127,7 @@ function HeroMesh({
 
     if (!initialized.current) {
       matRef.current.uProgress = isDark ? 1 : 0;
-      matRef.current.uScroll = 0;
+      matRef.current.uScroll = scrollRef.current;
       initialized.current = true;
       onReady?.();
       return;

@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import ForestHeroBackground from './ForestHeroBackground';
 
 // Einzige Konstante — steuert Dauer und Zoomgeschwindigkeit automatisch
-const HERO_HEIGHT_VH = 300;
+const HERO_HEIGHT_VH = 250;
 // scrollYProgress-Wert bei dem das Sticky endet (= end of visible canvas)
 const STICKY_END = (HERO_HEIGHT_VH - 100) / HERO_HEIGHT_VH;
 
@@ -35,6 +35,16 @@ export function HeroSection() {
   const textY = useTransform(normalized, [0, 0.25], [0, -50]);
   const hintOpacity = useTransform(normalized, [0, 0.12], [1, 0]);
 
+  // "Write what endures." — erscheint nachdem Dendrite ausgeblendet ist, bleibt bis Hero-Section endet
+  const taglineOpacity = useTransform(normalized, [0.28, 0.42], [0, 1]);
+  const taglineY = useTransform(normalized, [0.28, 0.42], [50, 0]);
+
+  // Sofort mit aktuellem Scrollwert initialisieren — kein Zoom-Sprung nach dem Ladescreen
+  useLayoutEffect(() => {
+    const raw = scrollYProgress.get();
+    scrollProgress.current = Math.min(raw / STICKY_END, 1);
+  }, [scrollYProgress]);
+
   useEffect(() => {
     return normalized.on('change', (v) => {
       scrollProgress.current = Math.min(v, 1);
@@ -51,6 +61,32 @@ export function HeroSection() {
       <div style={{ position: 'sticky', top: 0, height: '100dvh', overflow: 'hidden' }}>
 
         <ForestHeroBackground isDark={isDark} scrollRef={scrollProgress} onReady={() => setCanvasReady(true)} />
+
+        {/* Lade-Overlay — faded aus sobald Canvas ready */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 20,
+            background: 'rgb(10, 9, 7)',
+            opacity: canvasReady ? 0 : 1,
+            transition: 'opacity 0.8s ease',
+            pointerEvents: canvasReady ? 'none' : 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+        >
+          {[0, 1, 2].map(i => (
+            <motion.div
+              key={i}
+              animate={{ opacity: [0.15, 0.7, 0.15] }}
+              transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.22, ease: 'easeInOut' }}
+              style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}
+            />
+          ))}
+        </div>
 
         {/* Permanente CSS-Vignette — sichtbar bevor Canvas lädt */}
         <div
@@ -110,7 +146,7 @@ export function HeroSection() {
           </div>
 
           {/* Subtitle — line reveal */}
-          <div style={{ overflow: 'hidden', paddingBottom: '0.1em', marginTop: '16px', marginBottom: '48px' }}>
+          <div style={{ overflow: 'hidden', paddingBottom: '0.1em', marginTop: '16px' }}>
             <motion.p
               initial={{ y: '110%' }}
               animate={canvasReady ? { y: 0 } : { y: '110%' }}
@@ -127,40 +163,63 @@ export function HeroSection() {
               A Notebook
             </motion.p>
           </div>
+        </motion.div>
 
-          {/* CTAs */}
-          <motion.div
-            className="flex flex-wrap gap-3 justify-center"
-            initial={{ opacity: 0, y: 16 }}
-            animate={canvasReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-            transition={{ duration: 0.9, delay: 0.5, ease: [0.25, 1, 0.5, 1] }}
-          >
-            <a
-              href="/register"
-              className="btn primary"
-              style={{ padding: '11px 24px', borderRadius: '10px', fontSize: '15px' }}
-            >
-              Start for free
-            </a>
-            <a
-              href="#features"
-              style={{
-                padding: '11px 24px',
-                fontSize: '15px',
-                borderRadius: '10px',
-                fontFamily: 'var(--serif-body)',
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.85)',
-                border: '0.5px solid rgba(255,255,255,0.25)',
-                backdropFilter: 'blur(8px)',
-                background: 'rgba(255,255,255,0.08)',
-                textDecoration: 'none',
-                display: 'inline-block',
-              }}
-            >
-              Explore features
-            </a>
-          </motion.div>
+        {/* "Write what endures." — erscheint nachdem Dendrite ausgeblendet ist */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: taglineOpacity,
+            y: taglineY,
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px' }}>
+            <p style={{
+              fontFamily: 'var(--serif-display)',
+              fontSize: 'clamp(2.2rem, 5vw, 5rem)',
+              fontWeight: 300,
+              fontStyle: 'italic',
+              color: 'rgba(255,255,255,0.92)',
+              letterSpacing: '-0.02em',
+              textShadow: '0 2px 40px rgba(0,0,0,0.4)',
+              margin: 0,
+              textAlign: 'center',
+            }}>
+              Write what endures.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <a
+                href="/register"
+                className="btn primary"
+                style={{ padding: '11px 24px', borderRadius: '10px', fontSize: '15px', pointerEvents: 'auto' }}
+              >
+                Start for free
+              </a>
+              <a
+                href="#features"
+                className="fill-slide text-white/85 hover:text-[oklch(0.15_0.02_60)] transition-colors duration-700"
+                style={{
+                  padding: '11px 24px',
+                  fontSize: '15px',
+                  borderRadius: '10px',
+                  fontFamily: 'var(--serif-body)',
+                  fontWeight: 500,
+                  border: '0.5px solid rgba(255,255,255,0.25)',
+                  background: 'rgba(255,255,255,0.08)',
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  pointerEvents: 'auto',
+                }}
+              >
+                Explore features
+              </a>
+            </div>
+          </div>
         </motion.div>
 
         {/* Scroll hint */}
@@ -183,31 +242,31 @@ export function HeroSection() {
           >
             <span style={{
               fontFamily: 'var(--mono)',
-              fontSize: '9px',
+              fontSize: '11px',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.35)',
+              color: 'rgba(255,255,255,0.6)',
             }}>
               Scroll
             </span>
             <div style={{
-              width: '32px',
-              height: '32px',
+              width: '42px',
+              height: '42px',
               borderRadius: '50%',
-              border: '1px solid rgba(255,255,255,0.2)',
+              border: '1px solid rgba(255,255,255,0.25)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
             }}>
               <motion.svg
-                width="12" height="12" viewBox="0 0 14 14" fill="none"
+                width="14" height="14" viewBox="0 0 14 14" fill="none"
                 animate={{ y: [0, 4, 0] }}
                 transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
               >
                 <path
                   d="M2 4.5L7 9.5L12 4.5"
-                  stroke="rgba(255,255,255,0.35)"
+                  stroke="rgba(255,255,255,0.6)"
                   strokeWidth="1.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
