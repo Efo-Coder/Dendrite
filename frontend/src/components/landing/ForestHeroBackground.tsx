@@ -1,4 +1,4 @@
-import { useRef, useState, Suspense, MutableRefObject } from 'react';
+import { useRef, useState, useEffect, Suspense, MutableRefObject } from 'react';
 import { Canvas, useFrame, useThree, extend } from '@react-three/fiber';
 import { shaderMaterial, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
@@ -183,10 +183,23 @@ function FadingCanvas({
   onReady?: () => void;
 }) {
   const [visible, setVisible] = useState(false);
+  const [isIntersecting, setIsIntersecting] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsIntersecting(entry.isIntersecting),
+      { rootMargin: '100px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div style={{ position: 'absolute', inset: 0, opacity: visible ? 1 : 0, transition: 'opacity 0.5s ease' }}>
-      <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}>
+    <div ref={containerRef} style={{ position: 'absolute', inset: 0, opacity: visible ? 1 : 0, transition: 'opacity 0.5s ease' }}>
+      <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }} frameloop={isIntersecting ? 'always' : 'never'}>
         <HeroMesh isDark={isDark} scrollRef={scrollRef} onReady={() => { setVisible(true); onReady?.(); }} />
       </Canvas>
     </div>

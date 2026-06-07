@@ -259,7 +259,7 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
-  const [maskRadius, setMaskRadius] = useState(0);
+  const maskRadiusRef = useRef(0);
   const isEven = index % 2 === 0;
 
   const xTo = useRef<gsap.QuickToFunc | null>(null);
@@ -351,8 +351,8 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
         end: "top -20%",
         scrub: 1.5,
         invalidateOnRefresh: true,
-        onUpdate: (self) => setMaskRadius(self.progress * 1200),
-        onLeaveBack: () => setMaskRadius(0),
+        onUpdate: (self) => { maskRadiusRef.current = self.progress * 1200; },
+        onLeaveBack: () => { maskRadiusRef.current = 0; },
       },
     });
     maskTl.to({}, { duration: 1 });
@@ -387,7 +387,7 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
               className="absolute inset-0 w-full h-full"
               style={{ willChange: "transform", transformStyle: "preserve-3d", backfaceVisibility: "hidden", transform: "scale(1.15)" }}
             >
-              <WaterRipple src={feature.image} maskRadius={maskRadius} zoom={feature.zoom ?? 1.0} offset={feature.offset} />
+              <WaterRipple src={feature.image} maskRadiusRef={maskRadiusRef} zoom={feature.zoom ?? 1.0} offset={feature.offset} />
             </div>
           </div>
 

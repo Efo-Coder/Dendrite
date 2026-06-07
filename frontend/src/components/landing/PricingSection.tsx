@@ -13,7 +13,7 @@ const IS_BETA = true;
 
 function CheckIcon() {
   return (
-    <svg className="w-4 h-4 shrink-0" viewBox="0 0 16 16" fill="none">
+    <svg className="w-4 h-4 shrink-0" viewBox="0 0 16 16" fill="none" style={{ color: 'var(--accent)' }}>
       <path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -120,14 +120,19 @@ function PricingCard({ plan }: { plan: Plan }) {
       <div
         className="relative rounded-2xl p-5 md:p-6 lg:p-8 flex flex-col"
         data-locked={locked || undefined}
-        style={{ background: 'var(--ink)', color: 'var(--bg)', pointerEvents: locked ? 'none' : undefined }}
+        style={{
+          background: 'var(--bg-deep)',
+          border: '1px solid var(--accent-deep)',
+          boxShadow: '0 0 0 1px oklch(0.55 0.110 80 / 0.3), 0 8px 48px -8px oklch(0.78 0.110 85 / 0.18)',
+          pointerEvents: locked ? 'none' : undefined,
+        }}
       >
-        {locked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.5)', borderRadius: 'inherit', zIndex: 1, pointerEvents: 'none' }} />}
+        {locked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: 'inherit', zIndex: 1, pointerEvents: 'none' }} />}
         {!IS_BETA && (
           <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
             <span
-              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium uppercase tracking-widest whitespace-nowrap"
-              style={{ background: 'var(--bg)', color: 'var(--ink)' }}
+              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-serif italic whitespace-nowrap"
+              style={{ background: 'var(--accent)', color: 'var(--bg-deep)' }}
             >
               Recommended
             </span>
@@ -135,22 +140,25 @@ function PricingCard({ plan }: { plan: Plan }) {
         )}
 
         <div className="mb-8">
-          <p className="text-sm font-medium uppercase tracking-widest mb-2" style={{ opacity: 0.55 }}>
+          <p className="text-sm font-serif italic mb-2" style={{ color: 'var(--accent)' }}>
             {plan.name}
           </p>
           <div className="flex items-end gap-1 mb-2">
-            <span className="text-5xl font-medium tracking-tight">{plan.price}</span>
-            <span className="text-sm mb-2" style={{ opacity: 0.55 }}>/{plan.period}</span>
+            <span className="font-serif text-5xl tracking-tight" style={{ color: 'var(--ink)' }}>{plan.price}</span>
+            <span className="text-sm mb-2" style={{ color: 'var(--ink-low)' }}>/{plan.period}</span>
           </div>
-          <p className="text-sm" style={{ opacity: 0.65 }}>{plan.description}</p>
+          <p className="text-sm" style={{ color: 'var(--ink-mid)' }}>{plan.description}</p>
         </div>
 
-        <ul className="flex flex-col gap-3 flex-1 mb-8">
+        <ul className="flex-1 mb-8" style={{ borderTop: '1px solid var(--line-soft)' }}>
           {plan.features.map((feature) => (
             <li
               key={feature.label}
-              className="flex items-center gap-3 text-sm"
-              style={{ opacity: feature.included ? 0.9 : 0.25 }}
+              className="flex items-center gap-3 text-sm py-2.5"
+              style={{
+                color: feature.included ? 'var(--ink)' : 'var(--ink-dim)',
+                borderBottom: '1px solid var(--line-soft)',
+              }}
             >
               {feature.included ? <CheckIcon /> : <DashIcon />}
               {feature.label}
@@ -163,8 +171,15 @@ function PricingCard({ plan }: { plan: Plan }) {
             sessionStorage.setItem('pending_plan', plan.name.toLowerCase());
             navigate('/register');
           }}
-          className="btn-ghost fill-slide w-full text-center text-sm font-medium text-(--ink) cursor-pointer"
-          style={{ background: 'var(--bg)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', textTransform: 'none', letterSpacing: 'normal', border: 'none' }}
+          className="w-full text-center text-sm font-medium cursor-pointer transition-opacity hover:opacity-90 active:opacity-80"
+          style={{
+            background: 'var(--accent)',
+            color: 'var(--bg-deep)',
+            padding: '12px 24px',
+            borderRadius: '9999px',
+            fontFamily: 'inherit',
+            border: 'none',
+          }}
         >
           {plan.cta}
         </button>
@@ -172,13 +187,15 @@ function PricingCard({ plan }: { plan: Plan }) {
     );
   }
 
+  const isAuthor = plan.name === 'Author';
+
   return (
     <div
       className="rounded-2xl p-5 md:p-6 lg:p-8 flex flex-col"
       data-locked={locked || undefined}
       style={{
         background: 'var(--surface)',
-        border: '1px solid var(--line)',
+        border: isAuthor ? '1px solid oklch(0.55 0.110 80 / 0.3)' : '1px solid var(--line)',
         pointerEvents: locked ? 'none' : undefined,
         position: 'relative',
       }}
@@ -186,13 +203,13 @@ function PricingCard({ plan }: { plan: Plan }) {
       {locked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: 'inherit', zIndex: 1, pointerEvents: 'none' }} />}
       <div className="mb-8">
         <p
-          className="text-sm font-medium uppercase tracking-widest mb-2"
-          style={{ color: 'var(--ink-low)' }}
+          className="text-sm font-serif italic mb-2"
+          style={{ color: isAuthor ? 'var(--accent)' : 'var(--ink-low)' }}
         >
           {plan.name}
         </p>
         <div className="flex items-end gap-1 mb-2">
-          <span className="text-5xl font-medium tracking-tight" style={{ color: 'var(--ink)' }}>
+          <span className="font-serif text-5xl tracking-tight" style={{ color: 'var(--ink)' }}>
             {plan.price}
           </span>
           <span className="text-sm mb-2" style={{ color: 'var(--ink-low)' }}>/{plan.period}</span>
@@ -200,12 +217,15 @@ function PricingCard({ plan }: { plan: Plan }) {
         <p className="text-sm" style={{ color: 'var(--ink-mid)' }}>{plan.description}</p>
       </div>
 
-      <ul className="flex flex-col gap-3 flex-1 mb-8">
+      <ul className="flex-1 mb-8" style={{ borderTop: '1px solid var(--line-soft)' }}>
         {plan.features.map((feature) => (
           <li
             key={feature.label}
-            className="flex items-center gap-3 text-sm"
-            style={{ color: feature.included ? 'var(--ink)' : 'var(--ink-dim)' }}
+            className="flex items-center gap-3 text-sm py-2.5"
+            style={{
+              color: feature.included ? 'var(--ink)' : 'var(--ink-dim)',
+              borderBottom: '1px solid var(--line-soft)',
+            }}
           >
             {feature.included ? <CheckIcon /> : <DashIcon />}
             {feature.label}

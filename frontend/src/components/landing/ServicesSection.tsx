@@ -89,37 +89,34 @@ export function ServicesSection() {
   useEffect(() => {
     if (!titleRef.current || !sectionRef.current || !contentRef.current) return;
 
-    ScrollTrigger.normalizeScroll(true);
-
     const title = titleRef.current;
     const chars = title.querySelectorAll(".char");
     const section = sectionRef.current;
     const content = contentRef.current;
 
-    gsap.fromTo(
-      chars,
-      { willChange: "transform", transformOrigin: "50% 100%", scaleY: 0 },
-      {
-        ease: "power3.in",
-        opacity: 1,
-        scaleY: 1,
-        stagger: 0.05,
-        scrollTrigger: {
-          trigger: section,
-          start: "top top",
-          end: "+=150%",
-          scrub: 1.5,
-          pin: content,
-          pinType: "transform",
-          invalidateOnRefresh: true,
-        },
-      }
-    );
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        chars,
+        { willChange: "transform", transformOrigin: "50% 100%", scaleY: 0 },
+        {
+          ease: "power3.in",
+          opacity: 1,
+          scaleY: 1,
+          stagger: 0.05,
+          scrollTrigger: {
+            trigger: section,
+            start: "top top",
+            end: "+=150%",
+            scrub: 1.5,
+            pin: content,
+            pinType: "transform",
+            invalidateOnRefresh: true,
+          },
+        }
+      );
+    });
 
-    return () => {
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-      ScrollTrigger.normalizeScroll(false);
-    };
+    return () => ctx.revert();
   }, []);
 
   return (

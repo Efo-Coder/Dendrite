@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useMemo, useSyncExternalStore } from "react";
+import { useRef, useEffect, useMemo, useSyncExternalStore, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
@@ -91,7 +91,17 @@ function createBrushTexture(): THREE.Texture {
   return tex;
 }
 
-function WaterRippleScene({ src, maskRadius, zoom = 1.0, offset = [0, 0] }: { src: string; maskRadius: number; zoom?: number; offset?: [number, number] }) {
+function WaterRippleScene({
+  src,
+  maskRadiusRef,
+  zoom = 1.0,
+  offset = [0, 0],
+}: {
+  src: string;
+  maskRadiusRef: React.MutableRefObject<number>;
+  zoom?: number;
+  offset?: [number, number];
+}) {
   const { size, gl } = useThree();
   const mainMaterialRef = useRef<THREE.ShaderMaterial>(null);
   const imageTexture = useTexture(src);
@@ -107,7 +117,6 @@ function WaterRippleScene({ src, maskRadius, zoom = 1.0, offset = [0, 0] }: { sr
   const currentWave = useRef(0);
   const imageTextureRef = useRef(imageTexture);
   const sizeRef = useRef(size);
-  const maskRadiusRef = useRef(maskRadius);
 
   useEffect(() => {
     if (initializedRef.current) return;
@@ -184,7 +193,6 @@ function WaterRippleScene({ src, maskRadius, zoom = 1.0, offset = [0, 0] }: { sr
 
   useEffect(() => { imageTextureRef.current = imageTexture; }, [imageTexture]);
   useEffect(() => { sizeRef.current = size; }, [size]);
-  useEffect(() => { maskRadiusRef.current = maskRadius; }, [maskRadius]);
 
   const uniforms = useMemo(
     () => ({
@@ -259,15 +267,40 @@ function WaterRippleScene({ src, maskRadius, zoom = 1.0, offset = [0, 0] }: { sr
 
 const emptySubscribe = () => () => {};
 
-export function WaterRipple({ src, maskRadius, zoom, offset }: { src: string; maskRadius: number; zoom?: number; offset?: [number, number] }) {
+export function WaterRipple({
+  src,
+  maskRadiusRef,
+  zoom,
+  offset,
+}: {
+  src: string;
+  maskRadiusRef: React.MutableRefObject<number>;
+  zoom?: number;
+  offset?: [number, number];
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isIntersecting, setIsIntersecting] = useState(false);
+
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
     () => false
   );
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsIntersecting(entry.isIntersecting),
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
+      ref={containerRef}
       className="absolute inset-0 w-full h-full"
       style={{ willChange: "transform", transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
     >
@@ -276,9 +309,9 @@ export function WaterRipple({ src, maskRadius, zoom, offset }: { src: string; ma
           dpr={1}
           gl={{ antialias: false, alpha: true, powerPreference: "high-performance", stencil: false, depth: false }}
           style={{ width: "100%", height: "100%" }}
-          frameloop="always"
+          frameloop={isIntersecting ? "always" : "never"}
         >
-          <WaterRippleScene src={src} maskRadius={maskRadius} zoom={zoom} offset={offset} />
+          <WaterRippleScene src={src} maskRadiusRef={maskRadiusRef} zoom={zoom} offset={offset} />
         </Canvas>
       )}
     </div>
