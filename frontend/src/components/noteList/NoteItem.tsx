@@ -1,5 +1,5 @@
 import { Note } from '../../types';
-import { GripVertical, Folder } from 'lucide-react';
+import { GripVertical, Folder, Users } from 'lucide-react';
 import { Icons } from '../ui/Icons';
 import clsx from 'clsx';
 import { Reorder, useDragControls, DragControls } from 'motion/react';
@@ -43,7 +43,17 @@ export const NoteItemContent = ({
         paddingLeft: '18px',
       }}
     >
-      <div className="note-card-head">
+      <div className="note-card-head" style={{ position: 'relative' }}>
+        {note.collaborators && note.collaborators.length > 0 && (
+          <Users
+            style={{
+              position: 'absolute', right: '100%', top: '50%',
+              transform: 'translateY(-50%)', marginRight: '5px',
+              width: '9px', height: '9px', color: 'var(--ink-dim)',
+              flexShrink: 0,
+            }}
+          />
+        )}
         <span className="note-card-title">{getNoteTitle(note)}</span>
         {note.isPinned && <Icons.pinFill size={11} className="note-card-pin" />}
       </div>
