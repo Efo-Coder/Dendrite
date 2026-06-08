@@ -651,7 +651,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               </div>
 
               {activeUsers.length > 0 && (
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                <div className="flex items-center gap-2 pointer-events-none">
                   <div className="flex -space-x-2">
                     {activeUsers.slice(0, 5).map(u => (
                       <div
