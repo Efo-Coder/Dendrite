@@ -236,8 +236,8 @@ function PricingCard({ plan }: { plan: Plan }) {
       {plan.name === 'Free' ? (
         <Link
           to="/register"
-          className="btn-ghost fill-slide w-full text-center text-sm font-medium text-(--ink)"
-          style={{ border: '1px solid var(--line)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', textTransform: 'none', letterSpacing: 'normal' }}
+          className="fill-slide w-full text-center text-sm font-medium text-(--ink-mid) hover:text-(--ink) transition-colors duration-300"
+          style={{ border: '1px solid var(--line)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', textDecoration: 'none', display: 'block' }}
         >
           {plan.cta}
         </Link>
@@ -247,8 +247,8 @@ function PricingCard({ plan }: { plan: Plan }) {
             sessionStorage.setItem('pending_plan', plan.name.toLowerCase());
             navigate('/register');
           }}
-          className="btn-ghost fill-slide w-full text-center text-sm font-medium text-(--ink) cursor-pointer"
-          style={{ border: '1px solid var(--line)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', textTransform: 'none', letterSpacing: 'normal' }}
+          className="fill-slide w-full text-center text-sm font-medium text-(--ink-mid) hover:text-(--ink) transition-colors duration-300 cursor-pointer"
+          style={{ border: '1px solid var(--line)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', background: 'transparent' }}
         >
           {plan.cta}
         </button>
