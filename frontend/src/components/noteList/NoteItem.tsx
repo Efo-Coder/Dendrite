@@ -1,5 +1,5 @@
 import { Note } from '../../types';
-import { GripVertical, Folder, Users } from 'lucide-react';
+import { GripVertical, Folder } from 'lucide-react';
 import { Icons } from '../ui/Icons';
 import clsx from 'clsx';
 import { Reorder, useDragControls, DragControls } from 'motion/react';
@@ -45,14 +45,21 @@ export const NoteItemContent = ({
     >
       <div className="note-card-head" style={{ position: 'relative' }}>
         {note.collaborators && note.collaborators.length > 0 && (
-          <Users
+          <svg
+            viewBox="0 0 16 16"
+            fill="currentColor"
             style={{
               position: 'absolute', right: '100%', top: '50%',
               transform: 'translateY(-50%)', marginRight: '5px',
               width: '9px', height: '9px', color: 'var(--accent)',
               flexShrink: 0,
             }}
-          />
+          >
+            <path d="M5.5 7a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+            <path d="M11 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+            <path d="M0 13c0-2.76 2.46-5 5.5-5s5.5 2.24 5.5 5H0z" />
+            <path d="M13.5 13h-1.14C12.12 11.3 10.9 10 9.36 9.4A3.98 3.98 0 0 1 11 9c2.21 0 4 1.57 4 3.5 0 .28-.23.5-.5.5H13.5z" />
+          </svg>
         )}
         <span className="note-card-title">{getNoteTitle(note)}</span>
         {note.isPinned && <Icons.pinFill size={11} className="note-card-pin" />}
