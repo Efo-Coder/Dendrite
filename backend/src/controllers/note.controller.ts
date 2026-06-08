@@ -63,7 +63,7 @@ async function applyPreferences(notes: any[], userId: string): Promise<any[]> {
       isFavorite: pref?.isFavorite ?? false,
       folderId,
       folder,
-      tags: tags !== undefined ? tags : note.tags,
+      tags: tags ?? [],
     };
   });
 }
