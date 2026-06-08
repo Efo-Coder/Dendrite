@@ -864,7 +864,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   line-height: 1.62; color: var(--ink); letter-spacing: 0.002em;
 }
 /* Drop-cap on first letter when enabled via Settings */
-.drop-cap .win .editor-body p:first-of-type::first-letter {
+.drop-cap .win .editor-body > p:first-of-type::first-letter {
   font-family: var(--serif-display); font-size: 3.4em; line-height: 0.9;
   float: left; padding: 0.04em 0.08em 0 0; color: var(--accent); font-weight: 500; text-transform: uppercase;
 }
@@ -1276,7 +1276,7 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 /* Tables */
 .editor-table { border-collapse: collapse; width: 100%; margin: 1rem 0; table-layout: fixed; }
 .editor-table-cell        { border: 1px solid var(--line); padding: 8px 12px; min-width: 80px; vertical-align: top; color: var(--ink); position: relative; }
-.editor-table-cell-header { border: 1px solid var(--line); padding: 8px 12px; font-weight: 600; color: var(--ink); text-align: left; vertical-align: top; }
+.editor-table-cell-header { border: 1px solid var(--line); padding: 8px 12px; font-weight: 400; color: var(--ink); text-align: left; vertical-align: top; }
 
 /* Code block */
 .editor-code { background-color: rgba(17, 24, 39, 0.8); color: #ffffff; font-family: Menlo, Consolas, Monaco, monospace; display: block; padding: 12px; line-height: 1.5; font-size: 0.9em; margin: 16px 0; tab-size: 2; overflow-x: auto; position: relative; border-radius: 4px; border: 1px solid rgba(75, 85, 99, 0.3); }
