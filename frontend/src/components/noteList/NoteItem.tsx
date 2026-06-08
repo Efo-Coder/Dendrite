@@ -51,7 +51,7 @@ export const NoteItemContent = ({
             style={{
               position: 'absolute', right: '100%', top: '50%',
               transform: 'translateY(-50%)', marginRight: '5px',
-              width: '9px', height: '9px', color: 'var(--accent)',
+              width: '11px', height: '11px', color: 'var(--accent)',
               flexShrink: 0,
             }}
           >
