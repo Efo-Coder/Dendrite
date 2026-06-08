@@ -20,17 +20,17 @@ const TableInsertModal = ({ isOpen, onClose, onInsert }: TableInsertModalProps) 
           <div className="flex-1">
             <label className="block text-xs font-medium text-(--ink) mb-2 uppercase tracking-wide">Rows</label>
             <div className="input flex items-center gap-1 px-2">
-              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setRows(Math.max(0, rows - 1))} className="transition-colors flex-shrink-0"><Minus className="w-3 h-3" /></button>
+              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setRows(Math.max(0, rows - 1))} className="transition-colors shrink-0"><Minus className="w-3 h-3" /></button>
               <span className="flex-1 text-center text-sm tabular-nums">{rows}</span>
-              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setRows(Math.min(20, rows + 1))} className="transition-colors flex-shrink-0"><Plus className="w-3 h-3" /></button>
+              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setRows(Math.min(20, rows + 1))} className="transition-colors shrink-0"><Plus className="w-3 h-3" /></button>
             </div>
           </div>
           <div className="flex-1">
             <label className="block text-xs font-medium text-(--ink) mb-2 uppercase tracking-wide">Columns</label>
             <div className="input flex items-center gap-1 px-2">
-              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setCols(Math.max(0, cols - 1))} className="transition-colors flex-shrink-0"><Minus className="w-3 h-3" /></button>
+              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setCols(Math.max(0, cols - 1))} className="transition-colors shrink-0"><Minus className="w-3 h-3" /></button>
               <span className="flex-1 text-center text-sm tabular-nums">{cols}</span>
-              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setCols(Math.min(10, cols + 1))} className="transition-colors flex-shrink-0"><Plus className="w-3 h-3" /></button>
+              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => setCols(Math.min(10, cols + 1))} className="transition-colors shrink-0"><Plus className="w-3 h-3" /></button>
             </div>
           </div>
         </div>
