@@ -17,7 +17,7 @@ export function ActiveLinePlugin() {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const visibleRef = useRef(false);
   const prevTopRef = useRef<number | null>(null);
-  const lastCursorHRef = useRef<number>(0); // last measured non-zero cursor height
+  const lastCursorHRef = useRef<number>(0);
 
   // Create overlay once, attach to editor-container
   useEffect(() => {
@@ -70,13 +70,35 @@ export function ActiveLinePlugin() {
       const nativeSel = window.getSelection();
       if (!nativeSel || nativeSel.rangeCount === 0) return;
 
-      // Collapse to cursor position to get single-line rect
+      // Collapse to cursor position to get single-line rect.
+      // Use anchor (collapse=true) only for same-paragraph selections (double-click on a word).
+      // For cross-paragraph transitions (Enter, Backspace) anchor stays on the old line —
+      // use focus instead so the overlay follows the actual cursor.
       const range = nativeSel.getRangeAt(0).cloneRange();
-      range.collapse(true);
+      const useAnchor = !nativeSel.isCollapsed && nativeSel.anchorNode === nativeSel.focusNode;
+      range.collapse(useAnchor);
       let cursorRect = range.getBoundingClientRect();
 
-      // Cache the height whenever we land on a real text line
-      if (cursorRect.height > 0) lastCursorHRef.current = cursorRect.height;
+      // Cache the height whenever we land on a real text line (ignore dropcap inflation)
+      if (cursorRect.height > 0) {
+        const rcEl = range.startContainer.nodeType === Node.ELEMENT_NODE
+          ? range.startContainer as Element
+          : (range.startContainer as Text).parentElement;
+        if (rcEl) {
+          const rcCs = getComputedStyle(rcEl);
+          const rcFs = parseFloat(rcCs.fontSize) || 16;
+          const rcLhRaw = rcCs.lineHeight;
+          const rcLineH = rcLhRaw === 'normal' ? rcFs * 1.2 : (parseFloat(rcLhRaw) || rcFs * 1.2);
+          if (cursorRect.height > rcLineH * 1.5) {
+            // Dropcap-inflated rect — clamp to one normal line
+            cursorRect = { top: cursorRect.top, height: rcLineH } as DOMRect;
+          } else {
+            lastCursorHRef.current = cursorRect.height;
+          }
+        } else {
+          lastCursorHRef.current = cursorRect.height;
+        }
+      }
 
       // Empty line: range yields height 0 — find cursor line position
       if (cursorRect.height === 0) {
