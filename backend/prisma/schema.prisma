@@ -33,11 +33,13 @@ model User {
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
 
-  notes         Note[]
-  folders       Folder[]
-  tags          Tag[]
-  noteOrders    NoteOrder[]
-  collaborations NoteCollaborator[]
+  notes              Note[]
+  folders            Folder[]
+  tags               Tag[]
+  noteOrders         NoteOrder[]
+  collaborations     NoteCollaborator[]
+  notePreferences    UserNotePreference[]
+  userNoteTags       UserNoteTag[]
 
   @@unique([provider, providerId])
 }
@@ -76,11 +78,13 @@ model Note {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  folder        Folder?          @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  noteTags      NoteTag[]
-  attachments   Attachment[]
-  collaborators NoteCollaborator[]
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder          Folder?            @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  noteTags        NoteTag[]
+  attachments     Attachment[]
+  collaborators   NoteCollaborator[]
+  notePreferences UserNotePreference[]
+  userNoteTags    UserNoteTag[]
 
   @@index([userId])
   @@index([folderId])
@@ -99,8 +103,9 @@ model Tag {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  noteTags  NoteTag[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  noteTags     NoteTag[]
+  userNoteTags UserNoteTag[]
 
   @@unique([name, userId])
   @@index([userId])
@@ -149,6 +154,40 @@ model NoteCollaborator {
   @@index([userId])
   @@index([noteId])
   @@map("note_collaborators")
+}
+
+model UserNotePreference {
+  id                String   @id @default(uuid())
+  noteId            String
+  userId            String
+  isPinned          Boolean?
+  isFavorite        Boolean?
+  folderId          String?
+  folderOverrideSet Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, userId])
+  @@index([userId])
+  @@map("user_note_preferences")
+}
+
+model UserNoteTag {
+  noteId    String
+  tagId     String
+  userId    String
+  createdAt DateTime @default(now())
+
+  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, tagId, userId])
+  @@index([noteId, userId])
+  @@map("user_note_tags")
 }
 
 model NoteOrder {

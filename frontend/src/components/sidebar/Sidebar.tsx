@@ -130,9 +130,8 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
     { icon: FileText, label: 'All Notes',         view: 'all'       as ViewType, onClick: () => onViewChange('all'),       count: noteCounts.all,       badge: 0 },
     { icon: Star,     label: 'Favorites',          view: 'favorites' as ViewType, onClick: () => onViewChange('favorites'), count: noteCounts.favorites,  badge: 0 },
     { icon: Archive,  label: 'Archive',            view: 'archive'   as ViewType, onClick: () => onViewChange('archive'),   count: noteCounts.archive,    badge: 0 },
-    { icon: Trash2,   label: 'Trash',              view: 'trash'     as ViewType, onClick: () => onViewChange('trash'),     count: noteCounts.trash,      badge: 0 },
-    // Einladungs-Badge zeigt offene Einladungen an
     { icon: Users,    label: 'Shared with me',     view: 'shared'    as ViewType, onClick: () => onViewChange('shared'),    count: noteCounts.shared,     badge: noteCounts.pendingInvitations },
+    { icon: Trash2,   label: 'Trash',              view: 'trash'     as ViewType, onClick: () => onViewChange('trash'),     count: noteCounts.trash,      badge: 0 },
   ];
 
   return (

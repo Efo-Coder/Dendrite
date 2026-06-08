@@ -18,6 +18,56 @@ function transformNote(note: any) {
   return { ...rest, tags: (noteTags ?? []).map((nt: any) => nt.tag) };
 }
 
+async function applyPreferences(notes: any[], userId: string): Promise<any[]> {
+  if (notes.length === 0) return notes;
+  const noteIds = notes.map(n => n.id);
+  const [prefs, userTags] = await Promise.all([
+    prisma.userNotePreference.findMany({ where: { userId, noteId: { in: noteIds } } }),
+    prisma.userNoteTag.findMany({
+      where: { userId, noteId: { in: noteIds } },
+      include: { tag: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ]);
+
+  const prefMap = new Map(prefs.map(p => [p.noteId, p]));
+  const tagMap = new Map<string, any[]>();
+  for (const ut of userTags) {
+    if (!tagMap.has(ut.noteId)) tagMap.set(ut.noteId, []);
+    tagMap.get(ut.noteId)!.push(ut.tag);
+  }
+
+  // Fetch overridden folders if needed
+  const overriddenFolderIds = new Set<string>();
+  for (const pref of prefs) {
+    if (pref.folderOverrideSet && pref.folderId) overriddenFolderIds.add(pref.folderId);
+  }
+  const folderMap = new Map<string, any>();
+  if (overriddenFolderIds.size > 0) {
+    const folders = await prisma.folder.findMany({ where: { id: { in: Array.from(overriddenFolderIds) } } });
+    for (const f of folders) folderMap.set(f.id, f);
+  }
+
+  return notes.map(note => {
+    const pref = prefMap.get(note.id);
+    const tags = tagMap.get(note.id);
+    let folderId = note.folderId;
+    let folder = note.folder;
+    if (pref?.folderOverrideSet) {
+      folderId = pref.folderId;
+      folder = pref.folderId ? (folderMap.get(pref.folderId) ?? null) : null;
+    }
+    return {
+      ...note,
+      isPinned: pref?.isPinned ?? note.isPinned,
+      isFavorite: pref?.isFavorite ?? note.isFavorite,
+      folderId,
+      folder,
+      tags: tags !== undefined ? tags : note.tags,
+    };
+  });
+}
+
 
 export const getAllNotes = async (req: AuthRequest, res: Response) => {
   try {
@@ -30,7 +80,15 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
         include: { note: { include: NOTE_INCLUDE } },
         orderBy: { acceptedAt: 'desc' },
       });
-      const notes = collabs.map((c: any) => transformNote(c.note));
+      const notes = await applyPreferences(
+        collabs.map((c: any) => transformNote(c.note)),
+        req.userId!
+      );
+      notes.sort((a: any, b: any) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
       return res.json({ notes });
     }
 
@@ -139,7 +197,13 @@ export const getNoteById = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Notiz nicht gefunden' });
     }
 
-    return res.json({ note: transformNote(raw) });
+    const transformed = transformNote(raw);
+    const isOwner = raw.userId === req.userId;
+    if (!isOwner) {
+      const [withPref] = await applyPreferences([transformed], req.userId!);
+      return res.json({ note: withPref });
+    }
+    return res.json({ note: transformed });
   } catch (error) {
     console.error('GetNoteById error:', error);
     return res.status(500).json({ error: 'Fehler beim Abrufen der Notiz' });
@@ -211,6 +275,29 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
       ]);
     }
 
+    if (!isOwner && tags !== undefined) {
+      const existing = await prisma.userNoteTag.findMany({
+        where: { noteId: id, userId: req.userId! },
+        select: { tagId: true },
+      });
+      const existingIds = existing.map(e => e.tagId);
+      const toAdd = (tags as string[]).filter(tid => !existingIds.includes(tid));
+      const toRemove = existingIds.filter(tid => !(tags as string[]).includes(tid));
+
+      await prisma.$transaction([
+        prisma.userNoteTag.deleteMany({ where: { noteId: id, userId: req.userId!, tagId: { in: toRemove } } }),
+        ...toAdd.map(tagId => prisma.userNoteTag.create({ data: { noteId: id, tagId, userId: req.userId! } })),
+      ]);
+    }
+
+    if (!isOwner && folderId !== undefined) {
+      await prisma.userNotePreference.upsert({
+        where: { noteId_userId: { noteId: id, userId: req.userId! } },
+        create: { noteId: id, userId: req.userId!, folderId: folderId || null, folderOverrideSet: true },
+        update: { folderId: folderId || null, folderOverrideSet: true },
+      });
+    }
+
     const raw = await prisma.note.update({
       where: { id },
       data: {
@@ -221,7 +308,12 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
       include: NOTE_INCLUDE,
     });
 
-    return res.json({ note: transformNote(raw) });
+    const transformed = transformNote(raw);
+    if (!isOwner) {
+      const [withPref] = await applyPreferences([transformed], req.userId!);
+      return res.json({ note: withPref });
+    }
+    return res.json({ note: transformed });
   } catch (error) {
     console.error('UpdateNote error:', error);
     return res.status(500).json({ error: 'Fehler beim Aktualisieren der Notiz' });
@@ -284,19 +376,44 @@ export const togglePin = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
 
-    const note = await prisma.note.findFirst({ where: { id, userId: req.userId } });
+    const note = await prisma.note.findFirst({
+      where: {
+        id,
+        OR: [
+          { userId: req.userId },
+          { collaborators: { some: { userId: req.userId!, status: 'accepted' } } },
+        ],
+      },
+    });
 
     if (!note) {
       return res.status(404).json({ error: 'Notiz nicht gefunden' });
     }
 
-    const raw = await prisma.note.update({
-      where: { id },
-      data: { isPinned: !note.isPinned },
-      include: NOTE_INCLUDE,
+    const isOwner = note.userId === req.userId;
+
+    if (isOwner) {
+      const raw = await prisma.note.update({
+        where: { id },
+        data: { isPinned: !note.isPinned },
+        include: NOTE_INCLUDE,
+      });
+      return res.json({ note: transformNote(raw) });
+    }
+
+    const existing = await prisma.userNotePreference.findUnique({
+      where: { noteId_userId: { noteId: id, userId: req.userId! } },
+    });
+    const currentPinned = existing?.isPinned ?? note.isPinned;
+    await prisma.userNotePreference.upsert({
+      where: { noteId_userId: { noteId: id, userId: req.userId! } },
+      create: { noteId: id, userId: req.userId!, isPinned: !currentPinned },
+      update: { isPinned: !currentPinned },
     });
 
-    return res.json({ note: transformNote(raw) });
+    const raw = await prisma.note.findFirst({ where: { id }, include: NOTE_INCLUDE });
+    const [withPref] = await applyPreferences([transformNote(raw)], req.userId!);
+    return res.json({ note: withPref });
   } catch (error) {
     console.error('TogglePin error:', error);
     return res.status(500).json({ error: 'Fehler beim Pinnen der Notiz' });
@@ -307,19 +424,44 @@ export const toggleFavorite = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
 
-    const note = await prisma.note.findFirst({ where: { id, userId: req.userId } });
+    const note = await prisma.note.findFirst({
+      where: {
+        id,
+        OR: [
+          { userId: req.userId },
+          { collaborators: { some: { userId: req.userId!, status: 'accepted' } } },
+        ],
+      },
+    });
 
     if (!note) {
       return res.status(404).json({ error: 'Notiz nicht gefunden' });
     }
 
-    const raw = await prisma.note.update({
-      where: { id },
-      data: { isFavorite: !note.isFavorite },
-      include: NOTE_INCLUDE,
+    const isOwner = note.userId === req.userId;
+
+    if (isOwner) {
+      const raw = await prisma.note.update({
+        where: { id },
+        data: { isFavorite: !note.isFavorite },
+        include: NOTE_INCLUDE,
+      });
+      return res.json({ note: transformNote(raw) });
+    }
+
+    const existing = await prisma.userNotePreference.findUnique({
+      where: { noteId_userId: { noteId: id, userId: req.userId! } },
+    });
+    const currentFav = existing?.isFavorite ?? note.isFavorite;
+    await prisma.userNotePreference.upsert({
+      where: { noteId_userId: { noteId: id, userId: req.userId! } },
+      create: { noteId: id, userId: req.userId!, isFavorite: !currentFav },
+      update: { isFavorite: !currentFav },
     });
 
-    return res.json({ note: transformNote(raw) });
+    const raw = await prisma.note.findFirst({ where: { id }, include: NOTE_INCLUDE });
+    const [withPref] = await applyPreferences([transformNote(raw)], req.userId!);
+    return res.json({ note: withPref });
   } catch (error) {
     console.error('ToggleFavorite error:', error);
     return res.status(500).json({ error: 'Fehler beim Favorisieren der Notiz' });
