@@ -51,16 +51,16 @@ async function applyPreferences(notes: any[], userId: string): Promise<any[]> {
   return notes.map(note => {
     const pref = prefMap.get(note.id);
     const tags = tagMap.get(note.id);
-    let folderId = note.folderId;
-    let folder = note.folder;
+    let folderId: string | null = null;
+    let folder: any = null;
     if (pref?.folderOverrideSet) {
       folderId = pref.folderId;
       folder = pref.folderId ? (folderMap.get(pref.folderId) ?? null) : null;
     }
     return {
       ...note,
-      isPinned: pref?.isPinned ?? note.isPinned,
-      isFavorite: pref?.isFavorite ?? note.isFavorite,
+      isPinned: pref?.isPinned ?? false,
+      isFavorite: pref?.isFavorite ?? false,
       folderId,
       folder,
       tags: tags !== undefined ? tags : note.tags,
