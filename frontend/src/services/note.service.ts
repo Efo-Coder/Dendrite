@@ -1,5 +1,5 @@
 import api from './api';
-import { Note, NoteCounts } from '../types';
+import { Note, NoteCounts, NoteVersion } from '../types';
 
 export const noteService = {
   async getAllNotes(filters?: {
@@ -92,5 +92,27 @@ export const noteService = {
     contextId?: string | null
   ): Promise<void> {
     await api.post('/notes/reorder', { noteOrders, contextType, contextId });
+  },
+
+  async getNoteVersions(id: string): Promise<{ versions: NoteVersion[]; plan: string }> {
+    const response = await api.get<{ versions: NoteVersion[]; plan: string }>(`/notes/${id}/versions`);
+    return response.data;
+  },
+
+  async restoreNoteVersion(id: string, versionId: string): Promise<Note> {
+    const response = await api.post<{ note: Note }>(`/notes/${id}/versions/${versionId}/restore`);
+    return response.data.note;
+  },
+
+  async exportPdf(id: string, title: string): Promise<void> {
+    const response = await api.get(`/notes/${id}/export/pdf`, { responseType: 'blob' });
+    const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title || 'Note'}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   },
 };

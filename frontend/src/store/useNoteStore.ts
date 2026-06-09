@@ -43,6 +43,7 @@ interface NoteState {
   toggleTrash: (id: string) => Promise<void>;
   setCurrentNote: (note: Note | null) => void;
   setNoteTitleOptimistic: (id: string, title: string) => void;
+  updateNoteInStore: (note: Note) => void;
   clearError: () => void;
 }
 
@@ -233,6 +234,11 @@ export const useNoteStore = create<NoteState>((set) => ({
   setNoteTitleOptimistic: (id, title) =>
     set((state) => ({
       notes: state.notes.map((n) => (n.id === id ? { ...n, title } : n)),
+    })),
+  updateNoteInStore: (note) =>
+    set((state) => ({
+      notes: state.notes.map((n) => (n.id === note.id ? note : n)),
+      currentNote: state.currentNote?.id === note.id ? note : state.currentNote,
     })),
   clearError: () => set({ error: null }),
 }));

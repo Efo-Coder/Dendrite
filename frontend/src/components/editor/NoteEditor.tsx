@@ -15,6 +15,8 @@ import { useToast } from '../ui/ToastContainer';
 import RichTextToolbar from './RichTextToolbar';
 import LexicalEditorWrapper, { ActiveUser } from './LexicalEditorWrapper';
 import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
+import VersionHistoryPanel from './VersionHistoryPanel';
+import { noteService } from '../../services/note.service';
 import { Icons } from '../ui/Icons';
 import {
   Pin,
@@ -31,7 +33,6 @@ import {
   Info,
   Share2,
   Download,
-  Printer,
   Copy,
   Users,
   PanelLeft,
@@ -67,7 +68,7 @@ function formatRelativeDate(dateString: string): string {
 }
 
 const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: NoteEditorProps) => {
-  const { updateNote, deleteNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, setCurrentNote, setNoteTitleOptimistic } = useNoteStore();
+  const { updateNote, deleteNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, setCurrentNote, setNoteTitleOptimistic, updateNoteInStore } = useNoteStore();
   const { folders } = useFolderStore();
   const { tags, createTag } = useTagStore();
   const { user } = useAuthStore();
@@ -129,6 +130,8 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const [showToolbarTagModal, setShowToolbarTagModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [restoreKey, setRestoreKey] = useState(0);
   // Lokale Kollaboratoren-Liste – wird nach Einladungen aktualisiert
   const [collaborators, setCollaborators] = useState(note.collaborators ?? []);
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
@@ -380,14 +383,15 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     toast.success('HTML exported');
   };
 
-  const handlePrint = () => {
-    const safeTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.write(`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>${safeTitle}</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem;line-height:1.6}img{max-width:100%}@media print{body{margin:0}}</style></head><body><h1>${safeTitle}</h1>${content}</body></html>`);
-    w.document.close();
-    w.print();
+  const handleExportPdf = async () => {
+    if (!note) return;
     setExportMenuPos(null);
+    try {
+      await noteService.exportPdf(note.id, title || 'Note');
+      toast.success('PDF exported');
+    } catch {
+      toast.error('PDF export failed');
+    }
   };
 
   const handleCopyMarkdown = async () => {
@@ -580,7 +584,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     >
       <motion.div
         className={clsx(
-          'relative z-10 transition-[max-height,opacity] duration-500 ease-out pt-4.5',
+          'relative z-1 transition-[max-height,opacity] duration-500 ease-out pt-4.5',
           focusWritingMode ? 'max-h-0 overflow-hidden opacity-0 pointer-events-none' : 'max-h-15.5 overflow-visible opacity-100'
         )}
         initial={{ y: 6 }}
@@ -610,12 +614,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                       onClick={async () => { await togglePin(note.id); toast.success(note.isPinned ? 'Unpinned' : 'Note pinned'); }}
                       onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
                       className={clsx(
-                        'icon-btn-md rounded-lg transition-colors',
+                        'icon-btn-md rounded-lg transition-colors flex items-center justify-center',
                         note.isPinned ? 'text-(--accent)' : ''
                       )}
                       title="Pin note"
                     >
-                      <Pin className="w-4 h-4" />
+                      {note.isPinned ? <span className="editor-pin-filled" /> : <Pin className="w-4 h-4" />}
                     </button>
                     <button
                       onClick={async () => { await toggleFavorite(note.id); toast.info(note.isFavorite ? 'Removed from favorites' : 'Added to favorites'); }}
@@ -650,7 +654,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 )}
               </div>
 
-              {activeUsers.length > 0 && (
+              {activeUsers.length > 0 && collaborators.some(c => c.status === 'accepted') && (
                 <div className="flex items-center gap-2 pointer-events-none">
                   <div className="flex -space-x-2">
                     {activeUsers.slice(0, 5).map(u => (
@@ -717,7 +721,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
       <div
         className={clsx(
-          'absolute top-3.75 z-60 sm:right-12 transition-[opacity,transform] duration-500 ease-out',
+          'absolute top-3.75 z-5 sm:right-12 transition-[opacity,transform] duration-500 ease-out',
               focusWritingMode ? 'pointer-events-auto' : 'pointer-events-none'
             )}
           >
@@ -743,7 +747,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             const isViewer = isCollaborator && myEntry?.role === 'viewer';
             return (
           <LexicalEditorWrapper
-            key={note.id}
+            key={`${note.id}-${restoreKey}`}
             content={note.content}
             onChange={handleContentChange}
             placeholder="Start writing..."
@@ -763,6 +767,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 minimalChrome={focusWritingMode}
                 onManageTags={isInTrash ? undefined : () => setShowToolbarTagModal(true)}
                 onInfo={isInTrash ? undefined : () => setShowInfoModal(true)}
+                onVersionHistory={isInTrash ? undefined : () => setShowVersionHistory(true)}
               />
             }
           />
@@ -791,7 +796,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               onMouseEnter={onFolderEnter}
               onMouseLeave={onFolderLeave}
               className={clsx(
-                'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-10',
+                'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-1',
                 !note.folderId ? 'text-(--ink)' : ''
               )}
             >
@@ -806,7 +811,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 onMouseEnter={onFolderEnter}
                 onMouseLeave={onFolderLeave}
                 className={clsx(
-                  'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-10',
+                  'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-1',
                   note.folderId === folder.id ? 'text-(--ink)' : ''
                 )}
               >
@@ -858,6 +863,27 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         </div>
       </Modal>
 
+      <VersionHistoryPanel
+        isOpen={showVersionHistory}
+        onClose={() => setShowVersionHistory(false)}
+        noteId={note.id}
+        userPlan={user?.plan ?? 'free'}
+        onRestore={async (noteId, versionId) => {
+          const restored = await noteService.restoreNoteVersion(noteId, versionId);
+          // Store lokal aktualisieren (kein extra API-Call)
+          updateNoteInStore(restored);
+          // Lokale Refs synchron updaten (save-on-unmount liest aus Refs)
+          contentRef.current = restored.content;
+          titleRef.current = restored.title ?? '';
+          lastSavedTitleRef.current = restored.title ?? '';
+          setContent(restored.content);
+          setTitle(restored.title ?? '');
+          // Lexical-Editor neu starten damit er den restored Content lädt
+          setRestoreKey((k) => k + 1);
+          toast.success('Version restored');
+        }}
+      />
+
       {exportMenuPos && createPortal(
         <>
           <div className="fixed inset-0" onClick={() => setExportMenuPos(null)} />
@@ -883,31 +909,31 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               const canPdf  = canAccess(user?.plan, 'pdfExport');
               const canCopy = canAccess(user?.plan, 'copyMarkdown');
               const badge = (feature: Parameters<typeof requiredPlan>[0]) => (
-                <span style={{ fontSize: '9px', fontFamily: 'var(--mono)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--accent)', opacity: 0.85, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '1px 4px', borderRadius: '3px', marginLeft: 'auto' }}>
+                <span style={{ fontSize: '9px', fontFamily: 'var(--mono)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--accent)', opacity: 0.85, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '1px 4px', borderRadius: '3px', marginLeft: 'auto', boxShadow: '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)' }}>
                   {requiredPlan(feature)}
                 </span>
               );
               return (
                 <>
-                  <button onClick={canMd ? handleExportMarkdown : undefined} disabled={!canMd} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canMd ? ' hover:bg-(--surface-hi)' : ' opacity-40 cursor-not-allowed'}`}>
-                    <Download className="w-4 h-4 shrink-0" />
-                    <span className="flex-1 text-left">Export as Markdown</span>
+                  <button onClick={canMd ? handleExportMarkdown : undefined} disabled={!canMd} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canMd ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
+                    <Download className={`w-4 h-4 shrink-0${!canMd ? ' opacity-40' : ''}`} />
+                    <span className={`flex-1 text-left${!canMd ? ' opacity-40' : ''}`}>Export as Markdown</span>
                     {!canMd && badge('markdownExport')}
                   </button>
-                  <button onClick={canHtml ? handleExportHtml : undefined} disabled={!canHtml} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canHtml ? ' hover:bg-(--surface-hi)' : ' opacity-40 cursor-not-allowed'}`}>
-                    <Download className="w-4 h-4 shrink-0" />
-                    <span className="flex-1 text-left">Export as HTML</span>
+                  <button onClick={canHtml ? handleExportHtml : undefined} disabled={!canHtml} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canHtml ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
+                    <Download className={`w-4 h-4 shrink-0${!canHtml ? ' opacity-40' : ''}`} />
+                    <span className={`flex-1 text-left${!canHtml ? ' opacity-40' : ''}`}>Export as HTML</span>
                     {!canHtml && badge('htmlExport')}
                   </button>
-                  <button onClick={canPdf ? handlePrint : undefined} disabled={!canPdf} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canPdf ? ' hover:bg-(--surface-hi)' : ' opacity-40 cursor-not-allowed'}`}>
-                    <Printer className="w-4 h-4 shrink-0" />
-                    <span className="flex-1 text-left">Print / Save as PDF</span>
+                  <button onClick={canPdf ? handleExportPdf : undefined} disabled={!canPdf} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canPdf ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
+                    <Download className={`w-4 h-4 shrink-0${!canPdf ? ' opacity-40' : ''}`} />
+                    <span className={`flex-1 text-left${!canPdf ? ' opacity-40' : ''}`}>Export as PDF</span>
                     {!canPdf && badge('pdfExport')}
                   </button>
                   <div className="my-1 mx-2 border-t border-[color-mix(in_srgb,var(--line)_50%,transparent)]" />
-                  <button onClick={canCopy ? handleCopyMarkdown : undefined} disabled={!canCopy} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canCopy ? ' hover:bg-(--surface-hi)' : ' opacity-40 cursor-not-allowed'}`}>
-                    <Copy className="w-4 h-4 shrink-0" />
-                    <span className="flex-1 text-left">Copy Markdown</span>
+                  <button onClick={canCopy ? handleCopyMarkdown : undefined} disabled={!canCopy} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canCopy ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
+                    <Copy className={`w-4 h-4 shrink-0${!canCopy ? ' opacity-40' : ''}`} />
+                    <span className={`flex-1 text-left${!canCopy ? ' opacity-40' : ''}`}>Copy Markdown</span>
                     {!canCopy && badge('copyMarkdown')}
                   </button>
                 </>
@@ -945,7 +971,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                   onMouseEnter={onInlineTagEnter}
                   onMouseLeave={onInlineTagLeave}
                   className={clsx(
-                    'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-10',
+                    'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-1',
                     i === activeSuggestion ? 'text-(--ink)' : ''
                   )}
                 >

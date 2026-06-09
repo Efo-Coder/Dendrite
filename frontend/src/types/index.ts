@@ -99,6 +99,12 @@ export interface Attachment {
   createdAt: string;
 }
 
+export interface NoteVersion {
+  id: string;
+  title?: string | null;
+  createdAt: string;
+}
+
 export interface AuthResponse {
   user: User;
   token: string;
