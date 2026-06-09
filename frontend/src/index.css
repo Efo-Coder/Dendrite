@@ -898,6 +898,10 @@ html[data-theme="dark"] .glass-popup {
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 }
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-popup { background: rgba(255, 255, 255, 0.95); }
+  html[data-theme="dark"] .glass-popup { background: color-mix(in srgb, var(--bg) 95%, transparent); }
+}
 
 .image-size-indicator { background: rgba(245, 245, 245, 0.97) !important; }
 html[data-theme="dark"] .image-size-indicator { background: rgba(28, 28, 28, 0.97) !important; }
