@@ -139,7 +139,7 @@ type ToolbarBtn = {
 };
 
 
-const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, onVersionHistory, minimalChrome = false }: RichTextToolbarProps) => {
+const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalChrome = false }: RichTextToolbarProps) => {
   const { user } = useAuthStore();
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const toolbarState = useToolbarState(minimalChrome, moreMenuRef);
