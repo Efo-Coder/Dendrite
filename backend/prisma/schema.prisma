@@ -85,6 +85,7 @@ model Note {
   collaborators   NoteCollaborator[]
   notePreferences UserNotePreference[]
   userNoteTags    UserNoteTag[]
+  versions        NoteVersion[]
 
   @@index([userId])
   @@index([folderId])
@@ -188,6 +189,19 @@ model UserNoteTag {
   @@id([noteId, tagId, userId])
   @@index([noteId, userId])
   @@map("user_note_tags")
+}
+
+model NoteVersion {
+  id        String   @id @default(uuid())
+  noteId    String
+  content   String   @db.Text
+  title     String?  @db.Text
+  createdAt DateTime @default(now())
+
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId, createdAt])
+  @@map("note_versions")
 }
 
 model NoteOrder {

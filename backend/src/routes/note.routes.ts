@@ -12,6 +12,9 @@ import {
   toggleArchive,
   toggleDelete,
   reorderNotes,
+  getNoteVersions,
+  restoreNoteVersion,
+  exportNoteToPdf,
 } from '../controllers/note.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
@@ -32,5 +35,8 @@ router.patch('/:id/pin', togglePin);
 router.patch('/:id/favorite', toggleFavorite);
 router.patch('/:id/archive', toggleArchive);
 router.patch('/:id/trash', toggleDelete);
+router.get('/:id/versions', getNoteVersions);
+router.post('/:id/versions/:versionId/restore', restoreNoteVersion);
+router.get('/:id/export/pdf', exportNoteToPdf);
 
 export default router;

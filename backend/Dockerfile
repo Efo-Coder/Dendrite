@@ -1,9 +1,26 @@
-FROM node:20-slim@sha256:f679d7699517426eb148a5698c717477fd3f8a48f6c1eaf771e390a9bb8268c8
+FROM node:22-slim
 
 WORKDIR /app
 
-# Installiere OpenSSL und andere Abhängigkeiten
-RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+
+# Installiere OpenSSL, Chromium und benötigte Abhängigkeiten
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    chromium \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libxshmfence1 \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 # Installiere Abhängigkeiten
 COPY package*.json ./
