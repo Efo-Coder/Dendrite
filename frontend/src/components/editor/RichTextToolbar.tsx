@@ -54,6 +54,29 @@ const LINE_HEIGHTS = ['1', '1.25', '1.5', '1.75', '2', '2.5'];
 const isPickerActive = (value: string, current: string, defaultValue: string) =>
   current === value || (value === defaultValue && !current);
 
+const HScrollRow: React.FC<{ className?: string; children: React.ReactNode }> = ({ className, children }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let rafId: number | null = null;
+    let pending = 0;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      pending += e.deltaY;
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        el.scrollBy({ left: pending, behavior: 'smooth' });
+        pending = 0;
+        rafId = null;
+      });
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, []);
+  return <div ref={ref} className={className}>{children}</div>;
+};
+
 const popupCls = (placement: 'above' | 'below', extra = '') =>
   clsx(
     'fixed overflow-hidden z-3',
@@ -468,7 +491,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
             {...popupMotion('above')}
           >
             {HPIndicator}
-            <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
+            <HScrollRow className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden">
               {blockType.startsWith('h') && (
                 <button
                   onClick={() => { removeHeading(); setHeadingPickerPos(null); }}
@@ -488,7 +511,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
                   {tag.toUpperCase()}
                 </button>
               ))}
-            </div>
+            </HScrollRow>
           </motion.div>
           </>)}
         </AnimatePresence>,
@@ -508,7 +531,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
             {...popupMotion(codeLangPlacement)}
           >
             {CLPIndicator}
-            <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
+            <HScrollRow className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden">
               <button
                 onClick={() => { formatCode(); setCodeLangPickerPos(null); }}
                 onMouseEnter={onCLPEnter} onMouseLeave={onCLPLeave}
@@ -533,7 +556,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
                   </button>
                 );
               })}
-            </div>
+            </HScrollRow>
           </motion.div>
           </>)}
         </AnimatePresence>,
@@ -578,7 +601,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
             {...popupMotion('above')}
           >
             {FSPIndicator}
-            <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
+            <HScrollRow className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden">
               {FONT_SIZES.map((size) => (
                 <button
                   key={size}
@@ -589,7 +612,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
                   {size}
                 </button>
               ))}
-            </div>
+            </HScrollRow>
           </motion.div>
           </>)}
         </AnimatePresence>,
@@ -609,7 +632,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
             {...popupMotion('above')}
           >
             {LHPIndicator}
-            <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
+            <HScrollRow className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden">
               {LINE_HEIGHTS.map((value) => (
                 <button
                   key={value}
@@ -620,7 +643,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
                   {value}×
                 </button>
               ))}
-            </div>
+            </HScrollRow>
           </motion.div>
           </>)}
         </AnimatePresence>,
