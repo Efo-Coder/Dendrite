@@ -2,6 +2,7 @@ import { Note } from '../../types';
 import { GripVertical, Folder } from 'lucide-react';
 import { Icons } from '../ui/Icons';
 import clsx from 'clsx';
+import { useState } from 'react';
 import { Reorder, useDragControls, DragControls } from 'motion/react';
 import { getNoteTitle, getFirstLine, getPreview, stripHtml } from './noteListUtils';
 
@@ -62,7 +63,7 @@ export const NoteItemContent = ({
           </svg>
         )}
         <span className="note-card-title">{getNoteTitle(note)}</span>
-        {note.isPinned && <Icons.pinFill size={11} className="note-card-pin" />}
+        {note.isPinned && <span className="note-card-pin" />}
       </div>
       <p className="note-card-preview">
         {note.title ? getFirstLine(note.content) : getPreview(note.content)}
@@ -93,6 +94,7 @@ export interface ReorderNoteItemProps {
   onSelectNote: (note: Note | null) => void;
   showDragHandle: boolean;
   dateDisplayMode: 'updatedAt' | 'createdAt';
+  isDragging?: boolean;
   onRightClick?: (e: React.MouseEvent, note: Note) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
@@ -106,6 +108,7 @@ const ReorderNoteItem = ({
   onSelectNote,
   showDragHandle,
   dateDisplayMode,
+  isDragging,
   onRightClick,
   onDragStart,
   onDragEnd,
@@ -113,20 +116,22 @@ const ReorderNoteItem = ({
   onMouseLeave,
 }: ReorderNoteItemProps) => {
   const controls = useDragControls();
+  const [selfDragging, setSelfDragging] = useState(false);
 
   return (
     <Reorder.Item
       value={note}
       layout="position"
-      initial={false}
+      layoutId={note.id}
       dragListener={false}
       dragControls={showDragHandle ? controls : undefined}
       drag={showDragHandle ? 'y' : false}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      transition={{ layout: selfDragging ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 38 } }}
+      onDragStart={() => { setSelfDragging(true); onDragStart?.(); }}
+      onDragEnd={() => { setSelfDragging(false); onDragEnd?.(); }}
       onContextMenu={(e: React.MouseEvent) => onRightClick?.(e, note)}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onMouseEnter={isDragging ? undefined : onMouseEnter}
+      onMouseLeave={isDragging ? undefined : onMouseLeave}
       className={clsx('note-card', isSelected && 'active')}
       style={{ listStyle: 'none', position: 'relative' }}
     >

@@ -4,7 +4,7 @@ import { Note } from '../../types';
 import { Plus, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react';
 import clsx from 'clsx';
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Fragment } from 'react';
-import { AnimatePresence, motion, Reorder, MotionConfig, useMotionValue, useMotionTemplate } from 'motion/react';
+import { AnimatePresence, motion, Reorder, MotionConfig, LayoutGroup, useMotionValue, useMotionTemplate, animate } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { noteService } from '../../services/note.service';
 import { useNoteStore } from '../../store/useNoteStore';
@@ -88,6 +88,8 @@ const NoteList = ({
   const [listTab, setListTab] = useState<ListTab>('all');
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabContainerRef = useRef<HTMLDivElement>(null);
+  const { onItemEnter: onTabEnter, onItemLeave: onTabLeave, Indicator: TabIndicator } = useMagicHover({ mode: 'free', background: 'color-mix(in oklch, var(--ink-low) 8%, transparent)', borderRadius: 20, ref: tabContainerRef });
   const [sortFieldMenuOpen, setSortFieldMenuOpen] = useState(false);
   const [sortMenuAnchor, setSortMenuAnchor] = useState<PopupAnchor | null>(null);
   const [searchHovered, setSearchHovered] = useState(false);
@@ -96,6 +98,10 @@ const NoteList = ({
   const searchMouseY = useMotionValue(0);
   const searchGradient = useMotionTemplate`radial-gradient(120px circle at ${searchMouseX}px ${searchMouseY}px, var(--accent), transparent 80%)`;
   const searchGlowActive = searchHovered && !searchFocused;
+  const searchGlowOpacity = useMotionValue(0);
+  useEffect(() => {
+    animate(searchGlowOpacity, searchGlowActive ? 1 : 0, { duration: searchGlowActive ? 0.25 : 0.55, ease: 'easeOut' });
+  }, [searchGlowActive]);
 
   // ── Refs ───────────────────────────────────────────────────────────────────
 
@@ -370,7 +376,7 @@ const NoteList = ({
   }, []);
 
   const handleReorderDragEnd = useCallback(async () => {
-    setTimeout(() => setIsDragging(false), 250);
+    setIsDragging(false);
     onSortChange('manual', sortOrder);
     const noteOrders = localNotesRef.current.map((note, index) => ({ id: note.id, order: index }));
     try {
@@ -404,13 +410,11 @@ const NoteList = ({
         className="p-px notelist-search-wrapper"
       >
         <motion.div
-          animate={{ opacity: searchGlowActive ? 1 : 0 }}
-          transition={{ duration: searchGlowActive ? 0.25 : 0.55, ease: "easeOut" }}
-          style={{ position: 'absolute', inset: 0, background: searchGradient, borderRadius: 'inherit', pointerEvents: 'none' }}
+          style={{ position: 'absolute', inset: 0, background: searchGradient, borderRadius: 'inherit', pointerEvents: 'none', opacity: searchGlowOpacity }}
         />
       <div
         ref={listSearchRef}
-        className="notelist-search input"
+        className="notelist-search"
         style={sortFieldMenuOpen ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : undefined}
       >
         <Search className="search-icon w-3.5 h-3.5" />
@@ -445,7 +449,8 @@ const NoteList = ({
       </div>
       {!isTrash && (
         <div style={{ position: 'relative', marginTop: '10px' }}>
-          <div style={{ position: 'relative', display: 'flex', gap: '4px' }}>
+          <div ref={tabContainerRef} style={{ position: 'relative', display: 'flex', gap: '4px' }}>
+            {TabIndicator}
             <div
               style={{
                 position: 'absolute',
@@ -466,6 +471,8 @@ const NoteList = ({
                 ref={el => { tabRefs.current[i] = el; }}
                 type="button"
                 onClick={() => setListTab(t.id)}
+                onMouseEnter={onTabEnter}
+                onMouseLeave={onTabLeave}
                 className="notelist-tab-btn"
                 style={{
                   fontFamily: 'var(--mono)',
@@ -498,7 +505,7 @@ const NoteList = ({
         <motion.div
           key="sort-popup"
           ref={sortPopupRef}
-          className="fixed overflow-hidden z-40 border border-(--line) border-t-0"
+          className="fixed overflow-hidden z-3 border border-(--line) border-t-0"
           style={{
             ...sortPopupStyle,
             background: 'transparent',
@@ -522,7 +529,7 @@ const NoteList = ({
                 onClick={() => { onSortChange(value, sortOrder); setSortFieldMenuOpen(false); setSortMenuAnchor(null); }}
                 onMouseEnter={onSortEnter}
                 onMouseLeave={onSortLeave}
-                className={clsx('w-full px-3 py-2 text-left text-sm relative z-10', sortBy === value ? 'text-(--accent)' : '')}
+                className={clsx('w-full px-3 py-2 text-left text-sm relative z-1', sortBy === value ? 'text-(--accent)' : '')}
               >
                 {label}
               </button>
@@ -638,9 +645,10 @@ const NoteList = ({
   return (
     <>
       {header}
-      <MotionConfig transition={isDragging ? { layout: { duration: 0.2 } } : { layout: { duration: 0 } }}>
+      <MotionConfig transition={{ layout: { duration: 0.35, ease: [0.23, 1, 0.32, 1] } }}>
         <div key={contextType + (contextId ?? '')} ref={noteListRef} className="notelist-scroll" style={{ position: 'relative' }}>
           {NoteIndicator}
+          <LayoutGroup>
           {groups.map((group) => (
             <Fragment key={group.label}>
               <div className="notelist-group-label">{group.label}</div>
@@ -660,6 +668,7 @@ const NoteList = ({
                       showDragHandle={!isTrash}
                       dateDisplayMode={dateDisplayMode}
                       onRightClick={handleNoteRightClick}
+                      isDragging={isDragging}
                       onDragStart={handleReorderDragStart}
                       onDragEnd={handleReorderDragEnd}
                       onMouseEnter={onCardEnter}
@@ -670,6 +679,7 @@ const NoteList = ({
               </Reorder.Group>
             </Fragment>
           ))}
+          </LayoutGroup>
         </div>
       </MotionConfig>
       {onCreateNote && (
