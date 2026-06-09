@@ -2,10 +2,11 @@
 import Modal from './Modal';
 import { MagicInput } from '../ui/MagicInput';
 import { useFolderStore } from '../../store/useFolderStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { canAccess } from '../../lib/planFeatures';
 import { Folder } from '../../types';
 import ColorPickerInline from '../editor/ColorPickerInline';
-import { FOLDER_ICONS } from '../../lib/folderIcons';
-import clsx from 'clsx';
+import IconPickerDropdown from '../ui/IconPickerDropdown';
 
 interface EditFolderModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ const presets = [
 
 const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolderModalProps) => {
   const { updateFolder } = useFolderStore();
+  const { user } = useAuthStore();
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#10b981');
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
@@ -94,24 +96,7 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
 
         <div className="modal-field">
           <label className="modal-label">Icon</label>
-          <div className="flex flex-wrap gap-1.5">
-            {Object.entries(FOLDER_ICONS).map(([name, IconComp]) => (
-              <button
-                key={name}
-                type="button"
-                title={name}
-                onClick={() => setSelectedIcon(selectedIcon === name ? null : name)}
-                className={clsx(
-                  'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
-                  selectedIcon === name
-                    ? 'bg-(--surface-hi) ring-2 ring-(--accent) text-(--accent)'
-                    : 'bg-(--surface) ring-1 ring-(--line) text-(--ink-mid) hover:text-(--ink) hover:bg-(--surface-hi)'
-                )}
-              >
-                <IconComp style={{ width: 14, height: 14 }} />
-              </button>
-            ))}
-          </div>
+          <IconPickerDropdown value={selectedIcon} onChange={setSelectedIcon} />
         </div>
 
         <div className="modal-field">
@@ -121,6 +106,8 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
             onChange={setSelectedColor}
             storageKey="dendrite-tag-folder-favorites"
             presets={presets}
+            canFavorite={canAccess(user?.plan, 'colorFavorites')}
+            canCustomColor={canAccess(user?.plan, 'customColor')}
           />
         </div>
 
