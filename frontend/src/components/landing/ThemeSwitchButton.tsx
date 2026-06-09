@@ -33,14 +33,14 @@ export function ThemeSwitchButton({ dark, onToggleDark }: ThemeSwitchButtonProps
 
   if (!mounted) {
     return (
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-6 z-4">
         <div className="w-10 h-10 rounded-full bg-foreground/10 opacity-30" />
       </div>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-4">
       <button
         onClick={onToggleDark}
         className="w-10 h-10 cursor-pointer rounded-full bg-muted text-foreground flex items-center justify-center opacity-30 hover:opacity-100 transition-opacity duration-300 shadow-lg hover:shadow-xl"

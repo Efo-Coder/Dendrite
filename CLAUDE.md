@@ -6,7 +6,6 @@ Was du tun sollst:
 - Auf deutsch antworten
 - An alle Konversationen erinnern die innerhalb dieses Projekts mit dir stattfinden
 - Benutze Powershell statt Bash
-- Wenn ich dir "commit" schreibe, dann verfässt du mir einen commit in der Datei commit.txt über alle Änderungen die Neu sind, seit dem letzten commit.
 - Bevor du eine Änderung durchführst, sage mir zuerst was du genau tun willst und frage mich ob ich das will
 
 Was du nicht tun sollst:

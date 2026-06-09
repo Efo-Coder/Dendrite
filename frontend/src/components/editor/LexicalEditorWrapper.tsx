@@ -58,6 +58,7 @@ import {
   INDENT_CONTENT_COMMAND,
   OUTDENT_CONTENT_COMMAND,
   SKIP_COLLAB_TAG,
+  CLEAR_HISTORY_COMMAND,
   LexicalNode,
   LexicalEditor,
 } from 'lexical';
@@ -284,12 +285,20 @@ function CodeHighlightPlugin(): null {
 
 function ChangePlugin({ onChange }: { onChange: (html: string) => void }) {
   const [editor] = useLexicalComposerContext();
+  const readyRef = useRef(false);
+
+  // setTimeout(0) fires after all rAF callbacks (including FocusAtEndPlugin's selectEnd
+  // update) have settled, so we don't fire onChange for initialization-only updates.
+  useEffect(() => {
+    const id = setTimeout(() => { readyRef.current = true; }, 0);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
-    return editor.registerUpdateListener(({ dirtyElements, dirtyLeaves, prevEditorState, tags }) => {
+    return editor.registerUpdateListener(({ dirtyElements, dirtyLeaves, tags }) => {
+      if (!readyRef.current) return;
       if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
       if (tags.has('history-merge') || tags.has(SKIP_COLLAB_TAG) || tags.has('collaboration')) return;
-      if (prevEditorState.isEmpty()) return;
       editor.read(() => {
         onChange($generateHtmlFromNodes(editor));
       });
@@ -412,6 +421,8 @@ function YjsSyncPlugin({
           $insertNodes(nodes);
         }, { tag: SKIP_COLLAB_TAG });
       }
+      // Clear history so the initial load isn't an undo-able entry
+      setTimeout(() => editor.dispatchCommand(CLEAR_HISTORY_COMMAND, undefined), 0);
     };
     provider.on('sync', onSync);
 
@@ -796,7 +807,8 @@ const LexicalEditorWrapper = ({
                   placeholder={<div className="editor-placeholder">{placeholder}</div>}
                   ErrorBoundary={LexicalErrorBoundary}
                 />
-                {collaboration ? (
+                <HistoryPlugin delay={0} />
+                {collaboration && (
                   <YjsSyncPlugin
                     noteId={collaboration.noteId}
                     token={collaboration.token}
@@ -806,8 +818,6 @@ const LexicalEditorWrapper = ({
                     onUsersChangeRef={onUsersChangeRef}
                     cursorsContainerRef={cursorsContainerRef}
                   />
-                ) : (
-                  <HistoryPlugin />
                 )}
                 <FocusAtEndPlugin />
                 <ListPlugin />
@@ -829,7 +839,7 @@ const LexicalEditorWrapper = ({
           </div>
 
           {toolbar && (
-            <div className="relative z-20 min-h-0 shrink-0 bg-transparent">
+            <div className="relative z-2 min-h-0 shrink-0 bg-transparent">
               {toolbar}
             </div>
           )}

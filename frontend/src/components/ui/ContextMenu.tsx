@@ -82,7 +82,7 @@ const ContextMenu = ({ isOpen, position, onClose, items, minWidth = '160px' }: C
           onMouseEnter={onItemEnter}
           onMouseLeave={onItemLeave}
           className={clsx(
-            'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-10',
+            'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-1',
             item.variant === 'danger' ? 'text-red-400' : 'text-(--ink)'
           )}
         >

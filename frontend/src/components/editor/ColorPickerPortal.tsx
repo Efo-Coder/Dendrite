@@ -170,7 +170,7 @@ const ColorPickerPortal = ({
                     key={mode}
                     onClick={() => setInputMode(mode)}
                     className={clsx(
-                      'flex-1 h-8 rounded text-xs font-medium uppercase tracking-wide transition-colors relative z-10',
+                      'flex-1 h-8 rounded text-xs font-medium uppercase tracking-wide transition-colors relative z-1',
                       inputMode === mode ? 'text-(--ink)' : 'text-(--ink-low) hover:text-(--ink)'
                     )}
                   >
@@ -181,7 +181,7 @@ const ColorPickerPortal = ({
                   onClick={openEyeDropper}
                   title="Eyedropper"
                   className={clsx(
-                    'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 shrink-0',
+                    'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-1 shrink-0',
                     !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-(--ink-low)' : 'text-(--ink-low) hover:text-(--ink)'
                   )}
                 >

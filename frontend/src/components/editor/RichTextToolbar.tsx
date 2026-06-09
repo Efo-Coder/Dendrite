@@ -26,8 +26,8 @@ import {
   Bold, Italic, Underline, Strikethrough, Superscript, Subscript, List, ListOrdered, ListChecks, Quote, CodeXml, Link, Image, Minus, Table,
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Undo, Redo, X,
   Heading,
-  ClockCheck, IndentIncrease, IndentDecrease, Tag, Info, MoreVertical,
-  Palette, Highlighter, Type, ListChevronsUpDown,
+  ClockCheck, IndentIncrease, IndentDecrease, Info, MoreVertical,
+  Palette, Highlighter, Type, ListChevronsUpDown, History,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -56,7 +56,7 @@ const isPickerActive = (value: string, current: string, defaultValue: string) =>
 
 const popupCls = (placement: 'above' | 'below', extra = '') =>
   clsx(
-    'fixed overflow-hidden z-40',
+    'fixed overflow-hidden z-3',
     'border border-(--line)',
     placement === 'above' ? 'border-b-0' : 'border-t-0',
     extra,
@@ -125,6 +125,7 @@ interface RichTextToolbarProps {
   noteId?: string;
   onManageTags?: () => void;
   onInfo?: () => void;
+  onVersionHistory?: () => void;
   minimalChrome?: boolean;
 }
 
@@ -138,7 +139,7 @@ type ToolbarBtn = {
 };
 
 
-const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome = false }: RichTextToolbarProps) => {
+const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, onVersionHistory, minimalChrome = false }: RichTextToolbarProps) => {
   const { user } = useAuthStore();
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const toolbarState = useToolbarState(minimalChrome, moreMenuRef);
@@ -259,8 +260,8 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
     {
       id: 'history',
       buttons: [
-        { icon: Undo, action: undoAction, title: 'Undo', isDisabled: !canUndo },
-        { icon: Redo, action: redoAction, title: 'Redo', isDisabled: !canRedo },
+        { icon: Undo, action: undoAction, title: 'Undo (Ctrl+Z)', isDisabled: !canUndo },
+        { icon: Redo, action: redoAction, title: 'Redo (Ctrl+Y)', isDisabled: !canRedo },
       ],
     },
   ];
@@ -349,8 +350,8 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
               {MiniIndicator}
               {miniIconBtn(formatBulletList, 'Bullet list', List, blockType === 'bullet', undefined)}
               {miniIconBtn(insertImage, 'Image', Image, false, undefined, isInCode)}
-              {onManageTags && miniIconBtn(() => onManageTags(), 'Tags', Tag, false, undefined)}
-              {onInfo && miniIconBtn(() => onInfo(), 'Info', Info, false, undefined)}
+{onInfo && miniIconBtn(() => onInfo(), 'Info', Info, false, undefined)}
+              {onVersionHistory && miniIconBtn(() => onVersionHistory(), 'Version History', History, false, undefined)}
               {miniIconBtn(() => setShowMoreMenu((v) => !v), 'More tools', MoreVertical, hasPopupActive, undefined)}
             </div>
           </div>
@@ -364,7 +365,7 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
           <div className="fixed inset-0" onClick={() => setShowMoreMenu(false)} />
           <motion.div
             ref={moreMenuRef}
-            className="fixed bottom-24 right-6 sm:right-12 w-[min(92vw,280px)] max-h-[70vh] overflow-y-auto rounded-2xl border border-[color-mix(in_srgb,var(--line)_50%,transparent)] p-2 glass-popup shadow-2xl z-50 magic-hover"
+            className="fixed bottom-16 right-6 sm:right-12 w-[min(92vw,280px)] max-h-[70vh] overflow-y-auto rounded-2xl border border-[color-mix(in_srgb,var(--line)_50%,transparent)] p-2 glass-popup shadow-2xl z-4 magic-hover"
             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onClick={() => closeAllPopups()}
             initial={{ opacity: 0, y: 8 }}
@@ -413,10 +414,8 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
                     onClick={(e) => {
                       if (blockType === 'code' && canLang) {
                         openCodeLangPicker(e);
-                      } else if (blockType !== 'code') {
-                        formatCode(canLang ? undefined : 'plain');
                       } else {
-                        formatCode();
+                        formatCode(canLang ? undefined : 'plain');
                       }
                     }}
                     onMouseEnter={onMoreEnter} onMouseLeave={onMoreLeave}
@@ -754,12 +753,12 @@ const RichTextToolbar = ({ disabled = false, onManageTags, onInfo, minimalChrome
               return (
                 <button
                   onClick={canTimer ? () => { setChecklistDropdownPos(null); openTimerModal(); } : undefined}
-                  className={pickerItemCls(blockType === 'timer-checkbox', clsx('flex items-center gap-2 px-3 w-full', !canTimer && 'opacity-40 cursor-not-allowed'))}
+                  className={pickerItemCls(blockType === 'timer-checkbox', clsx('flex items-center gap-2 px-3 w-full', !canTimer && 'cursor-not-allowed'))}
                 >
-                  <ClockCheck className="w-4 h-4 shrink-0" />
-                  <span className="flex-1">Timer-Checkbox</span>
+                  <ClockCheck className={clsx('w-4 h-4 shrink-0', !canTimer && 'opacity-40')} />
+                  <span className={clsx('flex-1', !canTimer && 'opacity-40')}>Timer-Checkbox</span>
                   {!canTimer && (
-                    <span style={{ fontSize: '9px', fontFamily: 'var(--mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', opacity: 0.85, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '1px 4px', borderRadius: '3px' }}>
+                    <span style={{ fontSize: '9px', fontFamily: 'var(--mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', opacity: 0.85, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '1px 4px', borderRadius: '3px', boxShadow: '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)' }}>
                       Writer
                     </span>
                   )}

@@ -56,7 +56,7 @@ function BlobCursor({ isVisible }: { isVisible: boolean }) {
 
   return createPortal(
     <motion.div
-      className="pointer-events-none fixed z-50 flex items-center justify-center"
+      className="pointer-events-none fixed z-4 flex items-center justify-center"
       style={{ left: smoothX, top: smoothY, x: "-50%", y: "-50%" }}
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: isVisible ? 1 : 0, scale: isVisible ? 1 : 0 }}
@@ -216,7 +216,7 @@ function FeatureOverlay({ feature, onClose }: { feature: Feature | null; onClose
           </motion.div>
 
           <motion.div
-            className="absolute left-4 top-4 z-10 sm:left-6 sm:top-6 md:left-12 md:top-12 lg:left-16 lg:top-16"
+            className="absolute left-4 top-4 z-1 sm:left-6 sm:top-6 md:left-12 md:top-12 lg:left-16 lg:top-16"
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -229,7 +229,7 @@ function FeatureOverlay({ feature, onClose }: { feature: Feature | null; onClose
           </motion.div>
 
           <motion.div
-            className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6 md:right-12 md:top-12 lg:right-16 lg:top-16"
+            className="absolute right-4 top-4 z-2 sm:right-6 sm:top-6 md:right-12 md:top-12 lg:right-16 lg:top-16"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}

@@ -174,7 +174,7 @@ const RegisterPage = () => {
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.50) 100%)' }}
         />
-        <div className="absolute bottom-0 left-0 right-0 z-10" style={{ padding: '56px' }}>
+        <div className="absolute bottom-0 left-0 right-0 z-1" style={{ padding: '56px' }}>
           <p style={{
             fontFamily: 'var(--mono)',
             fontSize: '10px',
@@ -209,7 +209,7 @@ const RegisterPage = () => {
 
         <Link
           to="/"
-          className="absolute top-4 left-6 z-20 icon-btn-auth fill-slide p-2.5 rounded-full flex items-center justify-center backdrop-blur-xl"
+          className="absolute top-4 left-6 z-2 icon-btn-auth fill-slide p-2.5 rounded-full flex items-center justify-center backdrop-blur-xl"
           title="Back to home"
         >
           <Home className="w-4 h-4" />
@@ -217,14 +217,14 @@ const RegisterPage = () => {
 
         <button
           onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
-          className="absolute top-4 right-6 z-20 icon-btn-auth fill-slide p-2.5 rounded-full flex items-center justify-center backdrop-blur-xl"
+          className="absolute top-4 right-6 z-2 icon-btn-auth fill-slide p-2.5 rounded-full flex items-center justify-center backdrop-blur-xl"
           title={`Switch to ${themeMode === 'dark' ? 'light' : 'dark'} mode`}
         >
           {themeMode === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
         {/* Form area */}
-        <div className="relative z-10 flex-1 flex items-center justify-center" style={{ padding: '64px 40px' }}>
+        <div className="relative z-1 flex-1 flex items-center justify-center" style={{ padding: '64px 40px' }}>
           <div style={{ width: '100%', maxWidth: '360px' }}>
 
             <AnimatePresence mode="wait" initial={false}>

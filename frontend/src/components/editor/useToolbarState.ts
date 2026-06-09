@@ -516,7 +516,11 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     editor.update(() => {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return;
-      if (blockType !== 'code') {
+      const anchorNode = selection.anchor.getNode();
+      const topEl = anchorNode.getKey() === 'root'
+        ? anchorNode
+        : anchorNode.getTopLevelElementOrThrow();
+      if (!$isCodeNode(topEl)) {
         // Collapse to anchor paragraph — $setBlocksType creates one code node per selected
         // block, so a multi-paragraph selection would produce multiple code blocks.
         const collapsed = $createRangeSelection();

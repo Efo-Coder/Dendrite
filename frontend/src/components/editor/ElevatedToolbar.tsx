@@ -260,7 +260,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
   const isInCode = blockType === 'code';
 
   const popupCls = (placement: 'above' | 'below', extra = '') => clsx(
-    'fixed overflow-hidden z-40',
+    'fixed overflow-hidden z-3',
     'border border-[color-mix(in_srgb,var(--line)_50%,transparent)]',
     placement === 'above' ? 'border-b-0' : 'border-t-0',
     extra,
@@ -304,7 +304,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
       disabled={btnDisabled}
       title={title}
       className={clsx(
-        'icon-btn-md rounded-lg transition-colors shrink-0 relative z-10 disabled:opacity-30',
+        'icon-btn-md rounded-lg transition-colors shrink-0 relative z-1 disabled:opacity-30',
         active ? 'text-(--ink) sidebar-item-active' : '',
       )}
     >
@@ -446,7 +446,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
       <div
         ref={floatingBarRef}
         className={clsx(
-          'fixed flex items-center gap-0.5 px-1.5 py-1 z-50 magic-hover',
+          'fixed flex items-center gap-0.5 px-1.5 py-1 z-4 magic-hover',
           'border border-[color-mix(in_srgb,var(--line)_55%,transparent)]',
           'shadow-[0_12px_40px_color-mix(in_srgb,#000_35%,transparent),0_0_0_1px_color-mix(in_srgb,var(--accent)_8%,transparent)]',
           'rounded-2xl',

@@ -70,6 +70,19 @@ export function ActiveLinePlugin() {
       const nativeSel = window.getSelection();
       if (!nativeSel || nativeSel.rangeCount === 0) return;
 
+      // Never show active line outside the editor body (e.g. title textarea)
+      const rootEl = editor.getRootElement();
+      const focusInEditor = rootEl && (
+        rootEl.contains(nativeSel.focusNode) || rootEl.contains(nativeSel.anchorNode)
+      );
+      if (!focusInEditor) {
+        if (visibleRef.current) {
+          animate(overlay, { opacity: 0 }, { duration: DURATION, ease: EASE });
+          visibleRef.current = false;
+        }
+        return;
+      }
+
       // Collapse to cursor position to get single-line rect.
       // Use anchor (collapse=true) only for same-paragraph selections (double-click on a word).
       // For cross-paragraph transitions (Enter, Backspace) anchor stays on the old line —

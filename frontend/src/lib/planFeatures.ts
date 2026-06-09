@@ -6,7 +6,8 @@ export type PlanFeature =
   | 'copyMarkdown'
   | 'pdfExport'
   | 'colorFavorites'
-  | 'customColor';
+  | 'customColor'
+  | 'versionHistory';
 
 const WRITER_FEATURES = new Set<PlanFeature>([
   'timerChecklist',
@@ -14,13 +15,14 @@ const WRITER_FEATURES = new Set<PlanFeature>([
   'markdownExport',
   'htmlExport',
   'copyMarkdown',
+  'pdfExport',
   'colorFavorites',
   'customColor',
+  'versionHistory',
 ]);
 
 const AUTHOR_FEATURES = new Set<PlanFeature>([
   ...WRITER_FEATURES,
-  'pdfExport',
 ]);
 
 export function canAccess(plan: string | undefined | null, feature: PlanFeature): boolean {
@@ -30,6 +32,6 @@ export function canAccess(plan: string | undefined | null, feature: PlanFeature)
   return false;
 }
 
-export function requiredPlan(feature: PlanFeature): 'Writer' | 'Author' {
-  return feature === 'pdfExport' ? 'Author' : 'Writer';
+export function requiredPlan(_feature: PlanFeature): 'Writer' {
+  return 'Writer';
 }

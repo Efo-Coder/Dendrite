@@ -31,7 +31,6 @@
   --animate-slide-out: slideOut 0.3s ease-in;
 
   --radius: 0.625rem;
-  --z-9999: 9999;
 }
 
 /* ─── Color palette — dark mode (default, no attribute) ─────────────────────── */
@@ -619,7 +618,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 /* Search bar */
 .win .notelist-search-wrapper { transition: background .15s; }
 .win .notelist-search {
-  position: relative; display: flex; align-items: center; gap: 2px;
+  position: relative; z-index: 1; display: flex; align-items: center; gap: 2px;
   background: var(--surface);
   border-radius: 8px; padding: 0 6px 0 32px;
   transition: background .15s;
@@ -675,7 +674,8 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
 }
 .win .note-card.active .note-card-title { color: var(--accent-hi); }
-.win .note-card-pin     { color: var(--accent); opacity: 0.9; font-size: 10px; }
+.win .note-card-pin     { display: inline-block; width: 11px; height: 11px; background-color: var(--accent); -webkit-mask-image: url('/icons/pin-filled.svg'); mask-image: url('/icons/pin-filled.svg'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; opacity: 0.9; flex-shrink: 0; }
+.win .editor-pin-filled { display: inline-block; width: 16px; height: 16px; background-color: var(--accent); -webkit-mask-image: url('/icons/pin-filled.svg'); mask-image: url('/icons/pin-filled.svg'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; flex-shrink: 0; }
 .win .note-card-preview {
   font-family: var(--serif-body); font-size: 13.5px;
   color: var(--ink-low); line-height: 1.45;
@@ -832,6 +832,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   color: var(--ink-dim); letter-spacing: 0.16em; text-transform: uppercase;
   cursor: default; padding: 3px 8px; border-radius: 6px;
   border: 0.5px dashed var(--line); background: transparent;
+  height: 26px; box-sizing: border-box;
 }
 .win .editor-tag-add:hover { color: var(--accent); border-color: var(--accent); transform: none; }
 
@@ -840,12 +841,13 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   background: var(--surface); border: 0.5px solid var(--accent);
   color: var(--ink); border-radius: 999px; padding: 3px 10px;
   outline: none; width: 110px;
+  height: 26px; box-sizing: border-box;
 }
 .win .editor-tag-wrapper { position: relative; display: inline-flex; }
 .win .editor-tag-suggestions {
   position: absolute; top: calc(100% + 4px); left: 0;
   background: var(--surface-hi); border: 0.5px solid var(--line);
-  border-radius: 8px; padding: 3px; z-index: 200;
+  border-radius: 8px; padding: 3px; z-index: 4;
   display: flex; flex-direction: column; min-width: 130px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.14);
 }
@@ -960,7 +962,7 @@ html .auth-inputs .input {
 ══════════════════════════════════════════════════════════════════════════════ */
 
 .modal-overlay {
-  position: fixed; inset: 0; z-index: 9999;
+  position: fixed; inset: 0; z-index: 6;
   display: flex; align-items: center; justify-content: center;
   background: color-mix(in oklch, var(--bg-deep) 90%, transparent);
   backdrop-filter: blur(8px) saturate(120%); -webkit-backdrop-filter: blur(8px) saturate(120%);
@@ -1079,6 +1081,14 @@ html .auth-inputs .input {
 }
 .modal-overlay .modal-input:focus { border-color: var(--accent); }
 .modal-overlay .modal-input::placeholder { color: var(--ink-dim); font-style: italic; }
+.badge-plan {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent); opacity: 0.85;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  padding: 1px 4px; border-radius: 3px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
 .modal-overlay .modal-error {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
   color: var(--danger); padding: 8px 12px;

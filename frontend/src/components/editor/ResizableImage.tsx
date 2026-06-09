@@ -375,9 +375,9 @@ const ResizableImage = ({
 
         {showControls && !positionLocked && (
           <>
-            <div onMouseDown={(e) => handleMouseDown(e, 'right')} className="resize-handle-ew absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
-            <div onMouseDown={(e) => handleMouseDown(e, 'bottom')} className="resize-handle-ns absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rounded-full border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
-            <div onMouseDown={(e) => handleMouseDown(e, 'corner')} className="resize-handle-nwse absolute -bottom-2 -right-2 w-4 h-4 rounded-full border-2 z-10" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
+            <div onMouseDown={(e) => handleMouseDown(e, 'right')} className="resize-handle-ew absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 z-1" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
+            <div onMouseDown={(e) => handleMouseDown(e, 'bottom')} className="resize-handle-ns absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rounded-full border-2 z-1" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
+            <div onMouseDown={(e) => handleMouseDown(e, 'corner')} className="resize-handle-nwse absolute -bottom-2 -right-2 w-4 h-4 rounded-full border-2 z-1" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
           </>
         )}
 

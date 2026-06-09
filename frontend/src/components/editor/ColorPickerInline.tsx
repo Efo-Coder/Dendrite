@@ -49,7 +49,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
   const canAdd = color && !favorites.includes(color) && !presets.includes(color) && favorites.length < 19;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {presets.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
           {presets.map((preset) => (
@@ -68,8 +68,13 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
         </div>
       )}
 
-      {/* Favorites row */}
-      <div className="flex items-center gap-2 flex-wrap min-h-6">
+      {/* Favorites section */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <span className="modal-label">Favorites</span>
+          {!canFavorite && <span className="badge-plan">Writer</span>}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap min-h-6">
         {favorites.map((fav) => (
           <div key={fav} className="relative group/fav w-8 h-8 shrink-0">
             <button
@@ -110,6 +115,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
           <Plus className="w-3 h-3" />
         </button>
       </div>
+      </div>
 
       <div data-plan-locked={!canCustomColor || undefined} style={!canCustomColor ? { pointerEvents: 'none', opacity: 0.35 } : undefined}>
           <HexColorPicker
@@ -126,7 +132,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
                 type="button"
                 onClick={() => setInputMode(mode)}
                 className={clsx(
-                  'flex-1 h-8 rounded text-base font-medium uppercase tracking-wide transition-colors relative z-10',
+                  'flex-1 h-8 rounded text-base font-medium uppercase tracking-wide transition-colors relative z-1',
                   inputMode === mode ? 'text-(--ink)' : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink)'
                 )}
               >
@@ -138,7 +144,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
               onClick={openEyeDropper}
               title="Eyedropper"
               className={clsx(
-                'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-10 shrink-0',
+                'h-8 w-8 flex items-center justify-center rounded transition-colors relative z-1 shrink-0',
                 !('EyeDropper' in window) ? 'opacity-30 pointer-events-none text-(--ink-mid)' : 'text-[color-mix(in_srgb,var(--ink-mid)_70%,transparent)] hover:text-(--ink)'
               )}
             >
