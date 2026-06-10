@@ -17,7 +17,7 @@ interface HoverBox {
 export function useMagicHover({
   mode = 'vertical',
   inset = 0,
-  background = 'var(--surface)',
+  background = 'color-mix(in oklch, var(--accent) 8%, transparent)',
   borderRadius = 7,
   leaveDelay = 60,
   ref: externalRef,

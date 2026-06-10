@@ -105,8 +105,8 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
   const leftGroupRef = useRef<HTMLDivElement>(null);
   const rightGroupRef = useRef<HTMLDivElement>(null);
-  const { onItemEnter: onLeftEnter, onItemLeave: onLeftLeave, Indicator: LeftIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: leftGroupRef });
-  const { onItemEnter: onRightEnter, onItemLeave: onRightLeave, Indicator: RightIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: rightGroupRef });
+  const { onItemEnter: onLeftEnter, onItemLeave: onLeftLeave, Indicator: LeftIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: leftGroupRef });
+  const { onItemEnter: onRightEnter, onItemLeave: onRightLeave, Indicator: RightIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: rightGroupRef });
   const [focusWritingMode, setFocusWritingMode] = useState(false);
   const [showExitBtn, setShowExitBtn] = useState(false);
   const exitBtnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -141,8 +141,8 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const inlineTagPopupRef = useRef<HTMLDivElement>(null);
   const prevInlineTagHeightRef = useRef<number>(0);
   const inlineTagTransitionEndRef = useRef<(() => void) | null>(null);
-  const { onItemEnter: onFolderEnter, onItemLeave: onFolderLeave, Indicator: FolderIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 6, ref: folderMenuRef });
-  const { onItemEnter: onInlineTagEnter, onItemLeave: onInlineTagLeave, Indicator: InlineTagIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 6, ref: inlineTagPopupRef });
+  const { onItemEnter: onFolderEnter, onItemLeave: onFolderLeave, Indicator: FolderIndicator } = useMagicHover({ mode: 'free', borderRadius: 6, ref: folderMenuRef });
+  const { onItemEnter: onInlineTagEnter, onItemLeave: onInlineTagLeave, Indicator: InlineTagIndicator } = useMagicHover({ mode: 'free', borderRadius: 6, ref: inlineTagPopupRef });
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

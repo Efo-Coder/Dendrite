@@ -22,7 +22,7 @@ interface ContextMenuProps {
 
 const ContextMenu = ({ isOpen, position, onClose, items, minWidth = '160px' }: ContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
-  const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 6, ref: menuRef });
+  const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', borderRadius: 6, ref: menuRef, background: 'color-mix(in oklch, var(--accent) 16%, transparent)' });
 
   useLayoutEffect(() => {
     if (!isOpen || !menuRef.current) return;

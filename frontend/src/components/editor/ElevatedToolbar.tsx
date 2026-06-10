@@ -102,11 +102,11 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
   const lineHeightRef = useRef<HTMLDivElement>(null);
   const codeLangRef = useRef<HTMLDivElement>(null);
 
-  const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: floatingBarRef });
-  const { onItemEnter: onHEnter, onItemLeave: onHLeave, Indicator: HIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: headingPickerRef });
-  const { onItemEnter: onFSEnter, onItemLeave: onFSLeave, Indicator: FSIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: fontSizeRef });
-  const { onItemEnter: onLHEnter, onItemLeave: onLHLeave, Indicator: LHIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: lineHeightRef });
-  const { onItemEnter: onCLEnter, onItemLeave: onCLLeave, Indicator: CLIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: codeLangRef });
+  const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: floatingBarRef });
+  const { onItemEnter: onHEnter, onItemLeave: onHLeave, Indicator: HIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: headingPickerRef });
+  const { onItemEnter: onFSEnter, onItemLeave: onFSLeave, Indicator: FSIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: fontSizeRef });
+  const { onItemEnter: onLHEnter, onItemLeave: onLHLeave, Indicator: LHIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: lineHeightRef });
+  const { onItemEnter: onCLEnter, onItemLeave: onCLLeave, Indicator: CLIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: codeLangRef });
 
   const [visible, setVisible] = useState(false);
   const [scrolledOut, setScrolledOut] = useState(false);

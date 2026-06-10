@@ -21,7 +21,6 @@ const IconPickerDropdown = ({ value, onChange }: IconPickerDropdownProps) => {
   const SelectedIcon = FOLDER_ICONS[value ?? 'Folder'];
   const { containerRef: gridRef, onItemEnter, onItemLeave, Indicator } = useMagicHover({
     mode: 'free',
-    background: 'var(--surface-hi)',
     borderRadius: 8,
   });
 

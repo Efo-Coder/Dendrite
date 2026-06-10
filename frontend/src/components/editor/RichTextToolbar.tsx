@@ -59,17 +59,9 @@ const HScrollRow: React.FC<{ className?: string; children: React.ReactNode }> = 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    let rafId: number | null = null;
-    let pending = 0;
     const handler = (e: WheelEvent) => {
       e.preventDefault();
-      pending += e.deltaY;
-      if (rafId !== null) return;
-      rafId = requestAnimationFrame(() => {
-        el.scrollBy({ left: pending, behavior: 'smooth' });
-        pending = 0;
-        rafId = null;
-      });
+      el.scrollLeft += e.deltaY;
     };
     el.addEventListener('wheel', handler, { passive: false });
     return () => el.removeEventListener('wheel', handler);
@@ -217,13 +209,13 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
   const codeLangPickerRef = useRef<HTMLDivElement>(null);
   const checklistDropdownRef = useRef<HTMLDivElement>(null);
 
-  const { onItemEnter: onMiniEnter, onItemLeave: onMiniLeave, Indicator: MiniIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 9999, ref: miniToolbarRef });
-  const { onItemEnter: onMoreEnter, onItemLeave: onMoreLeave, Indicator: MoreIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: moreMenuRef });
-  const { onItemEnter: onHPEnter, onItemLeave: onHPLeave, Indicator: HPIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: headingPickerRef });
-  const { onItemEnter: onCLPEnter, onItemLeave: onCLPLeave, Indicator: CLPIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: codeLangPickerRef });
-  const { onItemEnter: onFSPEnter, onItemLeave: onFSPLeave, Indicator: FSPIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: fontSizeRef });
-  const { onItemEnter: onLHPEnter, onItemLeave: onLHPLeave, Indicator: LHPIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: lineHeightPickerRef });
-  const { onItemEnter: onFPEnter, onItemLeave: onFPLeave, Indicator: FPIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 8, ref: fontPickerRef });
+  const { onItemEnter: onMiniEnter, onItemLeave: onMiniLeave, Indicator: MiniIndicator } = useMagicHover({ mode: 'free', borderRadius: 9999, ref: miniToolbarRef });
+  const { onItemEnter: onMoreEnter, onItemLeave: onMoreLeave, Indicator: MoreIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: moreMenuRef });
+  const { onItemEnter: onHPEnter, onItemLeave: onHPLeave, Indicator: HPIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: headingPickerRef });
+  const { onItemEnter: onCLPEnter, onItemLeave: onCLPLeave, Indicator: CLPIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: codeLangPickerRef });
+  const { onItemEnter: onFSPEnter, onItemLeave: onFSPLeave, Indicator: FSPIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: fontSizeRef });
+  const { onItemEnter: onLHPEnter, onItemLeave: onLHPLeave, Indicator: LHPIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: lineHeightPickerRef });
+  const { onItemEnter: onFPEnter, onItemLeave: onFPLeave, Indicator: FPIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: fontPickerRef });
 
   const { style: headingPickerStyle } = useSmartPopupStyle(headingPickerPos, headingPickerRef, -8);
   const { style: fontPickerStyle, placement: fontPickerPlacement } = useSmartPopupStyle(fontPickerPos, fontPickerRef, 0);
