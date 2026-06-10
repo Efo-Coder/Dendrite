@@ -4,7 +4,8 @@
       "Bash(*)",
       "PowerShell(*)",
       "WebFetch(domain:reactbits.dev)",
-      "Read(//c/Users/efrah/Downloads/Dendrite-Cursor/**)"
+      "Read(//c/Users/efrah/Downloads/Dendrite-Cursor/**)",
+      "WebFetch(domain:theodorusclarence.com)"
     ]
   }
 }
