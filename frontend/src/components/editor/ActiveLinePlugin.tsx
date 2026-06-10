@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { BLUR_COMMAND, COMMAND_PRIORITY_LOW } from 'lexical';
 import { animate } from 'motion';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 const EXTEND = 40;     // px extension left + right
 const LINE_PAD = 6;    // extra px above + below the cursor line
@@ -14,6 +15,7 @@ function highlightColor() {
 
 export function ActiveLinePlugin() {
   const [editor] = useLexicalComposerContext();
+  const activeLine = useSettingsStore((s) => s.activeLine);
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const visibleRef = useRef(false);
   const prevTopRef = useRef<number | null>(null);
@@ -21,6 +23,15 @@ export function ActiveLinePlugin() {
 
   // Create overlay once, attach to editor-container
   useEffect(() => {
+    if (!activeLine) {
+      if (overlayRef.current) {
+        overlayRef.current.remove();
+        overlayRef.current = null;
+        visibleRef.current = false;
+      }
+      return;
+    }
+
     const editorEl = editor.getRootElement();
     if (!editorEl) return;
 
@@ -47,10 +58,11 @@ export function ActiveLinePlugin() {
       overlayRef.current = null;
       visibleRef.current = false;
     };
-  }, [editor]);
+  }, [editor, activeLine]);
 
   // Hide on blur
   useEffect(() => {
+    if (!activeLine) return;
     return editor.registerCommand(BLUR_COMMAND, () => {
       const overlay = overlayRef.current;
       if (overlay && visibleRef.current) {
@@ -59,10 +71,11 @@ export function ActiveLinePlugin() {
       }
       return false;
     }, COMMAND_PRIORITY_LOW);
-  }, [editor]);
+  }, [editor, activeLine]);
 
   // Track cursor position and update overlay
   useEffect(() => {
+    if (!activeLine) return;
     return editor.registerUpdateListener(() => {
       const overlay = overlayRef.current;
       if (!overlay) return;
@@ -240,7 +253,7 @@ export function ActiveLinePlugin() {
         setPosition();
       }
     });
-  }, [editor]);
+  }, [editor, activeLine]);
 
   return null;
 }

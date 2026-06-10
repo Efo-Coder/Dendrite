@@ -15,6 +15,7 @@ interface SettingsState {
   font: FontId;
   fontSize: number;
   dropCap: boolean;
+  activeLine: boolean;
   density: DensityId;
   autoSave: boolean;
   cursorStyle: CursorStyle;
@@ -25,6 +26,7 @@ interface SettingsState {
   setFont: (font: FontId) => void;
   setFontSize: (size: number) => void;
   setDropCap: (on: boolean) => void;
+  setActiveLine: (on: boolean) => void;
   setDensity: (density: DensityId) => void;
   setAutoSave: (on: boolean) => void;
   setCursorStyle: (style: CursorStyle) => void;
@@ -39,6 +41,7 @@ export const useSettingsStore = create<SettingsState>()(
       font: 'cormorant',
       fontSize: 19,
       dropCap: true,
+      activeLine: true,
       density: 'regular',
       autoSave: true,
       cursorStyle: 'classic',
@@ -49,22 +52,24 @@ export const useSettingsStore = create<SettingsState>()(
       setFont: (font) => set({ font }),
       setFontSize: (fontSize) => set({ fontSize }),
       setDropCap: (dropCap) => set({ dropCap }),
+      setActiveLine: (activeLine) => set({ activeLine }),
       setDensity: (density) => set({ density }),
       setAutoSave: (autoSave) => set({ autoSave }),
       setCursorStyle: (cursorStyle) => set({ cursorStyle }),
     }),
     {
       name: 'dendrite-settings',
-      version: 4,
+      version: 5,
       migrate: (_: any, version: number) => {
         if (version < 2) {
-          return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: 'cormorant', fontSize: 19, dropCap: true, density: 'regular', autoSave: true, cursorStyle: 'classic' };
+          return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: 'cormorant', fontSize: 19, dropCap: true, activeLine: true, density: 'regular', autoSave: true, cursorStyle: 'classic' };
         }
         if (version < 3) return { ..._, cursorStyle: 'classic' };
         if (version < 4) {
           const oldStyle = _?.cursorStyle;
           return { ..._, cursorStyle: oldStyle === 'classic' ? 'modern' : 'classic' };
         }
+        if (version < 5) return { ..._, activeLine: true };
         return _;
       },
     }
