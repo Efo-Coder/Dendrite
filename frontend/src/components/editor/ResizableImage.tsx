@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { AlignLeft, AlignCenter, AlignRight, Trash2, Lock, Unlock, Square, Scan } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, Trash2, Lock, Unlock, Square, Scan, ChevronDown, ImageIcon } from 'lucide-react';
 import { useSmartPopupStyle, type PopupAnchor } from '../../hooks/useSmartPopupStyle';
 
 interface ResizableImageProps {
@@ -11,10 +11,12 @@ interface ResizableImageProps {
   initialAlignment?: 'left' | 'center' | 'right';
   initialMaintainAspectRatio?: boolean;
   initialPositionLocked?: boolean;
+  initialCollapsed?: boolean;
   onSizeChange?: (width: number, height: number) => void;
   onAlignmentChange?: (alignment: 'left' | 'center' | 'right') => void;
   onAspectRatioChange?: (locked: boolean) => void;
   onPositionLockChange?: (locked: boolean) => void;
+  onCollapseChange?: (collapsed: boolean) => void;
   onDelete?: () => void;
 }
 
@@ -29,10 +31,12 @@ const ResizableImage = ({
   initialAlignment = 'left',
   initialMaintainAspectRatio = false,
   initialPositionLocked = false,
+  initialCollapsed = false,
   onSizeChange,
   onAlignmentChange,
   onAspectRatioChange,
   onPositionLockChange,
+  onCollapseChange,
   onDelete,
 }: ResizableImageProps) => {
   const [width, setWidth] = useState(initialWidth);
@@ -44,6 +48,7 @@ const ResizableImage = ({
   const [isVisible, setIsVisible] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(initialMaintainAspectRatio);
   const [positionLocked, setPositionLocked] = useState(initialPositionLocked);
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [anchor, setAnchor] = useState<PopupAnchor | null>(null);
 
   const imageRef = useRef<HTMLDivElement>(null);
@@ -64,6 +69,7 @@ const ResizableImage = ({
   useEffect(() => { if (!isResizing) setWidth(initialWidth ?? 100); }, [initialWidth]);
   useEffect(() => { if (!isResizing) setHeight(initialHeight ?? 300); }, [initialHeight]);
   useEffect(() => { setPositionLocked(initialPositionLocked ?? false); }, [initialPositionLocked]);
+  useEffect(() => { setCollapsed(initialCollapsed ?? false); }, [initialCollapsed]);
 
   // Sync float/size/margin to the Lexical createDOM wrapper div (parent of this component).
   // This is needed because the float must be on a sibling of text paragraphs for text-wrap to work.
@@ -73,7 +79,7 @@ const ResizableImage = ({
     if (alignment === 'left' || alignment === 'right') {
       parent.style.float = alignment;
       parent.style.width = `${width}%`;
-      parent.style.height = '';       // let content (imageRef) determine height
+      parent.style.height = '';
       parent.style.marginTop = '4px';
       parent.style.marginBottom = '4px';
       parent.style.marginLeft = alignment === 'right' ? '16px' : '0';
@@ -93,7 +99,7 @@ const ResizableImage = ({
       parent.style.zIndex = '';
       parent.style.display = 'block';
     }
-  }, [alignment, width, height]);
+  }, [alignment, width, height, collapsed]);
 
   // Compute anchor for smart popup positioning, clamped to editor canvas bounds
   useLayoutEffect(() => {
@@ -105,7 +111,6 @@ const ResizableImage = ({
     const popupW = controlsRef.current.offsetWidth;
     const centerX = imageRect.left + imageRect.width / 2;
 
-    // Clamp horizontal position to the editor canvas (scroll container)
     let scrollEl: HTMLElement | null = imageRef.current.parentElement;
     while (scrollEl) {
       const ov = getComputedStyle(scrollEl).overflowY;
@@ -120,7 +125,6 @@ const ResizableImage = ({
     requestAnimationFrame(() => setIsVisible(true));
   }, [showControls, width, height]);
 
-  // Returns the editor container width (not the image width when floating)
   const getEditorWidth = () => {
     if (!imageRef.current) return 800;
     const parent = imageRef.current.parentElement;
@@ -145,7 +149,6 @@ const ResizableImage = ({
       const actualWidth = (width / 100) * editorWidthRef.current;
       aspectRatioRef.current = actualWidth / height;
     }
-
   };
 
   useEffect(() => {
@@ -217,6 +220,7 @@ const ResizableImage = ({
   };
 
   const handleMouseEnter = () => {
+    if (collapsed) return;
     if (!showControls) setShowControls(true);
   };
 
@@ -283,12 +287,11 @@ const ResizableImage = ({
 
   const getContainerStyle = (): React.CSSProperties => {
     if (alignment === 'left' || alignment === 'right') {
-      // Parent handles float + width; this div owns the explicit height
-      return { width: '100%', height: `${height}px`, position: 'relative' };
+      return { width: '100%', height: collapsed ? undefined : `${height}px`, position: 'relative' };
     }
     return {
       width: `${width}%`,
-      height: `${height}px`,
+      height: collapsed ? undefined : `${height}px`,
       marginTop: '4px',
       marginBottom: '4px',
       position: 'relative',
@@ -297,10 +300,35 @@ const ResizableImage = ({
     };
   };
 
-  return (
-    <div ref={imageRef} style={getContainerStyle()} className="group" onMouseEnter={handleMouseEnter} onMouseMove={handleMouseEnter}>
+  const handleCollapse = () => {
+    setCollapsed(true);
+    setShowControls(false);
+    setAnchor(null);
+    onCollapseChange?.(true);
+  };
 
-      {showControls && createPortal(
+  const handleExpand = () => {
+    setCollapsed(false);
+    onCollapseChange?.(false);
+  };
+
+  return (
+    <div ref={imageRef} style={getContainerStyle()} className={collapsed ? '' : 'group'} onMouseEnter={handleMouseEnter} onMouseMove={handleMouseEnter}>
+
+      {collapsed && (
+        <div
+          role="button"
+          onClick={handleExpand}
+          className="group flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:bg-(--surface-hi)"
+          style={{ width: 'fit-content', boxShadow: '0 0 0 1px var(--line-soft)' }}
+          title="Bild aufklappen"
+        >
+          <ImageIcon className="w-3.5 h-3.5 shrink-0 text-(--ink-mid) group-hover:text-(--accent) transition-colors" />
+          <span className="text-sm font-mono text-(--ink-mid) group-hover:text-(--accent) transition-colors">{altText}</span>
+        </div>
+      )}
+
+      {!collapsed && showControls && createPortal(
         <div
           ref={controlsRef}
           className="glass-popup rounded-lg shadow-xl flex items-center gap-0.5 px-1.5 py-1"
@@ -313,6 +341,14 @@ const ResizableImage = ({
               : 'opacity 180ms ease-in, transform 200ms ease-in',
           }}
         >
+          <button
+            onClick={handleCollapse}
+            className="p-1.5 rounded-md transition-all hover:bg-(--surface-hi)"
+            title="Bild zuklappen"
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+          <div className="h-6 w-px border-l border-(--line-soft) mx-1 shrink-0" />
           <button
             onClick={() => !positionLocked && handleAlignmentChange('left')}
             className={`p-1.5 rounded-md transition-all hover:bg-(--surface-hi) ${positionLocked ? 'opacity-30 pointer-events-none' : alignment === 'left' ? 'text-(--accent)' : ''}`}
@@ -364,8 +400,7 @@ const ResizableImage = ({
         document.body
       )}
 
-      {/* Image + Resize Handles */}
-      <div className="relative h-full">
+      {!collapsed && <div className="relative h-full">
         <img
           src={src}
           alt={altText}
@@ -387,10 +422,9 @@ const ResizableImage = ({
         {isResizing && (
           <div className="absolute inset-0 pointer-events-none border-2" style={{ borderColor: 'var(--accent)', backgroundColor: 'color-mix(in srgb, var(--accent) 5%, transparent)' }} />
         )}
-      </div>
+      </div>}
 
-      {/* Size Indicator */}
-      {isResizing && (
+      {!collapsed && isResizing && (
         <div className="image-size-indicator absolute -bottom-9 left-1/2 -translate-x-1/2 glass-popup rounded-lg px-3 py-1.5 text-xs text-(--ink) shadow-xl font-mono whitespace-nowrap flex items-center" style={{ zIndex: 50 }}>
           {(() => {
             const actualWidthPx = Math.round((width / 100) * editorWidthRef.current);

@@ -88,7 +88,10 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
     } else if (imageMode === 'upload' && selectedFile) {
       setIsUploading(true);
       try {
-        const result = await attachmentService.uploadImage(selectedFile);
+        const [result] = await Promise.all([
+          attachmentService.uploadImage(selectedFile),
+          new Promise(r => setTimeout(r, 900)),
+        ]);
         onInsert(attachmentService.getAttachmentUrl(result.url), selectedFile.name);
         onClose();
       } catch (error) {
