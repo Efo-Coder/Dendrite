@@ -427,9 +427,16 @@ const LoginPage = () => {
                 </div>
 
                 {/* Remember me */}
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+                <label htmlFor="rememberMe" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+                  <input
+                    id="rememberMe"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
+                  />
                   <div
-                    onClick={() => setRememberMe(!rememberMe)}
+                    aria-hidden="true"
                     style={{
                       width: '16px',
                       height: '16px',

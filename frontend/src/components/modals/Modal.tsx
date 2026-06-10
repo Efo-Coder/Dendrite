@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 
@@ -78,7 +79,7 @@ const Modal = ({
                 disabled={confirmDisabled || isConfirming}
                 className={confirmVariant === 'danger' ? 'btn danger' : 'btn primary'}
               >
-                {isConfirming ? 'Loading…' : confirmLabel}
+                {isConfirming ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Loader2 size={13} className="animate-spin" />Loading…</span> : confirmLabel}
               </button>
             )}
           </div>

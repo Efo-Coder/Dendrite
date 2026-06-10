@@ -237,7 +237,7 @@ export function FooterSection() {
               margin: 0,
             }}
           >
-            © 2026 Dendrite
+            © 2026 Dendrite • All rights reserved
           </p>
           <div className="flex items-center gap-6">
             <Link

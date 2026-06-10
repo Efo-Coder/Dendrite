@@ -652,7 +652,6 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   padding: calc(13px * var(--density)) 14px;
   border-radius: 9px; cursor: default; position: relative;
   display: flex; flex-direction: column; gap: 5px;
-  transition: background 400ms ease, border-color 400ms ease, box-shadow 400ms ease;
   border: 0.5px solid transparent;
   box-shadow: 0 4px 16px rgba(0,0,0,0), 0 0 0 0.5px transparent inset;
   will-change: transform;
@@ -813,7 +812,8 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 .win .editor-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-height: 26px; }
 .win .editor-tag  {
   font-family: var(--serif-body); font-size: 12.5px; font-style: italic;
-  padding: 3px 10px 3px 8px; border-radius: 999px;
+  padding: 0 10px 0 8px; border-radius: 999px;
+  height: 26px; box-sizing: border-box;
   background: var(--surface); border: 0.5px solid var(--line-soft);
   color: var(--ink-mid); display: inline-flex; align-items: center; gap: 0;
 }
@@ -944,7 +944,7 @@ html .auth-inputs .input {
 }
 
 /* Inputs on the themed --bg-deep background (settings/profile panels) */
-.auth-panel .input {
+html .auth-panel .input {
   background: var(--surface-hi); border: 0.5px solid var(--line);
   color: var(--ink); font-family: var(--serif-body); font-size: 15px;
 }
@@ -1137,7 +1137,7 @@ html .auth-inputs .input {
 }
 .modal-overlay .settings-row:last-child { border-bottom: 0; }
 .modal-overlay .settings-row .lbl { font-family: var(--serif-display); font-size: 15px; color: var(--ink); }
-.modal-overlay .settings-row .lbl small {
+.modal-overlay .lbl small {
   display: block; font-family: var(--serif-body); font-size: 12.5px;
   color: var(--ink-low); font-style: italic; margin-top: 3px;
 }

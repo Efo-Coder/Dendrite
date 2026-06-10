@@ -3,7 +3,7 @@ import Modal from './Modal';
 import { MagicInput } from '../ui/MagicInput';
 import ConfirmAccountDeletionModal from './ConfirmAccountDeletionModal';
 import { useAuthStore } from '../../store/useAuthStore';
-import { LogOut, KeyRound, Pencil, Trash2, Eye, EyeOff, Camera, X } from 'lucide-react';
+import { LogOut, KeyRound, Pencil, Trash2, Eye, EyeOff, Camera, X, Loader2 } from 'lucide-react';
 
 const PROVIDER_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   google: {
@@ -83,7 +83,10 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     e.preventDefault();
     setNameLoading(true);
     try {
-      await updateProfile(name.trim());
+      await Promise.all([
+        updateProfile(name.trim()),
+        new Promise(r => setTimeout(r, 900)),
+      ]);
       toast.success('Name updated successfully');
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Could not update name');
@@ -100,7 +103,10 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     }
     setPasswordLoading(true);
     try {
-      await changePassword(currentPassword, newPassword);
+      await Promise.all([
+        changePassword(currentPassword, newPassword),
+        new Promise(r => setTimeout(r, 900)),
+      ]);
       toast.success('Password changed successfully');
       setCurrentPassword('');
       setNewPassword('');
@@ -195,7 +201,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                   fontFamily: 'var(--serif-display)', fontWeight: 600, fontSize: '20px',
                   boxShadow: '0 0 0 0.5px var(--line)',
                 }}>
-                  {avatarLoading ? '…' : initials}
+                  {avatarLoading ? <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--ink)' }} /> : initials}
                 </div>
               )}
               <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -264,7 +270,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               disabled={nameLoading || !name.trim() || name.trim() === (user?.name ?? '')}
               className="btn group relative disabled:opacity-50"
             >
-              <span className="nav-underline">{nameLoading ? '...' : 'Save'}</span>
+              {nameLoading ? <span className="flex items-center gap-1.5"><Loader2 size={13} className="animate-spin" />Saving…</span> : <span className="nav-underline">Save</span>}
             </button>
           </form>
         </div>
@@ -325,7 +331,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
               className="btn group relative w-full disabled:opacity-50"
             >
-              <span className="nav-underline">{passwordLoading ? 'Changing...' : 'Change password'}</span>
+              {passwordLoading ? <span className="flex items-center gap-1.5"><Loader2 size={13} className="animate-spin" />Changing…</span> : <span className="nav-underline">Change password</span>}
             </button>
           </form>
         </div>}

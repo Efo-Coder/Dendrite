@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, X, Loader2 } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { Invitation } from '../../types';
 import { collaborationService } from '../../services/collaboration.service';
 import { useToast } from '../ui/ToastContainer';
@@ -57,11 +57,7 @@ const InvitationsPanel = ({ onChanged }: Props) => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-6">
-        <Loader2 className="w-4 h-4 animate-spin text-(--ink-dim)" />
-      </div>
-    );
+    return null;
   }
 
   if (invitations.length === 0) return null;
