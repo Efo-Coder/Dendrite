@@ -654,9 +654,8 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   display: flex; flex-direction: column; gap: 5px;
   border: 0.5px solid transparent;
   box-shadow: 0 4px 16px rgba(0,0,0,0), 0 0 0 0.5px transparent inset;
-  will-change: transform;
 }
-.win .note-card:hover { background: transparent; }
+.win .note-card:hover { background: var(--surface); }
 .magic-hover button { position: relative; }
 .magic-hover button:hover { background-color: transparent; }
 .win .note-card.active {
@@ -665,6 +664,64 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   box-shadow: 0 4px 16px rgba(0,0,0,.18), 0 0 0 0.5px color-mix(in oklch, var(--accent) 24%, transparent) inset;
   transition: background 350ms ease, border-color 350ms ease, box-shadow 350ms ease;
 }
+
+/* ── Enter/Exit Listen-Animation (Port aus dem Dashboard_v2-Prototyp) ──────────
+   .note-anim       → animiert Höhe via grid-template-rows 0fr↔1fr (reines CSS)
+   .note-anim-inner → clippt den Inhalt während der Höhenänderung
+   .note-card-shell → Abstand als Padding (kollabiert mit) + Content-Animation */
+.win .note-anim {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .32s cubic-bezier(.22,.7,.18,1);
+}
+.win .note-anim.open { grid-template-rows: 1fr; }
+.win .note-anim-inner { overflow: hidden; min-height: 0; }
+.win .note-card-shell {
+  padding-bottom: 3px;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.985);
+  filter: blur(4px);
+  transition: opacity .22s ease, transform .26s cubic-bezier(.22,.7,.18,1), filter .22s ease;
+  transition-delay: var(--stagger, 0ms);
+  will-change: opacity, transform, filter;
+}
+.win .note-card-shell.open {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+/* Exitende Karten kollabieren schneller als sie eingetreten sind */
+.win .note-anim:not(.open) { transition-duration: .3s; }
+.win .note-anim:not(.open) .note-card-shell {
+  transform: translateY(6px) scale(0.985);
+  transition-delay: 0ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .win .note-anim, .win .note-card-shell { transition: none; }
+}
+
+/* Pop-Exit: gelöschte Karte verlässt das Layout sofort (absolute, siehe NoteItem)
+   und faded an Ort und Stelle aus — kein Höhen-Kollaps; die Elemente darunter
+   gleiten per FLIP-Transform nach (siehe NoteList) */
+.win .note-anim.exit-pop {
+  grid-template-rows: 1fr;
+  z-index: 1;
+  pointer-events: none;
+}
+.win .note-anim.exit-pop .note-card-shell {
+  transition-duration: .16s, .18s, .16s;
+}
+
+/* Drag & Drop Reorder (natives HTML5-DnD, Port aus dem Dashboard_v2-Prototyp) */
+.win .note-card.drag-over-top::before,
+.win .note-card.drag-over-bottom::after {
+  content: ""; position: absolute; left: 8px; right: 8px; height: 2px;
+  background: var(--accent); border-radius: 1px;
+  box-shadow: 0 0 8px var(--accent);
+}
+.win .note-card.drag-over-top::before { top: -2px; }
+.win .note-card.drag-over-bottom::after { bottom: -2px; }
+.win .note-card.dragging { opacity: 0.4; }
 
 .win .note-card-head    { display: flex; align-items: baseline; gap: 8px; }
 .win .note-card-title   {

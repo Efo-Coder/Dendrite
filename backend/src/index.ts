@@ -37,7 +37,7 @@ export const prisma = new PrismaClient();
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-  : ['http://localhost:5173'];
+  : ['http://localhost:5173', 'http://localhost:4173'];
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: allowedOrigins, credentials: true }));

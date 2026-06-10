@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { BetaBadge } from '../components/ui/BetaBadge';
 import { motion, AnimatePresence } from 'motion/react';
 // @ts-ignore
@@ -21,7 +22,7 @@ import DarkModeToggle from '../components/sidebar/DarkModeToggle';
 import { Icons } from '../components/ui/Icons';
 import { LOGO_SRC } from '../config/brand';
 import clsx from 'clsx';
-import { ViewType } from '../types';
+import { Note, ViewType } from '../types';
 
 type NoteFilters = {
   archived?: boolean;
@@ -44,12 +45,37 @@ function buildFilters(view: ViewType, folderId?: string, tagId?: string): NoteFi
 }
 
 const DashboardPage = () => {
-  const { notes, fetchNotes, createNote, currentNote, setCurrentNote, deleteNote, togglePin, justCreatedNoteIds, clearJustCreatedNoteIds } = useNoteStore();
-  const { user } = useAuthStore();
-  const { folders } = useFolderStore();
-  const { tags } = useTagStore();
+  // Gezielte Selektoren statt Voll-Store-Abo: isLoading-Flips der Fetches dürfen
+  // das Dashboard nicht mitten in laufenden Listen-Animationen neu rendern
+  const { notes, fetchNotes, createNote, currentNote, setCurrentNote, deleteNote, togglePin, justCreatedNoteIds, clearJustCreatedNoteIds } = useNoteStore(
+    useShallow((s) => ({
+      notes: s.notes, fetchNotes: s.fetchNotes, createNote: s.createNote,
+      currentNote: s.currentNote, setCurrentNote: s.setCurrentNote, deleteNote: s.deleteNote,
+      togglePin: s.togglePin, justCreatedNoteIds: s.justCreatedNoteIds, clearJustCreatedNoteIds: s.clearJustCreatedNoteIds,
+    })),
+  );
+  const user = useAuthStore((s) => s.user);
+  const folders = useFolderStore((s) => s.folders);
+  const tags = useTagStore((s) => s.tags);
   const toast = useToast();
   const [isCreating, setIsCreating] = useState(false);
+  const postCreateTimerRef = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (postCreateTimerRef.current) clearTimeout(postCreateTimerRef.current);
+  }, []);
+
+  // Editor-Note ist von der Listen-Selektion entkoppelt: Beim Erstellen ist die neue
+  // Note sofort selektiert (Active-Highlight wie in der Referenz), der teure
+  // Lexical-Mount zieht aber erst nach dem Ende des Create-Bursts nach.
+  const [editorNote, setEditorNote] = useState<Note | null>(null);
+  const pendingEditorNoteRef = useRef<Note | null>(null);
+  useEffect(() => {
+    // Frisch erstellte Note: Editor-Wechsel übernimmt der Post-Create-Timer
+    if (pendingEditorNoteRef.current && currentNote?.id === pendingEditorNoteRef.current.id) return;
+    // Jede andere Selektion (Klick, Löschen, View-Wechsel): sofort übernehmen
+    pendingEditorNoteRef.current = null;
+    setEditorNote(currentNote);
+  }, [currentNote]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showEmptyTrashModal, setShowEmptyTrashModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -206,10 +232,22 @@ const DashboardPage = () => {
         folderId: currentView === 'folder' ? selectedFolderId : undefined,
         tags: currentView === 'tag' && selectedTagId ? [selectedTagId] : undefined,
       });
+      // Sofort selektieren — das Active-Highlight erscheint direkt an der neuen Karte.
+      // Der Editor-Mount und die übrigen Folgearbeiten (Refetch, Counts, Toast)
+      // blockieren den Main-Thread und laufen deshalb erst nach dem Ende der
+      // 320ms-Entrance — beim Spammen gebündelt einmal, 400ms nach dem letzten Klick.
+      pendingEditorNoteRef.current = newNote;
       setCurrentNote(newNote);
-      refreshCurrentView();
-      toast.success('Note created');
-      setRefreshTrigger(prev => prev + 1);
+      if (postCreateTimerRef.current) clearTimeout(postCreateTimerRef.current);
+      postCreateTimerRef.current = window.setTimeout(() => {
+        if (pendingEditorNoteRef.current) {
+          setEditorNote(pendingEditorNoteRef.current);
+          pendingEditorNoteRef.current = null;
+        }
+        refreshCurrentView();
+        toast.success('Note created');
+        setRefreshTrigger(prev => prev + 1);
+      }, 400);
     } catch (error: any) {
       console.error('Error creating note:', error);
       toast.error(error.response?.data?.error || 'Could not create note');
@@ -385,15 +423,15 @@ const DashboardPage = () => {
           {/* Editor panel */}
           <div className="editor-panel">
             <AnimatePresence mode="wait">
-              {currentNote ? (
+              {editorNote ? (
                 <motion.div
-                  key={currentNote.id}
+                  key={editorNote.id}
                   className="h-full flex flex-col"
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.1 }}
                 >
                   <NoteEditor
-                    note={currentNote}
+                    note={editorNote}
                     onNoteUpdate={refreshCurrentView}
                     onToggleSidebar={() => setSidebarCollapsed(v => !v)}
                     sidebarCollapsed={sidebarCollapsed}

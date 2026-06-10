@@ -2,16 +2,14 @@ import { Note } from '../../types';
 import { GripVertical, Folder } from 'lucide-react';
 import { Icons } from '../ui/Icons';
 import clsx from 'clsx';
-import { useState } from 'react';
-import { Reorder, useDragControls, DragControls } from 'motion/react';
-import { getNoteTitle, getFirstLine, getPreview, stripHtml } from './noteListUtils';
+import { memo, useEffect, useMemo, useState } from 'react';
+import { getFirstLine, getPreview, stripHtml } from './noteListUtils';
 
 export interface NoteItemContentProps {
   note: Note;
   showDragHandle: boolean;
   dateDisplayMode: 'updatedAt' | 'createdAt';
   onSelectNote: (note: Note | null) => void;
-  dragControls?: DragControls;
 }
 
 export const NoteItemContent = ({
@@ -19,13 +17,19 @@ export const NoteItemContent = ({
   showDragHandle,
   dateDisplayMode,
   onSelectNote,
-  dragControls,
-}: NoteItemContentProps) => (
+}: NoteItemContentProps) => {
+  // stripHtml parst den kompletten Note-HTML-Inhalt ins DOM — darf nicht bei jedem Listen-Render laufen
+  const { title, preview, wordCount } = useMemo(() => ({
+    title: note.title || getFirstLine(note.content),
+    preview: note.title ? getFirstLine(note.content) : getPreview(note.content),
+    wordCount: stripHtml(note.content).trim().split(/\s+/).filter(Boolean).length,
+  }), [note.title, note.content]);
+
+  return (
   <>
     {showDragHandle && (
       <div
         data-draggable
-        onPointerDown={(e) => { e.preventDefault(); dragControls?.start(e); }}
         style={{
           position: 'absolute', left: 0, top: 0, bottom: 0,
           width: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -62,11 +66,11 @@ export const NoteItemContent = ({
             <path d="M13.5 13h-1.14C12.12 11.3 10.9 10 9.36 9.4A3.98 3.98 0 0 1 11 9c2.21 0 4 1.57 4 3.5 0 .28-.23.5-.5.5H13.5z" />
           </svg>
         )}
-        <span className="note-card-title">{getNoteTitle(note)}</span>
+        <span className="note-card-title">{title}</span>
         {note.isPinned && <span className="note-card-pin" />}
       </div>
       <p className="note-card-preview">
-        {note.title ? getFirstLine(note.content) : getPreview(note.content)}
+        {preview}
       </p>
       <div className="note-card-folder">
         <Folder style={{ width: '9px', height: '9px', flexShrink: 0 }} />
@@ -75,7 +79,7 @@ export const NoteItemContent = ({
       <div className="note-card-meta">
         <span>{new Date(dateDisplayMode === 'createdAt' ? note.createdAt : note.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
         <span className="block size-0.5 rounded-full bg-(--ink-dim) shrink-0 self-center -mt-px" />
-        <span>{stripHtml(note.content).trim().split(/\s+/).filter(Boolean).length} words</span>
+        <span>{wordCount} words</span>
         {note.tags && note.tags.length > 0 && (
           <>
             <span className="block size-0.5 rounded-full bg-(--ink-dim) shrink-0 self-center -mt-px" />
@@ -86,73 +90,106 @@ export const NoteItemContent = ({
       </div>
     </button>
   </>
-);
+  );
+};
 
-export interface ReorderNoteItemProps {
+export interface ExitRect {
+  top: number;
+  left: number;
+  width: number;
+}
+
+export interface NoteListItemProps {
   note: Note;
   isSelected: boolean;
   onSelectNote: (note: Note | null) => void;
   showDragHandle: boolean;
   dateDisplayMode: 'updatedAt' | 'createdAt';
-  isDragging?: boolean;
-  dragConstraints?: React.RefObject<HTMLElement | null>;
+  exiting?: boolean;
+  /* Position der Karte vor dem Löschen (relativ zum Scroll-Container) — aktiviert den Pop-Exit */
+  exitRect?: ExitRect | null;
+  stagger?: number;
+  isDragSource?: boolean;
+  dragOverPos?: 'top' | 'bottom' | null;
   onRightClick?: (e: React.MouseEvent, note: Note) => void;
-  onDragStart?: () => void;
-  onDragEnd?: () => void;
-  onMouseEnter?: (e: React.MouseEvent<HTMLElement>) => void;
-  onMouseLeave?: () => void;
+  onDragStartItem?: (e: React.DragEvent, note: Note) => void;
+  onDragOverItem?: (e: React.DragEvent, note: Note) => void;
+  onDropItem?: (e: React.DragEvent, note: Note) => void;
+  onDragEndItem?: () => void;
 }
 
-const ReorderNoteItem = ({
+// Memoisiert: beim Einfügen/Löschen einer Note rendert nur die betroffene Karte,
+// nicht die gesamte Liste
+const NoteListItem = memo(({
   note,
   isSelected,
   onSelectNote,
   showDragHandle,
   dateDisplayMode,
-  isDragging,
-  dragConstraints,
+  exiting,
+  exitRect,
+  stagger,
+  isDragSource,
+  dragOverPos,
   onRightClick,
-  onDragStart,
-  onDragEnd,
-  onMouseEnter,
-  onMouseLeave,
-}: ReorderNoteItemProps) => {
-  const controls = useDragControls();
-  const [selfDragging, setSelfDragging] = useState(false);
+  onDragStartItem,
+  onDragOverItem,
+  onDropItem,
+  onDragEndItem,
+}: NoteListItemProps) => {
+  // Enter: erst nach Doppel-rAF öffnen, damit die CSS-Transition vom 0fr-Startwert greift
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const r = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
+    return () => cancelAnimationFrame(r);
+  }, []);
+  const open = shown && !exiting;
+
+  const draggable = showDragHandle && !exiting;
+
+  // Pop-Exit: Karte verlässt das Layout sofort (absolute an alter Position) und
+  // faded aus — die Karten darunter gleiten per FLIP nach (siehe NoteList).
+  // Ohne bekannte Position fällt der Exit auf den Höhen-Kollaps zurück.
+  const popExit = exiting && exitRect != null;
 
   return (
-    <Reorder.Item
-      value={note}
-      layout="position"
-      dragListener={false}
-      dragControls={showDragHandle ? controls : undefined}
-      drag={showDragHandle ? 'y' : false}
-      dragConstraints={dragConstraints}
-      dragElastic={0.1}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{
-        layout: selfDragging ? { duration: 0 } : isDragging ? { type: 'spring', stiffness: 350, damping: 38 } : { type: 'spring', stiffness: 500, damping: 35 },
-        opacity: { duration: 0.15 },
-      }}
-      onDragStart={() => { setSelfDragging(true); onDragStart?.(); }}
-      onDragEnd={() => { setSelfDragging(false); onDragEnd?.(); }}
-      onContextMenu={(e: React.MouseEvent) => onRightClick?.(e, note)}
-      onMouseEnter={isDragging ? undefined : onMouseEnter}
-      onMouseLeave={isDragging ? undefined : onMouseLeave}
-      className={clsx('note-card', isSelected && 'active')}
-      style={{ listStyle: 'none', position: 'relative' }}
+    <li
+      data-flip-id={note.id}
+      draggable={draggable}
+      onDragStart={draggable ? (e) => onDragStartItem?.(e, note) : undefined}
+      onDragOver={(e) => onDragOverItem?.(e, note)}
+      onDrop={(e) => onDropItem?.(e, note)}
+      onDragEnd={draggable ? onDragEndItem : undefined}
+      className={clsx('note-anim', open && 'open', popExit && 'exit-pop')}
+      style={{
+        listStyle: 'none',
+        '--stagger': `${stagger ?? 0}ms`,
+        ...(exiting && exitRect ? { position: 'absolute', top: exitRect.top, left: exitRect.left, width: exitRect.width } : null),
+      } as React.CSSProperties}
     >
-      <NoteItemContent
-        note={note}
-        showDragHandle={showDragHandle}
-        dateDisplayMode={dateDisplayMode}
-        onSelectNote={onSelectNote}
-        dragControls={controls}
-      />
-    </Reorder.Item>
+      <div className="note-anim-inner">
+        <div className={clsx('note-card-shell', open && 'open')} style={exiting ? { pointerEvents: 'none' } : undefined}>
+          <div
+            className={clsx(
+              'note-card',
+              isSelected && 'active',
+              isDragSource && 'dragging',
+              dragOverPos === 'top' && 'drag-over-top',
+              dragOverPos === 'bottom' && 'drag-over-bottom',
+            )}
+            onContextMenu={(e: React.MouseEvent) => onRightClick?.(e, note)}
+          >
+            <NoteItemContent
+              note={note}
+              showDragHandle={showDragHandle}
+              dateDisplayMode={dateDisplayMode}
+              onSelectNote={onSelectNote}
+            />
+          </div>
+        </div>
+      </div>
+    </li>
   );
-};
+});
 
-export default ReorderNoteItem;
+export default NoteListItem;

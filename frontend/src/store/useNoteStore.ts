@@ -99,9 +99,10 @@ export const useNoteStore = create<NoteState>((set) => ({
         folderId: data.folderId,
         tags: data.tags,
       });
+      // currentNote wird bewusst NICHT hier gesetzt — die DashboardPage öffnet den Editor
+      // erst nach der Listen-Animation (Editor-Mount blockiert sonst den Main-Thread)
       set((state) => ({
         notes: [note, ...state.notes],
-        currentNote: note,
         justCreatedNoteIds: [note.id, ...state.justCreatedNoteIds],
         isLoading: false,
       }));

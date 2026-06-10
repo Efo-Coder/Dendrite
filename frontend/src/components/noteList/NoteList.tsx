@@ -4,7 +4,8 @@ import { Note } from '../../types';
 import { Plus, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react';
 import clsx from 'clsx';
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Fragment } from 'react';
-import { AnimatePresence, motion, Reorder, useMotionValue, useMotionTemplate, animate } from 'motion/react';
+import { AnimatePresence, motion, useMotionValue, useMotionTemplate, animate } from 'motion/react';
+import { useShallow } from 'zustand/react/shallow';
 import { createPortal } from 'react-dom';
 import { noteService } from '../../services/note.service';
 import { useNoteStore } from '../../store/useNoteStore';
@@ -16,8 +17,9 @@ import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import NoteContextMenu from './NoteContextMenu';
 import MoveToFolderModal from '../modals/MoveToFolderModal';
 import TagSelectionModal from '../modals/TagSelectionModal';
-import ReorderNoteItem, { NoteItemContent } from './NoteItem';
+import NoteListItem, { NoteItemContent, type ExitRect } from './NoteItem';
 import { getFirstLine } from './noteListUtils';
+import { usePresenceList, type PresenceItem } from './usePresenceList';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -54,19 +56,27 @@ const NoteList = ({
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
 
-  const { updateNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, deleteNote, searchNotes, noteCounts } = useNoteStore();
-  const { dateDisplayMode } = useSettingsStore();
+  // Gezielte Selektoren statt Voll-Store-Abo: isLoading-Flips der Fetches dürfen
+  // die Liste nicht mitten in laufenden Animationen neu rendern
+  const { updateNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, deleteNote, searchNotes, noteCounts } = useNoteStore(
+    useShallow((s) => ({
+      updateNote: s.updateNote, togglePin: s.togglePin, toggleFavorite: s.toggleFavorite,
+      toggleArchive: s.toggleArchive, toggleTrash: s.toggleTrash, deleteNote: s.deleteNote,
+      searchNotes: s.searchNotes, noteCounts: s.noteCounts,
+    })),
+  );
+  const dateDisplayMode = useSettingsStore((s) => s.dateDisplayMode);
   const toast = useToast();
 
   // ── State ──────────────────────────────────────────────────────────────────
 
-  const { containerRef: noteListRef, onItemEnter: onCardEnter, onItemLeave: onCardLeave, Indicator: NoteIndicator } = useMagicHover({ mode: 'free', borderRadius: 9 });
   const sortMenuInnerRef = useRef<HTMLDivElement>(null);
   const { onItemEnter: onSortEnter, onItemLeave: onSortLeave, Indicator: SortIndicator } = useMagicHover({ mode: 'free', borderRadius: 6, ref: sortMenuInnerRef });
 
-  // Only non-null while the user is actively drag-reordering
+  // Only non-null while a drag-reorder result is being persisted
   const [dragNotes, setDragNotes] = useState<Note[] | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [dragNoteId, setDragNoteId] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<{ id: string | null; pos: 'top' | 'bottom' | null }>({ id: null, pos: null });
   const waitingToClearDragRef = useRef(false);
 
   useEffect(() => {
@@ -106,8 +116,13 @@ const NoteList = ({
 
   // ── Refs ───────────────────────────────────────────────────────────────────
 
-  // Stable reference for use inside async callbacks (handleReorderDragEnd)
+  // Stable reference for use inside async callbacks (handleNoteDrop)
   const localNotesRef = useRef<Note[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // FLIP-Daten für den Pop-Exit: Positionen aller Karten/Labels vom letzten Commit
+  // (relativ zum Scroll-Container, da offsetParent)
+  const flipRectsRef = useRef<Map<string, ExitRect>>(new Map());
+  const prevExitingIdsRef = useRef<Set<string>>(new Set());
   const listSearchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const sortPopupRef = useRef<HTMLDivElement | null>(null);
@@ -126,6 +141,8 @@ const NoteList = ({
     const weekStart = startOfWeek(now, { weekStartsOn: 1 });
     const monthStart = startOfMonth(now);
     return notes.filter((n) => {
+      // Optimistisch getrashte Notes sofort raus, damit der Exit direkt startet
+      if (n.isDeleted) return false;
       const updated = new Date(n.updatedAt);
       if (listTab === 'today') return updated >= dayStart;
       if (listTab === 'week')  return updated >= weekStart;
@@ -171,21 +188,25 @@ const NoteList = ({
     return sorted;
   }, [dragNotes, displayNotes, sortBy, sortOrder, justCreatedNoteIds]);
 
-  // Group into pinned + month buckets for the reorder view
+  // Exitende Notes bleiben für die Dauer ihrer CSS-Exit-Transition in der Liste
+  const presence = usePresenceList(localNotes);
+
+  // Group into pinned + month buckets for the reorder view (aus der Presence-Liste,
+  // damit exitende Karten an ihrer Position bleiben)
   const groups = useMemo(() => {
-    const pinned = localNotes.filter(n => n.isPinned);
-    const rest   = localNotes.filter(n => !n.isPinned);
-    const monthMap = new Map<string, Note[]>();
-    rest.forEach(n => {
-      const key = new Date(n.updatedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase();
+    const pinned = presence.filter(it => it.note.isPinned);
+    const rest   = presence.filter(it => !it.note.isPinned);
+    const monthMap = new Map<string, PresenceItem[]>();
+    rest.forEach(it => {
+      const key = new Date(it.note.updatedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase();
       if (!monthMap.has(key)) monthMap.set(key, []);
-      monthMap.get(key)!.push(n);
+      monthMap.get(key)!.push(it);
     });
-    const result: { label: string; items: Note[] }[] = [];
+    const result: { label: string; items: PresenceItem[] }[] = [];
     if (pinned.length) result.push({ label: 'PINNED', items: pinned });
     monthMap.forEach((items, label) => result.push({ label, items }));
     return result;
-  }, [localNotes]);
+  }, [presence]);
 
   // Count shown in the header — uses pre-computed store totals for global views
   const displayCount =
@@ -218,7 +239,8 @@ const NoteList = ({
   // stale drag notes from a previous category briefly appearing in the new view
   useLayoutEffect(() => {
     setDragNotes(null);
-    setIsDragging(false);
+    setDragNoteId(null);
+    setDragOver({ id: null, pos: null });
   }, [contextType, contextId]);
 
   useLayoutEffect(() => {
@@ -245,6 +267,40 @@ const NoteList = ({
   useEffect(() => {
     if (focusSearchTrigger) searchInputRef.current?.focus();
   }, [focusSearchTrigger]);
+
+  // FLIP für den Pop-Exit: Beim Löschen verlässt die Karte das Layout sofort —
+  // alle Elemente darunter springen hoch und gleiten von ihrem Versatz per
+  // Compositor-Transform auf 0 zurück. Positionen werden bei jedem Commit
+  // festgehalten, damit der "Vorher"-Stand beim nächsten Löschen vorliegt.
+  useLayoutEffect(() => {
+    const container = scrollRef.current;
+    const prevExiting = prevExitingIdsRef.current;
+    const currentExiting = new Set(presence.filter(it => it.exiting).map(it => it.note.id));
+    prevExitingIdsRef.current = currentExiting;
+    if (!container) {
+      flipRectsRef.current = new Map();
+      return;
+    }
+    const els = Array.from(container.querySelectorAll<HTMLElement>('[data-flip-id]'));
+    const hasNewExit = [...currentExiting].some(id => !prevExiting.has(id));
+    if (hasNewExit && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach(el => {
+        const id = el.dataset.flipId!;
+        if (currentExiting.has(id)) return;
+        const old = flipRectsRef.current.get(id);
+        if (old == null) return;
+        const delta = old.top - el.offsetTop;
+        if (Math.abs(delta) < 0.5) return;
+        el.animate(
+          [{ transform: `translateY(${delta}px)` }, { transform: 'translateY(0)' }],
+          { duration: 240, easing: 'cubic-bezier(.22,.7,.18,1)' },
+        );
+      });
+    }
+    const next = new Map<string, ExitRect>();
+    els.forEach(el => next.set(el.dataset.flipId!, { top: el.offsetTop, left: el.offsetLeft, width: el.offsetWidth }));
+    flipRectsRef.current = next;
+  });
 
   // ── Search & sort handlers ─────────────────────────────────────────────────
 
@@ -277,11 +333,11 @@ const NoteList = ({
 
   // ── Context menu handlers ──────────────────────────────────────────────────
 
-  const handleNoteRightClick = (e: React.MouseEvent, note: Note) => {
+  const handleNoteRightClick = useCallback((e: React.MouseEvent, note: Note) => {
     e.preventDefault();
     e.stopPropagation();
     setContextMenu({ isOpen: true, position: { x: e.clientX, y: e.clientY }, note });
-  };
+  }, []);
 
   const closeContextMenu = () => {
     setContextMenu(prev => ({ ...prev, isOpen: false, position: { x: 0, y: 0 } }));
@@ -366,33 +422,46 @@ const NoteList = ({
     } catch { toast.error('Error restoring note'); }
   };
 
-  // ── Drag / reorder handlers ────────────────────────────────────────────────
+  // ── Drag / reorder handlers (natives HTML5-DnD wie im Dashboard_v2-Prototyp) ──
 
-  // Merges a reordered group back into the flat note list
-  const handleGroupReorder = useCallback((reorderedItems: Note[]) => {
-    setDragNotes(prev => {
-      const base = prev ?? localNotesRef.current;
-      const result: Note[] = [];
-      let inserted = false;
-      for (const n of base) {
-        if (reorderedItems.some(ri => ri.id === n.id)) {
-          if (!inserted) { result.push(...reorderedItems); inserted = true; }
-        } else {
-          result.push(n);
-        }
-      }
-      return result;
-    });
+  const handleNoteDragStart = useCallback((e: React.DragEvent, note: Note) => {
+    setDragNoteId(note.id);
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', note.id); } catch { /* einige Browser werfen hier */ }
   }, []);
 
-  const handleReorderDragStart = useCallback(() => {
-    setIsDragging(true);
+  const handleNoteDragOver = useCallback((e: React.DragEvent, note: Note) => {
+    e.preventDefault();
+    const r = e.currentTarget.getBoundingClientRect();
+    const pos = e.clientY - r.top < r.height / 2 ? 'top' as const : 'bottom' as const;
+    setDragOver(prev => (prev.id === note.id && prev.pos === pos ? prev : { id: note.id, pos }));
   }, []);
 
-  const handleReorderDragEnd = useCallback(async () => {
-    setIsDragging(false);
+  const handleNoteDragEnd = useCallback(() => {
+    setDragNoteId(null);
+    setDragOver({ id: null, pos: null });
+  }, []);
+
+  const handleNoteDrop = useCallback(async (e: React.DragEvent, target: Note) => {
+    e.preventDefault();
+    const sourceId = dragNoteId;
+    const pos = dragOver.id === target.id ? dragOver.pos : null;
+    setDragNoteId(null);
+    setDragOver({ id: null, pos: null });
+    if (!sourceId || sourceId === target.id || !pos) return;
+
+    const base = localNotesRef.current;
+    const source = base.find(n => n.id === sourceId);
+    if (!source) return;
+    const without = base.filter(n => n.id !== sourceId);
+    const targetIdx = without.findIndex(n => n.id === target.id);
+    if (targetIdx === -1) return;
+    const insertAt = pos === 'top' ? targetIdx : targetIdx + 1;
+    const reordered = [...without.slice(0, insertAt), source, ...without.slice(insertAt)];
+
+    setDragNotes(reordered);
     onSortChange('manual', sortOrder);
-    const noteOrders = localNotesRef.current.map((note, index) => ({ id: note.id, order: index }));
+    const noteOrders = reordered.map((note, index) => ({ id: note.id, order: index }));
     try {
       await noteService.reorderNotes(noteOrders, contextType, contextId || null);
       if (onNotesReordered) {
@@ -404,7 +473,7 @@ const NoteList = ({
     } catch {
       setDragNotes(null);
     }
-  }, [sortOrder, contextType, contextId, onNotesReordered, onSortChange]);
+  }, [dragNoteId, dragOver, sortOrder, contextType, contextId, onNotesReordered, onSortChange]);
 
   // ── JSX fragments ──────────────────────────────────────────────────────────
 
@@ -597,7 +666,8 @@ const NoteList = ({
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  if (displayNotes.length === 0) {
+  // Solange noch Exits laufen, Liste weiterrendern (z. B. letzte Note gelöscht)
+  if (displayNotes.length === 0 && !presence.some(it => it.exiting)) {
     return (
       <>
         {header}
@@ -623,14 +693,11 @@ const NoteList = ({
     return (
       <>
         {header}
-        <div ref={noteListRef} className="notelist-scroll" style={{ position: 'relative' }}>
-          {NoteIndicator}
+        <div className="notelist-scroll">
           {localNotes.map((note) => (
             <div
               key={note.id}
               onContextMenu={(e) => handleNoteRightClick(e, note)}
-              onMouseEnter={onCardEnter}
-              onMouseLeave={onCardLeave}
               className={clsx('note-card', currentNote?.id === note.id && 'active')}
             >
               <NoteItemContent
@@ -649,40 +716,40 @@ const NoteList = ({
     );
   }
 
+  let renderIndex = 0;
+
   return (
     <>
       {header}
-      <div ref={noteListRef} className="notelist-scroll" style={{ position: 'relative' }}>
-          {NoteIndicator}
+      <div ref={scrollRef} className="notelist-scroll" style={{ position: 'relative' }}>
           {groups.map((group) => (
             <Fragment key={group.label}>
-              <div className="notelist-group-label">{group.label}</div>
-              <Reorder.Group
-                axis="y"
-                values={group.items}
-                onReorder={handleGroupReorder}
-                style={{ padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '2px' }}
-              >
-                <AnimatePresence mode="popLayout" key={contextType + (contextId ?? '')} initial={false}>
-                  {group.items.map((note) => (
-                    <ReorderNoteItem
-                      key={note.id}
-                      note={note}
-                      isSelected={currentNote?.id === note.id}
+              <div className="notelist-group-label" data-flip-id={`label:${group.label}`}>{group.label}</div>
+              <ul style={{ padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column' }}>
+                {group.items.map((it) => {
+                  const stagger = Math.min(renderIndex++, 8) * 28;
+                  return (
+                    <NoteListItem
+                      key={it.note.id}
+                      note={it.note}
+                      exiting={it.exiting}
+                      exitRect={it.exiting ? flipRectsRef.current.get(it.note.id) ?? null : null}
+                      stagger={stagger}
+                      isSelected={currentNote?.id === it.note.id}
                       onSelectNote={onSelectNote}
                       showDragHandle={!isTrash}
                       dateDisplayMode={dateDisplayMode}
                       onRightClick={handleNoteRightClick}
-                      isDragging={isDragging}
-                      dragConstraints={noteListRef}
-                      onDragStart={handleReorderDragStart}
-                      onDragEnd={handleReorderDragEnd}
-                      onMouseEnter={onCardEnter}
-                      onMouseLeave={onCardLeave}
+                      isDragSource={dragNoteId === it.note.id}
+                      dragOverPos={dragOver.id === it.note.id && dragNoteId !== it.note.id ? dragOver.pos : null}
+                      onDragStartItem={handleNoteDragStart}
+                      onDragOverItem={handleNoteDragOver}
+                      onDropItem={handleNoteDrop}
+                      onDragEndItem={handleNoteDragEnd}
                     />
-                  ))}
-                </AnimatePresence>
-              </Reorder.Group>
+                  );
+                })}
+              </ul>
             </Fragment>
           ))}
         </div>
