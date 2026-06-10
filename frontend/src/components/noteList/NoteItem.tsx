@@ -95,6 +95,7 @@ export interface ReorderNoteItemProps {
   showDragHandle: boolean;
   dateDisplayMode: 'updatedAt' | 'createdAt';
   isDragging?: boolean;
+  dragConstraints?: React.RefObject<HTMLElement | null>;
   onRightClick?: (e: React.MouseEvent, note: Note) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
@@ -109,6 +110,7 @@ const ReorderNoteItem = ({
   showDragHandle,
   dateDisplayMode,
   isDragging,
+  dragConstraints,
   onRightClick,
   onDragStart,
   onDragEnd,
@@ -122,11 +124,18 @@ const ReorderNoteItem = ({
     <Reorder.Item
       value={note}
       layout="position"
-      layoutId={note.id}
       dragListener={false}
       dragControls={showDragHandle ? controls : undefined}
       drag={showDragHandle ? 'y' : false}
-      transition={{ layout: selfDragging ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 38 } }}
+      dragConstraints={dragConstraints}
+      dragElastic={0.1}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{
+        layout: selfDragging ? { duration: 0 } : isDragging ? { type: 'spring', stiffness: 350, damping: 38 } : { type: 'spring', stiffness: 500, damping: 35 },
+        opacity: { duration: 0.15 },
+      }}
       onDragStart={() => { setSelfDragging(true); onDragStart?.(); }}
       onDragEnd={() => { setSelfDragging(false); onDragEnd?.(); }}
       onContextMenu={(e: React.MouseEvent) => onRightClick?.(e, note)}

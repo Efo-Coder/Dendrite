@@ -4,7 +4,7 @@ import { Note } from '../../types';
 import { Plus, Trash2, Search, SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react';
 import clsx from 'clsx';
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Fragment } from 'react';
-import { AnimatePresence, motion, Reorder, MotionConfig, LayoutGroup, useMotionValue, useMotionTemplate, animate } from 'motion/react';
+import { AnimatePresence, motion, Reorder, useMotionValue, useMotionTemplate, animate } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { noteService } from '../../services/note.service';
 import { useNoteStore } from '../../store/useNoteStore';
@@ -38,6 +38,7 @@ interface NoteListProps {
   onSortChange: (sortBy: SortOption, sortOrder: 'asc' | 'desc') => void;
   onCreateNote?: () => void;
   isCreating?: boolean;
+  justCreatedNoteIds?: string[];
   onEmptyTrash?: () => void;
   focusSearchTrigger?: number;
 }
@@ -48,7 +49,7 @@ const NoteList = ({
   notes, currentNote, onSelectNote, onNotesReordered,
   viewLabel, contextType, contextId, isTrash,
   sortBy, sortOrder, onSortChange,
-  onCreateNote, isCreating, onEmptyTrash, focusSearchTrigger,
+  onCreateNote, isCreating, justCreatedNoteIds, onEmptyTrash, focusSearchTrigger,
 }: NoteListProps) => {
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
@@ -59,9 +60,9 @@ const NoteList = ({
 
   // ── State ──────────────────────────────────────────────────────────────────
 
-  const { containerRef: noteListRef, onItemEnter: onCardEnter, onItemLeave: onCardLeave, Indicator: NoteIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface)', borderRadius: 9 });
+  const { containerRef: noteListRef, onItemEnter: onCardEnter, onItemLeave: onCardLeave, Indicator: NoteIndicator } = useMagicHover({ mode: 'free', borderRadius: 9 });
   const sortMenuInnerRef = useRef<HTMLDivElement>(null);
-  const { onItemEnter: onSortEnter, onItemLeave: onSortLeave, Indicator: SortIndicator } = useMagicHover({ mode: 'free', background: 'var(--surface-hi)', borderRadius: 6, ref: sortMenuInnerRef });
+  const { onItemEnter: onSortEnter, onItemLeave: onSortLeave, Indicator: SortIndicator } = useMagicHover({ mode: 'free', borderRadius: 6, ref: sortMenuInnerRef });
 
   // Only non-null while the user is actively drag-reordering
   const [dragNotes, setDragNotes] = useState<Note[] | null>(null);
@@ -89,7 +90,7 @@ const NoteList = ({
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const tabContainerRef = useRef<HTMLDivElement>(null);
-  const { onItemEnter: onTabEnter, onItemLeave: onTabLeave, Indicator: TabIndicator } = useMagicHover({ mode: 'free', background: 'color-mix(in oklch, var(--ink-low) 8%, transparent)', borderRadius: 20, ref: tabContainerRef });
+  const { onItemEnter: onTabEnter, onItemLeave: onTabLeave, Indicator: TabIndicator } = useMagicHover({ mode: 'free', borderRadius: 20, ref: tabContainerRef });
   const [sortFieldMenuOpen, setSortFieldMenuOpen] = useState(false);
   const [sortMenuAnchor, setSortMenuAnchor] = useState<PopupAnchor | null>(null);
   const [searchHovered, setSearchHovered] = useState(false);
@@ -137,25 +138,38 @@ const NoteList = ({
   // During drag, dragNotes holds the live reorder snapshot; otherwise derived from displayNotes.
   const localNotes = useMemo(() => {
     if (dragNotes) return dragNotes;
-    if (sortBy === 'manual') return displayNotes;
-    return [...displayNotes].sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      let cmp = 0;
-      switch (sortBy) {
-        case 'createdAt': cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(); break;
-        case 'updatedAt': cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(); break;
-        case 'title': {
-          const aT = a.title || getFirstLine(a.content);
-          const bT = b.title || getFirstLine(b.content);
-          cmp = aT.localeCompare(bT);
-          break;
+    let sorted: Note[];
+    if (sortBy === 'manual') {
+      sorted = displayNotes;
+    } else {
+      sorted = [...displayNotes].sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        let cmp = 0;
+        switch (sortBy) {
+          case 'createdAt': cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(); break;
+          case 'updatedAt': cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(); break;
+          case 'title': {
+            const aT = a.title || getFirstLine(a.content);
+            const bT = b.title || getFirstLine(b.content);
+            cmp = aT.localeCompare(bT);
+            break;
+          }
+          case 'pinned': cmp = a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1; break;
         }
-        case 'pinned': cmp = a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1; break;
-      }
-      return sortOrder === 'desc' ? -cmp : cmp;
-    });
-  }, [dragNotes, displayNotes, sortBy, sortOrder]);
+        return sortOrder === 'desc' ? -cmp : cmp;
+      });
+    }
+    if (justCreatedNoteIds?.length) {
+      const idSet = new Set(justCreatedNoteIds);
+      const pinned = sorted.filter(n => n.isPinned);
+      const created = sorted.filter(n => !n.isPinned && idSet.has(n.id))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      const rest = sorted.filter(n => !n.isPinned && !idSet.has(n.id));
+      sorted = [...pinned, ...created, ...rest];
+    }
+    return sorted;
+  }, [dragNotes, displayNotes, sortBy, sortOrder, justCreatedNoteIds]);
 
   // Group into pinned + month buckets for the reorder view
   const groups = useMemo(() => {
@@ -609,32 +623,25 @@ const NoteList = ({
     return (
       <>
         {header}
-        <MotionConfig transition={isDragging ? { layout: { duration: 0.2 } } : { layout: { duration: 0 } }}>
-          <div key={contextType + (contextId ?? '')} ref={noteListRef} className="notelist-scroll" style={{ position: 'relative' }}>
-            {NoteIndicator}
-            <AnimatePresence initial={false}>
-              {localNotes.map((note) => (
-                <motion.div
-                  key={note.id}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  onContextMenu={(e) => handleNoteRightClick(e, note)}
-                  onMouseEnter={onCardEnter}
-                  onMouseLeave={onCardLeave}
-                  className={clsx('note-card', currentNote?.id === note.id && 'active')}
-                >
-                  <NoteItemContent
-                    note={note}
-                    showDragHandle={false}
-                    dateDisplayMode={dateDisplayMode}
-                    onSelectNote={onSelectNote}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </MotionConfig>
+        <div ref={noteListRef} className="notelist-scroll" style={{ position: 'relative' }}>
+          {NoteIndicator}
+          {localNotes.map((note) => (
+            <div
+              key={note.id}
+              onContextMenu={(e) => handleNoteRightClick(e, note)}
+              onMouseEnter={onCardEnter}
+              onMouseLeave={onCardLeave}
+              className={clsx('note-card', currentNote?.id === note.id && 'active')}
+            >
+              <NoteItemContent
+                note={note}
+                showDragHandle={false}
+                dateDisplayMode={dateDisplayMode}
+                onSelectNote={onSelectNote}
+              />
+            </div>
+          ))}
+        </div>
         {onEmptyTrash && emptyTrashFooter}
         {sharedModals}
         {sortPortal}
@@ -645,10 +652,8 @@ const NoteList = ({
   return (
     <>
       {header}
-      <MotionConfig transition={{ layout: { duration: 0.35, ease: [0.23, 1, 0.32, 1] } }}>
-        <div key={contextType + (contextId ?? '')} ref={noteListRef} className="notelist-scroll" style={{ position: 'relative' }}>
+      <div ref={noteListRef} className="notelist-scroll" style={{ position: 'relative' }}>
           {NoteIndicator}
-          <LayoutGroup>
           {groups.map((group) => (
             <Fragment key={group.label}>
               <div className="notelist-group-label">{group.label}</div>
@@ -658,7 +663,7 @@ const NoteList = ({
                 onReorder={handleGroupReorder}
                 style={{ padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '2px' }}
               >
-                <AnimatePresence initial={false}>
+                <AnimatePresence mode="popLayout" key={contextType + (contextId ?? '')} initial={false}>
                   {group.items.map((note) => (
                     <ReorderNoteItem
                       key={note.id}
@@ -669,6 +674,7 @@ const NoteList = ({
                       dateDisplayMode={dateDisplayMode}
                       onRightClick={handleNoteRightClick}
                       isDragging={isDragging}
+                      dragConstraints={noteListRef}
                       onDragStart={handleReorderDragStart}
                       onDragEnd={handleReorderDragEnd}
                       onMouseEnter={onCardEnter}
@@ -679,9 +685,7 @@ const NoteList = ({
               </Reorder.Group>
             </Fragment>
           ))}
-          </LayoutGroup>
         </div>
-      </MotionConfig>
       {onCreateNote && (
         <div className="notelist-footer">
           <button type="button" onClick={onCreateNote} disabled={isCreating} className="notelist-new-btn">

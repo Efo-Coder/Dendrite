@@ -44,7 +44,7 @@ function buildFilters(view: ViewType, folderId?: string, tagId?: string): NoteFi
 }
 
 const DashboardPage = () => {
-  const { notes, fetchNotes, createNote, currentNote, setCurrentNote, deleteNote, togglePin } = useNoteStore();
+  const { notes, fetchNotes, createNote, currentNote, setCurrentNote, deleteNote, togglePin, justCreatedNoteIds, clearJustCreatedNoteIds } = useNoteStore();
   const { user } = useAuthStore();
   const { folders } = useFolderStore();
   const { tags } = useTagStore();
@@ -148,12 +148,14 @@ const DashboardPage = () => {
       setSortBy('createdAt');
       setSortOrder('desc');
     }
+    clearJustCreatedNoteIds();
   }, [listSortContextKey]);
 
   const handleSortChange = useCallback(
     (by: SortOption, order: 'asc' | 'desc') => {
       setSortBy(by);
       setSortOrder(order);
+      clearJustCreatedNoteIds();
       setContextSortStates((prev) => {
         const next = { ...prev, [listSortContextKey]: { sortBy: by, sortOrder: order } };
         try { localStorage.setItem('dendrite-sort-states', JSON.stringify(next)); } catch {}
@@ -357,6 +359,7 @@ const DashboardPage = () => {
                 currentView === 'favorites' ? 'favorites' :
                 currentView === 'archive' ? 'archive' :
                 currentView === 'trash' ? 'trash' :
+                currentView === 'shared' ? 'shared' :
                 'all'
               }
               contextId={
@@ -373,6 +376,7 @@ const DashboardPage = () => {
                   ? handleCreateNote : undefined
               }
               isCreating={isCreating}
+              justCreatedNoteIds={justCreatedNoteIds}
               onEmptyTrash={currentView === 'trash' ? () => setShowEmptyTrashModal(true) : undefined}
               focusSearchTrigger={focusSearchTrigger}
             />

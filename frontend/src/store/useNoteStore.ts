@@ -8,6 +8,7 @@ interface NoteState {
   isLoading: boolean;
   error: string | null;
   noteCounts: NoteCounts;
+  justCreatedNoteIds: string[];
 
   // Actions
   fetchNoteCounts: () => Promise<void>;
@@ -42,6 +43,7 @@ interface NoteState {
   toggleArchive: (id: string) => Promise<void>;
   toggleTrash: (id: string) => Promise<void>;
   setCurrentNote: (note: Note | null) => void;
+  clearJustCreatedNoteIds: () => void;
   setNoteTitleOptimistic: (id: string, title: string) => void;
   updateNoteInStore: (note: Note) => void;
   clearError: () => void;
@@ -53,6 +55,7 @@ export const useNoteStore = create<NoteState>((set) => ({
   isLoading: false,
   error: null,
   noteCounts: { all: 0, favorites: 0, archive: 0, trash: 0, shared: 0, pendingInvitations: 0 },
+  justCreatedNoteIds: [],
 
   fetchNoteCounts: async () => {
     try {
@@ -99,6 +102,7 @@ export const useNoteStore = create<NoteState>((set) => ({
       set((state) => ({
         notes: [note, ...state.notes],
         currentNote: note,
+        justCreatedNoteIds: [note.id, ...state.justCreatedNoteIds],
         isLoading: false,
       }));
       return note;
@@ -231,6 +235,7 @@ export const useNoteStore = create<NoteState>((set) => ({
   },
 
   setCurrentNote: (note) => set({ currentNote: note }),
+  clearJustCreatedNoteIds: () => set({ justCreatedNoteIds: [] }),
   setNoteTitleOptimistic: (id, title) =>
     set((state) => ({
       notes: state.notes.map((n) => (n.id === id ? { ...n, title } : n)),
