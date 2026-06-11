@@ -26,6 +26,24 @@ import { usePresenceList, type PresenceItem } from './usePresenceList';
 export type SortOption = 'createdAt' | 'updatedAt' | 'title' | 'pinned' | 'manual';
 type ListTab = 'all' | 'today' | 'week' | 'month';
 
+// ── Drag-Helfer ───────────────────────────────────────────────────────────────
+
+// Gruppenzugehörigkeit einer Note (PINNED bzw. Monats-Bucket der Liste)
+const groupKeyOf = (n: Note) =>
+  n.isPinned ? 'PINNED' : new Date(n.updatedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase();
+
+// Laufender Pointer-Drag (Karte hängt am Cursor)
+interface DragState {
+  id: string;
+  el: HTMLElement;
+  startPointerY: number;
+  startTop: number;
+  lastDy: number;
+  height: number;
+  moved: boolean;
+  abort: AbortController;
+}
+
 interface NoteListProps {
   notes: Note[];
   currentNote: Note | null;
@@ -73,10 +91,11 @@ const NoteList = ({
   const sortMenuInnerRef = useRef<HTMLDivElement>(null);
   const { onItemEnter: onSortEnter, onItemLeave: onSortLeave, Indicator: SortIndicator } = useMagicHover({ mode: 'free', borderRadius: 6, ref: sortMenuInnerRef });
 
-  // Only non-null while a drag-reorder result is being persisted
+  // Live-Preview-Reihenfolge während des Drags bzw. bis der Persist-Refetch landet
   const [dragNotes, setDragNotes] = useState<Note[] | null>(null);
   const [dragNoteId, setDragNoteId] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState<{ id: string | null; pos: 'top' | 'bottom' | null }>({ id: null, pos: null });
+  const dragStateRef = useRef<DragState | null>(null);
+  const dragOriginRef = useRef<Note[] | null>(null);
   const waitingToClearDragRef = useRef(false);
 
   useEffect(() => {
@@ -188,8 +207,9 @@ const NoteList = ({
     return sorted;
   }, [dragNotes, displayNotes, sortBy, sortOrder, justCreatedNoteIds]);
 
-  // Exitende Notes bleiben für die Dauer ihrer CSS-Exit-Transition in der Liste
-  const presence = usePresenceList(localNotes);
+  // Exitende Notes bleiben für die Dauer ihrer CSS-Exit-Transition in der Liste;
+  // Kategorie-Wechsel resettet ohne Exit-Choreografie
+  const presence = usePresenceList(localNotes, contextType + (contextId ?? ''));
 
   // Group into pinned + month buckets for the reorder view (aus der Presence-Liste,
   // damit exitende Karten an ihrer Position bleiben)
@@ -198,7 +218,7 @@ const NoteList = ({
     const rest   = presence.filter(it => !it.note.isPinned);
     const monthMap = new Map<string, PresenceItem[]>();
     rest.forEach(it => {
-      const key = new Date(it.note.updatedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase();
+      const key = groupKeyOf(it.note);
       if (!monthMap.has(key)) monthMap.set(key, []);
       monthMap.get(key)!.push(it);
     });
@@ -238,10 +258,19 @@ const NoteList = ({
   // Reset drag state synchronously before paint when context changes — prevents
   // stale drag notes from a previous category briefly appearing in the new view
   useLayoutEffect(() => {
+    dragStateRef.current?.abort.abort();
+    dragStateRef.current = null;
+    document.documentElement.classList.remove('note-dragging');
     setDragNotes(null);
     setDragNoteId(null);
-    setDragOver({ id: null, pos: null });
+    dragOriginRef.current = null;
   }, [contextType, contextId]);
+
+  // Laufenden Drag beim Unmount sauber beenden
+  useEffect(() => () => {
+    dragStateRef.current?.abort.abort();
+    document.documentElement.classList.remove('note-dragging');
+  }, []);
 
   useLayoutEffect(() => {
     const idx = listTabs.findIndex(t => t.id === listTab);
@@ -268,24 +297,33 @@ const NoteList = ({
     if (focusSearchTrigger) searchInputRef.current?.focus();
   }, [focusSearchTrigger]);
 
-  // FLIP für den Pop-Exit: Beim Löschen verlässt die Karte das Layout sofort —
-  // alle Elemente darunter springen hoch und gleiten von ihrem Versatz per
-  // Compositor-Transform auf 0 zurück. Positionen werden bei jedem Commit
-  // festgehalten, damit der "Vorher"-Stand beim nächsten Löschen vorliegt.
+  // FLIP für Pop-Exit und Drag-Preview: Wenn Elemente ihre Layout-Position
+  // wechseln (Karte gelöscht oder Reihenfolge beim Ziehen umgestellt), gleiten
+  // sie von ihrem alten Versatz per Compositor-Transform auf 0 zurück.
+  // Positionen werden bei jedem Commit festgehalten ("Vorher"-Stand).
+  const prevDragIdRef = useRef<string | null>(null);
   useLayoutEffect(() => {
     const container = scrollRef.current;
     const prevExiting = prevExitingIdsRef.current;
     const currentExiting = new Set(presence.filter(it => it.exiting).map(it => it.note.id));
     prevExitingIdsRef.current = currentExiting;
+    const dragActive = dragNoteId !== null || prevDragIdRef.current !== null;
+    prevDragIdRef.current = dragNoteId;
     if (!container) {
       flipRectsRef.current = new Map();
       return;
     }
     const els = Array.from(container.querySelectorAll<HTMLElement>('[data-flip-id]'));
     const hasNewExit = [...currentExiting].some(id => !prevExiting.has(id));
-    if (hasNewExit && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((hasNewExit || dragActive) && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       els.forEach(el => {
         const id = el.dataset.flipId!;
+        const st = dragStateRef.current;
+        if (st && id === st.id) {
+          // Karte hängt am Cursor — Layout-Sprung kompensieren statt animieren
+          el.style.transform = `translateY(${st.startTop + st.lastDy - el.offsetTop}px)`;
+          return;
+        }
         if (currentExiting.has(id)) return;
         const old = flipRectsRef.current.get(id);
         if (old == null) return;
@@ -293,12 +331,12 @@ const NoteList = ({
         if (Math.abs(delta) < 0.5) return;
         el.animate(
           [{ transform: `translateY(${delta}px)` }, { transform: 'translateY(0)' }],
-          { duration: 240, easing: 'cubic-bezier(.22,.7,.18,1)' },
+          { duration: 280, easing: 'cubic-bezier(.3,1.25,.35,1)' },
         );
       });
     }
     const next = new Map<string, ExitRect>();
-    els.forEach(el => next.set(el.dataset.flipId!, { top: el.offsetTop, left: el.offsetLeft, width: el.offsetWidth }));
+    els.forEach(el => next.set(el.dataset.flipId!, { top: el.offsetTop, left: el.offsetLeft, width: el.offsetWidth, height: el.offsetHeight }));
     flipRectsRef.current = next;
   });
 
@@ -422,44 +460,18 @@ const NoteList = ({
     } catch { toast.error('Error restoring note'); }
   };
 
-  // ── Drag / reorder handlers (natives HTML5-DnD wie im Dashboard_v2-Prototyp) ──
+  // ── Drag / reorder handlers ────────────────────────────────────────────────
+  // Pointer-Events-Drag mit Live-Preview: Die Karte hängt per Transform am Cursor,
+  // die Geschwister gleiten per FLIP aus dem Weg, beim Loslassen settelt die Karte
+  // federnd in die Lücke — die Reihenfolge ist dann bereits final.
 
-  const handleNoteDragStart = useCallback((e: React.DragEvent, note: Note) => {
-    setDragNoteId(note.id);
-    e.dataTransfer.effectAllowed = 'move';
-    try { e.dataTransfer.setData('text/plain', note.id); } catch { /* einige Browser werfen hier */ }
-  }, []);
-
-  const handleNoteDragOver = useCallback((e: React.DragEvent, note: Note) => {
-    e.preventDefault();
-    const r = e.currentTarget.getBoundingClientRect();
-    const pos = e.clientY - r.top < r.height / 2 ? 'top' as const : 'bottom' as const;
-    setDragOver(prev => (prev.id === note.id && prev.pos === pos ? prev : { id: note.id, pos }));
-  }, []);
-
-  const handleNoteDragEnd = useCallback(() => {
-    setDragNoteId(null);
-    setDragOver({ id: null, pos: null });
-  }, []);
-
-  const handleNoteDrop = useCallback(async (e: React.DragEvent, target: Note) => {
-    e.preventDefault();
-    const sourceId = dragNoteId;
-    const pos = dragOver.id === target.id ? dragOver.pos : null;
-    setDragNoteId(null);
-    setDragOver({ id: null, pos: null });
-    if (!sourceId || sourceId === target.id || !pos) return;
-
-    const base = localNotesRef.current;
-    const source = base.find(n => n.id === sourceId);
-    if (!source) return;
-    const without = base.filter(n => n.id !== sourceId);
-    const targetIdx = without.findIndex(n => n.id === target.id);
-    if (targetIdx === -1) return;
-    const insertAt = pos === 'top' ? targetIdx : targetIdx + 1;
-    const reordered = [...without.slice(0, insertAt), source, ...without.slice(insertAt)];
-
-    setDragNotes(reordered);
+  const persistDragOrder = useCallback(async (origin: Note[] | null) => {
+    const reordered = localNotesRef.current;
+    // Nichts bewegt → nichts persistieren
+    if (origin && origin.length === reordered.length && origin.every((n, i) => n.id === reordered[i].id)) {
+      setDragNotes(null);
+      return;
+    }
     onSortChange('manual', sortOrder);
     const noteOrders = reordered.map((note, index) => ({ id: note.id, order: index }));
     try {
@@ -473,7 +485,122 @@ const NoteList = ({
     } catch {
       setDragNotes(null);
     }
-  }, [dragNoteId, dragOver, sortOrder, contextType, contextId, onNotesReordered, onSortChange]);
+  }, [sortOrder, contextType, contextId, onNotesReordered, onSortChange]);
+
+  const handleCardPointerDown = useCallback((e: React.PointerEvent, note: Note) => {
+    if (e.button !== 0 || dragStateRef.current) return;
+    const li = (e.currentTarget as HTMLElement).closest<HTMLElement>('[data-flip-id]');
+    if (!li) return;
+    // Kein preventDefault und noch kein Drag-State: Ein einfacher Klick soll die
+    // Note normal öffnen — der Drag startet erst ab der Bewegungs-Schwelle.
+
+    const abort = new AbortController();
+    const st: DragState = {
+      id: note.id,
+      el: li,
+      startPointerY: e.clientY,
+      startTop: li.offsetTop,
+      lastDy: 0,
+      height: li.offsetHeight,
+      moved: false,
+      abort,
+    };
+    dragStateRef.current = st;
+
+    const onMove = (ev: PointerEvent) => {
+      const rawDy = ev.clientY - st.startPointerY;
+      if (!st.moved) {
+        if (Math.abs(rawDy) < 5) return;
+        // Schwelle überschritten → Drag wirklich starten
+        st.moved = true;
+        dragOriginRef.current = localNotesRef.current;
+        setDragNoteId(st.id);
+        document.documentElement.classList.add('note-dragging');
+        window.getSelection()?.removeAllRanges();
+        st.el.style.zIndex = '2';
+      }
+
+      const base = localNotesRef.current;
+      const source = base.find(n => n.id === st.id);
+      if (!source) return;
+
+      // Drag-Grenze: Die Karte bleibt im vertikalen Bereich ihrer Gruppe —
+      // weiter kann sie ohnehin nicht einsortiert werden
+      let minTop = st.startTop;
+      let maxBottom = st.startTop + st.height;
+      for (const n of base) {
+        if (groupKeyOf(n) !== groupKeyOf(source)) continue;
+        const rect = flipRectsRef.current.get(n.id);
+        if (!rect) continue;
+        minTop = Math.min(minTop, rect.top);
+        maxBottom = Math.max(maxBottom, rect.top + rect.height);
+      }
+      const dy = Math.min(Math.max(rawDy, minTop - st.startTop), maxBottom - st.height - st.startTop);
+      st.lastDy = dy;
+
+      // Karte folgt dem Cursor — relativ zur aktuellen Layout-Position
+      st.el.style.transform = `translateY(${st.startTop + dy - st.el.offsetTop}px)`;
+
+      // Einfüge-Position: getauscht wird, sobald der Mittelpunkt eines Ziel-Items
+      // deutlich in die Spanne der gezogenen Karte ragt (25%-Einzug von den Kanten) —
+      // früher als beim Mittelpunkt-Kreuzen, aber nicht schon bei erster Berührung
+      const inset = st.height * 0.25;
+      const cardTop = st.startTop + dy;
+      const cardBottom = cardTop + st.height;
+      let target: Note | null = null;
+      let pos: 'top' | 'bottom' = 'top';
+      for (const n of base) {
+        if (n.id === st.id || groupKeyOf(n) !== groupKeyOf(source)) continue;
+        const rect = flipRectsRef.current.get(n.id);
+        if (!rect) continue;
+        const mid = rect.top + rect.height / 2;
+        if (mid >= cardTop + inset && mid <= cardBottom - inset) {
+          target = n;
+          pos = mid < cardTop + st.height / 2 ? 'top' : 'bottom';
+          break;
+        }
+      }
+      if (!target) return;
+      const without = base.filter(n => n.id !== st.id);
+      const targetIdx = without.findIndex(n => n.id === target!.id);
+      if (targetIdx === -1) return;
+      const insertAt = pos === 'top' ? targetIdx : targetIdx + 1;
+      const preview = [...without.slice(0, insertAt), source, ...without.slice(insertAt)];
+      if (!preview.every((n, i) => n.id === base[i]?.id)) setDragNotes(preview);
+    };
+
+    const finishDrag = () => {
+      abort.abort();
+      dragStateRef.current = null;
+      if (!st.moved) return; // war nur ein Klick — nichts anfassen
+      document.documentElement.classList.remove('note-dragging');
+      setDragNoteId(null);
+      // Federnder Settle vom aktuellen Versatz in die finale Lücke
+      const residual = st.startTop + st.lastDy - st.el.offsetTop;
+      st.el.style.transform = '';
+      st.el.style.zIndex = '';
+      if (Math.abs(residual) > 0.5) {
+        st.el.animate(
+          [{ transform: `translateY(${residual}px)` }, { transform: 'translateY(0)' }],
+          { duration: 320, easing: 'cubic-bezier(.3,1.25,.35,1)' },
+        );
+      }
+      // Den auf das Loslassen folgenden Click schlucken, sonst öffnet er die Note
+      const swallowClick = (ce: MouseEvent) => {
+        ce.stopPropagation();
+        ce.preventDefault();
+      };
+      window.addEventListener('click', swallowClick, { capture: true, once: true });
+      window.setTimeout(() => window.removeEventListener('click', swallowClick, { capture: true }), 0);
+      const origin = dragOriginRef.current;
+      dragOriginRef.current = null;
+      void persistDragOrder(origin);
+    };
+
+    window.addEventListener('pointermove', onMove, { signal: abort.signal });
+    window.addEventListener('pointerup', finishDrag, { signal: abort.signal });
+    window.addEventListener('pointercancel', finishDrag, { signal: abort.signal });
+  }, [persistDragOrder]);
 
   // ── JSX fragments ──────────────────────────────────────────────────────────
 
@@ -741,11 +868,7 @@ const NoteList = ({
                       dateDisplayMode={dateDisplayMode}
                       onRightClick={handleNoteRightClick}
                       isDragSource={dragNoteId === it.note.id}
-                      dragOverPos={dragOver.id === it.note.id && dragNoteId !== it.note.id ? dragOver.pos : null}
-                      onDragStartItem={handleNoteDragStart}
-                      onDragOverItem={handleNoteDragOver}
-                      onDropItem={handleNoteDrop}
-                      onDragEndItem={handleNoteDragEnd}
+                      onCardPointerDown={handleCardPointerDown}
                     />
                   );
                 })}

@@ -12,16 +12,39 @@ export interface PresenceItem {
 // (Port aus dem Dashboard_v2-Prototyp). Gleichzeitiges Add+Remove
 // (View-/Filter-Wechsel) gilt als Reset: kein Exit, Items remounten und
 // spielen ihre gestaffelte Entrance.
-export function usePresenceList(notes: Note[]): PresenceItem[] {
+// resetKey: Bei Wechsel (z. B. Kategorie) wird die Liste sofort geleert —
+// kein Exit der alten Ansicht, keine hängenden Gruppen-Labels — und die Notes
+// der neuen Ansicht mounten frisch mit Entrance-Stagger.
+export function usePresenceList(notes: Note[], resetKey?: string): PresenceItem[] {
   const [items, setItems] = useState<PresenceItem[]>(() =>
     notes.map((n) => ({ note: n, exiting: false })));
   const prevRef = useRef(notes);
+  const prevKeyRef = useRef(resetKey);
+  const pendingResetRef = useRef(false);
   const timers = useRef<Record<string, number>>({});
 
   useEffect(() => {
+    const keyChanged = prevKeyRef.current !== resetKey;
+    prevKeyRef.current = resetKey;
     const prev = prevRef.current;
-    if (prev === notes) return;
+    const notesChanged = prev !== notes;
     prevRef.current = notes;
+    if (!keyChanged && !notesChanged) return;
+
+    if (keyChanged) pendingResetRef.current = true;
+    if (pendingResetRef.current) {
+      Object.values(timers.current).forEach(clearTimeout);
+      timers.current = {};
+      if (notesChanged) {
+        // Notes der neuen Ansicht sind da → frisch mounten (Entrance-Stagger)
+        pendingResetRef.current = false;
+        setItems(notes.map((n) => ({ note: n, exiting: false })));
+      } else {
+        // Noch alter Datenstand → Liste leeren statt Exit-Choreografie spielen
+        setItems([]);
+      }
+      return;
+    }
 
     const nextIds = new Set(notes.map((n) => n.id));
     const prevIds = new Set(prev.map((n) => n.id));
@@ -72,7 +95,7 @@ export function usePresenceList(notes: Note[]): PresenceItem[] {
       });
       return base;
     });
-  }, [notes]);
+  }, [notes, resetKey]);
 
   useEffect(() => () => {
     Object.values(timers.current).forEach(clearTimeout);

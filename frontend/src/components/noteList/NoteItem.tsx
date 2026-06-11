@@ -34,6 +34,7 @@ export const NoteItemContent = ({
           position: 'absolute', left: 0, top: 0, bottom: 0,
           width: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'grab', color: 'var(--ink-dim)', zIndex: 2,
+          touchAction: 'none',
         }}
         className="active:cursor-grabbing hover:text-(--ink-low)"
       >
@@ -97,6 +98,7 @@ export interface ExitRect {
   top: number;
   left: number;
   width: number;
+  height: number;
 }
 
 export interface NoteListItemProps {
@@ -110,12 +112,8 @@ export interface NoteListItemProps {
   exitRect?: ExitRect | null;
   stagger?: number;
   isDragSource?: boolean;
-  dragOverPos?: 'top' | 'bottom' | null;
   onRightClick?: (e: React.MouseEvent, note: Note) => void;
-  onDragStartItem?: (e: React.DragEvent, note: Note) => void;
-  onDragOverItem?: (e: React.DragEvent, note: Note) => void;
-  onDropItem?: (e: React.DragEvent, note: Note) => void;
-  onDragEndItem?: () => void;
+  onCardPointerDown?: (e: React.PointerEvent, note: Note) => void;
 }
 
 // Memoisiert: beim Einfügen/Löschen einer Note rendert nur die betroffene Karte,
@@ -130,12 +128,8 @@ const NoteListItem = memo(({
   exitRect,
   stagger,
   isDragSource,
-  dragOverPos,
   onRightClick,
-  onDragStartItem,
-  onDragOverItem,
-  onDropItem,
-  onDragEndItem,
+  onCardPointerDown,
 }: NoteListItemProps) => {
   // Enter: erst nach Doppel-rAF öffnen, damit die CSS-Transition vom 0fr-Startwert greift
   const [shown, setShown] = useState(false);
@@ -145,7 +139,17 @@ const NoteListItem = memo(({
   }, []);
   const open = shown && !exiting;
 
-  const draggable = showDragHandle && !exiting;
+  // Das Clipping (overflow: hidden) wird nur während der Höhen-Transition gebraucht —
+  // danach freigeben, sonst wird der Schatten der aktiven Karte abgeschnitten
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!open) {
+      setSettled(false);
+      return;
+    }
+    const t = window.setTimeout(() => setSettled(true), 360);
+    return () => clearTimeout(t);
+  }, [open]);
 
   // Pop-Exit: Karte verlässt das Layout sofort (absolute an alter Position) und
   // faded aus — die Karten darunter gleiten per FLIP nach (siehe NoteList).
@@ -155,11 +159,6 @@ const NoteListItem = memo(({
   return (
     <li
       data-flip-id={note.id}
-      draggable={draggable}
-      onDragStart={draggable ? (e) => onDragStartItem?.(e, note) : undefined}
-      onDragOver={(e) => onDragOverItem?.(e, note)}
-      onDrop={(e) => onDropItem?.(e, note)}
-      onDragEnd={draggable ? onDragEndItem : undefined}
       className={clsx('note-anim', open && 'open', popExit && 'exit-pop')}
       style={{
         listStyle: 'none',
@@ -167,17 +166,16 @@ const NoteListItem = memo(({
         ...(exiting && exitRect ? { position: 'absolute', top: exitRect.top, left: exitRect.left, width: exitRect.width } : null),
       } as React.CSSProperties}
     >
-      <div className="note-anim-inner">
+      <div className="note-anim-inner" style={settled || popExit ? { overflow: 'visible' } : undefined}>
         <div className={clsx('note-card-shell', open && 'open')} style={exiting ? { pointerEvents: 'none' } : undefined}>
           <div
             className={clsx(
               'note-card',
               isSelected && 'active',
               isDragSource && 'dragging',
-              dragOverPos === 'top' && 'drag-over-top',
-              dragOverPos === 'bottom' && 'drag-over-bottom',
             )}
             onContextMenu={(e: React.MouseEvent) => onRightClick?.(e, note)}
+            onPointerDown={showDragHandle && !exiting ? (e) => onCardPointerDown?.(e, note) : undefined}
           >
             <NoteItemContent
               note={note}
