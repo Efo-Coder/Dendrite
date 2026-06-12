@@ -11,25 +11,25 @@ if (typeof window !== "undefined") {
 // Destilliert aus der echten Namensgeschichte: Dendrit = verzweigter Fortsatz
 // der Nervenzelle, der Signale empfängt — und zugleich Baum mit Wurzeln.
 const PARAGRAPHS = [
-  "A dendrite is the branched limb of a nerve cell — the part of the mind that receives ideas and carries them inward. The name is no accident: thoughts arrive, branch, and grow the way trees do. We work the way trees do — closer to nature than we remember.",
-  "Dendrite began with small frustrations: five preset colors, rigid images, formatting that fought back. It grew into a conviction — that a notebook should feel like a fine object, not a tool. Something you open gladly, get lost in, and trust with your thoughts and plans.",
+  "Every thought begins as a signal. In the brain, it arrives through the dendrite — the branched limb of a nerve cell that receives each impulse and carries it inward, toward the place where thinking takes form. The name was chosen with intention: a structure that is at once neuron and tree, root and branch, mind and nature. We built Dendrite in its image — a notebook that branches the way thinking does.",
+  "Dendrite began as a quiet refusal — of preset palettes, rigid images, formatting that resisted intention. At Dendrite, we believe your notes should work as hard as you do: beautiful by design, exact in every detail, calm in every gesture. Not software that stores text, but a notebook of genuine substance — one you open gladly, lose yourself in willingly, and trust with everything you mean to build.",
 ];
 
 const PRINCIPLES = [
   {
     n: "01",
     title: "Rooted in thought",
-    text: "Named for the branch of a neuron where every idea first arrives.",
+    text: "Named for the structure where every idea first arrives — part neuron, part tree, entirely devoted to thought.",
   },
   {
     n: "02",
     title: "No small frustrations",
-    text: "Any color, any size, images that move where you want them — details, done right.",
+    text: "Every color, every size, every image precisely where you intend it. The details others dismiss are where we begin.",
   },
   {
     n: "03",
     title: "A notebook to get lost in",
-    text: "Calm, quiet, and a little luxurious. Yours to wander.",
+    text: "Calm, considered, quietly luxurious. A place you enter to write — and stay, because you think better here.",
   },
 ];
 
@@ -37,6 +37,8 @@ const hairlineStyle: CSSProperties = {
   height: '1px',
   background: 'var(--line)',
   transformOrigin: 'left',
+  // Eigener Layer: rundet die 1px-Linie bei DPR 1.25/1.5 einheitlich statt pro Position auf 1 oder 2 Gerätepixel
+  willChange: 'transform',
 };
 
 export function AboutSection() {

@@ -105,32 +105,41 @@ export function FooterSection() {
             <a
               key={label}
               href={href}
-              className="group"
+              className="relative group text-(--bg)/60 hover:text-(--bg) transition-colors duration-300"
               style={{
                 fontFamily: 'var(--mono)',
                 fontSize: '10px',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                color: 'color-mix(in oklch, var(--bg) 60%, transparent)',
                 textDecoration: 'none',
+                padding: '6px 0',
               }}
             >
-              <span className="nav-underline">{label}</span>
+              {label}
+              {/* w-full would cover the trailing 0.2em letter-spacing gap, so subtract it */}
+              <span
+                className="absolute bottom-0 left-0 w-0 group-hover:w-[calc(100%-0.2em)]"
+                style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }}
+              />
             </a>
           ))}
           <Link
             to="/login"
-            className="group"
+            className="relative group text-(--bg)/60 hover:text-(--bg) transition-colors duration-300"
             style={{
               fontFamily: 'var(--mono)',
               fontSize: '10px',
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
-              color: 'color-mix(in oklch, var(--bg) 60%, transparent)',
               textDecoration: 'none',
+              padding: '6px 0',
             }}
           >
-            <span className="nav-underline">Sign in</span>
+            Sign in
+            <span
+              className="absolute bottom-0 left-0 w-0 group-hover:w-[calc(100%-0.2em)]"
+              style={{ height: '0.5px', background: 'currentColor', transition: 'width 0.4s cubic-bezier(.2,.7,.2,1)' }}
+            />
           </Link>
         </nav>
 
