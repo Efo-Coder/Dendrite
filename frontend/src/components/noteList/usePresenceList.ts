@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Note } from '../../types';
 
 export const EXIT_MS = 300;
@@ -23,7 +23,10 @@ export function usePresenceList(notes: Note[], resetKey?: string): PresenceItem[
   const pendingResetRef = useRef(false);
   const timers = useRef<Record<string, number>>({});
 
-  useEffect(() => {
+  // useLayoutEffect statt useEffect: Der Sync (insbesondere der Reset beim
+  // Kategorie-Wechsel) muss VOR dem Paint passieren, sonst blitzt für einen
+  // Frame die alte Liste unter der neuen Kategorie auf
+  useLayoutEffect(() => {
     const keyChanged = prevKeyRef.current !== resetKey;
     prevKeyRef.current = resetKey;
     const prev = prevRef.current;
@@ -31,18 +34,23 @@ export function usePresenceList(notes: Note[], resetKey?: string): PresenceItem[
     prevRef.current = notes;
     if (!keyChanged && !notesChanged) return;
 
-    if (keyChanged) pendingResetRef.current = true;
-    if (pendingResetRef.current) {
+    // Kategorie-Wechsel: immer sofort leeren — auch wenn notes im selben Render
+    // eine neue Identität haben (z. B. durch geänderte Sortier-Props ist das nur
+    // der alte Datenstand, umsortiert). Erst ein SPÄTERER notes-Wechsel (der
+    // Fetch der neuen Ansicht) füllt die Liste wieder.
+    if (keyChanged) {
+      pendingResetRef.current = true;
       Object.values(timers.current).forEach(clearTimeout);
       timers.current = {};
-      if (notesChanged) {
-        // Notes der neuen Ansicht sind da → frisch mounten (Entrance-Stagger)
-        pendingResetRef.current = false;
-        setItems(notes.map((n) => ({ note: n, exiting: false })));
-      } else {
-        // Noch alter Datenstand → Liste leeren statt Exit-Choreografie spielen
-        setItems([]);
-      }
+      setItems([]);
+      return;
+    }
+    if (pendingResetRef.current) {
+      // notesChanged ist hier garantiert true (sonst wären wir oben raus)
+      pendingResetRef.current = false;
+      Object.values(timers.current).forEach(clearTimeout);
+      timers.current = {};
+      setItems(notes.map((n) => ({ note: n, exiting: false })));
       return;
     }
 

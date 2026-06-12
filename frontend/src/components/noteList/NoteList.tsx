@@ -17,7 +17,7 @@ import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import NoteContextMenu from './NoteContextMenu';
 import MoveToFolderModal from '../modals/MoveToFolderModal';
 import TagSelectionModal from '../modals/TagSelectionModal';
-import NoteListItem, { NoteItemContent, type ExitRect } from './NoteItem';
+import NoteListItem, { type ExitRect } from './NoteItem';
 import { getFirstLine } from './noteListUtils';
 import { usePresenceList, type PresenceItem } from './usePresenceList';
 
@@ -817,24 +817,30 @@ const NoteList = ({
   }
 
   if (isTrash) {
+    let trashIndex = 0;
     return (
       <>
         {header}
-        <div className="notelist-scroll">
-          {localNotes.map((note) => (
-            <div
-              key={note.id}
-              onContextMenu={(e) => handleNoteRightClick(e, note)}
-              className={clsx('note-card', currentNote?.id === note.id && 'active')}
-            >
-              <NoteItemContent
-                note={note}
-                showDragHandle={false}
-                dateDisplayMode={dateDisplayMode}
-                onSelectNote={onSelectNote}
-              />
-            </div>
-          ))}
+        <div key="trash" ref={scrollRef} className="notelist-scroll" style={{ position: 'relative' }}>
+          <ul style={{ padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column' }}>
+            {presence.map((it) => {
+              const stagger = Math.min(trashIndex++, 8) * 28;
+              return (
+                <NoteListItem
+                  key={it.note.id}
+                  note={it.note}
+                  exiting={it.exiting}
+                  exitRect={it.exiting ? flipRectsRef.current.get(it.note.id) ?? null : null}
+                  stagger={stagger}
+                  isSelected={currentNote?.id === it.note.id}
+                  onSelectNote={onSelectNote}
+                  showDragHandle={false}
+                  dateDisplayMode={dateDisplayMode}
+                  onRightClick={handleNoteRightClick}
+                />
+              );
+            })}
+          </ul>
         </div>
         {onEmptyTrash && emptyTrashFooter}
         {sharedModals}
@@ -848,7 +854,7 @@ const NoteList = ({
   return (
     <>
       {header}
-      <div ref={scrollRef} className="notelist-scroll" style={{ position: 'relative' }}>
+      <div key={contextType + (contextId ?? '')} ref={scrollRef} className="notelist-scroll" style={{ position: 'relative' }}>
           {groups.map((group) => (
             <Fragment key={group.label}>
               <div className="notelist-group-label" data-flip-id={`label:${group.label}`}>{group.label}</div>

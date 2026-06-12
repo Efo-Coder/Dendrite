@@ -21,7 +21,6 @@ import { User } from 'lucide-react';
 import DarkModeToggle from '../components/sidebar/DarkModeToggle';
 import { Icons } from '../components/ui/Icons';
 import { LOGO_SRC } from '../config/brand';
-import clsx from 'clsx';
 import { Note, ViewType } from '../types';
 
 type NoteFilters = {
@@ -31,6 +30,25 @@ type NoteFilters = {
   folderId?: string;
   tagId?: string;
 };
+
+// Eindeutiger Schlüssel einer Ansicht — identisch zu listSortContextKey aufgebaut
+function viewContextKey(view: ViewType, folderId?: string, tagId?: string): string {
+  const contextType =
+    view === 'folder' ? 'folder' :
+    view === 'tag' ? 'tag' :
+    view === 'favorites' ? 'favorites' :
+    view === 'archive' ? 'archive' :
+    view === 'trash' ? 'trash' :
+    view === 'shared' ? 'shared' :
+    'all';
+  const contextId =
+    view === 'folder' ? folderId :
+    view === 'tag' ? tagId :
+    undefined;
+  return `${contextType}-${contextId || '_none'}`;
+}
+
+const EMPTY_NOTES: Note[] = [];
 
 function buildFilters(view: ViewType, folderId?: string, tagId?: string): NoteFilters {
   switch (view) {
@@ -124,21 +142,16 @@ const DashboardPage = () => {
     }
   }, [currentView, selectedFolderId, selectedTagId, folders, tags]);
 
-  const listSortContextKey = useMemo(() => {
-    const contextType =
-      currentView === 'folder' ? 'folder' :
-      currentView === 'tag' ? 'tag' :
-      currentView === 'favorites' ? 'favorites' :
-      currentView === 'archive' ? 'archive' :
-      currentView === 'trash' ? 'trash' :
-      currentView === 'shared' ? 'shared' :
-      'all';
-    const contextId =
-      currentView === 'folder' ? selectedFolderId :
-      currentView === 'tag' ? selectedTagId :
-      undefined;
-    return `${contextType}-${contextId || '_none'}`;
-  }, [currentView, selectedFolderId, selectedTagId]);
+  const listSortContextKey = useMemo(
+    () => viewContextKey(currentView, selectedFolderId, selectedTagId),
+    [currentView, selectedFolderId, selectedTagId],
+  );
+
+  // Zu welcher Ansicht gehören die Notes im Store? Bis der Fetch der neuen
+  // Ansicht abgeschlossen ist, bekommt die NoteList ein leeres Array — sonst
+  // zeigt sie kurz die (ggf. umsortierten) Daten der vorherigen Kategorie.
+  const [loadedViewKey, setLoadedViewKey] = useState(() => viewContextKey('all'));
+  const listNotes = loadedViewKey === listSortContextKey ? notes : EMPTY_NOTES;
 
   const [contextSortStates, setContextSortStates] = useState<
     Record<string, { sortBy: SortOption; sortOrder: 'asc' | 'desc' }>
@@ -191,7 +204,6 @@ const DashboardPage = () => {
     [listSortContextKey]
   );
 
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [focusSearchTrigger, setFocusSearchTrigger] = useState(0);
 
@@ -204,24 +216,18 @@ const DashboardPage = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  // View wechselt sofort — die Liste leert sich synchron (listNotes-Gate +
+  // usePresenceList-Reset) und die neuen Notes staggern rein, sobald der Fetch
+  // der neuen Ansicht abgeschlossen ist (loadedViewKey).
   const handleViewChange = (view: ViewType, id?: string) => {
-    setIsTransitioning(true);
-    setTimeout(async () => {
-      setCurrentView(view);
-      setCurrentNote(null);
-      if (view === 'folder') {
-        setSelectedFolderId(id);
-        setSelectedTagId(undefined);
-      } else if (view === 'tag') {
-        setSelectedTagId(id);
-        setSelectedFolderId(undefined);
-      } else {
-        setSelectedFolderId(undefined);
-        setSelectedTagId(undefined);
-      }
-      await fetchNotes(buildFilters(view, view === 'folder' ? id : undefined, view === 'tag' ? id : undefined));
-      setIsTransitioning(false);
-    }, 200);
+    setCurrentView(view);
+    setCurrentNote(null);
+    const folderId = view === 'folder' ? id : undefined;
+    const tagId = view === 'tag' ? id : undefined;
+    setSelectedFolderId(folderId);
+    setSelectedTagId(tagId);
+    const key = viewContextKey(view, folderId, tagId);
+    void fetchNotes(buildFilters(view, folderId, tagId)).then(() => setLoadedViewKey(key));
   };
 
   const handleCreateNote = async () => {
@@ -377,16 +383,13 @@ const DashboardPage = () => {
           />
 
           {/* Notes panel */}
-          <div
-            className={clsx('notelist-panel', 'transition-opacity duration-300')}
-            style={{ opacity: isTransitioning ? 0 : 1 }}
-          >
+          <div className="notelist-panel">
             {/* Einladungs-Panel im Shared-View */}
             {currentView === 'shared' && (
               <InvitationsPanel onChanged={refreshCurrentView} />
             )}
             <NoteList
-              notes={notes}
+              notes={listNotes}
               currentNote={currentNote}
               onSelectNote={setCurrentNote}
               onNotesReordered={refreshCurrentView}
