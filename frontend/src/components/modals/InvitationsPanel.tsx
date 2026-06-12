@@ -72,7 +72,7 @@ const InvitationsPanel = ({ onChanged }: Props) => {
           <li key={inv.id} className="flex items-center gap-2.5 rounded-lg p-2 bg-(--surface-hi)">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate text-(--ink)">
-                {inv.note.title || 'Unbenannte Notiz'}
+                {inv.note.title || 'Untitled Note'}
               </p>
               <p className="text-xs text-(--ink-dim)">
                 from {inv.noteOwner?.name || inv.noteOwner?.email || 'Unknown'}

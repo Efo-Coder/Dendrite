@@ -36,7 +36,7 @@ export const getNoteTitle = (note: { title?: string | null; content: string }) =
 export const getFirstLine = (content: string) => {
   const text = stripHtml(content);
   const lines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
-  const firstLine = lines[0] || 'Neue Notiz';
+  const firstLine = lines[0] || 'New Note';
   return firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine;
 };
 
@@ -52,6 +52,6 @@ export const getPreview = (content: string) => {
   const raw = lines[0] || '';
   const skip = raw.length > 50 ? 50 : raw.length;
   const rest = raw.slice(skip).replace(/^\s+/, '').trim();
-  if (!rest) return 'Kein zusätzlicher Text';
+  if (!rest) return 'No additional text';
   return rest.length > 100 ? rest.slice(0, 100) + '...' : rest;
 };
