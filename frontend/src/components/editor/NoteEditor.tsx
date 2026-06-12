@@ -1,43 +1,36 @@
-﻿import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
-import { useMagicHover } from '../../hooks/useMagicHover';
-import TurndownService from 'turndown';
-import { motion, AnimatePresence } from 'motion/react';
-import { createPortal } from 'react-dom';
-import { getModalPortalRoot } from '../../lib/modalPortalRoot';
-import { getNoteTitle } from '../noteList/noteListUtils';
-import { Note } from '../../types';
-import { canAccess, requiredPlan } from '../../lib/planFeatures';
-import { useNoteStore } from '../../store/useNoteStore';
-import { useFolderStore } from '../../store/useFolderStore';
-import { useTagStore } from '../../store/useTagStore';
-import { useAuthStore } from '../../store/useAuthStore';
-import { useToast } from '../ui/ToastContainer';
-import RichTextToolbar from './RichTextToolbar';
-import LexicalEditorWrapper, { ActiveUser } from './LexicalEditorWrapper';
-import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
-import VersionHistoryPanel from './VersionHistoryPanel';
-import { noteService } from '../../services/note.service';
-import { Icons } from '../ui/Icons';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion } from 'motion/react';
+import clsx from 'clsx';
 import {
   Pin,
   Trash2,
-  FolderOpen,
-  Tag as TagIcon,
   Archive,
   ArchiveRestore,
   RotateCcw,
   X,
-  Check,
   Maximize2,
   Minimize2,
   Info,
   Share2,
-  Download,
-  Copy,
-  Users,
   PanelLeft,
 } from 'lucide-react';
-import clsx from 'clsx';
+import { Note } from '../../types';
+import { useMagicHover } from '../../hooks/useMagicHover';
+import { getNoteTitle } from '../noteList/noteListUtils';
+import { useNoteStore } from '../../store/useNoteStore';
+import { useFolderStore } from '../../store/useFolderStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useToast } from '../ui/ToastContainer';
+import { noteService } from '../../services/note.service';
+import { Icons } from '../ui/Icons';
+import RichTextToolbar from './RichTextToolbar';
+import LexicalEditorWrapper, { ActiveUser } from './LexicalEditorWrapper';
+import VersionHistoryPanel from './VersionHistoryPanel';
+import FolderMenu from './FolderMenu';
+import NoteExportMenu from './NoteExportMenu';
+import NoteTagsRow from './NoteTagsRow';
+import { MenuPos, formatRelativeDate, userCursorColor } from './noteEditorUtils';
+import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
 import TagSelectionModal from '../modals/TagSelectionModal';
 import Modal from '../modals/Modal';
 
@@ -48,36 +41,11 @@ interface NoteEditorProps {
   sidebarCollapsed?: boolean;
 }
 
-const CURSOR_PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'];
-function userCursorColor(userId: string): string {
-  let h = 0;
-  for (const c of userId) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return CURSOR_PALETTE[h % CURSOR_PALETTE.length];
-}
-
-function formatRelativeDate(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 86_400_000);
-  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  if (dateOnly.getTime() === today.getTime()) return `Today, ${timeStr}`;
-  if (dateOnly.getTime() === yesterday.getTime()) return `Yesterday, ${timeStr}`;
-  return `${date.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}, ${timeStr}`;
-}
-
 const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: NoteEditorProps) => {
   const { updateNote, deleteNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, setCurrentNote, setNoteTitleOptimistic, updateNoteInStore } = useNoteStore();
   const { folders } = useFolderStore();
-  const { tags, createTag } = useTagStore();
   const { user } = useAuthStore();
   const toast = useToast();
-
-  const [addingTag, setAddingTag] = useState(false);
-  const [newTag, setNewTag] = useState('');
-  const [activeSuggestion, setActiveSuggestion] = useState(-1);
-  const [inlineTagPopupPos, setInlineTagPopupPos] = useState<{ x: number; y: number } | null>(null);
 
   const [title, setTitle] = useState(note.title ?? '');
   const titleRef = useRef(note.title ?? '');
@@ -100,13 +68,15 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     setContent(html);
     setIsSaving(true);
   }, []);
-  const [folderMenuPos, setFolderMenuPos] = useState<{ x: number; y: number; anchorTop: number } | null>(null);
-  const [exportMenuPos, setExportMenuPos] = useState<{ x: number; y: number; anchorTop: number } | null>(null);
+
+  const [folderMenuPos, setFolderMenuPos] = useState<MenuPos | null>(null);
+  const [exportMenuPos, setExportMenuPos] = useState<MenuPos | null>(null);
 
   const leftGroupRef = useRef<HTMLDivElement>(null);
   const rightGroupRef = useRef<HTMLDivElement>(null);
   const { onItemEnter: onLeftEnter, onItemLeave: onLeftLeave, Indicator: LeftIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: leftGroupRef });
   const { onItemEnter: onRightEnter, onItemLeave: onRightLeave, Indicator: RightIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: rightGroupRef });
+
   const [focusWritingMode, setFocusWritingMode] = useState(false);
   const [showExitBtn, setShowExitBtn] = useState(false);
   const exitBtnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -127,24 +97,17 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
       if (exitBtnTimerRef.current) clearTimeout(exitBtnTimerRef.current);
     }
   }, [focusWritingMode]);
+
   const [showToolbarTagModal, setShowToolbarTagModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [restoreKey, setRestoreKey] = useState(0);
-  // Lokale Kollaboratoren-Liste – wird nach Einladungen aktualisiert
+  // Local collaborator list — refreshed after invitations
   const [collaborators, setCollaborators] = useState(note.collaborators ?? []);
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
 
-  const folderMenuRef = useRef<HTMLDivElement>(null);
-  const tagInputWrapperRef = useRef<HTMLDivElement>(null);
-  const inlineTagPopupRef = useRef<HTMLDivElement>(null);
-  const prevInlineTagHeightRef = useRef<number>(0);
-  const inlineTagTransitionEndRef = useRef<(() => void) | null>(null);
-  const { onItemEnter: onFolderEnter, onItemLeave: onFolderLeave, Indicator: FolderIndicator } = useMagicHover({ mode: 'free', borderRadius: 6, ref: folderMenuRef });
-  const { onItemEnter: onInlineTagEnter, onItemLeave: onInlineTagLeave, Indicator: InlineTagIndicator } = useMagicHover({ mode: 'free', borderRadius: 6, ref: inlineTagPopupRef });
-  const exportMenuRef = useRef<HTMLDivElement>(null);
-
+  // Save-on-switch: flush unsaved content/title of the previous note
   useEffect(() => {
     return () => {
       const currentContent = contentRef.current;
@@ -167,68 +130,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     setActiveUsers([]);
   }, [note.id]);
 
-
-  // Close menus on Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setFolderMenuPos(null);
-        setExportMenuPos(null);
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, []);
-
-  useEffect(() => {
-    if (addingTag && tagInputWrapperRef.current) {
-      const rect = tagInputWrapperRef.current.getBoundingClientRect();
-      setInlineTagPopupPos({ x: rect.left, y: rect.bottom + 6 });
-    } else {
-      setInlineTagPopupPos(null);
-    }
-  }, [addingTag]);
-
-  useLayoutEffect(() => {
-    const el = inlineTagPopupRef.current;
-    if (!el || !prevInlineTagHeightRef.current) return;
-    const newHeight = el.scrollHeight;
-    if (Math.abs(newHeight - prevInlineTagHeightRef.current) < 2) return;
-
-    if (inlineTagTransitionEndRef.current) {
-      el.removeEventListener('transitionend', inlineTagTransitionEndRef.current);
-      inlineTagTransitionEndRef.current = null;
-    }
-
-    el.style.transition = 'none';
-    el.style.height = `${prevInlineTagHeightRef.current}px`;
-    el.style.overflow = 'hidden';
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        el.style.transition = 'height .3s cubic-bezier(.2,.8,.2,1)';
-        el.style.height = `${newHeight}px`;
-
-        const onEnd = () => {
-          el.style.height = '';
-          el.style.transition = '';
-          el.style.overflow = '';
-          inlineTagTransitionEndRef.current = null;
-        };
-        inlineTagTransitionEndRef.current = onEnd;
-        el.addEventListener('transitionend', onEnd, { once: true });
-      });
-    });
-  }, [newTag]);
-
-  const inlineTagSuggestions = useMemo(() =>
-    tags.filter(t =>
-      !note.tags?.some(nt => nt.id === t.id) &&
-      (newTag.length === 0 || t.name.toLowerCase().startsWith(newTag.toLowerCase()))
-    ),
-    [tags, note.tags, newTag]
-  );
-
   // Combined auto-save: sends content + title together to avoid race conditions
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -243,7 +144,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         await updateNote(note.id, updates);
         if (shouldSaveTitle) lastSavedTitleRef.current = title;
       } catch (error) {
-        console.error('Fehler beim Speichern:', error);
+        console.error('Auto-save failed:', error);
       } finally {
         setIsSaving(false);
       }
@@ -251,57 +152,16 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     return () => clearTimeout(timer);
   }, [content, title]);
 
-
   const handleMoveToFolder = async (folderId: string | null) => {
     try {
       await updateNote(note.id, { folderId });
       setFolderMenuPos(null);
       toast.info('Note moved');
       if (onNoteUpdate) onNoteUpdate();
-    } catch (error) {
+    } catch {
       toast.error('Error moving note');
     }
   };
-
-  const handleToggleTag = async (tagId: string) => {
-    const currentTagIds = note.tags?.map(t => t.id) || [];
-    const isAdding = !currentTagIds.includes(tagId);
-    if (isAdding && currentTagIds.length >= 4) { toast.error('Maximum 4 tags per note'); return; }
-    const newTagIds = isAdding
-      ? [...currentTagIds, tagId]
-      : currentTagIds.filter(id => id !== tagId);
-
-    try {
-      await updateNote(note.id, { tags: newTagIds });
-      toast.info('Tags updated');
-      if (onNoteUpdate) onNoteUpdate();
-    } catch (error) {
-      toast.error('Error updating tags');
-    }
-  };
-
-  const submitInlineTagWithName = async (name: string) => {
-    const cleanName = name.trim().replace(/^#/, '');
-    setNewTag('');
-    setAddingTag(false);
-    setActiveSuggestion(-1);
-    if (!cleanName) return;
-    if (cleanName.length > 20) { toast.error('Tag name must be 20 characters or fewer'); return; }
-    try {
-      const existing = tags.find(t => t.name.toLowerCase() === cleanName.toLowerCase());
-      const tagId = existing ? existing.id : (await createTag({ name: cleanName })).id;
-      const currentTagIds = note.tags?.map(t => t.id) || [];
-      if (!currentTagIds.includes(tagId)) {
-        if (currentTagIds.length >= 4) { toast.error('Maximum 4 tags per note'); return; }
-        await updateNote(note.id, { tags: [...currentTagIds, tagId] });
-        if (onNoteUpdate) onNoteUpdate();
-      }
-    } catch {
-      toast.error('Error adding tag');
-    }
-  };
-
-  const submitInlineTag = () => submitInlineTagWithName(newTag);
 
   const handleDelete = async () => {
     if (note.isDeleted) {
@@ -310,7 +170,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         setCurrentNote(null);
         toast.error('Note permanently deleted');
         if (onNoteUpdate) onNoteUpdate();
-      } catch (error) {
+      } catch {
         toast.error('Error deleting note');
       }
     } else {
@@ -319,7 +179,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         setCurrentNote(null);
         toast.error('Note deleted');
         if (onNoteUpdate) onNoteUpdate();
-      } catch (error) {
+      } catch {
         toast.error('Error deleting note');
       }
     }
@@ -330,7 +190,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
       await toggleArchive(note.id);
       toast.info('Note archived');
       if (onNoteUpdate) onNoteUpdate();
-    } catch (error) {
+    } catch {
       toast.error('Error archiving note');
     }
   };
@@ -345,72 +205,13 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         toast.success('Note unarchived');
       }
       if (onNoteUpdate) onNoteUpdate();
-    } catch (error) {
+    } catch {
       toast.error('Error restoring note');
     }
   };
 
   const handleClose = () => {
     setCurrentNote(null);
-  };
-
-  const downloadFile = (filename: string, data: string, mimeType: string) => {
-    const blob = new Blob([data], { type: `${mimeType};charset=utf-8` });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const makeTurndown = () => new TurndownService({ headingStyle: 'atx', bulletListMarker: '-', codeBlockStyle: 'fenced' });
-
-  const handleExportMarkdown = () => {
-    const md = makeTurndown().turndown(content || '');
-    downloadFile(`${title || 'Note'}.md`, `# ${title}\n\n${md}`, 'text/markdown');
-    setExportMenuPos(null);
-    toast.success('Markdown exported');
-  };
-
-  const handleExportHtml = () => {
-    const safeTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const html = `<!DOCTYPE html>\n<html lang="de">\n<head>\n<meta charset="UTF-8">\n<title>${safeTitle}</title>\n<style>body{font-family:system-ui,sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem;line-height:1.6}img{max-width:100%}</style>\n</head>\n<body>\n<h1>${safeTitle}</h1>\n${content}\n</body>\n</html>`;
-    downloadFile(`${title || 'Note'}.html`, html, 'text/html');
-    setExportMenuPos(null);
-    toast.success('HTML exported');
-  };
-
-  const handleExportPdf = async () => {
-    if (!note) return;
-    setExportMenuPos(null);
-    try {
-      await noteService.exportPdf(note.id, title || 'Note');
-      toast.success('PDF exported');
-    } catch {
-      toast.error('PDF export failed');
-    }
-  };
-
-  const handleCopyMarkdown = async () => {
-    const md = makeTurndown().turndown(content || '');
-    await navigator.clipboard.writeText(`# ${title}\n\n${md}`);
-    toast.success('Markdown copied');
-    setExportMenuPos(null);
-  };
-
-  const handleShare = async () => {
-    const md = makeTurndown().turndown(content || '');
-    const text = `${title}\n\n${md}`;
-    if (navigator.share) {
-      try { await navigator.share({ title, text }); } catch { /* user cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(text);
-      toast.success('Copied to clipboard');
-    }
-    setExportMenuPos(null);
   };
 
   const openFolderMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -424,40 +225,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     setFolderMenuPos(null);
     setExportMenuPos(prev => prev ? null : { x: rect.right - 220, y: rect.bottom + 4, anchorTop: rect.top });
   };
-
-  const MENU_MARGIN = 8;
-
-  useLayoutEffect(() => {
-    if (!folderMenuPos || !folderMenuRef.current) return;
-    const menu = folderMenuRef.current;
-    const { width, height } = menu.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const finalY = folderMenuPos.y + height > vh - MENU_MARGIN
-      ? Math.max(MENU_MARGIN, folderMenuPos.anchorTop - height - 4)
-      : folderMenuPos.y;
-    const finalX = folderMenuPos.x + width > vw - MENU_MARGIN
-      ? Math.max(MENU_MARGIN, vw - MENU_MARGIN - width)
-      : folderMenuPos.x;
-    menu.style.top  = `${finalY}px`;
-    menu.style.left = `${finalX}px`;
-  }, [folderMenuPos]);
-
-  useLayoutEffect(() => {
-    if (!exportMenuPos || !exportMenuRef.current) return;
-    const menu = exportMenuRef.current;
-    const { width, height } = menu.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const finalY = exportMenuPos.y + height > vh - MENU_MARGIN
-      ? Math.max(MENU_MARGIN, exportMenuPos.anchorTop - height - 4)
-      : exportMenuPos.y;
-    const finalX = exportMenuPos.x + width > vw - MENU_MARGIN
-      ? Math.max(MENU_MARGIN, vw - MENU_MARGIN - width)
-      : Math.max(MENU_MARGIN, exportMenuPos.x);
-    menu.style.top  = `${finalY}px`;
-    menu.style.left = `${finalX}px`;
-  }, [exportMenuPos]);
 
   const isInTrash = note.isDeleted;
   const isArchived = note.isArchived && !note.isDeleted;
@@ -502,64 +269,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         className="editor-title"
         style={{ height: 'auto', opacity: isInTrash ? 0.6 : 1 }}
       />
-      <div className="editor-byline">
-        <div className="editor-tags">
-          {note.tags?.map(t => (
-            <span key={t.id} className="editor-tag" style={(() => { const live = tags.find(x => x.id === t.id); const c = live?.color ?? t.color; return { color: c, borderColor: `color-mix(in srgb, ${c} 35%, transparent)`, background: `color-mix(in srgb, ${c} 8%, transparent)` }; })()}>
-              {t.name}
-              {!isInTrash && (
-                <span className="tag-remove" onClick={() => handleToggleTag(t.id)}>×</span>
-              )}
-            </span>
-          ))}
-{!isInTrash && (note.tags?.length ?? 0) < 4 && (
-            addingTag ? (
-              <div ref={tagInputWrapperRef} className="editor-tag-wrapper">
-                <input
-                  autoFocus
-                  className="editor-tag-input"
-                  value={newTag}
-                  maxLength={20}
-                  onChange={e => {
-                    if (inlineTagPopupRef.current) prevInlineTagHeightRef.current = inlineTagPopupRef.current.offsetHeight;
-                    setNewTag(e.target.value);
-                    setActiveSuggestion(-1);
-                  }}
-                  onBlur={submitInlineTag}
-                  onKeyDown={e => {
-                    if (e.key === 'ArrowDown') {
-                      e.preventDefault();
-                      setActiveSuggestion(i => Math.min(i + 1, inlineTagSuggestions.length - 1));
-                    } else if (e.key === 'ArrowUp') {
-                      e.preventDefault();
-                      setActiveSuggestion(i => Math.max(i - 1, -1));
-                    } else if (e.key === 'Tab' && inlineTagSuggestions.length > 0) {
-                      e.preventDefault();
-                      setNewTag(inlineTagSuggestions[0].name);
-                      setActiveSuggestion(-1);
-                    } else if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (activeSuggestion >= 0 && inlineTagSuggestions[activeSuggestion]) {
-                        submitInlineTagWithName(inlineTagSuggestions[activeSuggestion].name);
-                      } else {
-                        submitInlineTag();
-                      }
-                    } else if (e.key === 'Escape') {
-                      setAddingTag(false);
-                      setNewTag('');
-                      setActiveSuggestion(-1);
-                    }
-                  }}
-                />
-              </div>
-            ) : (
-              <button type="button" className="editor-tag-add" onClick={() => setAddingTag(true)}>
-                + Add tag
-              </button>
-            )
-          )}
-        </div>
-      </div>
+      <NoteTagsRow note={note} disabled={isInTrash} onNoteUpdate={onNoteUpdate} />
     </>
   );
 
@@ -595,7 +305,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               className="relative flex h-11 items-center justify-between bg-(--panel-bg) border-b-[0.5px] border-(--line-soft) px-4.5"
             >
               {/* Left side */}
-              <div ref={leftGroupRef} className="relative flex items-center gap-1 magic-hover">
+              <div ref={leftGroupRef} className="relative flex items-center magic-hover">
                 {LeftIndicator}
                 {onToggleSidebar && (
                   <button
@@ -677,7 +387,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 </div>
               )}
 
-              <div ref={rightGroupRef} className="relative flex items-center gap-1 magic-hover">
+              <div ref={rightGroupRef} className="relative flex items-center magic-hover">
                 {RightIndicator}
                 {!isInTrash && (
                   <button
@@ -739,8 +449,9 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             </button>
           </div>
 
-          {/* CollaborationPlugin ist immer aktiv — jede Notiz hat einen Yjs-Room.
-              So joinen Owner und Kollaboratoren denselben Room ohne Verzögerung. */}
+          {/* CollaborationPlugin is always active — every note has a Yjs room,
+              so owner and collaborators join the same room without delay. */}
+          <div className="flex-1 min-w-0 min-h-0">
           {(() => {
             const isCollaborator = note.userId !== user?.id;
             const myEntry = collaborators.find(c => c.userId === user?.id);
@@ -767,67 +478,50 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 minimalChrome={focusWritingMode}
                 onManageTags={isInTrash ? undefined : () => setShowToolbarTagModal(true)}
                 onInfo={isInTrash ? undefined : () => setShowInfoModal(true)}
-                onVersionHistory={isInTrash ? undefined : () => setShowVersionHistory(true)}
+                onVersionHistory={isInTrash ? undefined : () => setShowVersionHistory(v => !v)}
+              />
+            }
+            sidePanel={
+              <VersionHistoryPanel
+                isOpen={showVersionHistory}
+                onClose={() => setShowVersionHistory(false)}
+                noteId={note.id}
+                userPlan={user?.plan ?? 'free'}
+                onRestore={async (noteId, versionId) => {
+                  const restored = await noteService.restoreNoteVersion(noteId, versionId);
+                  updateNoteInStore(restored);
+                  contentRef.current = restored.content;
+                  titleRef.current = restored.title ?? '';
+                  lastSavedTitleRef.current = restored.title ?? '';
+                  setContent(restored.content);
+                  setTitle(restored.title ?? '');
+                  setRestoreKey((k) => k + 1);
+                  toast.success('Version restored');
+                }}
               />
             }
           />
             );
           })()}
+          </div>
 
-      {/* Folder context menu — portal to document.body */}
-      {createPortal(
-        <>
-          {folderMenuPos && <div className="fixed inset-0" onClick={() => setFolderMenuPos(null)} />}
-          <AnimatePresence>
-            {folderMenuPos && (
-          <motion.div
-            key="folder-popup"
-            ref={folderMenuRef}
-            initial={{ opacity: 0, scale: 0.95, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -4 }}
-            transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
-            style={{ left: folderMenuPos.x, top: folderMenuPos.y, minWidth: '200px', transformOrigin: 'top left' }}
-          >
-            {FolderIndicator}
-            <button
-              onClick={() => handleMoveToFolder(null)}
-              onMouseEnter={onFolderEnter}
-              onMouseLeave={onFolderLeave}
-              className={clsx(
-                'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-1',
-                !note.folderId ? 'text-(--ink)' : ''
-              )}
-            >
-              <FolderOpen className="w-4 h-4 text-(--ink-mid) shrink-0" />
-              <span className="flex-1 text-left">No folder</span>
-              {!note.folderId && <Check className="w-3 h-3 text-(--accent) shrink-0" />}
-            </button>
-            {folders.map((folder) => (
-              <button
-                key={folder.id}
-                onClick={() => handleMoveToFolder(folder.id)}
-                onMouseEnter={onFolderEnter}
-                onMouseLeave={onFolderLeave}
-                className={clsx(
-                  'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-1',
-                  note.folderId === folder.id ? 'text-(--ink)' : ''
-                )}
-              >
-                <FolderOpen className="w-4 h-4 shrink-0" style={{ color: folder.color || '#10b981' }} />
-                <span className="flex-1 text-left">{folder.name}</span>
-                {note.folderId === folder.id && <Check className="w-3 h-3 text-(--accent) shrink-0" />}
-              </button>
-            ))}
-          </motion.div>
-            )}
-          </AnimatePresence>
-        </>,
-        getModalPortalRoot()
-      )}
+      <FolderMenu
+        pos={folderMenuPos}
+        currentFolderId={note.folderId}
+        onSelect={handleMoveToFolder}
+        onClose={() => setFolderMenuPos(null)}
+      />
 
-      {/* Tag context menu — portal to document.body */}
+      <NoteExportMenu
+        pos={exportMenuPos}
+        onClose={() => setExportMenuPos(null)}
+        onShareNote={() => setShowInviteModal(true)}
+        hasActiveCollaborators={collaborators.some(c => c.status === 'accepted')}
+        noteId={note.id}
+        title={title}
+        content={content}
+      />
+
       <TagSelectionModal
         isOpen={showToolbarTagModal}
         onClose={() => setShowToolbarTagModal(false)}
@@ -841,12 +535,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         noteId={note.id}
         isOwner={note.userId === user?.id}
         onCollaboratorsChange={async () => {
-          // Aktuelle Kollaboratoren neu laden und State aktualisieren
+          // Reload the collaborator list so the share indicator stays accurate
           const { collaborationService } = await import('../../services/collaboration.service');
           try {
             const list = await collaborationService.listCollaborators(note.id);
             setCollaborators(list);
-          } catch { /* ignorieren */ }
+          } catch { /* ignore */ }
         }}
       />
 
@@ -862,131 +556,8 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
           </p>
         </div>
       </Modal>
-
-      <VersionHistoryPanel
-        isOpen={showVersionHistory}
-        onClose={() => setShowVersionHistory(false)}
-        noteId={note.id}
-        userPlan={user?.plan ?? 'free'}
-        onRestore={async (noteId, versionId) => {
-          const restored = await noteService.restoreNoteVersion(noteId, versionId);
-          // Store lokal aktualisieren (kein extra API-Call)
-          updateNoteInStore(restored);
-          // Lokale Refs synchron updaten (save-on-unmount liest aus Refs)
-          contentRef.current = restored.content;
-          titleRef.current = restored.title ?? '';
-          lastSavedTitleRef.current = restored.title ?? '';
-          setContent(restored.content);
-          setTitle(restored.title ?? '');
-          // Lexical-Editor neu starten damit er den restored Content lädt
-          setRestoreKey((k) => k + 1);
-          toast.success('Version restored');
-        }}
-      />
-
-      {exportMenuPos && createPortal(
-        <>
-          <div className="fixed inset-0" onClick={() => setExportMenuPos(null)} />
-          <div
-            ref={exportMenuRef}
-            className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
-            style={{ left: exportMenuPos.x, top: exportMenuPos.y, minWidth: '220px' }}
-          >
-            <button
-              onClick={() => { setShowInviteModal(true); setExportMenuPos(null); }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)"
-            >
-              <Users className="w-4 h-4 shrink-0 text-(--accent)" />
-              <span className="flex-1 text-left">
-                Share note
-                {collaborators.some(c => c.status === 'accepted') && <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-(--accent) align-middle" />}
-              </span>
-            </button>
-            <div className="my-1 mx-2 border-t border-[color-mix(in_srgb,var(--line)_50%,transparent)]" />
-            {(() => {
-              const canMd   = canAccess(user?.plan, 'markdownExport');
-              const canHtml = canAccess(user?.plan, 'htmlExport');
-              const canPdf  = canAccess(user?.plan, 'pdfExport');
-              const canCopy = canAccess(user?.plan, 'copyMarkdown');
-              const badge = (feature: Parameters<typeof requiredPlan>[0]) => (
-                <span style={{ fontSize: '9px', fontFamily: 'var(--mono)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--accent)', opacity: 0.85, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '1px 4px', borderRadius: '3px', marginLeft: 'auto', boxShadow: '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)' }}>
-                  {requiredPlan(feature)}
-                </span>
-              );
-              return (
-                <>
-                  <button onClick={canMd ? handleExportMarkdown : undefined} disabled={!canMd} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canMd ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
-                    <Download className={`w-4 h-4 shrink-0${!canMd ? ' opacity-40' : ''}`} />
-                    <span className={`flex-1 text-left${!canMd ? ' opacity-40' : ''}`}>Export as Markdown</span>
-                    {!canMd && badge('markdownExport')}
-                  </button>
-                  <button onClick={canHtml ? handleExportHtml : undefined} disabled={!canHtml} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canHtml ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
-                    <Download className={`w-4 h-4 shrink-0${!canHtml ? ' opacity-40' : ''}`} />
-                    <span className={`flex-1 text-left${!canHtml ? ' opacity-40' : ''}`}>Export as HTML</span>
-                    {!canHtml && badge('htmlExport')}
-                  </button>
-                  <button onClick={canPdf ? handleExportPdf : undefined} disabled={!canPdf} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canPdf ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
-                    <Download className={`w-4 h-4 shrink-0${!canPdf ? ' opacity-40' : ''}`} />
-                    <span className={`flex-1 text-left${!canPdf ? ' opacity-40' : ''}`}>Export as PDF</span>
-                    {!canPdf && badge('pdfExport')}
-                  </button>
-                  <div className="my-1 mx-2 border-t border-[color-mix(in_srgb,var(--line)_50%,transparent)]" />
-                  <button onClick={canCopy ? handleCopyMarkdown : undefined} disabled={!canCopy} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canCopy ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
-                    <Copy className={`w-4 h-4 shrink-0${!canCopy ? ' opacity-40' : ''}`} />
-                    <span className={`flex-1 text-left${!canCopy ? ' opacity-40' : ''}`}>Copy Markdown</span>
-                    {!canCopy && badge('copyMarkdown')}
-                  </button>
-                </>
-              );
-            })()}
-            <button onClick={handleShare} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)">
-              <Share2 className="w-4 h-4 shrink-0" />
-              <span className="flex-1 text-left">Share</span>
-            </button>
-          </div>
-        </>,
-        getModalPortalRoot()
-      )}
-
-
-      {createPortal(
-        <AnimatePresence>
-          {inlineTagPopupPos && addingTag && inlineTagSuggestions.length > 0 && (
-            <motion.div
-              key="inline-tag-popup"
-              ref={inlineTagPopupRef}
-              initial={{ opacity: 0, scale: 0.95, y: -4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -4 }}
-              transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
-              style={{ left: inlineTagPopupPos.x, top: inlineTagPopupPos.y, minWidth: '180px', zIndex: 50, transformOrigin: 'top left' }}
-            >
-              {InlineTagIndicator}
-              {inlineTagSuggestions.map((tag, i) => (
-                <button
-                  key={tag.id}
-                  onMouseDown={e => e.preventDefault()}
-                  onClick={() => submitInlineTagWithName(tag.name)}
-                  onMouseEnter={onInlineTagEnter}
-                  onMouseLeave={onInlineTagLeave}
-                  className={clsx(
-                    'w-full flex items-center space-x-2 px-3 py-2 text-sm relative z-1',
-                    i === activeSuggestion ? 'text-(--ink)' : ''
-                  )}
-                >
-                  <TagIcon className="w-4 h-4 shrink-0" style={{ color: tag.color }} />
-                  <span className="flex-1 text-left">{tag.name}</span>
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        getModalPortalRoot()
-      )}
     </motion.div>
   );
 };
 
 export default NoteEditor;
-
