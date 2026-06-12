@@ -6,7 +6,9 @@
       "WebFetch(domain:reactbits.dev)",
       "Read(//c/Users/efrah/Downloads/Dendrite-Cursor/**)",
       "WebFetch(domain:theodorusclarence.com)",
-      "Read(//c/Users/efrah/Downloads/Dashboard_v2/**)"
+      "Read(//c/Users/efrah/Downloads/Dashboard_v2/**)",
+      "Read(//c/Users/efrah/.claude/projects/c--Users-efrah-OneDrive-git-repos-Dendrite/memory/**)",
+      "Read(//c/Users/efrah/OneDrive/claude-memory/projects/c--Users-Efrahim-OneDrive-git-repos-Dendrite/memory/**)"
     ],
     "additionalDirectories": [
       "C:\\Users\\efrah\\AppData\\Local\\Temp"

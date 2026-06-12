@@ -13,25 +13,17 @@ Was du nicht tun sollst:
 - toten Code rumliegen lassen
 - toten Code schreiben
 
-# Frontend / Design Engineering
+# Arbeitsstil
 
-Bei Frontend-Aufgaben (UI, Animationen, Komponenten, Design-Review, Bildgenerierung) liest du die relevanten Skill-Dateien aktiv ein und wendest deren Prinzipien an. Bei reinen Backend-Aufgaben lädst du sie nicht.
+Bei jeder Code-Aufgabe (Frontend wie Backend) liest du `.claude/skills/dendrite-style/SKILL.md` ein und wendest die Regeln an — Arbeitsablauf, Frontend-Regeln, Design-Geschmack und Debugging-Methode dieses Projekts.
 
-Verfügbare Skills und wann sie einzusetzen sind:
+# Code-Konventionen
 
-| Skill | Pfad | Wann einsetzen |
-|---|---|---|
-| `impeccable` | .claude/skills/impeccable/SKILL.md | Design-Review, Redesign, UI-Verbesserungen, Animationen, Audit |
-| `emil-design-eng` | .claude/skills/emil-design-eng/SKILL.md | Animationen, Komponenten-Polish, UI-Details |
-| `brandkit` | .claude/skills/brandkit/SKILL.md | Branding, visuelle Identität |
-| `design-taste-frontend` | .claude/skills/design-taste-frontend/SKILL.md | Allgemeines Frontend-Design, Taste-Entscheidungen |
-| `gpt-taste` | .claude/skills/gpt-taste/SKILL.md | Design-Qualität und Taste |
-| `high-end-visual-design` | .claude/skills/high-end-visual-design/SKILL.md | Hochwertiges visuelles Design |
-| `industrial-brutalist-ui` | .claude/skills/industrial-brutalist-ui/SKILL.md | Brutalistisches / industrielles UI-Design |
-| `minimalist-ui` | .claude/skills/minimalist-ui/SKILL.md | Minimalistisches UI-Design |
-| `stitch-design-taste` | .claude/skills/stitch-design-taste/SKILL.md | Design-Taste und Qualitätssinn |
-| `redesign-existing-projects` | .claude/skills/redesign-existing-projects/SKILL.md | Redesign bestehender Komponenten/Seiten |
-| `full-output-enforcement` | .claude/skills/full-output-enforcement/SKILL.md | Vollständige Code-Ausgabe sicherstellen |
-| `image-to-code` | .claude/skills/image-to-code/SKILL.md | UI aus Screenshots/Mockups implementieren |
-| `imagegen-frontend-mobile` | .claude/skills/imagegen-frontend-mobile/SKILL.md | Mobile Frontend-Bildgenerierung |
-| `imagegen-frontend-web` | .claude/skills/imagegen-frontend-web/SKILL.md | Web Frontend-Bildgenerierung |
+Gelten für jede neue und jede angefasste Datei (Frontend wie Backend):
+
+- **Kommentare auf Englisch.** Nur „Warum"-Kommentare (Begründungen, Constraints, nicht offensichtliche Effekte) — keine Kommentare, die beschreiben, was die nächste Zeile tut. UI-Texte sind davon ausgenommen.
+- **Abschnitts-Header** in längeren Dateien: `// ─── Section name ───…` (Stil wie in `backend/src/index.ts`).
+- **Datei-Aufbau in fester Reihenfolge:** Imports (extern, dann intern) → Typen/Interfaces → Konstanten → Hilfsfunktionen → Hauptkomponente/Handler.
+- **Max. ~400 Zeilen pro Datei** (ESLint warnt darüber). Beim Überschreiten nach Verantwortlichkeit aufteilen, nicht mechanisch.
+- **Kein `any`** — ESLint-Fehler. Backend: Prisma-generierte Typen. Frontend: konkrete Typen; für API-Fehler `getApiErrorMessage` aus `src/lib/apiError.ts`.
+- **Tooling:** `npm run lint` und `npm run format` existieren in `frontend/` und `backend/`. Lint muss vor jedem Commit fehlerfrei sein.
