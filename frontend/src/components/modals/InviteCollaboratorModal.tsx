@@ -6,6 +6,7 @@ import { Collaborator } from '../../types';
 import { collaborationService } from '../../services/collaboration.service';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToast } from '../ui/ToastContainer';
+import { getApiErrorMessage } from '../../lib/apiError';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
@@ -61,8 +62,8 @@ const InviteCollaboratorModal = ({ isOpen, onClose, noteId, onCollaboratorsChang
       setInput('');
       toast.success('Invitation sent');
       onCollaboratorsChange?.();
-    } catch (e: any) {
-      toast.error(e?.response?.data?.error || 'Failed to send invitation');
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, 'Failed to send invitation'));
     } finally {
       setInviting(false);
     }

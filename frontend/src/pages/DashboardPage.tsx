@@ -2,7 +2,6 @@
 import { useShallow } from 'zustand/react/shallow';
 import { BetaBadge } from '../components/ui/BetaBadge';
 import { motion, AnimatePresence } from 'motion/react';
-// @ts-ignore
 import SplitText from '../components/ui/GreetingAnimation';
 import { useNoteStore } from '../store/useNoteStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -22,6 +21,7 @@ import DarkModeToggle from '../components/sidebar/DarkModeToggle';
 import { Icons } from '../components/ui/Icons';
 import { LOGO_SRC } from '../config/brand';
 import { Note, ViewType } from '../types';
+import { getApiErrorMessage } from '../lib/apiError';
 
 type NoteFilters = {
   archived?: boolean;
@@ -29,6 +29,7 @@ type NoteFilters = {
   favorite?: boolean;
   folderId?: string;
   tagId?: string;
+  shared?: boolean;
 };
 
 // Eindeutiger Schlüssel einer Ansicht — identisch zu listSortContextKey aufgebaut
@@ -58,7 +59,7 @@ function buildFilters(view: ViewType, folderId?: string, tagId?: string): NoteFi
     case 'trash':     return { deleted: true };
     case 'folder':    return { folderId, archived: false, deleted: false };
     case 'tag':       return { tagId, archived: false, deleted: false };
-    case 'shared':    return { shared: true } as any;
+    case 'shared':    return { shared: true };
   }
 }
 
@@ -254,9 +255,9 @@ const DashboardPage = () => {
         toast.success('Note created');
         setRefreshTrigger(prev => prev + 1);
       }, 400);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating note:', error);
-      toast.error(error.response?.data?.error || 'Could not create note');
+      toast.error(getApiErrorMessage(error, 'Could not create note'));
     } finally {
       setIsCreating(false);
     }
@@ -269,8 +270,8 @@ const DashboardPage = () => {
       await Promise.all(trashedNotes.map(n => deleteNote(n.id)));
       await fetchNotes({ deleted: true });
       toast.success('Trash emptied');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || 'Could not empty trash');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Could not empty trash'));
     } finally {
       setShowEmptyTrashModal(false);
       setRefreshTrigger(prev => prev + 1);

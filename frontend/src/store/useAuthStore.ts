@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User } from '../types';
 import { authService } from '../services/auth.service';
+import { getApiErrorMessage } from '../lib/apiError';
 
 interface AuthState {
   user: User | null;
@@ -38,14 +39,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await authService.login(email, password);
-      if ((data as any).requiresTwoFactor) {
-        set({ requiresTwoFactor: true, tempToken: (data as any).tempToken, isLoading: false });
+      if ('requiresTwoFactor' in data) {
+        set({ requiresTwoFactor: true, tempToken: data.tempToken, isLoading: false });
         return;
       }
       authService.setToken(data.token);
       set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false });
-    } catch (error: any) {
-      set({ error: error.response?.data?.error || 'Login failed', isLoading: false });
+    } catch (error) {
+      set({ error: getApiErrorMessage(error, 'Login failed'), isLoading: false });
       throw error;
     }
   },
@@ -77,8 +78,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         requiresTwoFactor: false,
         tempToken: null,
       });
-    } catch (error: any) {
-      set({ error: error.response?.data?.error || 'Invalid code', isLoading: false });
+    } catch (error) {
+      set({ error: getApiErrorMessage(error, 'Invalid code'), isLoading: false });
       throw error;
     }
   },
@@ -88,8 +89,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       await authService.register(email, password, name);
       set({ isLoading: false });
-    } catch (error: any) {
-      set({ error: error.response?.data?.error || 'Registration failed', isLoading: false });
+    } catch (error) {
+      set({ error: getApiErrorMessage(error, 'Registration failed'), isLoading: false });
       throw error;
     }
   },

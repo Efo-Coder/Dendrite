@@ -7,6 +7,7 @@ import { canAccess } from '../../lib/planFeatures';
 import { Folder } from '../../types';
 import ColorPickerInline from '../editor/ColorPickerInline';
 import IconPickerDropdown from '../ui/IconPickerDropdown';
+import { getApiErrorMessage } from '../../lib/apiError';
 
 interface EditFolderModalProps {
   isOpen: boolean;
@@ -57,8 +58,8 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
       await updateFolder(folder.id, { name: name.trim(), color: selectedColor, icon: selectedIcon ?? undefined });
       onFolderUpdated?.();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Error updating folder');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Error updating folder'));
     } finally {
       setIsSubmitting(false);
     }

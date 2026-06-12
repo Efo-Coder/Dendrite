@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Note, NoteCounts } from '../types';
 import { noteService } from '../services/note.service';
+import { getApiErrorMessage } from '../lib/apiError';
 
 interface NoteState {
   notes: Note[];
@@ -19,6 +20,7 @@ interface NoteState {
     favorite?: boolean;
     archived?: boolean;
     deleted?: boolean;
+    shared?: boolean;
   }) => Promise<void>;
   fetchNoteById: (id: string) => Promise<void>;
   createNote: (data: {
@@ -69,9 +71,9 @@ export const useNoteStore = create<NoteState>((set) => ({
     try {
       const notes = await noteService.getAllNotes(filters);
       set({ notes, isLoading: false });
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Laden der Notizen',
+        error: getApiErrorMessage(error, 'Fehler beim Laden der Notizen'),
         isLoading: false,
       });
     }
@@ -82,9 +84,9 @@ export const useNoteStore = create<NoteState>((set) => ({
     try {
       const note = await noteService.getNoteById(id);
       set({ currentNote: note, isLoading: false });
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Notiz nicht gefunden',
+        error: getApiErrorMessage(error, 'Notiz nicht gefunden'),
         isLoading: false,
       });
     }
@@ -99,17 +101,17 @@ export const useNoteStore = create<NoteState>((set) => ({
         folderId: data.folderId,
         tags: data.tags,
       });
-      // currentNote wird bewusst NICHT hier gesetzt — die DashboardPage öffnet den Editor
-      // erst nach der Listen-Animation (Editor-Mount blockiert sonst den Main-Thread)
+      // Deliberately NOT setting currentNote here — the DashboardPage opens the
+      // editor only after the list animation (editor mount blocks the main thread)
       set((state) => ({
         notes: [note, ...state.notes],
         justCreatedNoteIds: [note.id, ...state.justCreatedNoteIds],
         isLoading: false,
       }));
       return note;
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Erstellen der Notiz',
+        error: getApiErrorMessage(error, 'Fehler beim Erstellen der Notiz'),
         isLoading: false,
       });
       throw error;
@@ -141,9 +143,9 @@ export const useNoteStore = create<NoteState>((set) => ({
         currentNote: state.currentNote?.id === id ? updatedNote : state.currentNote,
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Aktualisieren der Notiz',
+        error: getApiErrorMessage(error, 'Fehler beim Aktualisieren der Notiz'),
         isLoading: false,
       });
       throw error;
@@ -159,9 +161,9 @@ export const useNoteStore = create<NoteState>((set) => ({
         currentNote: state.currentNote?.id === id ? null : state.currentNote,
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Löschen der Notiz',
+        error: getApiErrorMessage(error, 'Fehler beim Löschen der Notiz'),
         isLoading: false,
       });
       throw error;
@@ -173,9 +175,9 @@ export const useNoteStore = create<NoteState>((set) => ({
     try {
       const notes = await noteService.searchNotes(query);
       set({ notes, isLoading: false });
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler bei der Suche',
+        error: getApiErrorMessage(error, 'Fehler bei der Suche'),
         isLoading: false,
       });
     }
@@ -188,9 +190,9 @@ export const useNoteStore = create<NoteState>((set) => ({
         notes: state.notes.map((note) => (note.id === id ? updatedNote : note)),
         currentNote: state.currentNote?.id === id ? updatedNote : state.currentNote,
       }));
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Pinnen der Notiz',
+        error: getApiErrorMessage(error, 'Fehler beim Pinnen der Notiz'),
       });
     }
   },
@@ -202,9 +204,9 @@ export const useNoteStore = create<NoteState>((set) => ({
         notes: state.notes.map((note) => (note.id === id ? updatedNote : note)),
         currentNote: state.currentNote?.id === id ? updatedNote : state.currentNote,
       }));
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Favorisieren der Notiz',
+        error: getApiErrorMessage(error, 'Fehler beim Favorisieren der Notiz'),
       });
     }
   },
@@ -215,9 +217,9 @@ export const useNoteStore = create<NoteState>((set) => ({
       set((state) => ({
         notes: state.notes.map((note) => (note.id === id ? updatedNote : note)),
       }));
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Archivieren der Notiz',
+        error: getApiErrorMessage(error, 'Fehler beim Archivieren der Notiz'),
       });
     }
   },
@@ -228,9 +230,9 @@ export const useNoteStore = create<NoteState>((set) => ({
       set((state) => ({
         notes: state.notes.map((note) => (note.id === id ? updatedNote : note)),
       }));
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Verschieben in den Papierkorb',
+        error: getApiErrorMessage(error, 'Fehler beim Verschieben in den Papierkorb'),
       });
     }
   },

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot } from 'lexical';
+import { $getRoot, $isElementNode } from 'lexical';
 import type { LexicalNode, NodeKey } from 'lexical';
 import { $isTimerListItemNode, RING_CIRCUMFERENCE } from './TimerListItemNode';
 import { useCheckResetStore } from '../../store/useCheckResetStore';
@@ -36,8 +36,8 @@ export function TimerCheckboxPlugin() {
               resetId: node.getResetId(),
             });
           }
-          if ('getChildren' in node)
-            for (const child of (node as any).getChildren() as LexicalNode[]) walk(child);
+          if ($isElementNode(node))
+            for (const child of node.getChildren()) walk(child);
         }
         walk($getRoot());
       });
@@ -45,8 +45,8 @@ export function TimerCheckboxPlugin() {
       prevEditorState.read(() => {
         function walk(node: LexicalNode) {
           if ($isTimerListItemNode(node)) prevChecked.set(node.getKey(), node.getChecked());
-          if ('getChildren' in node)
-            for (const child of (node as any).getChildren() as LexicalNode[]) walk(child);
+          if ($isElementNode(node))
+            for (const child of node.getChildren()) walk(child);
         }
         walk($getRoot());
       });
@@ -151,8 +151,8 @@ export function TimerCheckboxPlugin() {
               function walk(node: LexicalNode): void {
                 if ($isTimerListItemNode(node) && node.getResetId() === resetId && node.getChecked())
                   node.setChecked(false);
-                if ('getChildren' in node)
-                  for (const child of (node as any).getChildren() as LexicalNode[]) walk(child);
+                if ($isElementNode(node))
+                  for (const child of node.getChildren()) walk(child);
               }
               walk($getRoot());
             });

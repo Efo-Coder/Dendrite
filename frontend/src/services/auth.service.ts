@@ -1,5 +1,5 @@
 import api from './api';
-import { AuthResponse, User } from '../types';
+import { AuthResponse, LoginResponse, User } from '../types';
 
 export const authService = {
   async register(email: string, password: string, name?: string): Promise<AuthResponse> {
@@ -11,8 +11,8 @@ export const authService = {
     return response.data;
   },
 
-  async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/login', {
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const response = await api.post<LoginResponse>('/auth/login', {
       email,
       password,
     });
@@ -50,8 +50,8 @@ export const authService = {
     await api.post('/auth/2fa/disable', { password });
   },
 
-  async verify2FA(tempToken: string, code: string): Promise<{ user: any; token: string }> {
-    const response = await api.post<{ user: any; token: string }>('/auth/2fa/verify', { tempToken, code });
+  async verify2FA(tempToken: string, code: string): Promise<{ user: User; token: string }> {
+    const response = await api.post<{ user: User; token: string }>('/auth/2fa/verify', { tempToken, code });
     return response.data;
   },
 

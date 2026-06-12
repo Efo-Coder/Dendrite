@@ -38,7 +38,7 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
   const openEyeDropper = async () => {
     if (!('EyeDropper' in window)) return;
     try {
-      const eyeDropper = new (window as any).EyeDropper();
+      const eyeDropper = new (window as unknown as { EyeDropper: new () => { open(): Promise<{ sRGBHex: string }> } }).EyeDropper();
       const { sRGBHex } = await eyeDropper.open();
       onChange(sRGBHex);
     } catch {

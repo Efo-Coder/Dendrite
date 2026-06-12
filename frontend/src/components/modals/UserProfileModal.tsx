@@ -4,6 +4,7 @@ import { MagicInput } from '../ui/MagicInput';
 import ConfirmAccountDeletionModal from './ConfirmAccountDeletionModal';
 import { useAuthStore } from '../../store/useAuthStore';
 import { LogOut, KeyRound, Pencil, Trash2, Eye, EyeOff, Camera, X, Loader2 } from 'lucide-react';
+import { getApiErrorMessage } from '../../lib/apiError';
 
 const PROVIDER_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   google: {
@@ -88,8 +89,8 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
         new Promise(r => setTimeout(r, 900)),
       ]);
       toast.success('Name updated successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Could not update name');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not update name'));
     } finally {
       setNameLoading(false);
     }
@@ -111,8 +112,8 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Could not change password');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not change password'));
     } finally {
       setPasswordLoading(false);
     }
@@ -154,8 +155,8 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     setDeleteLoading(true);
     try {
       await deleteAccount();
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Could not delete account');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not delete account'));
       setDeleteLoading(false);
       setShowDeleteModal(false);
     }

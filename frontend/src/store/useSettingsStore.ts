@@ -60,13 +60,13 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'dendrite-settings',
       version: 5,
-      migrate: (_: any, version: number) => {
+      migrate: (persisted: unknown, version: number) => {
         if (version < 2) {
           return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: 'cormorant', fontSize: 19, dropCap: true, activeLine: true, density: 'regular', autoSave: true, cursorStyle: 'classic' };
         }
         // Migrations apply cumulatively — no early returns, otherwise an old
         // stored version skips every later step.
-        const s = { ..._ };
+        const s = { ...(persisted as Partial<SettingsState>) };
         if (version < 3) s.cursorStyle = 'classic';
         if (version < 4) s.cursorStyle = s.cursorStyle === 'classic' ? 'modern' : 'classic';
         if (version < 5) s.activeLine = true;

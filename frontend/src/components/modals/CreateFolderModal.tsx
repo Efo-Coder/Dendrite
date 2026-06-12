@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { canAccess } from '../../lib/planFeatures';
 import ColorPickerInline from '../editor/ColorPickerInline';
 import IconPickerDropdown from '../ui/IconPickerDropdown';
+import { getApiErrorMessage } from '../../lib/apiError';
 
 interface CreateFolderModalProps {
   isOpen: boolean;
@@ -45,8 +46,8 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
       setSelectedIcon(null);
       onFolderCreated?.();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Error creating folder');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Error creating folder'));
     } finally {
       setIsSubmitting(false);
     }

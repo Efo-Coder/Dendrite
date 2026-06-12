@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Folder } from '../types';
 import { folderService } from '../services/folder.service';
+import { getApiErrorMessage } from '../lib/apiError';
 
 interface FolderState {
   folders: Folder[];
@@ -38,9 +39,9 @@ export const useFolderStore = create<FolderState>((set) => ({
     try {
       const folders = await folderService.getAllFolders();
       set({ folders, isLoading: false });
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Laden der Ordner',
+        error: getApiErrorMessage(error, 'Fehler beim Laden der Ordner'),
         isLoading: false,
       });
     }
@@ -55,9 +56,9 @@ export const useFolderStore = create<FolderState>((set) => ({
         isLoading: false,
       }));
       return folder;
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Erstellen des Ordners',
+        error: getApiErrorMessage(error, 'Fehler beim Erstellen des Ordners'),
         isLoading: false,
       });
       throw error;
@@ -74,9 +75,9 @@ export const useFolderStore = create<FolderState>((set) => ({
         ),
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Aktualisieren des Ordners',
+        error: getApiErrorMessage(error, 'Fehler beim Aktualisieren des Ordners'),
         isLoading: false,
       });
       throw error;
@@ -91,9 +92,9 @@ export const useFolderStore = create<FolderState>((set) => ({
         folders: state.folders.filter((folder) => folder.id !== id),
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Löschen des Ordners',
+        error: getApiErrorMessage(error, 'Fehler beim Löschen des Ordners'),
         isLoading: false,
       });
       throw error;

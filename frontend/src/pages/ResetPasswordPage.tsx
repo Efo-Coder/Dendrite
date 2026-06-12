@@ -8,6 +8,7 @@ import NightTransitionBackground from '../components/auth/NightTransitionBackgro
 import { Eye, EyeOff, Moon, Sun, Home, CheckCircle, Loader2 } from 'lucide-react';
 import { authService } from '../services/auth.service';
 import { MagicInput } from '../components/ui/MagicInput';
+import { getApiErrorMessage } from '../lib/apiError';
 
 function getPasswordStrength(password: string): { level: 0 | 1 | 2 | 3; label: string; color: string } {
   if (!password) return { level: 0, label: '', color: 'transparent' };
@@ -71,9 +72,9 @@ const ResetPasswordPage = () => {
       await minDelay;
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2500);
-    } catch (err: any) {
+    } catch (err) {
       await minDelay;
-      setError(err?.response?.data?.error || 'Invalid or expired reset link');
+      setError(getApiErrorMessage(err, 'Invalid or expired reset link'));
     } finally {
       setIsLoading(false);
     }

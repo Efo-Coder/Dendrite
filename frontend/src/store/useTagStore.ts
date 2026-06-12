@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Tag } from '../types';
 import { tagService } from '../services/tag.service';
+import { getApiErrorMessage } from '../lib/apiError';
 
 interface TagState {
   tags: Tag[];
@@ -25,9 +26,9 @@ export const useTagStore = create<TagState>((set) => ({
     try {
       const tags = await tagService.getAllTags();
       set({ tags, isLoading: false });
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Laden der Tags',
+        error: getApiErrorMessage(error, 'Fehler beim Laden der Tags'),
         isLoading: false,
       });
     }
@@ -42,9 +43,9 @@ export const useTagStore = create<TagState>((set) => ({
         isLoading: false,
       }));
       return tag;
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Erstellen des Tags',
+        error: getApiErrorMessage(error, 'Fehler beim Erstellen des Tags'),
         isLoading: false,
       });
       throw error;
@@ -59,9 +60,9 @@ export const useTagStore = create<TagState>((set) => ({
         tags: state.tags.map((tag) => (tag.id === id ? updatedTag : tag)),
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Aktualisieren des Tags',
+        error: getApiErrorMessage(error, 'Fehler beim Aktualisieren des Tags'),
         isLoading: false,
       });
       throw error;
@@ -76,9 +77,9 @@ export const useTagStore = create<TagState>((set) => ({
         tags: state.tags.filter((tag) => tag.id !== id),
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error) {
       set({
-        error: error.response?.data?.error || 'Fehler beim Löschen des Tags',
+        error: getApiErrorMessage(error, 'Fehler beim Löschen des Tags'),
         isLoading: false,
       });
       throw error;

@@ -44,8 +44,14 @@ declare module '@react-three/fiber' {
   }
 }
 
+type NightTransitionMaterialImpl = THREE.ShaderMaterial & {
+  uProgress: number;
+  uRepeat: THREE.Vector2;
+  uOffset: THREE.Vector2;
+};
+
 function BackgroundMesh({ isDark, onReady }: { isDark: boolean; onReady?: () => void }) {
-  const matRef = useRef<any>(null);
+  const matRef = useRef<NightTransitionMaterialImpl | null>(null);
   const { viewport, size } = useThree();
   const [dayTex, nightTex] = useTexture([
     '/img/backgrounds/forest.webp',
@@ -81,7 +87,7 @@ function BackgroundMesh({ isDark, onReady }: { isDark: boolean; onReady?: () => 
     }
 
     const target = isDark ? 1 : 0;
-    const cur = matRef.current.uProgress as number;
+    const cur = matRef.current.uProgress;
     const next = THREE.MathUtils.lerp(cur, target, 0.04);
     matRef.current.uProgress = Math.abs(next - target) < 0.001 ? target : next;
   });

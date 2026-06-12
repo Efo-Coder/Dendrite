@@ -5,6 +5,7 @@ import { useTagStore } from '../../store/useTagStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { canAccess } from '../../lib/planFeatures';
 import ColorPickerInline from '../editor/ColorPickerInline';
+import { getApiErrorMessage } from '../../lib/apiError';
 
 interface CreateTagModalProps {
   isOpen: boolean;
@@ -46,8 +47,8 @@ const CreateTagModal = ({ isOpen, onClose, onTagCreated }: CreateTagModalProps) 
       setSelectedColor('#10b981');
       onTagCreated?.();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Error creating tag');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Error creating tag'));
     } finally {
       setIsSubmitting(false);
     }

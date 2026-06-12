@@ -111,6 +111,9 @@ export interface AuthResponse {
   message: string;
 }
 
+// Login returns either a full session or a 2FA challenge
+export type LoginResponse = AuthResponse | { requiresTwoFactor: true; tempToken: string };
+
 export interface ApiError {
   error: string;
   message?: string;

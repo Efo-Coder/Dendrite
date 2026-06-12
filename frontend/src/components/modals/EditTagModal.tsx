@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { canAccess } from '../../lib/planFeatures';
 import { Tag } from '../../types';
 import ColorPickerInline from '../editor/ColorPickerInline';
+import { getApiErrorMessage } from '../../lib/apiError';
 
 interface EditTagModalProps {
   isOpen: boolean;
@@ -54,8 +55,8 @@ const EditTagModal = ({ isOpen, onClose, onTagUpdated, tag }: EditTagModalProps)
       await updateTag(tag.id, { name: name.trim(), color: selectedColor });
       onTagUpdated?.();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Error updating tag');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Error updating tag'));
     } finally {
       setIsSubmitting(false);
     }

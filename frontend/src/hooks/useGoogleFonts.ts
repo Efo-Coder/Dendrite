@@ -39,10 +39,10 @@ async function fetchFonts(): Promise<GoogleFont[]> {
         const isTextFont = (f: { family: string; category: string }) =>
           !/(icons|symbols|emoji)/i.test(f.family) && f.category !== 'display';
 
-        const top100: GoogleFont[] = ((data.items as any[]) || [])
+        const top100: GoogleFont[] = ((data.items as { family: string; category: string }[] | undefined) || [])
           .filter(isTextFont)
           .slice(0, 100)
-          .map((f) => ({ family: f.family as string, category: f.category as string }));
+          .map((f) => ({ family: f.family, category: f.category }));
         const pinnedFamilies = new Set(PINNED_FONTS.map((f) => f.family));
         fontCache = [
           ...PINNED_FONTS,
