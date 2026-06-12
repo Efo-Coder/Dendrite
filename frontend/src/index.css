@@ -766,7 +766,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   display: flex; align-items: center; justify-content: center; gap: 10px;
   background: linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep));
   color: oklch(0.15 0.020 60);
-  border: 0; border-radius: 0;
+  border: 0; border-radius: 9px;
   font-family: var(--serif-display); font-weight: 600; font-size: 14px; letter-spacing: 0.02em;
   cursor: default;
   box-shadow:
@@ -782,7 +782,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   margin: 0 18px; padding: 6px 12px;
   display: flex; align-items: center; justify-content: center; gap: 10px;
   background: linear-gradient(180deg, #e57373, #c0392b); color: #fff;
-  border: 0; border-radius: 0;
+  border: 0; border-radius: 9px;
   font-family: var(--serif-display); font-weight: 600; font-size: 14px; letter-spacing: 0.02em;
   cursor: pointer;
   box-shadow:
