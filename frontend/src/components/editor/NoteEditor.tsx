@@ -584,15 +584,15 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     >
       <motion.div
         className={clsx(
-          'relative z-1 transition-[max-height,opacity] duration-500 ease-out pt-4.5',
-          focusWritingMode ? 'max-h-0 overflow-hidden opacity-0 pointer-events-none' : 'max-h-15.5 overflow-visible opacity-100'
+          'relative z-1 transition-[max-height,opacity] duration-500 ease-out',
+          focusWritingMode ? 'max-h-0 overflow-hidden opacity-0 pointer-events-none' : 'max-h-11 overflow-visible opacity-100'
         )}
         initial={{ y: 6 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.18, ease: 'easeOut' }}
       >
             <div
-              className="relative flex h-11 items-center justify-between bg-transparent px-6 sm:px-12 pb-5"
+              className="relative flex h-11 items-center justify-between bg-(--panel-bg) border-b-[0.5px] border-(--line-soft) px-4.5"
             >
               {/* Left side */}
               <div ref={leftGroupRef} className="relative flex items-center gap-1 magic-hover">
@@ -605,7 +605,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                     className={clsx('icon-btn-md rounded-lg transition-colors', sidebarCollapsed && 'text-(--accent)')}
                     title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
                   >
-                    <PanelLeft className="w-4 h-4" />
+                    <PanelLeft className="w-3.5 h-3.5" />
                   </button>
                 )}
                 {!isInTrash && !isArchived && (
@@ -619,7 +619,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                       )}
                       title="Pin note"
                     >
-                      {note.isPinned ? <span className="editor-pin-filled" /> : <Pin className="w-4 h-4" />}
+                      {note.isPinned ? <span className="editor-pin-filled" /> : <Pin className="w-3.5 h-3.5" />}
                     </button>
                     <button
                       onClick={async () => { await toggleFavorite(note.id); toast.info(note.isFavorite ? 'Removed from favorites' : 'Added to favorites'); }}
@@ -628,7 +628,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                       style={note.isFavorite ? { color: 'var(--accent)' } : undefined}
                       title="Add to favorites"
                     >
-                      {note.isFavorite ? <Icons.starFill size={16} /> : <Icons.star size={16} />}
+                      {note.isFavorite ? <Icons.starFill size={14} /> : <Icons.star size={14} />}
                     </button>
                     <button
                       onClick={handleArchive}
@@ -636,7 +636,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                       className="icon-btn-md rounded-lg transition-colors"
                       title="Archive"
                     >
-                      <Archive className="w-4 h-4" />
+                      <Archive className="w-3.5 h-3.5" />
                     </button>
 
                   </>
@@ -644,12 +644,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
                 {isArchived && (
                   <button onClick={handleRestore} onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave} className="icon-btn-md rounded-lg transition-colors" title="Restore from archive">
-                    <ArchiveRestore className="w-4 h-4" />
+                    <ArchiveRestore className="w-3.5 h-3.5" />
                   </button>
                 )}
                 {isInTrash && (
                   <button onClick={handleRestore} onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave} className="icon-btn-md rounded-lg transition-colors" title="Restore">
-                    <RotateCcw className="w-4 h-4" />
+                    <RotateCcw className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
@@ -689,7 +689,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                     )}
                     title="Export / Share"
                   >
-                    <Share2 className="w-4 h-4" />
+                    <Share2 className="w-3.5 h-3.5" />
                   </button>
                 )}
                 <button
@@ -698,10 +698,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                   className="icon-btn-md rounded-lg hover:text-red-500"
                   title={isInTrash ? 'Delete permanently' : 'Move to trash'}
                 >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                <button onClick={handleClose} onMouseEnter={onRightEnter} onMouseLeave={onRightLeave} className="icon-btn-md rounded-lg transition-colors" title="Close note">
-                  <X className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
                 {!isInTrash && (
                   <button
@@ -711,9 +708,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                     className="icon-btn-md rounded-lg transition-colors"
                     title="Focus mode"
                   >
-                    <Maximize2 className="w-4 h-4" />
+                    <Maximize2 className="w-3.5 h-3.5" />
                   </button>
                 )}
+                <button onClick={handleClose} onMouseEnter={onRightEnter} onMouseLeave={onRightLeave} className="icon-btn-md rounded-lg transition-colors" title="Close note">
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
 

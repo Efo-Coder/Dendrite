@@ -38,6 +38,7 @@
 :root {
   --bg:           oklch(0.16 0.008 60);
   --bg-deep:      oklch(0.11 0.008 60);
+  --panel-bg:     color-mix(in oklch, var(--bg) 96%, black 2%);
   --surface:      oklch(0.21 0.010 60);
   --surface-hi:   oklch(0.26 0.012 60);
   --line:         oklch(0.30 0.008 60 / 0.5);
@@ -599,7 +600,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 
 .win .notelist-panel {
   width: var(--list-w); flex-shrink: 0;
-  background: color-mix(in oklch, var(--bg) 96%, black 2%);
+  background: var(--panel-bg);
   border-right: 0.5px solid var(--line);
   display: flex; flex-direction: column;
   overflow: hidden; min-height: 0;
@@ -731,7 +732,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 }
 .win .note-card.active .note-card-title { color: var(--accent-hi); }
 .win .note-card-pin     { display: inline-block; width: 11px; height: 11px; background-color: var(--accent); -webkit-mask-image: url('/icons/pin-filled.svg'); mask-image: url('/icons/pin-filled.svg'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; opacity: 0.9; flex-shrink: 0; }
-.win .editor-pin-filled { display: inline-block; width: 16px; height: 16px; background-color: var(--accent); -webkit-mask-image: url('/icons/pin-filled.svg'); mask-image: url('/icons/pin-filled.svg'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; flex-shrink: 0; }
+.win .editor-pin-filled { display: inline-block; width: 14px; height: 14px; background-color: var(--accent); -webkit-mask-image: url('/icons/pin-filled.svg'); mask-image: url('/icons/pin-filled.svg'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; flex-shrink: 0; }
 .win .note-card-preview {
   font-family: var(--serif-body); font-size: 13.5px;
   color: var(--ink-low); line-height: 1.45;
