@@ -3,7 +3,6 @@ import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 import { WebSocketServer, WebSocket } from 'ws';
@@ -22,6 +21,7 @@ import feedbackRoutes from './routes/feedback.routes';
 import { handleWebhook } from './controllers/checkout.controller';
 
 import { setupYjsConnection } from './wsHandler';
+import { prisma } from './lib/prisma';
 
 dotenv.config();
 
@@ -32,8 +32,6 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-export const prisma = new PrismaClient();
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
@@ -151,7 +149,7 @@ async function deleteExpiredUnverifiedAccounts() {
   }
 }
 
-setInterval(deleteExpiredUnverifiedAccounts, 60 * 60 * 1000); // stündlich
+setInterval(deleteExpiredUnverifiedAccounts, 60 * 60 * 1000); // hourly
 
 // ─── Startup ─────────────────────────────────────────────────────────────────
 
@@ -161,6 +159,6 @@ process.on('SIGTERM', async () => {
 });
 
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Dendrite Backend läuft auf http://localhost:${PORT}`);
+  console.log(`🚀 Dendrite backend running at http://localhost:${PORT}`);
   console.log(`📊 Health Check: http://localhost:${PORT}/health`);
 });

@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
@@ -110,7 +110,7 @@ export const getInvitations = async (req: AuthRequest, res: Response) => {
 
     const result = invitations.map(inv => ({
       ...inv,
-      noteOwner: (inv.note as any).user ?? null,
+      noteOwner: inv.note.user ?? null,
       note: { id: inv.note.id, title: inv.note.title, content: inv.note.content },
     }));
 

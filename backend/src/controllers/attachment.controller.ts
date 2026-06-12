@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import fs from 'fs';
 import path from 'path';
 import { AuthRequest } from '../middleware/auth.middleware';

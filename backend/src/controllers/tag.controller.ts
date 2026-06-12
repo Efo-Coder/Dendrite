@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 export const getAllTags = async (req: AuthRequest, res: Response) => {

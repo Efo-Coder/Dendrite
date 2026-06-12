@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import nodemailer from 'nodemailer';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 export const submitRating = async (req: AuthRequest, res: Response) => {

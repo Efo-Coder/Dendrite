@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
+import { AuthRequest } from '../middleware/auth.middleware';
 
 function getStripe(): Stripe {
   if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is not configured');
@@ -17,8 +18,8 @@ const PLAN_NAMES: Record<string, string> = {
   author: 'author',
 };
 
-export async function createCheckoutSession(req: Request, res: Response) {
-  const userId = (req as any).userId as string;
+export async function createCheckoutSession(req: AuthRequest, res: Response) {
+  const userId = req.userId!;
   const { plan } = req.body as { plan: string };
 
   if (!plan || !PRICE_IDS[plan]) {

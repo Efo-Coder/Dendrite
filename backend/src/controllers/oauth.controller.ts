@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
+
+type OAuthTokenResponse = { access_token?: string };
 
 const getJwtSecret = () => process.env.JWT_SECRET!;
 const getJwtExpiresIn = () => process.env.JWT_EXPIRES_IN || '7d';
@@ -20,7 +22,7 @@ function buildState(provider: string): string {
 function verifyState(state: string | undefined, expectedProvider: string): boolean {
   if (!state) return false;
   try {
-    const payload = jwt.verify(state, getJwtSecret()) as any;
+    const payload = jwt.verify(state, getJwtSecret()) as { provider?: string };
     return payload.provider === expectedProvider;
   } catch {
     return false;
@@ -39,7 +41,7 @@ async function findOrCreateOAuthUser(data: {
   });
   if (existing) return existing;
 
-  // Email bereits vorhanden → Provider verknüpfen
+  // Same email already registered → link the OAuth provider to that account
   const byEmail = await prisma.user.findUnique({ where: { email: data.email } });
   if (byEmail) {
     return prisma.user.update({
@@ -101,13 +103,18 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
         grant_type: 'authorization_code',
       }),
     });
-    const tokenData = await tokenRes.json() as any;
+    const tokenData = (await tokenRes.json()) as OAuthTokenResponse;
     if (!tokenData.access_token) return redirectWithError(res, 'Google login failed');
 
     const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
-    const profile = await userRes.json() as any;
+    const profile = (await userRes.json()) as {
+      id: string;
+      email?: string;
+      name?: string;
+      picture?: string;
+    };
     if (!profile.email) return redirectWithError(res, 'Could not retrieve email from Google');
 
     const user = await findOrCreateOAuthUser({
@@ -118,7 +125,7 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
       avatarUrl: profile.picture,
     });
 
-    const token = jwt.sign({ userId: user.id }, getJwtSecret(), { expiresIn: getJwtExpiresIn() as any });
+    const token = jwt.sign({ userId: user.id }, getJwtSecret(), { expiresIn: getJwtExpiresIn() as SignOptions['expiresIn'] });
     return res.redirect(`${getFrontendUrl()}/oauth/callback?token=${token}`);
   } catch (err) {
     console.error('Google OAuth error:', err);
@@ -155,21 +162,31 @@ export const handleGithubCallback = async (req: Request, res: Response) => {
         redirect_uri: callbackUrl('github'),
       }),
     });
-    const tokenData = await tokenRes.json() as any;
+    const tokenData = (await tokenRes.json()) as OAuthTokenResponse;
     if (!tokenData.access_token) return redirectWithError(res, 'GitHub login failed');
 
     const userRes = await fetch('https://api.github.com/user', {
       headers: { Authorization: `Bearer ${tokenData.access_token}`, 'User-Agent': 'Dendrite' },
     });
-    const profile = await userRes.json() as any;
+    const profile = (await userRes.json()) as {
+      id: number;
+      email: string | null;
+      name: string | null;
+      login: string;
+      avatar_url?: string;
+    };
 
     let email: string | null = profile.email;
     if (!email) {
       const emailsRes = await fetch('https://api.github.com/user/emails', {
         headers: { Authorization: `Bearer ${tokenData.access_token}`, 'User-Agent': 'Dendrite' },
       });
-      const emails = await emailsRes.json() as any[];
-      const primary = emails.find((e: any) => e.primary && e.verified);
+      const emails = (await emailsRes.json()) as Array<{
+        email: string;
+        primary: boolean;
+        verified: boolean;
+      }>;
+      const primary = emails.find(e => e.primary && e.verified);
       if (primary) email = primary.email;
     }
 
@@ -183,7 +200,7 @@ export const handleGithubCallback = async (req: Request, res: Response) => {
       avatarUrl: profile.avatar_url,
     });
 
-    const token = jwt.sign({ userId: user.id }, getJwtSecret(), { expiresIn: getJwtExpiresIn() as any });
+    const token = jwt.sign({ userId: user.id }, getJwtSecret(), { expiresIn: getJwtExpiresIn() as SignOptions['expiresIn'] });
     return res.redirect(`${getFrontendUrl()}/oauth/callback?token=${token}`);
   } catch (err) {
     console.error('GitHub OAuth error:', err);
@@ -224,13 +241,18 @@ export const handleMicrosoftCallback = async (req: Request, res: Response) => {
         scope: 'openid email profile User.Read',
       }),
     });
-    const tokenData = await tokenRes.json() as any;
+    const tokenData = (await tokenRes.json()) as OAuthTokenResponse;
     if (!tokenData.access_token) return redirectWithError(res, 'Microsoft login failed');
 
     const userRes = await fetch('https://graph.microsoft.com/v1.0/me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
-    const profile = await userRes.json() as any;
+    const profile = (await userRes.json()) as {
+      id: string;
+      mail?: string;
+      userPrincipalName?: string;
+      displayName?: string;
+    };
 
     const email = profile.mail || profile.userPrincipalName;
     if (!email) return redirectWithError(res, 'Could not retrieve email from Microsoft');
@@ -242,7 +264,7 @@ export const handleMicrosoftCallback = async (req: Request, res: Response) => {
       name: profile.displayName,
     });
 
-    const token = jwt.sign({ userId: user.id }, getJwtSecret(), { expiresIn: getJwtExpiresIn() as any });
+    const token = jwt.sign({ userId: user.id }, getJwtSecret(), { expiresIn: getJwtExpiresIn() as SignOptions['expiresIn'] });
     return res.redirect(`${getFrontendUrl()}/oauth/callback?token=${token}`);
   } catch (err) {
     console.error('Microsoft OAuth error:', err);

@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import speakeasy from 'speakeasy';
 import qrcode from 'qrcode';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.service';
 
@@ -147,7 +147,7 @@ export const login = async (req: Request, res: Response) => {
       return res.json({ requiresTwoFactor: true, tempToken });
     }
 
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as any });
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as SignOptions['expiresIn'] });
 
     return res.json({
       message: 'Login successful',
@@ -445,9 +445,9 @@ export const verify2FA = async (req: Request, res: Response) => {
     if (!tempToken || !code) return res.status(400).json({ error: 'Token and code are required' });
 
     const JWT_SECRET = process.env.JWT_SECRET!;
-    let payload: any;
+    let payload: { userId: string; twoFactor?: boolean };
     try {
-      payload = jwt.verify(tempToken, JWT_SECRET);
+      payload = jwt.verify(tempToken, JWT_SECRET) as { userId: string; twoFactor?: boolean };
     } catch {
       return res.status(401).json({ error: 'Invalid or expired session' });
     }
@@ -467,7 +467,7 @@ export const verify2FA = async (req: Request, res: Response) => {
     if (!verified) return res.status(400).json({ error: 'Invalid code' });
 
     const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as any });
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as SignOptions['expiresIn'] });
 
     return res.json({
       message: 'Login successful',

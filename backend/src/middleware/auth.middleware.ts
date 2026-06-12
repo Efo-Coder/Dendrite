@@ -22,7 +22,7 @@ export const authenticateToken = (
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     req.userId = decoded.userId;
     return next();
-  } catch (error) {
+  } catch {
     return res.status(403).json({ error: 'Invalid or expired token' });
   }
 };
