@@ -28,6 +28,7 @@ const fragmentShader = `
   uniform sampler2D uTexture, uDisplacement;
   uniform vec2 uResolution, uTextureSize, uMaskCenter, uOffset;
   uniform float uMaskRadius, uTime, uZoom;
+  uniform vec3 uShadow, uHighlight;
   varying vec2 vUv;
   const float PI = 3.141592653589793238;
 
@@ -53,8 +54,7 @@ const fragmentShader = `
   vec3 applyDuotone(vec3 c) {
     c = clamp((c - 0.5) * 1.2 + 0.5, 0.0, 1.0);
     float lum = pow(dot(c, vec3(0.299, 0.587, 0.114)), 0.9);
-    vec3 shadow = vec3(0.06, 0.03, 0.01), highlight = vec3(0.98, 0.76, 0.30);
-    vec3 duo = mix(shadow, highlight, smoothstep(0.0, 1.0, lum));
+    vec3 duo = mix(uShadow, uHighlight, smoothstep(0.0, 1.0, lum));
     float shift = (c.r - c.b) * 0.1;
     duo.r += shift; duo.b -= shift * 0.5;
     return clamp(mix(vec3(dot(duo, vec3(0.299, 0.587, 0.114))), duo, 1.3), 0.0, 1.0);
@@ -75,6 +75,24 @@ const fragmentShader = `
     #include <colorspace_fragment>
   }
 `;
+
+// CSS-Farbe (oklch etc.) → lineares RGB für den Shader. Canvas parst jedes
+// CSS-Farbformat; colorspace_fragment wandelt am Ende zurück nach sRGB.
+function cssColorToLinearRGB(color: string): [number, number, number] | null {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 1;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx || !color) return null;
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, 1, 1);
+  const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+  if (a === 0) return null;
+  const toLinear = (v: number) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  return [toLinear(r), toLinear(g), toLinear(b)];
+}
 
 function createBrushTexture(): THREE.Texture {
   const canvas = Object.assign(document.createElement("canvas"), { width: 128, height: 128 });
@@ -205,10 +223,33 @@ function WaterRippleScene({
       uTime: { value: 0 },
       uZoom: { value: zoom },
       uOffset: { value: new THREE.Vector2(offset[0], offset[1]) },
+      uShadow: { value: new THREE.Vector3(0.06, 0.03, 0.01) },
+      uHighlight: { value: new THREE.Vector3(0.98, 0.76, 0.30) },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
+
+  // Duotone folgt der Akzentfarbe — liest --accent-hi/--accent-deep und
+  // aktualisiert bei Theme-/Palettenwechsel (Attribut-Änderungen auf <html>)
+  useEffect(() => {
+    const applyAccent = () => {
+      const styles = getComputedStyle(document.documentElement);
+      const hi = cssColorToLinearRGB(styles.getPropertyValue('--accent-hi').trim());
+      const deep = cssColorToLinearRGB(styles.getPropertyValue('--accent-deep').trim());
+      const u = mainMaterialRef.current?.uniforms;
+      if (!u) return;
+      if (hi) u.uHighlight.value.set(hi[0], hi[1], hi[2]);
+      if (deep) u.uShadow.value.set(deep[0] * 0.2, deep[1] * 0.2, deep[2] * 0.2);
+    };
+    applyAccent();
+    const observer = new MutationObserver(applyAccent);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'data-palette', 'style'],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   useFrame((_, delta) => {
     const fbo = fboRef.current;

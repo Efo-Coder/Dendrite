@@ -1,282 +1,152 @@
 "use client";
 
-import { useRef, useEffect, useLayoutEffect, useState } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
-import { useSettingsStore } from '../../store/useSettingsStore';
-import ForestHeroBackground from './ForestHeroBackground';
+import { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
+import DendriteHeroBackground from './DendriteHeroBackground';
+import { HeroEditorMock } from './HeroEditorMock';
 
-// Einzige Konstante — steuert Dauer und Zoomgeschwindigkeit automatisch
-const HERO_HEIGHT_VH = 250;
-// scrollYProgress-Wert bei dem das Sticky endet (= end of visible canvas)
-const STICKY_END = (HERO_HEIGHT_VH - 100) / HERO_HEIGHT_VH;
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function HeroSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const scrollProgress = useRef(0);
-  const { themeMode } = useSettingsStore();
-  const isDark = themeMode === 'dark';
-  const [canvasReady, setCanvasReady] = useState(false);
-
-  // Fallback: Animationen starten spätestens nach 2s falls Canvas nicht lädt
-  useEffect(() => {
-    const t = setTimeout(() => setCanvasReady(true), 2000);
-    return () => clearTimeout(t);
-  }, []);
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start start', 'end start'],
-  });
-
-  // Normalisiert: Shader bekommt immer 0→1, Endzoom bleibt konstant
-  const normalized = useTransform(scrollYProgress, [0, STICKY_END], [0, 1]);
-
-  const textOpacity = useTransform(normalized, [0, 0.25], [1, 0]);
-  const textY = useTransform(normalized, [0, 0.25], [0, -50]);
-  const hintOpacity = useTransform(normalized, [0, 0.12], [1, 0]);
-
-  // "Write what endures." — erscheint nachdem Dendrite ausgeblendet ist, bleibt bis Hero-Section endet
-  const taglineOpacity = useTransform(normalized, [0.28, 0.42], [0, 1]);
-  const taglineY = useTransform(normalized, [0.28, 0.42], [50, 0]);
-
-  // Sofort mit aktuellem Scrollwert initialisieren — kein Zoom-Sprung nach dem Ladescreen
-  useLayoutEffect(() => {
-    const raw = scrollYProgress.get();
-    scrollProgress.current = Math.min(raw / STICKY_END, 1);
-  }, [scrollYProgress]);
+  // Animationen erst starten, wenn der erste Frame wirklich gemalt ist (Doppel-rAF)
+  // und die Fonts bereit sind — sonst läuft die Choreografie unsichtbar an oder
+  // der H1-Reveal passiert mit der Fallback-Schrift. Timeout als CDN-Fallback.
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    return normalized.on('change', (v) => {
-      scrollProgress.current = Math.min(v, 1);
+    let cancelled = false;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        const timeout = new Promise<void>(resolve => setTimeout(resolve, 1500));
+        Promise.race([document.fonts.ready, timeout]).then(() => {
+          if (!cancelled) setReady(true);
+        });
+      });
     });
-  }, [normalized]);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, []);
 
   return (
     <section
-      ref={sectionRef}
       id="hero"
-      style={{ height: `${HERO_HEIGHT_VH}vh`, position: 'relative' }}
+      style={{
+        position: 'relative',
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
     >
-      {/* Sticky viewport */}
-      <div style={{ position: 'sticky', top: 0, height: '100dvh', overflow: 'hidden' }}>
+      <DendriteHeroBackground ready={ready} />
 
-        <ForestHeroBackground isDark={isDark} scrollRef={scrollProgress} onReady={() => setCanvasReady(true)} />
-
-        {/* Lade-Overlay — faded aus sobald Canvas ready */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 20,
-            background: 'rgb(10, 9, 7)',
-            opacity: canvasReady ? 0 : 1,
-            transition: 'opacity 0.8s ease',
-            pointerEvents: canvasReady ? 'none' : 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-          }}
-        >
-          {[0, 1, 2].map(i => (
-            <motion.div
-              key={i}
-              animate={{ opacity: [0.15, 0.7, 0.15] }}
-              transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.22, ease: 'easeInOut' }}
-              style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}
-            />
-          ))}
-        </div>
-
-        {/* Permanente CSS-Vignette — sichtbar bevor Canvas lädt */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,0.52) 100%)',
-            pointerEvents: 'none',
-          }}
-        />
-
-        {/* Subtle dark overlay for text legibility */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0,0,0,0.20)',
-            pointerEvents: 'none',
-          }}
-        />
-
-        {/* Centered text + CTAs */}
-        <motion.div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
-            padding: 'clamp(40px, 6vw, 80px) clamp(24px, 5vw, 80px)',
-            opacity: textOpacity,
-            y: textY,
-          }}
-        >
-          {/* Title — line reveal */}
-          <div style={{ overflow: 'hidden', paddingBottom: '0.06em' }}>
-            <motion.h1
-              initial={{ y: '105%' }}
-              animate={canvasReady ? { y: 0 } : { y: '105%' }}
-              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-              style={{
-                fontFamily: 'var(--serif-display)',
-                fontSize: 'clamp(4.5rem, 11vw, 11rem)',
-                fontWeight: 300,
-                fontStyle: 'italic',
-                color: 'rgba(255,255,255,0.95)',
-                lineHeight: 1.0,
-                letterSpacing: '-0.02em',
-                margin: 0,
-                textShadow: '0 2px 48px rgba(0,0,0,0.35)',
-              }}
-            >
-              Dendrite
-            </motion.h1>
-          </div>
-
-          {/* Subtitle — line reveal */}
-          <div style={{ overflow: 'hidden', paddingBottom: '0.1em', marginTop: '16px' }}>
-            <motion.p
-              initial={{ y: '110%' }}
-              animate={canvasReady ? { y: 0 } : { y: '110%' }}
-              transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
-              style={{
-                fontFamily: 'var(--mono)',
-                fontSize: 'clamp(9px, 1.1vw, 12px)',
-                letterSpacing: '0.35em',
-                textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.45)',
-                margin: 0,
-              }}
-            >
-              A Notebook
-            </motion.p>
-          </div>
-        </motion.div>
-
-        {/* "Write what endures." — erscheint nachdem Dendrite ausgeblendet ist */}
-        <motion.div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: taglineOpacity,
-            y: taglineY,
-            pointerEvents: 'none',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px' }}>
-            <p style={{
+      {/* Headline + Subline + CTAs */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          padding: 'clamp(110px, 16vh, 170px) clamp(24px, 5vw, 80px) clamp(28px, 5vh, 56px)',
+        }}
+      >
+        <div style={{ overflow: 'hidden', paddingBottom: '0.08em' }}>
+          <motion.h1
+            initial={{ y: '105%' }}
+            animate={ready ? { y: 0 } : { y: '105%' }}
+            transition={{ duration: 1.1, ease: EASE }}
+            style={{
               fontFamily: 'var(--serif-display)',
-              fontSize: 'clamp(2.2rem, 5vw, 5rem)',
+              fontSize: 'clamp(2.9rem, 7vw, 6.5rem)',
               fontWeight: 300,
               fontStyle: 'italic',
-              color: 'rgba(255,255,255,0.92)',
+              color: 'var(--ink)',
+              lineHeight: 1.04,
               letterSpacing: '-0.02em',
-              textShadow: '0 2px 40px rgba(0,0,0,0.4)',
               margin: 0,
-              textAlign: 'center',
-            }}>
-              Write what endures.
-            </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <a
-                href="/register"
-                className="btn primary"
-                style={{ padding: '11px 24px', borderRadius: '10px', fontSize: '15px', pointerEvents: 'auto' }}
-              >
-                Start for free
-              </a>
-              <a
-                href="#features"
-                className="fill-slide text-white/85 hover:text-[oklch(0.15_0.02_60)] transition-colors duration-700"
-                style={{
-                  padding: '11px 24px',
-                  fontSize: '15px',
-                  borderRadius: '10px',
-                  fontFamily: 'var(--serif-body)',
-                  fontWeight: 500,
-                  border: '0.5px solid rgba(255,255,255,0.25)',
-                  background: 'rgba(255,255,255,0.08)',
-                  textDecoration: 'none',
-                  display: 'inline-block',
-                  pointerEvents: 'auto',
-                }}
-              >
-                Explore features
-              </a>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Scroll hint */}
-        <motion.div
-          style={{
-            position: 'absolute',
-            bottom: '28px',
-            right: 'clamp(24px, 5vw, 80px)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            opacity: hintOpacity,
-          }}
-        >
-          <motion.div
-            style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-            initial={{ opacity: 0 }}
-            animate={canvasReady ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ duration: 1, delay: 1.2 }}
+            }}
           >
-            <span style={{
-              fontFamily: 'var(--mono)',
-              fontSize: '11px',
-              letterSpacing: '0.22em',
-              textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.6)',
-            }}>
-              Scroll
-            </span>
-            <div style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              border: '1px solid rgba(255,255,255,0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <motion.svg
-                width="14" height="14" viewBox="0 0 14 14" fill="none"
-                animate={{ y: [0, 4, 0] }}
-                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <path
-                  d="M2 4.5L7 9.5L12 4.5"
-                  stroke="rgba(255,255,255,0.6)"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </motion.svg>
-            </div>
-          </motion.div>
-        </motion.div>
+            Write what endures<span style={{ color: 'var(--accent)' }}>.</span>
+          </motion.h1>
+        </div>
 
+        <div style={{ overflow: 'hidden', paddingBottom: '0.15em', marginTop: '20px' }}>
+          <motion.p
+            initial={{ y: '110%' }}
+            animate={ready ? { y: 0 } : { y: '110%' }}
+            transition={{ duration: 0.9, ease: EASE, delay: 0.18 }}
+            style={{
+              fontFamily: 'var(--serif-body)',
+              fontSize: 'clamp(16px, 1.6vw, 19px)',
+              lineHeight: 1.5,
+              color: 'var(--ink-mid)',
+              maxWidth: '46ch',
+              margin: 0,
+            }}
+          >
+            Dendrite is a calm, fast notebook for notes, journals, and ideas —
+            a quiet place for the thoughts you want to keep.
+          </motion.p>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+          transition={{ duration: 0.8, ease: EASE, delay: 0.45 }}
+          className="flex flex-wrap gap-3 justify-center"
+          style={{ marginTop: '36px' }}
+        >
+          <Link
+            to="/register"
+            className="btn primary"
+            style={{ padding: '11px 26px', borderRadius: '10px', fontSize: '15px' }}
+          >
+            Start writing — free
+          </Link>
+          <a
+            href="#features"
+            className="fill-slide text-(--ink-mid) hover:text-[oklch(0.15_0.02_60)] transition-colors duration-700"
+            style={{
+              padding: '11px 26px',
+              fontSize: '15px',
+              borderRadius: '10px',
+              fontFamily: 'var(--serif-body)',
+              fontWeight: 500,
+              border: '0.5px solid var(--line)',
+              background: 'transparent',
+              textDecoration: 'none',
+              display: 'inline-block',
+            }}
+          >
+            Explore features
+          </a>
+        </motion.div>
       </div>
+
+      {/* Editor-Mock — ragt unten aus dem Viewport, die Section schneidet ihn ab */}
+      <motion.div
+        initial={{ opacity: 0, y: 48 }}
+        animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 48 }}
+        transition={{ duration: 1.1, ease: EASE, delay: 0.6 }}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          width: 'min(960px, 92vw)',
+          margin: '0 auto',
+          height: 'clamp(200px, 30vh, 340px)',
+        }}
+      >
+        <HeroEditorMock />
+      </motion.div>
     </section>
   );
 }

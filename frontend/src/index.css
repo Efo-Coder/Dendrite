@@ -1442,3 +1442,57 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
   }
 
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   HERO — Dendriten-Hintergrund & Editor-Mock
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* pathLength=1 normalisiert alle Pfade — ein Dasharray-Wert für alle Segmente.
+   Die Animation startet erst mit .dendrite-on (gesetzt nach erstem gemalten Frame),
+   sonst läuft die CSS-Uhr schon während der Browser noch mit Layout/Paint beschäftigt ist. */
+.dendrite-seg {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.dendrite-on .dendrite-seg {
+  animation: dendrite-draw 0.7s linear forwards;
+}
+@keyframes dendrite-draw { to { stroke-dashoffset: 0; } }
+
+.dendrite-dot {
+  opacity: 0;
+}
+.dendrite-on .dendrite-dot {
+  animation: dendrite-dot-in 0.9s ease-out forwards;
+}
+@keyframes dendrite-dot-in { to { opacity: 1; } }
+
+/* Halo atmet im Rhythmus des Saved-Dots im Editor (save-glow, 2.4s ease-in-out) */
+.dendrite-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.dendrite-on .dendrite-halo {
+  animation: dendrite-glow-breathe 2.4s ease-in-out infinite;
+}
+@keyframes dendrite-glow-breathe {
+  0%, 100% { opacity: 0.65; transform: scale(0.9); }
+  50%      { opacity: 1;    transform: scale(1.1); }
+}
+
+.hero-caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: hero-caret-blink 1.15s steps(1) infinite;
+}
+@keyframes hero-caret-blink { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .dendrite-seg, .dendrite-on .dendrite-seg { animation: none; stroke-dashoffset: 0; }
+  .dendrite-dot, .dendrite-on .dendrite-dot { animation: none; opacity: 1; }
+  .hero-caret { animation: none; }
+}

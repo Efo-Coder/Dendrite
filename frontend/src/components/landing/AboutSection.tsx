@@ -2,69 +2,97 @@
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, type CSSProperties } from "react";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// Destilliert aus der echten Namensgeschichte: Dendrit = verzweigter Fortsatz
+// der Nervenzelle, der Signale empfängt — und zugleich Baum mit Wurzeln.
+const PARAGRAPHS = [
+  "A dendrite is the branched limb of a nerve cell — the part of the mind that receives ideas and carries them inward. The name is no accident: thoughts arrive, branch, and grow the way trees do. We work the way trees do — closer to nature than we remember.",
+  "Dendrite began with small frustrations: five preset colors, rigid images, formatting that fought back. It grew into a conviction — that a notebook should feel like a fine object, not a tool. Something you open gladly, get lost in, and trust with your thoughts and plans.",
+];
+
+const PRINCIPLES = [
+  {
+    n: "01",
+    title: "Rooted in thought",
+    text: "Named for the branch of a neuron where every idea first arrives.",
+  },
+  {
+    n: "02",
+    title: "No small frustrations",
+    text: "Any color, any size, images that move where you want them — details, done right.",
+  },
+  {
+    n: "03",
+    title: "A notebook to get lost in",
+    text: "Calm, quiet, and a little luxurious. Yours to wander.",
+  },
+];
+
+const hairlineStyle: CSSProperties = {
+  height: '1px',
+  background: 'var(--line)',
+  transformOrigin: 'left',
+};
+
 export function AboutSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const imageRef = useRef<HTMLDivElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const ctaRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     if (!sectionRef.current) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        imageRef.current,
-        { scale: 0.9, opacity: 0 },
+        '.ab-plate',
+        { scale: 0.95, opacity: 0 },
         {
           scale: 1,
           opacity: 1,
           duration: 1,
-          ease: "power2.out",
+          ease: 'power2.out',
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top 80%",
-            end: "top 30%",
+            start: 'top 80%',
+            end: 'top 35%',
             scrub: 1,
           },
         }
       );
 
       gsap.fromTo(
-        headingRef.current,
-        { y: 60, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: headingRef.current,
-            start: "top 85%",
-            end: "top 60%",
-            scrub: 1,
-          },
-        }
-      );
-
-      gsap.fromTo(
-        ctaRef.current,
+        '.ab-reveal',
         { y: 40, opacity: 0 },
         {
           y: 0,
           opacity: 1,
           duration: 1,
-          ease: "power3.out",
+          ease: 'power3.out',
+          stagger: 0.12,
           scrollTrigger: {
-            trigger: ctaRef.current,
-            start: "top 90%",
-            end: "top 70%",
+            trigger: sectionRef.current,
+            start: 'top 75%',
+            end: 'top 30%',
+            scrub: 1,
+          },
+        }
+      );
+
+      gsap.fromTo(
+        '.ab-line',
+        { scaleX: 0 },
+        {
+          scaleX: 1,
+          duration: 1.2,
+          ease: 'power2.out',
+          stagger: 0.15,
+          scrollTrigger: {
+            trigger: '.ab-principles',
+            start: 'top 85%',
+            end: 'top 45%',
             scrub: 1,
           },
         }
@@ -75,31 +103,141 @@ export function AboutSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="about" className="bg-background pb-24 lg:pb-32">
-      <div className="px-6 sm:px-12 lg:px-24 flex flex-col items-center max-w-360 mx-auto">
-        <div ref={imageRef} className="relative aspect-21/9 lg:aspect-3/1 w-full overflow-hidden rounded-full mb-16">
-          <img
-            src="/img/branding/mood.webp"
-            alt="Dendrite note-taking app"
-            className="w-full h-full object-cover"
-          />
+    <section ref={sectionRef} id="about" className="py-24 lg:py-32">
+      <div className="px-6 sm:px-12 lg:px-24 max-w-360 mx-auto">
+        {/* Editorial: Buchtafel links, Manifest rechts */}
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <figure className="ab-plate lg:order-first" style={{ margin: 0 }}>
+            <div
+              style={{
+                border: '1px solid var(--line)',
+                borderRadius: 'var(--radius-card)',
+                padding: '10px',
+                background: 'color-mix(in oklch, var(--surface) 60%, transparent)',
+              }}
+            >
+              <img
+                src="/img/branding/mood.webp"
+                alt="A writing desk with books, candlelight and an open Dendrite notebook"
+                className="w-full h-auto block"
+                style={{ borderRadius: 'calc(var(--radius-card) - 4px)' }}
+                loading="lazy"
+              />
+            </div>
+            <figcaption
+              style={{
+                marginTop: '14px',
+                fontFamily: 'var(--mono)',
+                fontSize: '9.5px',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: 'var(--ink-dim)',
+                textAlign: 'center',
+              }}
+            >
+              Fig. 01 — A quiet place to write
+            </figcaption>
+          </figure>
+
+          <div>
+            <p
+              className="ab-reveal"
+              style={{
+                margin: 0,
+                fontFamily: 'var(--mono)',
+                fontSize: '11px',
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                color: 'var(--accent)',
+              }}
+            >
+              About — Why Dendrite
+            </p>
+            <h2
+              className="ab-reveal"
+              style={{
+                margin: '18px 0 28px',
+                fontFamily: 'var(--serif-display)',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2rem, 3.6vw, 3rem)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.12,
+                color: 'var(--ink)',
+              }}
+            >
+              Where thinking takes root<span style={{ color: 'var(--accent)' }}>.</span>
+            </h2>
+            {PARAGRAPHS.map((text) => (
+              <p
+                key={text.slice(0, 24)}
+                className="ab-reveal"
+                style={{
+                  margin: '0 0 18px',
+                  fontFamily: 'var(--serif-body)',
+                  fontSize: 'clamp(15px, 1.25vw, 17px)',
+                  lineHeight: 1.7,
+                  color: 'var(--ink-mid)',
+                  maxWidth: '54ch',
+                }}
+              >
+                {text}
+              </p>
+            ))}
+          </div>
         </div>
 
-        <h2
-          ref={headingRef}
-          className="text-[clamp(1.75rem,4vw,3rem)] font-medium leading-[1.2] tracking-tight text-center mx-auto text-foreground max-w-4xl"
-        >
-          At Dendrite, we believe your notes should work as hard as you do — beautiful by design, powerful by default.
-        </h2>
-
-        <Link
-          ref={ctaRef as React.RefObject<HTMLAnchorElement>}
-          to="/register"
-          className="btn primary mt-8"
-          style={{ padding: '12px 28px', borderRadius: '9999px', fontSize: '1rem' }}
-        >
-          Start for Free
-        </Link>
+        {/* Prinzipien — nummerierte Hairline-Zeilen */}
+        <div className="ab-principles" style={{ marginTop: 'clamp(56px, 8vw, 96px)' }}>
+          {PRINCIPLES.map((p) => (
+            <div key={p.n}>
+              <div className="ab-line" style={hairlineStyle} />
+              <div
+                className="ab-reveal flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-10"
+                style={{ padding: 'clamp(20px, 3vw, 30px) 0' }}
+              >
+                <span
+                  style={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: '10px',
+                    letterSpacing: '0.2em',
+                    color: 'var(--accent)',
+                    flexShrink: 0,
+                  }}
+                >
+                  {p.n}
+                </span>
+                <h3
+                  className="sm:w-72"
+                  style={{
+                    margin: 0,
+                    fontFamily: 'var(--serif-display)',
+                    fontStyle: 'italic',
+                    fontWeight: 400,
+                    fontSize: 'clamp(1.25rem, 1.8vw, 1.6rem)',
+                    letterSpacing: '-0.01em',
+                    color: 'var(--ink)',
+                    flexShrink: 0,
+                  }}
+                >
+                  {p.title}
+                </h3>
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: 'var(--serif-body)',
+                    fontSize: 'clamp(14px, 1.15vw, 16px)',
+                    lineHeight: 1.6,
+                    color: 'var(--ink-mid)',
+                  }}
+                >
+                  {p.text}
+                </p>
+              </div>
+            </div>
+          ))}
+          <div className="ab-line" style={hairlineStyle} />
+        </div>
       </div>
     </section>
   );

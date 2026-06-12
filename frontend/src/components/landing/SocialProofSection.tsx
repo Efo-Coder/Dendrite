@@ -2,189 +2,239 @@
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-function ArrowIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 17L17 7M17 7H7M17 7V17" />
-    </svg>
-  );
-}
+// PLATZHALTER — vor Launch durch echte Beta-Stimmen ersetzen
+const LEAD = {
+  quote:
+    "The first notes app that treats my thoughts like they're worth keeping. I stopped collecting tools and started writing.",
+  attribution: "Early beta writer · Product designer",
+};
 
-function QuoteIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
-    </svg>
-  );
-}
+// PLATZHALTER — vor Launch durch echte Beta-Stimmen ersetzen
+const QUOTES = [
+  {
+    quote:
+      "It feels less like software and more like a good notebook — quiet, fast, and always where I left it.",
+    attribution: "Beta writer · PhD student",
+  },
+  {
+    quote:
+      "I moved three years of scattered notes into Dendrite in one evening. Everything finally has a place.",
+    attribution: "Beta writer · Journalist",
+  },
+];
+
+const attributionStyle: CSSProperties = {
+  margin: 0,
+  fontFamily: 'var(--mono)',
+  fontSize: '10px',
+  letterSpacing: '0.22em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-low)',
+};
+
+const hairlineStyle: CSSProperties = {
+  height: '1px',
+  background: 'var(--line)',
+  transformOrigin: 'left',
+};
 
 export function SocialProofSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!sectionRef.current) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        headerRef.current,
+        '.sp-reveal',
         { y: 40, opacity: 0 },
         {
           y: 0,
           opacity: 1,
           duration: 1,
-          ease: "power3.out",
+          ease: 'power3.out',
+          stagger: 0.12,
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top 75%",
-            end: "top 50%",
+            start: 'top 75%',
+            end: 'top 30%',
             scrub: 1,
           },
         }
       );
 
-      const cards = gridRef.current?.children;
-      if (cards) {
-        gsap.fromTo(
-          cards,
-          { y: 80, opacity: 0, scale: 0.95 },
-          {
-            y: 0,
-            opacity: 1,
-            scale: 1,
-            duration: 0.8,
-            ease: "power3.out",
-            stagger: 0.1,
-            scrollTrigger: {
-              trigger: gridRef.current,
-              start: "top 80%",
-              end: "top 40%",
-              scrub: 1,
-            },
-          }
-        );
-      }
+      gsap.fromTo(
+        '.sp-line',
+        { scaleX: 0 },
+        {
+          scaleX: 1,
+          duration: 1.2,
+          ease: 'power2.out',
+          stagger: 0.15,
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top 70%',
+            end: 'top 25%',
+            scrub: 1,
+          },
+        }
+      );
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={sectionRef} id="social-proof" className="bg-background py-24 lg:py-32">
-      <div className="px-6 sm:px-12 lg:px-24 max-w-360 mx-auto">
-        <div ref={headerRef} className="flex items-center justify-between mb-12 lg:mb-16">
-          <h2 className="text-3xl lg:text-4xl font-medium tracking-tight text-foreground">
-            Loved by thinkers & creators
+    <section ref={sectionRef} id="social-proof" className="py-24 lg:py-32">
+      <div className="px-6 sm:px-12 lg:px-24 mx-auto" style={{ maxWidth: '68rem' }}>
+        {/* Header */}
+        <div className="sp-reveal">
+          <p
+            style={{
+              margin: 0,
+              fontFamily: 'var(--mono)',
+              fontSize: '11px',
+              letterSpacing: '0.3em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+            }}
+          >
+            From the beta
+          </p>
+          <h2
+            style={{
+              margin: '14px 0 0',
+              fontFamily: 'var(--serif-display)',
+              fontStyle: 'italic',
+              fontWeight: 300,
+              fontSize: 'clamp(2rem, 4vw, 3.2rem)',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.1,
+              color: 'var(--ink)',
+            }}
+          >
+            What early writers say.
           </h2>
         </div>
 
-        <div
-          ref={gridRef}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:grid-rows-[minmax(220px,auto)_minmax(220px,auto)_minmax(180px,auto)]"
-        >
-          {/* Image column — hidden on mobile to avoid layout issues */}
-          <div className="hidden md:flex lg:row-span-2 flex-col gap-4">
-            <div className="relative flex-1 min-h-50 w-full overflow-hidden rounded-2xl">
-              <img src="/img/branding/notebook.webp" alt="Feature showcase" className="w-full h-full object-cover" />
-            </div>
-            <div className="relative flex-1 min-h-45 w-full overflow-hidden rounded-full">
-              <img src="/img/branding/testimonials.webp" alt="Feature showcase" className="w-full h-full object-cover" />
-            </div>
-          </div>
+        <div className="sp-line" style={{ ...hairlineStyle, marginTop: '40px' }} />
 
-          {/* Main testimonial */}
-          <div className="md:col-span-1 lg:col-span-2 lg:row-span-2 bg-muted/50 rounded-2xl p-8 flex flex-col">
-            <div>
-              <QuoteIcon className="w-10 h-10 text-foreground/20 mb-6" />
-              <blockquote className="text-2xl lg:text-3xl font-medium leading-snug text-foreground">
-                Dendrite changed how I capture ideas. It&apos;s the first notes app that feels as thoughtful as the ideas I&apos;m trying to preserve.
-              </blockquote>
-              <div className="mt-6">
-                <p className="font-semibold text-foreground">Ryan Mitchell</p>
-                <p className="text-sm text-foreground/60">Product Designer · Beta User</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between mt-auto pt-8">
-              <span className="text-xl font-semibold text-foreground">Dendrite</span>
-              <Link
-                to="/register"
-                className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center hover:bg-foreground hover:text-background transition-colors"
-              >
-                <ArrowIcon className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Stat 1 */}
-          <div className="bg-muted/50 rounded-2xl p-6 flex flex-col">
-            <div className="flex-1">
-              <p className="text-3xl font-semibold text-foreground">2× Faster</p>
-              <p className="text-sm text-foreground/60 mt-1">Note retrieval vs. traditional apps</p>
-            </div>
-            <div className="flex items-center justify-between mt-auto pt-4">
-              <span className="text-sm font-medium text-foreground">speed</span>
-              <Link
-                to="/register"
-                className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center hover:bg-foreground hover:text-background transition-colors"
-              >
-                <ArrowIcon className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Stat 2 */}
-          <div className="bg-muted/50 rounded-2xl p-6 flex flex-col">
-            <div className="flex-1">
-              <p className="text-3xl font-semibold text-foreground">10k+</p>
-              <p className="text-sm text-foreground/60 mt-1">Notes created during beta</p>
-            </div>
-            <div className="flex items-center justify-between mt-auto pt-4">
-              <span className="text-sm font-medium text-foreground">growth</span>
-              <Link
-                to="/register"
-                className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center hover:bg-foreground hover:text-background transition-colors"
-              >
-                <ArrowIcon className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Rating */}
-          <div className="bg-muted/50 rounded-2xl p-8 flex flex-col">
-            <div className="flex-1">
-              <p className="text-3xl lg:text-4xl font-semibold text-foreground">5.0</p>
-              <p className="text-foreground/60 mt-2">
-                User satisfaction<br />from beta testers
-              </p>
-            </div>
-            <div className="mt-auto pt-6">
-              <p className="text-sm font-medium text-foreground">Rated by early adopters</p>
-            </div>
-          </div>
-
-          {/* Wide banner */}
-          <div className="lg:col-span-3 bg-muted/50 rounded-2xl p-8 flex flex-col">
-            <p className="text-xl lg:text-2xl font-medium leading-relaxed text-foreground max-w-3xl flex-1">
-              Dendrite gives your ideas structure, speed, and a home they deserve — all in one beautifully crafted app.
+        {/* Lead-Zitat — gesetzt wie ein Epigraph, hängendes Anführungszeichen in Gold */}
+        <figure className="sp-reveal" style={{ margin: 0, padding: 'clamp(40px, 6vw, 72px) 0' }}>
+          <blockquote style={{ position: 'relative', margin: 0 }}>
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                left: '-0.55em',
+                top: '-0.12em',
+                fontFamily: 'var(--serif-display)',
+                fontSize: '1.6em',
+                lineHeight: 1,
+                color: 'var(--accent)',
+              }}
+            >
+              &ldquo;
+            </span>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: 'var(--serif-display)',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(1.6rem, 3.2vw, 2.7rem)',
+                lineHeight: 1.3,
+                letterSpacing: '-0.015em',
+                color: 'var(--ink)',
+                maxWidth: '30ch',
+              }}
+            >
+              {LEAD.quote}
             </p>
-            <div className="flex items-center justify-between mt-auto pt-6">
-              <span className="text-xl font-semibold text-foreground">Dendrite · 2026</span>
-              <Link
-                to="/register"
-                className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center hover:bg-foreground hover:text-background transition-colors"
-              >
-                <ArrowIcon className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
+          </blockquote>
+          <figcaption style={{ ...attributionStyle, marginTop: '24px' }}>
+            — {LEAD.attribution}
+          </figcaption>
+        </figure>
+
+        <div className="sp-line" style={hairlineStyle} />
+
+        {/* Zwei kleinere Stimmen in Zeitungsspalten, vertikale Hairline dazwischen */}
+        <div className="grid md:grid-cols-2">
+          {QUOTES.map((q, i) => (
+            <figure
+              key={q.attribution}
+              className={`sp-reveal ${
+                i === 1
+                  ? 'border-t border-(--line) md:border-t-0 md:border-l md:border-(--line) md:pl-14'
+                  : 'md:pr-14'
+              }`}
+              style={{
+                margin: 0,
+                paddingTop: 'clamp(32px, 4vw, 48px)',
+                paddingBottom: 'clamp(32px, 4vw, 48px)',
+              }}
+            >
+              <blockquote style={{ margin: 0 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: 'var(--serif-display)',
+                    fontStyle: 'italic',
+                    fontWeight: 400,
+                    fontSize: 'clamp(1.15rem, 1.7vw, 1.5rem)',
+                    lineHeight: 1.45,
+                    color: 'var(--ink-mid)',
+                  }}
+                >
+                  {q.quote}
+                </p>
+              </blockquote>
+              <figcaption style={{ ...attributionStyle, marginTop: '18px' }}>
+                — {q.attribution}
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+
+        <div className="sp-line" style={hairlineStyle} />
+
+        {/* Ehrliche Fußzeile + ein einziger, leiser CTA */}
+        <div
+          className="sp-reveal flex flex-wrap items-center justify-between gap-4"
+          style={{ paddingTop: '28px' }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: 'var(--mono)',
+              fontSize: '10px',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              color: 'var(--ink-dim)',
+            }}
+          >
+            Collected during the private beta
+          </p>
+          <Link
+            to="/register"
+            className="group"
+            style={{
+              fontFamily: 'var(--serif-body)',
+              fontSize: '16px',
+              color: 'var(--ink-mid)',
+              textDecoration: 'none',
+            }}
+          >
+            <span className="nav-underline">Start writing — free</span>
+          </Link>
         </div>
       </div>
     </section>
