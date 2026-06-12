@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
+import { DendriteBranch } from './DendriteBranch';
 
-const MIN_LOAD_MS = 1000;
+// 1.4s statt 1s — so läuft die Zweig-Choreografie (Äste + Punkte) einmal komplett durch
+const MIN_LOAD_MS = 1400;
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -19,17 +21,28 @@ const PrivateRoute = ({ children }: PrivateRouteProps) => {
 
   if (!timerDone || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div
-          className="animate-spin"
+      <div
+        className="min-h-screen flex flex-col items-center justify-center"
+        style={{ background: 'var(--bg)', gap: '26px' }}
+      >
+        <DendriteBranch style={{ width: 'min(320px, 72vw)' }} />
+        <p
+          className="animate-fade-in"
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            border: '3px solid color-mix(in oklch, var(--accent) 20%, transparent)',
-            borderTopColor: 'var(--accent)',
+            margin: 0,
+            fontFamily: 'var(--serif-display)',
+            fontStyle: 'italic',
+            fontWeight: 400,
+            fontSize: '22px',
+            letterSpacing: '0.01em',
+            color: 'var(--ink-mid)',
+            animationDelay: '0.5s',
+            animationDuration: '0.8s',
+            animationFillMode: 'backwards',
           }}
-        />
+        >
+          Dendrite
+        </p>
       </div>
     );
   }
