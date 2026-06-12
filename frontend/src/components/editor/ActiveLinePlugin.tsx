@@ -53,6 +53,9 @@ export function ActiveLinePlugin() {
   // smaller font, so a code-measured height must never be reused for prose lines.
   const lastCaretRef = useRef<{ h: number; fs: number } | null>(null);
   const moveAnimRef = useRef<ReturnType<typeof animate> | null>(null);
+  // Target of the in-flight slide — lets redundant updates (ResizeObserver echo
+  // after every Enter) detect that the running animation is already correct.
+  const moveTargetRef = useRef<number | null>(null);
   const fadeAnimRef = useRef<ReturnType<typeof animate> | null>(null);
 
   // Create overlay once, attach to editor-container
@@ -277,12 +280,28 @@ export function ActiveLinePlugin() {
       const top = cursorRect.top - containerRect.top - LINE_PAD;
       const height = cursorRect.height + LINE_PAD * 2;
 
+      // A slide toward this exact target is already in flight — let it finish.
+      // Stopping it and rewriting the style races motion's trailing frame
+      // (measured: the stopped animation writes once more AFTER the direct
+      // write), which freezes the overlay between two lines and kills the slide.
+      if (
+        visibleRef.current &&
+        moveAnimRef.current &&
+        moveTargetRef.current !== null &&
+        Math.abs(moveTargetRef.current - top) < 0.5
+      ) {
+        prevTopRef.current = top;
+        return;
+      }
+
       const lineChanged = prevTopRef.current === null || Math.abs(prevTopRef.current - top) > SNAP_THRESHOLD;
       prevTopRef.current = top;
 
       overlay.style.background = highlightColor();
-      // Stop any in-flight slide so direct style writes below take effect
+      // Stop any in-flight slide (different target) so the writes below win
       moveAnimRef.current?.stop();
+      moveAnimRef.current = null;
+      moveTargetRef.current = null;
 
       if (!visibleRef.current) {
         // First appearance: position instantly, then fade in
@@ -294,11 +313,19 @@ export function ActiveLinePlugin() {
       } else if (lineChanged) {
         // Line switch: slide to the new line while staying visible.
         // Opacity untouched — an in-flight fade-in simply continues.
-        moveAnimRef.current = animate(
+        const anim = animate(
           overlay,
           { top: `${top}px`, height: `${height}px` },
           { duration: MOVE_DURATION, ease: EASE }
         );
+        moveAnimRef.current = anim;
+        moveTargetRef.current = top;
+        anim.then(() => {
+          if (moveAnimRef.current === anim) {
+            moveAnimRef.current = null;
+            moveTargetRef.current = null;
+          }
+        });
       } else {
         // Same line (typing): update position instantly, no animation
         overlay.style.top = `${top}px`;
