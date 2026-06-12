@@ -7,6 +7,9 @@
       "Read(//c/Users/efrah/Downloads/Dendrite-Cursor/**)",
       "WebFetch(domain:theodorusclarence.com)",
       "Read(//c/Users/efrah/Downloads/Dashboard_v2/**)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\efrah\\AppData\\Local\\Temp"
     ]
   }
 }
