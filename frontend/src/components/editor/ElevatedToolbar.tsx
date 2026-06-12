@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMagicHover } from '../../hooks/useMagicHover';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSmartPopupStyle, type PopupAnchor } from '../../hooks/useSmartPopupStyle';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { CODE_LANGUAGE_FRIENDLY_NAME_MAP, getLanguageFriendlyName } from '@lexical/code';
 import {
   Bold, Italic, Underline, Strikethrough, Highlighter, Heading,
@@ -15,59 +14,16 @@ import {
   List, ListOrdered, ListChecks, ClockCheck, Quote, CodeXml, X,
   Superscript, Subscript,
 } from 'lucide-react';
-import {
-  SiJavascript, SiTypescript, SiPython, SiRust, SiSwift,
-  SiHtml5, SiCss, SiCplusplus, SiC,
-  SiMarkdown, SiPhp, SiRuby, SiGo, SiKotlin, SiLua, SiScala,
-  SiR, SiGnubash,
-} from 'react-icons/si';
-import type { IconType } from 'react-icons';
 import clsx from 'clsx';
 import ColorPickerPortal from './ColorPickerPortal';
 import { useToolbarStateContext } from './ToolbarStateContext';
+import { useFloatingToolbarPosition } from './useFloatingToolbarPosition';
+import {
+  FONT_SIZES, LINE_HEIGHTS, TEXT_COLORS, HIGHLIGHT_COLORS, LANG_ICONS,
+  isPickerActive, getPopupStyle, popupPad, popupMotion,
+} from './toolbarPopupUtils';
 import { useAuthStore } from '../../store/useAuthStore';
 import { canAccess } from '../../lib/planFeatures';
-
-const FONT_SIZES = ['10', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48'];
-const LINE_HEIGHTS = ['1', '1.25', '1.5', '1.75', '2', '2.5'];
-
-const TEXT_COLORS = [
-  { label: 'Default', value: '' },
-  { label: 'Black', value: '#111827' },
-  { label: 'Gray', value: '#9ca3af' },
-  { label: 'Red', value: '#ef4444' },
-  { label: 'Green', value: '#22c55e' },
-  { label: 'Blue', value: '#3b82f6' },
-  { label: 'Pink', value: '#ec4899' },
-];
-
-const HIGHLIGHT_COLORS = [
-  { label: 'None', value: '' },
-  { label: 'Yellow', value: '#fef08a' },
-  { label: 'Green', value: '#bbf7d0' },
-  { label: 'Blue', value: '#bfdbfe' },
-  { label: 'Pink', value: '#fce7f3' },
-  { label: 'Orange', value: '#fed7aa' },
-  { label: 'Purple', value: '#e9d5ff' },
-];
-
-const LANG_ICONS: Record<string, IconType> = {
-  js: SiJavascript, javascript: SiJavascript,
-  ts: SiTypescript, typescript: SiTypescript,
-  py: SiPython, python: SiPython,
-  rust: SiRust, swift: SiSwift,
-  html: SiHtml5, css: SiCss,
-  cpp: SiCplusplus, c: SiC,
-  markdown: SiMarkdown, php: SiPhp,
-  ruby: SiRuby, go: SiGo,
-  kotlin: SiKotlin, lua: SiLua,
-  scala: SiScala, r: SiR,
-  bash: SiGnubash, shell: SiGnubash,
-};
-
-const isPickerActive = (value: string, current: string, defaultValue: string) =>
-  current === value || (value === defaultValue && !current);
-
 
 const PAGES = 3;
 const ITEM_W = 32;
@@ -80,7 +36,6 @@ interface ElevatedToolbarProps {
 }
 
 export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarProps) {
-  const [editor] = useLexicalComposerContext();
   const { user } = useAuthStore();
   const {
     isBold, isItalic, isUnderline, isStrikethrough, isSuperscript, isSubscript,
@@ -108,9 +63,8 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
   const { onItemEnter: onLHEnter, onItemLeave: onLHLeave, Indicator: LHIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: lineHeightRef });
   const { onItemEnter: onCLEnter, onItemLeave: onCLLeave, Indicator: CLIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: codeLangRef });
 
-  const [visible, setVisible] = useState(false);
-  const [scrolledOut, setScrolledOut] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const { visible, scrolledOut, pos, keepVisibleRef, codeFormattingRef } =
+    useFloatingToolbarPosition(disabled, floatingBarRef);
   const [page, setPage] = useState(0);
 
   const [headingPos, setHeadingPos] = useState<PopupAnchor | null>(null);
@@ -119,13 +73,6 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
   const [fontSizePos, setFontSizePos] = useState<PopupAnchor | null>(null);
   const [lineHeightPickerPos, setLineHeightPickerPos] = useState<PopupAnchor | null>(null);
   const [codeLangPickerPos, setCodeLangPickerPos] = useState<PopupAnchor | null>(null);
-
-  const rafRef = useRef<number>(0);
-  const posLockedRef = useRef(false);
-  const keepVisibleRef = useRef(false);
-  const codeFormattingRef = useRef(false);
-  const isMouseSelectingRef = useRef(false);
-  const toolbarWidthRef = useRef(320);
 
   const { style: headingStyle, placement: headingPlacement } = useSmartPopupStyle(headingPos, headingPickerRef, 0);
   const { style: fontSizeStyle, placement: fontSizePlacement } = useSmartPopupStyle(fontSizePos, fontSizeRef, 0);
@@ -150,105 +97,8 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
     closeAllLocalPickers();
   };
 
-  const updatePosition = useCallback(() => {
-    if (isMouseSelectingRef.current) return;
-    if (disabled) { setVisible(false); posLockedRef.current = false; return; }
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
-      if (!keepVisibleRef.current && !codeFormattingRef.current) { setVisible(false); posLockedRef.current = false; }
-      return;
-    }
-    const range = sel.getRangeAt(0);
-    const root = editor.getRootElement();
-    if (!root || !root.contains(range.commonAncestorContainer)) { setVisible(false); posLockedRef.current = false; return; }
-    const rect = range.getBoundingClientRect();
-    if (rect.width === 0 && rect.height === 0) { setVisible(false); posLockedRef.current = false; return; }
-
-    if (!posLockedRef.current) {
-      let scrollParent: HTMLElement | null = root.parentElement;
-      while (scrollParent) {
-        const { overflow, overflowY } = window.getComputedStyle(scrollParent);
-        if (/auto|scroll/.test(overflow + overflowY)) break;
-        scrollParent = scrollParent.parentElement;
-      }
-      if (scrollParent) {
-        const cr = scrollParent.getBoundingClientRect();
-        if (rect.bottom < cr.top || rect.top > cr.bottom) { setVisible(false); return; }
-      }
-
-      const pad = 8;
-      const toolbarH = 44;
-      let top = rect.top - toolbarH - pad;
-      if (top < pad) top = rect.bottom + pad;
-
-      const halfW = toolbarWidthRef.current / 2;
-      const editorRect = root.getBoundingClientRect();
-      const rawLeft = rect.left + rect.width / 2;
-      const left = Math.max(editorRect.left + halfW + pad, Math.min(editorRect.right - halfW - pad, rawLeft));
-
-      setPos({ top, left });
-      posLockedRef.current = true;
-    }
-    setScrolledOut(false);
-    codeFormattingRef.current = false;
-    setVisible(true);
-  }, [editor, disabled]);
-
-  const checkScrollVisibility = useCallback(() => {
-    if (!posLockedRef.current) return;
-    if (keepVisibleRef.current) return;
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
-    const range = sel.getRangeAt(0);
-    const root = editor.getRootElement();
-    if (!root || !root.contains(range.commonAncestorContainer)) return;
-    const rect = range.getBoundingClientRect();
-    let scrollParent: HTMLElement | null = root.parentElement;
-    while (scrollParent) {
-      const { overflow, overflowY } = window.getComputedStyle(scrollParent);
-      if (/auto|scroll/.test(overflow + overflowY)) break;
-      scrollParent = scrollParent.parentElement;
-    }
-    if (!scrollParent) return;
-    const cr = scrollParent.getBoundingClientRect();
-    setScrolledOut(rect.bottom < cr.top || rect.top > cr.bottom);
-  }, [editor]);
-
-  useEffect(() => {
-    const schedule = () => {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(updatePosition);
-    };
-    return editor.registerUpdateListener(schedule);
-  }, [editor, updatePosition]);
-
-  useEffect(() => {
-    const onMouseDown = () => { isMouseSelectingRef.current = true; };
-    const onMouseUp = () => {
-      isMouseSelectingRef.current = false;
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(updatePosition);
-    };
-    window.addEventListener('scroll', checkScrollVisibility, true);
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mouseup', onMouseUp);
-    return () => {
-      window.removeEventListener('scroll', checkScrollVisibility, true);
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('mouseup', onMouseUp);
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [updatePosition, checkScrollVisibility]);
-
-
   useEffect(() => {
     if (!visible) closeAllLocalPickers();
-  }, [visible]);
-
-  useEffect(() => {
-    if (visible && floatingBarRef.current) {
-      toolbarWidthRef.current = floatingBarRef.current.offsetWidth;
-    }
   }, [visible]);
 
   const handleFormatCode = (language?: string) => {
@@ -259,34 +109,13 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
 
   const isInCode = blockType === 'code';
 
+  // Slightly softer border than the shared popupCls — matches the floating bar
   const popupCls = (placement: 'above' | 'below', extra = '') => clsx(
     'fixed overflow-hidden z-3',
     'border border-[color-mix(in_srgb,var(--line)_50%,transparent)]',
     placement === 'above' ? 'border-b-0' : 'border-t-0',
     extra,
   );
-
-  const getPopupStyle = (placement: 'above' | 'below') => ({
-    background: 'transparent',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-    borderRadius: placement === 'above' ? '1rem 1rem 0 0' : '0 0 1rem 1rem',
-    clipPath: placement === 'above' ? 'inset(-1px round 1rem 1rem 0 0)' : 'inset(-1px round 0 0 1rem 1rem)',
-  });
-
-  const popupPad = (placement: 'above' | 'below', near = '2', far = '6') =>
-    placement === 'above' ? `pt-${near} pb-${far}` : `pb-${near} pt-${far}`;
-
-  const popupMotion = (placement: 'above' | 'below') => {
-    const dock  = placement === 'above' ?  16 : -16;
-    const enter = dock + 8;
-    return {
-      initial: { opacity: 0, y: enter },
-      animate: { opacity: 1, y: dock },
-      exit: { opacity: 0, y: enter, transition: { duration: 0.12 } },
-      transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
-    };
-  };
 
   const btn = (
     onClick: (e: React.MouseEvent<HTMLButtonElement>) => void,

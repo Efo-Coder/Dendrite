@@ -1,139 +1,30 @@
-import React, { useRef, useState, useMemo, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useMagicHover } from '../../hooks/useMagicHover';
-import { useSmartPopupStyle } from '../../hooks/useSmartPopupStyle';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import ElevatedToolbar from './ElevatedToolbar';
-import { MagicInput } from '../ui/MagicInput';
 import ImageInsertModal from '../modals/ImageInsertModal';
-import { useGoogleFonts } from '../../hooks/useGoogleFonts';
 import ChecklistTimerModal from '../modals/ChecklistTimerModal';
 import TableInsertModal from '../modals/TableInsertModal';
 import LinkInsertModal from '../modals/LinkInsertModal';
 import ColorPickerPortal from './ColorPickerPortal';
 import { useToolbarState } from './useToolbarState';
 import { ToolbarStateContext } from './ToolbarStateContext';
-import { CODE_LANGUAGE_FRIENDLY_NAME_MAP, getLanguageFriendlyName } from '@lexical/code';
-import {
-  SiJavascript, SiTypescript, SiPython, SiRust, SiSwift,
-  SiHtml5, SiCss, SiCplusplus, SiC,
-  SiMarkdown, SiPhp, SiRuby, SiGo, SiKotlin, SiLua, SiScala,
-  SiR, SiGnubash,
-} from 'react-icons/si';
-import type { IconType } from 'react-icons';
+import { HeadingPicker, CodeLangPicker, FontSizePicker, LineHeightPicker, ChecklistDropdown } from './ToolbarPickers';
+import FontPicker from './FontPicker';
+import { LANG_ICONS, TEXT_COLORS, HIGHLIGHT_COLORS, isToolbarActive, menuBtnCls } from './toolbarPopupUtils';
+import { getLanguageFriendlyName } from '@lexical/code';
 import {
   Bold, Italic, Underline, Strikethrough, Superscript, Subscript, List, ListOrdered, ListChecks, Quote, CodeXml, Link, Image, Minus, Table,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify, Undo, Redo, X,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify, Undo, Redo,
   Heading,
-  ClockCheck, IndentIncrease, IndentDecrease, Info, MoreVertical,
+  IndentIncrease, IndentDecrease, Info, MoreVertical,
   Palette, Highlighter, Type, ListChevronsUpDown, History,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuthStore } from '../../store/useAuthStore';
 import { canAccess } from '../../lib/planFeatures';
-
-
-const LANG_ICONS: Record<string, IconType> = {
-  js: SiJavascript, javascript: SiJavascript,
-  ts: SiTypescript, typescript: SiTypescript,
-  py: SiPython, python: SiPython,
-  rust: SiRust, swift: SiSwift,
-  html: SiHtml5, css: SiCss,
-  cpp: SiCplusplus, c: SiC,
-  markdown: SiMarkdown, php: SiPhp,
-  ruby: SiRuby, go: SiGo,
-  kotlin: SiKotlin, lua: SiLua,
-  scala: SiScala, r: SiR,
-  bash: SiGnubash, shell: SiGnubash,
-};
-
-const FONT_SIZES = ['10', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48'];
-const LINE_HEIGHTS = ['1', '1.25', '1.5', '1.75', '2', '2.5'];
-
-const isPickerActive = (value: string, current: string, defaultValue: string) =>
-  current === value || (value === defaultValue && !current);
-
-const HScrollRow: React.FC<{ className?: string; children: React.ReactNode }> = ({ className, children }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const handler = (e: WheelEvent) => {
-      e.preventDefault();
-      el.scrollLeft += e.deltaY;
-    };
-    el.addEventListener('wheel', handler, { passive: false });
-    return () => el.removeEventListener('wheel', handler);
-  }, []);
-  return <div ref={ref} className={className}>{children}</div>;
-};
-
-const popupCls = (placement: 'above' | 'below', extra = '') =>
-  clsx(
-    'fixed overflow-hidden z-3',
-    'border border-(--line)',
-    placement === 'above' ? 'border-b-0' : 'border-t-0',
-    extra,
-  );
-
-const getPopupStyle = (placement: 'above' | 'below'): React.CSSProperties => ({
-  background: 'transparent',
-  backdropFilter: 'blur(16px)',
-  WebkitBackdropFilter: 'blur(16px)',
-  borderRadius: placement === 'above' ? '1rem 1rem 0 0' : '0 0 1rem 1rem',
-  clipPath: placement === 'above' ? 'inset(-1px round 1rem 1rem 0 0)' : 'inset(-1px round 0 0 1rem 1rem)',
-});
-
-const popupPad = (placement: 'above' | 'below', near = '2', far = '6') =>
-  placement === 'above' ? `pt-${near} pb-${far}` : `pb-${near} pt-${far}`;
-
-const popupMotion = (placement: 'above' | 'below') => {
-  const dock  = placement === 'above' ?  16 : -16;
-  const enter = dock + 8;
-  return {
-    initial: { opacity: 0, y: enter },
-    animate: { opacity: 1, y: dock },
-    exit: { opacity: 0, y: enter, transition: { duration: 0.12 } },
-    transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
-  };
-};
-
-const isToolbarActive = (pickerOpen: boolean, current = '', defaultValue = '') =>
-  pickerOpen || (!!current && current !== defaultValue);
-
-const menuBtnCls = (active: boolean) =>
-  clsx(
-    'icon-btn-md rounded-lg transition-colors shrink-0 disabled:opacity-30',
-    active ? 'text-(--ink) sidebar-item-active' : '',
-  );
-
-const pickerItemCls = (active: boolean, extra = '') =>
-  clsx(
-    'py-1.5 text-sm transition-colors text-left whitespace-nowrap hover:bg-(--surface-hi)',
-    active ? 'text-(--accent)' : 'text-(--ink)',
-    extra,
-  );
-
-const TEXT_COLORS = [
-  { label: 'Default', value: '' },
-  { label: 'Black', value: '#111827' },
-  { label: 'Gray', value: '#9ca3af' },
-  { label: 'Red', value: '#ef4444' },
-  { label: 'Green', value: '#22c55e' },
-  { label: 'Blue', value: '#3b82f6' },
-  { label: 'Pink', value: '#ec4899' },
-];
-
-const HIGHLIGHT_COLORS = [
-  { label: 'None', value: '' },
-  { label: 'Yellow', value: '#fef08a' },
-  { label: 'Green', value: '#bbf7d0' },
-  { label: 'Blue', value: '#bfdbfe' },
-  { label: 'Pink', value: '#fce7f3' },
-  { label: 'Orange', value: '#fed7aa' },
-  { label: 'Purple', value: '#e9d5ff' },
-];
 
 interface RichTextToolbarProps {
   disabled?: boolean;
@@ -153,7 +44,6 @@ type ToolbarBtn = {
   isDisabled?: boolean;
 };
 
-
 const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalChrome = false }: RichTextToolbarProps) => {
   const { user } = useAuthStore();
   const moreMenuRef = useRef<HTMLDivElement>(null);
@@ -164,65 +54,38 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
     isInTable,
     isBold, isItalic, isUnderline, isStrikethrough, isSuperscript, isSubscript,
     blockType, canUndo, canRedo, canOutdent,
-    fontColor, highlightColor, fontFamily, fontSize, lineHeight,
-    fontPickerPos, setFontPickerPos,
+    fontColor, highlightColor, fontSize, lineHeight,
+    fontPickerPos,
     colorPickerPos, setColorPickerPos,
     highlightPickerPos, setHighlightPickerPos,
-    fontSizePos, setFontSizePos,
-    lineHeightPickerPos, setLineHeightPickerPos,
-    headingPickerPos, setHeadingPickerPos,
-    codeLanguage, codeLangPickerPos, setCodeLangPickerPos,
+    fontSizePos,
+    lineHeightPickerPos,
+    headingPickerPos,
+    codeLanguage,
     showLinkModal, setShowLinkModal,
     showImageModal, setShowImageModal,
     showTableModal, setShowTableModal,
     linkUrl, setLinkUrl,
     showTimerModal, setShowTimerModal,
-    checklistDropdownPos, setChecklistDropdownPos,
+    checklistDropdownPos,
     checklistCountdownHours, setChecklistCountdownHours,
     checklistCountdownMinutes, setChecklistCountdownMinutes,
     checklistExistingTimer,
     openColorFromMenu, openHighlightFromMenu, openFontPickerFromMenu, openFontSizeFromMenu, openLineHeightFromMenu,
-    openChecklistDropdown, openTimerModal, handleChecklistTimerSave, handleChecklistTimerRemove,
-    openHeadingPicker, openCodeLangPicker, setCodeNodeLanguage, closeAllPopups,
-    formatText, formatHeading, removeHeading, formatBulletList, formatNumberedList,
-    formatQuote, formatCode, formatCheckList,
+    openChecklistDropdown, handleChecklistTimerSave, handleChecklistTimerRemove,
+    openHeadingPicker, openCodeLangPicker, closeAllPopups,
+    formatText, formatBulletList, formatNumberedList,
+    formatQuote, formatCode,
     indentContent, outdentContent, formatAlignment,
-    applyFontColor, applyHighlight, applyFontFamily, applyFontSize, applyLineHeight,
+    applyFontColor, applyHighlight,
     undoAction, redoAction,
     insertHorizontalRule, insertTable, removeTable,
     insertLink, insertImage, handleLinkSubmit, insertImageFromUrl,
   } = toolbarState;
 
-  const { fonts: allFonts, loading: fontPickerLoading, error: fontPickerError } = useGoogleFonts();
-  const [fontSearch, setFontSearch] = useState('');
-  const filteredFonts = useMemo(
-    () => allFonts.filter((f) => f.family.toLowerCase().includes(fontSearch.toLowerCase())),
-    [allFonts, fontSearch]
-  );
-  useEffect(() => { if (!fontPickerPos) setFontSearch(''); }, [fontPickerPos]);
-
-  const fontPickerRef = useRef<HTMLDivElement>(null);
-  const fontSizeRef = useRef<HTMLDivElement>(null);
-  const lineHeightPickerRef = useRef<HTMLDivElement>(null);
-  const headingPickerRef = useRef<HTMLDivElement>(null);
   const miniToolbarRef = useRef<HTMLDivElement>(null);
-  const codeLangPickerRef = useRef<HTMLDivElement>(null);
-  const checklistDropdownRef = useRef<HTMLDivElement>(null);
-
   const { onItemEnter: onMiniEnter, onItemLeave: onMiniLeave, Indicator: MiniIndicator } = useMagicHover({ mode: 'free', borderRadius: 9999, ref: miniToolbarRef });
   const { onItemEnter: onMoreEnter, onItemLeave: onMoreLeave, Indicator: MoreIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: moreMenuRef });
-  const { onItemEnter: onHPEnter, onItemLeave: onHPLeave, Indicator: HPIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: headingPickerRef });
-  const { onItemEnter: onCLPEnter, onItemLeave: onCLPLeave, Indicator: CLPIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: codeLangPickerRef });
-  const { onItemEnter: onFSPEnter, onItemLeave: onFSPLeave, Indicator: FSPIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: fontSizeRef });
-  const { onItemEnter: onLHPEnter, onItemLeave: onLHPLeave, Indicator: LHPIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: lineHeightPickerRef });
-  const { onItemEnter: onFPEnter, onItemLeave: onFPLeave, Indicator: FPIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: fontPickerRef });
-
-  const { style: headingPickerStyle } = useSmartPopupStyle(headingPickerPos, headingPickerRef, -8);
-  const { style: fontPickerStyle, placement: fontPickerPlacement } = useSmartPopupStyle(fontPickerPos, fontPickerRef, 0);
-  const { style: fontSizeStyle } = useSmartPopupStyle(fontSizePos, fontSizeRef, -8);
-  const { style: lineHeightStyle } = useSmartPopupStyle(lineHeightPickerPos, lineHeightPickerRef, -8);
-  const { style: codeLangStyle, placement: codeLangPlacement } = useSmartPopupStyle(codeLangPickerPos, codeLangPickerRef, 0);
-  const { style: checklistStyle, placement: checklistPlacement } = useSmartPopupStyle(checklistDropdownPos, checklistDropdownRef, 0);
 
   const isInCode = blockType === 'code';
 
@@ -365,7 +228,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
               {MiniIndicator}
               {miniIconBtn(formatBulletList, 'Bullet list', List, blockType === 'bullet', undefined)}
               {miniIconBtn(insertImage, 'Image', Image, false, undefined, isInCode)}
-{onInfo && miniIconBtn(() => onInfo(), 'Info', Info, false, undefined)}
+              {onInfo && miniIconBtn(() => onInfo(), 'Info', Info, false, undefined)}
               {onVersionHistory && miniIconBtn(() => onVersionHistory(), 'Version History', History, false, undefined)}
               {miniIconBtn(() => setShowMoreMenu((v) => !v), 'More tools', MoreVertical, hasPopupActive, undefined)}
             </div>
@@ -470,90 +333,12 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
         getModalPortalRoot()
       )}
 
-      {createPortal(
-        <AnimatePresence>
-          {headingPickerPos && (
-          <>
-          <div className="fixed inset-0" onClick={() => setHeadingPickerPos(null)} />
-          <motion.div
-            ref={headingPickerRef}
-            className={clsx(popupCls('above', popupPad('above')), 'magic-hover')}
-            style={{ ...(headingPickerPos?.width !== undefined ? { width: headingPickerPos.width } : {}), ...headingPickerStyle, ...getPopupStyle('above') }}
-            onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion('above')}
-          >
-            {HPIndicator}
-            <HScrollRow className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden">
-              {blockType.startsWith('h') && (
-                <button
-                  onClick={() => { removeHeading(); setHeadingPickerPos(null); }}
-                  onMouseEnter={onHPEnter} onMouseLeave={onHPLeave}
-                  className="px-2.5 py-1 text-sm rounded-lg transition-colors text-red-500 shrink-0 whitespace-nowrap"
-                >
-                  ✕
-                </button>
-              )}
-              {(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const).map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => { formatHeading(tag); setHeadingPickerPos(null); }}
-                  onMouseEnter={onHPEnter} onMouseLeave={onHPLeave}
-                  className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap', blockType === tag ? 'text-(--accent)' : 'text-(--ink)')}
-                >
-                  {tag.toUpperCase()}
-                </button>
-              ))}
-            </HScrollRow>
-          </motion.div>
-          </>)}
-        </AnimatePresence>,
-        getModalPortalRoot()
-      )}
-
-      {createPortal(
-        <AnimatePresence>
-          {codeLangPickerPos && (
-          <>
-          <div className="fixed inset-0" onClick={() => setCodeLangPickerPos(null)} />
-          <motion.div
-            ref={codeLangPickerRef}
-            className={clsx(popupCls(codeLangPlacement, popupPad(codeLangPlacement)), 'magic-hover')}
-            style={{ ...codeLangStyle, ...getPopupStyle(codeLangPlacement) }}
-            onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion(codeLangPlacement)}
-          >
-            {CLPIndicator}
-            <HScrollRow className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden">
-              <button
-                onClick={() => { formatCode(); setCodeLangPickerPos(null); }}
-                onMouseEnter={onCLPEnter} onMouseLeave={onCLPLeave}
-                className="flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors text-red-500 shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              {Object.entries(CODE_LANGUAGE_FRIENDLY_NAME_MAP).map(([lang, label]) => {
-                const LangIcon = LANG_ICONS[lang];
-                return (
-                  <button
-                    key={lang}
-                    onClick={() => { setCodeNodeLanguage(lang); setCodeLangPickerPos(null); }}
-                    onMouseEnter={onCLPEnter} onMouseLeave={onCLPLeave}
-                    className={clsx('flex items-center gap-1.5 px-2.5 py-1 text-sm rounded-lg transition-colors shrink-0', isPickerActive(lang, codeLanguage, 'js') ? 'text-(--accent)' : 'text-(--ink)')}
-                  >
-                    {LangIcon
-                      ? <LangIcon className="w-3.5 h-3.5 shrink-0" />
-                      : <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center font-mono text-[9px] leading-none ring-1 ring-current rounded-sm">{label.slice(0, 3).toUpperCase()}</span>
-                    }
-                    {label}
-                  </button>
-                );
-              })}
-            </HScrollRow>
-          </motion.div>
-          </>)}
-        </AnimatePresence>,
-        getModalPortalRoot()
-      )}
+      <HeadingPicker />
+      <CodeLangPicker />
+      <FontSizePicker />
+      <LineHeightPicker />
+      <FontPicker />
+      <ChecklistDropdown />
 
       <ColorPickerPortal
         position={colorPickerPos}
@@ -580,68 +365,6 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
         canCustomColor={canAccess(user?.plan, 'customColor')}
       />
 
-      {createPortal(
-        <AnimatePresence>
-          {fontSizePos && (
-          <>
-          <div className="fixed inset-0" onClick={() => setFontSizePos(null)} />
-          <motion.div
-            ref={fontSizeRef}
-            className={clsx(popupCls('above', popupPad('above')), 'magic-hover')}
-            style={{ ...(fontSizePos?.width !== undefined ? { width: fontSizePos.width } : {}), ...fontSizeStyle, ...getPopupStyle('above') }}
-            onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion('above')}
-          >
-            {FSPIndicator}
-            <HScrollRow className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden">
-              {FONT_SIZES.map((size) => (
-                <button
-                  key={size}
-                  onClick={() => { applyFontSize(size); setFontSizePos(null); }}
-                  onMouseEnter={onFSPEnter} onMouseLeave={onFSPLeave}
-                  className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap', isPickerActive(size, fontSize, '12') ? 'text-(--accent)' : 'text-(--ink)')}
-                >
-                  {size}
-                </button>
-              ))}
-            </HScrollRow>
-          </motion.div>
-          </>)}
-        </AnimatePresence>,
-        getModalPortalRoot()
-      )}
-
-      {createPortal(
-        <AnimatePresence>
-          {lineHeightPickerPos && (
-          <>
-          <div className="fixed inset-0" onClick={() => setLineHeightPickerPos(null)} />
-          <motion.div
-            ref={lineHeightPickerRef}
-            className={clsx(popupCls('above', popupPad('above')), 'magic-hover')}
-            style={{ ...(lineHeightPickerPos?.width !== undefined ? { width: lineHeightPickerPos.width } : {}), ...lineHeightStyle, ...getPopupStyle('above') }}
-            onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion('above')}
-          >
-            {LHPIndicator}
-            <HScrollRow className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden">
-              {LINE_HEIGHTS.map((value) => (
-                <button
-                  key={value}
-                  onClick={() => { applyLineHeight(value); setLineHeightPickerPos(null); }}
-                  onMouseEnter={onLHPEnter} onMouseLeave={onLHPLeave}
-                  className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap', isPickerActive(value, lineHeight, '1.5') ? 'text-(--accent)' : 'text-(--ink)')}
-                >
-                  {value}×
-                </button>
-              ))}
-            </HScrollRow>
-          </motion.div>
-          </>)}
-        </AnimatePresence>,
-        getModalPortalRoot()
-      )}
-
       <LinkInsertModal
         isOpen={showLinkModal}
         onClose={() => setShowLinkModal(false)}
@@ -657,134 +380,6 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
         onClose={() => setShowImageModal(false)}
         onInsert={insertImageFromUrl}
       />
-
-      {createPortal(
-        <AnimatePresence>
-          {fontPickerPos && (
-          <>
-          <div className="fixed inset-0" onClick={() => setFontPickerPos(null)} />
-          <motion.div
-            ref={fontPickerRef}
-            className={clsx(popupCls(fontPickerPlacement, popupPad(fontPickerPlacement, '1', '4')), 'magic-hover')}
-            style={{ width: 220, ...fontPickerStyle, ...getPopupStyle(fontPickerPlacement) }}
-            onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion(fontPickerPlacement)}
-          >
-            {FPIndicator}
-            <div className="flex flex-col px-1 py-1">
-              <MagicInput
-                type="text"
-                value={fontSearch}
-                onChange={(e) => setFontSearch(e.target.value)}
-                placeholder="Search font..."
-                className="w-full input border-(--line)"
-                style={{
-                  background: 'var(--bg)',
-                  borderWidth: '0.5px',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  fontFamily: 'var(--serif-display)',
-                  fontSize: '15px',
-                  color: 'var(--ink)',
-                  transition: 'border-color .15s',
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                wrapperStyle={{ borderRadius: '10px' }}
-              />
-              <div style={{ height: '0.5px', background: 'var(--line-soft)', margin: '8px 0' }} />
-              {fontPickerLoading ? (
-                <p style={{ color: 'var(--ink-dim)', fontFamily: 'var(--mono)', fontSize: 12 }}>Loading…</p>
-              ) : fontPickerError ? (
-                <p style={{ color: 'var(--danger)', fontFamily: 'var(--mono)', fontSize: 12 }}>{fontPickerError}</p>
-              ) : (
-                <div className="overflow-y-auto max-h-52">
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      type="button"
-                      onClick={() => { applyFontFamily(''); setFontPickerPos(null); }}
-                      onMouseEnter={onFPEnter} onMouseLeave={onFPLeave}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all text-sm"
-                      style={!fontFamily ? {
-                        backgroundColor: 'color-mix(in oklch, var(--accent) 10%, transparent)',
-                        border: '1px solid color-mix(in oklch, var(--accent) 50%, transparent)',
-                        color: 'var(--accent)',
-                      } : { color: 'var(--ink-mid)' }}
-                    >
-                      <span>Default</span>
-                      {!fontFamily && <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--accent)' }} />}
-                    </button>
-                    {filteredFonts.map((font) => (
-                      <button
-                        key={font.family}
-                        type="button"
-                        onClick={() => { applyFontFamily(font.family); setFontPickerPos(null); }}
-                        onMouseEnter={onFPEnter} onMouseLeave={onFPLeave}
-                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all text-sm"
-                        style={fontFamily === font.family ? {
-                          backgroundColor: 'color-mix(in oklch, var(--accent) 10%, transparent)',
-                          border: '1px solid color-mix(in oklch, var(--accent) 50%, transparent)',
-                          color: 'var(--accent)',
-                          fontFamily: `'${font.family}', sans-serif`,
-                        } : {
-                          color: 'var(--ink-mid)',
-                          fontFamily: `'${font.family}', sans-serif`,
-                        }}
-                      >
-                        <span>{font.family}</span>
-                        {fontFamily === font.family && <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--accent)' }} />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-          </>)}
-        </AnimatePresence>,
-        getModalPortalRoot()
-      )}
-
-      {createPortal(
-        <AnimatePresence>
-          {checklistDropdownPos && (
-          <>
-          <div className="fixed inset-0" onClick={() => setChecklistDropdownPos(null)} />
-          <motion.div
-            ref={checklistDropdownRef}
-            className={popupCls(checklistPlacement, popupPad(checklistPlacement, '1', '4'))}
-            style={{ ...checklistStyle, ...getPopupStyle(checklistPlacement) }}
-            onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion(checklistPlacement)}
-          >
-            <button
-              onClick={() => { formatCheckList(); setChecklistDropdownPos(null); }}
-              className={pickerItemCls(blockType === 'check', 'flex items-center gap-2 px-3 w-full')}
-            >
-              <ListChecks className="w-4 h-4 shrink-0" />
-              Checkbox
-            </button>
-            {(() => {
-              const canTimer = canAccess(user?.plan, 'timerChecklist');
-              return (
-                <button
-                  onClick={canTimer ? () => { setChecklistDropdownPos(null); openTimerModal(); } : undefined}
-                  className={pickerItemCls(blockType === 'timer-checkbox', clsx('flex items-center gap-2 px-3 w-full', !canTimer && 'cursor-not-allowed'))}
-                >
-                  <ClockCheck className={clsx('w-4 h-4 shrink-0', !canTimer && 'opacity-40')} />
-                  <span className={clsx('flex-1', !canTimer && 'opacity-40')}>Timer-Checkbox</span>
-                  {!canTimer && (
-                    <span style={{ fontSize: '9px', fontFamily: 'var(--mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', opacity: 0.85, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '1px 4px', borderRadius: '3px', boxShadow: '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)' }}>
-                      Writer
-                    </span>
-                  )}
-                </button>
-              );
-            })()}
-          </motion.div>
-          </>)}
-        </AnimatePresence>,
-        getModalPortalRoot()
-      )}
 
       <ChecklistTimerModal
         isOpen={showTimerModal}

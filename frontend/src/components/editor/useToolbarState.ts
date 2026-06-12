@@ -21,6 +21,7 @@ import {
   COMMAND_PRIORITY_LOW,
   $createParagraphNode,
   ElementFormatType,
+  $isElementNode,
   $isTextNode,
   LexicalNode,
 } from 'lexical';
@@ -39,19 +40,8 @@ import { TOGGLE_LINK_COMMAND } from '@lexical/link';
 import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRuleNode';
 import { INSERT_TABLE_COMMAND, $isTableNode } from '@lexical/table';
 import { INSERT_IMAGE_COMMAND } from './ImagePlugin';
-import { useCheckResetStore, ResetTimer } from '../../store/useCheckResetStore';
-import {
-  $isTimerListItemNode,
-  $createTimerListItemNode,
-  type TimerConfig,
-} from './TimerListItemNode';
-import { $createListItemNode, $createListNode } from '@lexical/list';
-
-function generateResetId(): string {
-  return typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
+import { $isTimerListItemNode } from './TimerListItemNode';
+import { useChecklistTimer, type SavedSelection } from './useChecklistTimer';
 
 const parseStyle = (styleStr: string): Record<string, string> => {
   const result: Record<string, string> = {};
@@ -88,7 +78,6 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
   };
 
   const [editor] = useLexicalComposerContext();
-  const { timers, setTimer, removeTimer } = useCheckResetStore();
 
   const [wordCount, setWordCount] = useState(0);
   const motionCount = useMotionValue(0);
@@ -135,8 +124,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
   const [showTableModal, setShowTableModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
 
-  type SavedPoint = { key: string; offset: number; type: 'text' | 'element' };
-  const savedSelectionRef = useRef<{ anchor: SavedPoint; focus: SavedPoint } | null>(null);
+  const savedSelectionRef = useRef<SavedSelection>(null);
 
   const saveSelection = () => {
     editor.getEditorState().read(() => {
@@ -152,12 +140,8 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     });
   };
 
-  const checklistNodeKeyRef = useRef<string | null>(null);
-  const [showTimerModal, setShowTimerModal] = useState(false);
   const [checklistDropdownPos, setChecklistDropdownPos] = useState<PopupAnchor | null>(null);
-  const [checklistCountdownHours, setChecklistCountdownHours] = useState(1);
-  const [checklistCountdownMinutes, setChecklistCountdownMinutes] = useState(0);
-  const [checklistExistingTimer, setChecklistExistingTimer] = useState<ResetTimer | undefined>(undefined);
+  const checklistTimer = useChecklistTimer(saveSelection, savedSelectionRef);
 
   const closeAllPopups = () => {
     setColorPickerPos(null);
@@ -215,157 +199,6 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     if (checklistDropdownPos) { closeAllPopups(); return; }
     closeAllPopups();
     setChecklistDropdownPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
-  };
-
-  const openTimerModal = () => {
-    saveSelection();
-    let existingTimerConfig: TimerConfig | undefined;
-    let existingTimer: ResetTimer | undefined;
-
-    checklistNodeKeyRef.current = null;
-    editor.read(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) return;
-      let node: LexicalNode | null = selection.anchor.getNode();
-      while (node && !$isListItemNode(node)) node = node.getParent();
-      if (!$isListItemNode(node)) return;
-      checklistNodeKeyRef.current = node.getKey();
-      if ($isTimerListItemNode(node)) {
-        existingTimerConfig = node.getTimerConfig();
-        existingTimer = timers[node.getResetId()] ?? { type: 'countdown', endsAt: 0, totalMs: existingTimerConfig.totalMs };
-      }
-    });
-
-    if (existingTimerConfig) {
-      setChecklistCountdownHours(Math.floor(existingTimerConfig.totalMs / 3_600_000));
-      setChecklistCountdownMinutes(Math.floor((existingTimerConfig.totalMs % 3_600_000) / 60_000));
-    } else {
-      setChecklistCountdownHours(1);
-      setChecklistCountdownMinutes(0);
-    }
-    setChecklistExistingTimer(existingTimer);
-    setShowTimerModal(true);
-  };
-
-  const handleChecklistTimerSave = () => {
-    const nodeKey = checklistNodeKeyRef.current;
-    const totalMs = (checklistCountdownHours * 60 + checklistCountdownMinutes) * 60_000;
-    if (totalMs <= 0) return;
-
-    if (!nodeKey) {
-      // Kein vorhandenes Listenelement — neue Timer-Checkbox an der gespeicherten Cursorposition erstellen
-      const timerConfig: TimerConfig = { type: 'countdown', totalMs };
-      const newResetId = generateResetId();
-      checklistNodeKeyRef.current = null;
-      setShowTimerModal(false);
-
-      editor.update(() => {
-        const saved = savedSelectionRef.current;
-        savedSelectionRef.current = null;
-        if (saved) {
-          const an = $getNodeByKey(saved.anchor.key);
-          const fn = $getNodeByKey(saved.focus.key);
-          if (an && fn) {
-            const sel = $createRangeSelection();
-            sel.anchor.set(saved.anchor.key, saved.anchor.offset, saved.anchor.type);
-            sel.focus.set(saved.focus.key, saved.focus.offset, saved.focus.type);
-            $setSelection(sel);
-          }
-        }
-
-        const sel = $getSelection();
-        if (!$isRangeSelection(sel)) return;
-
-        const anchorNode = sel.anchor.getNode();
-
-        // Prüfen ob Cursor bereits in einem Listenelement sitzt
-        let listItem: LexicalNode | null = anchorNode;
-        while (listItem && !$isListItemNode(listItem)) listItem = listItem.getParent();
-
-        const timerNode = $createTimerListItemNode(timerConfig, newResetId);
-        timerNode.setChecked(false);
-
-        if (listItem && $isListItemNode(listItem) && !$isTimerListItemNode(listItem)) {
-          for (const child of listItem.getChildren()) timerNode.append(child);
-          listItem.replace(timerNode);
-        } else {
-          // Cursor in Paragraph oder anderem Block → in Check-Liste einbetten
-          const topEl = anchorNode.getKey() === 'root'
-            ? anchorNode
-            : (anchorNode.getTopLevelElementOrThrow() as LexicalNode);
-          if ('getChildren' in topEl) {
-            for (const child of (topEl as any).getChildren() as LexicalNode[]) timerNode.append(child);
-          }
-          const listNode = $createListNode('check');
-          listNode.append(timerNode);
-          topEl.replace(listNode);
-        }
-
-        timerNode.selectEnd();
-      });
-      return;
-    }
-
-    const timerConfig: TimerConfig = { type: 'countdown', totalMs };
-
-    // Read existing resetId and checked state before update (new nodes get a pre-generated one)
-    let resetId = generateResetId();
-    let nodeIsChecked = false;
-    editor.getEditorState().read(() => {
-      const node = $getNodeByKey(nodeKey);
-      if ($isTimerListItemNode(node)) {
-        resetId = node.getResetId();
-        nodeIsChecked = node.getChecked() ?? false;
-      } else if ($isListItemNode(node)) {
-        nodeIsChecked = node.getChecked() ?? false;
-      }
-    });
-    const finalResetId = resetId;
-
-    editor.update(() => {
-      const node = $getNodeByKey(nodeKey);
-      if (!node) return;
-      if ($isTimerListItemNode(node)) {
-        node.setTimerConfig(timerConfig);
-      } else if ($isListItemNode(node)) {
-        const timerNode = $createTimerListItemNode(timerConfig, finalResetId);
-        timerNode.setChecked(node.getChecked() ?? false);
-        for (const child of node.getChildren()) timerNode.append(child);
-        node.replace(timerNode);
-      }
-    });
-
-    if (nodeIsChecked) {
-      setTimer(finalResetId, { type: 'countdown', endsAt: Date.now() + totalMs, totalMs });
-    }
-    // Unchecked: TimerCheckboxPlugin startet den Timer beim ersten Check
-
-    checklistNodeKeyRef.current = null;
-    setShowTimerModal(false);
-  };
-
-  const handleChecklistTimerRemove = () => {
-    const nodeKey = checklistNodeKeyRef.current;
-    if (!nodeKey) { setShowTimerModal(false); return; }
-
-    let resetIdToRemove = '';
-    editor.getEditorState().read(() => {
-      const node = $getNodeByKey(nodeKey);
-      if ($isTimerListItemNode(node)) resetIdToRemove = node.getResetId();
-    });
-
-    editor.update(() => {
-      const node = $getNodeByKey(nodeKey);
-      if (!$isTimerListItemNode(node)) return;
-      const regularNode = $createListItemNode();
-      regularNode.setChecked(node.getChecked() ?? false);
-      for (const child of node.getChildren()) regularNode.append(child);
-      node.replace(regularNode);
-    });
-
-    if (resetIdToRemove) removeTimer(resetIdToRemove);
-    checklistNodeKeyRef.current = null;
-    setShowTimerModal(false);
   };
 
   const openHeadingPicker = (e: MouseEvent<HTMLButtonElement>) => {
@@ -431,7 +264,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
         setCanOutdent(listItemCount >= 2);
       } else {
         const topEl = anchorNode.getKey() === 'root' ? anchorNode : anchorNode.getTopLevelElementOrThrow();
-        const indent = typeof (topEl as any).getIndent === 'function' ? (topEl as any).getIndent() : 0;
+        const indent = $isElementNode(topEl) ? topEl.getIndent() : 0;
         setCanOutdent(indent > 0);
       }
 
@@ -714,11 +547,8 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     showImageModal, setShowImageModal,
     showTableModal, setShowTableModal,
     linkUrl, setLinkUrl,
-    showTimerModal, setShowTimerModal,
     checklistDropdownPos, setChecklistDropdownPos,
-    checklistCountdownHours, setChecklistCountdownHours,
-    checklistCountdownMinutes, setChecklistCountdownMinutes,
-    checklistExistingTimer,
+    ...checklistTimer,
     closeAllPopups,
     openColorFromMenu,
     openHighlightFromMenu,
@@ -726,9 +556,6 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     openFontSizeFromMenu,
     openLineHeightFromMenu,
     openChecklistDropdown,
-    openTimerModal,
-    handleChecklistTimerSave,
-    handleChecklistTimerRemove,
     openHeadingPicker,
     openCodeLangPicker,
     formatText,
