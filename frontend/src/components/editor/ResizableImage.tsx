@@ -62,6 +62,9 @@ const ResizableImage = ({
   const aspectRatioRef = useRef(1);
   const editorWidthRef = useRef(800);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Height captured right before a user collapse/expand toggle; null means no animation
+  const collapseAnimFromRef = useRef<number | null>(null);
+  const collapseAnimatingRef = useRef(false);
 
   const { style: popupStyle } = useSmartPopupStyle(anchor, controlsRef);
 
@@ -220,7 +223,8 @@ const ResizableImage = ({
   };
 
   const handleMouseEnter = () => {
-    if (collapsed) return;
+    // No popup while the expand animation runs — its anchor would be measured mid-animation
+    if (collapsed || collapseAnimatingRef.current) return;
     if (!showControls) setShowControls(true);
   };
 
@@ -301,6 +305,7 @@ const ResizableImage = ({
   };
 
   const handleCollapse = () => {
+    collapseAnimFromRef.current = imageRef.current?.getBoundingClientRect().height ?? null;
     setCollapsed(true);
     setShowControls(false);
     setAnchor(null);
@@ -308,9 +313,43 @@ const ResizableImage = ({
   };
 
   const handleExpand = () => {
+    collapseAnimFromRef.current = imageRef.current?.getBoundingClientRect().height ?? null;
     setCollapsed(false);
     onCollapseChange?.(false);
   };
+
+  // Animate the real height (not a transform) so surrounding text reflows with the box.
+  // Runs only after a user toggle (ref set in the handlers) — undo/redo and the initial
+  // mount sync collapsed via props and stay instant.
+  useLayoutEffect(() => {
+    const from = collapseAnimFromRef.current;
+    collapseAnimFromRef.current = null;
+    const el = imageRef.current;
+    if (from === null || !el) return;
+    const to = el.getBoundingClientRect().height;
+    if (Math.abs(from - to) < 1) return;
+
+    // Clip only while animating — expanded state needs visible overflow for resize handles
+    collapseAnimatingRef.current = true;
+    el.style.overflow = 'hidden';
+    const heightAnim = el.animate(
+      [{ height: `${from}px` }, { height: `${to}px` }],
+      { duration: 240, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' }
+    );
+    el.firstElementChild?.animate(
+      [{ opacity: 0 }, { opacity: 1 }],
+      { duration: 200, delay: 40, fill: 'backwards', easing: 'ease-out' }
+    );
+    const settle = () => {
+      el.style.overflow = '';
+      collapseAnimatingRef.current = false;
+    };
+    heightAnim.addEventListener('finish', settle);
+    return () => {
+      heightAnim.cancel();
+      settle();
+    };
+  }, [collapsed]);
 
   return (
     <div ref={imageRef} style={getContainerStyle()} className={collapsed ? '' : 'group'} onMouseEnter={handleMouseEnter} onMouseMove={handleMouseEnter}>
