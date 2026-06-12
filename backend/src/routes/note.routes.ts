@@ -12,15 +12,13 @@ import {
   toggleArchive,
   toggleDelete,
   reorderNotes,
-  getNoteVersions,
-  restoreNoteVersion,
-  exportNoteToPdf,
 } from '../controllers/note.controller';
+import { getNoteVersions, restoreNoteVersion } from '../controllers/noteVersion.controller';
+import { exportNoteToPdf } from '../controllers/noteExport.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Alle Routes benötigen Authentifizierung
 router.use(authenticateToken);
 
 router.get('/', getAllNotes);
