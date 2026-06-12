@@ -1,19 +1,15 @@
 ﻿import { useState, useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { useMagicHover } from '../../hooks/useMagicHover';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { useSettingsStore, PaletteId, FontId, DensityId, DateDisplayMode, CursorStyle } from '../../store/useSettingsStore';
-import { useAuthStore } from '../../store/useAuthStore';
-import { authService } from '../../services/auth.service';
-import { feedbackService } from '../../services/feedback.service';
 import { LOGO_SRC } from '../../config/brand';
 import { modKey } from '../../lib/platform';
 import ToggleSwitch from '../ui/ToggleSwitch';
 import RangeSlider from '../ui/RangeSlider';
-import { MagicInput } from '../ui/MagicInput';
 import Counter from '../ui/Counter';
+import SyncTab from './settings/SyncTab';
+import FeedbackTab from './settings/FeedbackTab';
 
 const PALETTES: { id: PaletteId; name: string; color: string }[] = [
   { id: 'onyx',     name: 'Onyx & Champagne', color: 'oklch(0.2253 0.0084 79.15)'  },
@@ -65,7 +61,6 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     activeLine, setActiveLine,
     density, setDensity,
     dateDisplayMode, setDateDisplayMode,
-    autoSave, setAutoSave,
     cursorStyle, setCursorStyle,
   } = useSettingsStore();
 
@@ -76,109 +71,6 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const [closing, setClosing] = useState(false);
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
-
-  const { user } = useAuthStore();
-  const [twoFASetup, setTwoFASetup] = useState<{ secret: string; qrCode: string } | null>(null);
-  const [twoFACode, setTwoFACode] = useState('');
-  const [twoFALoading, setTwoFALoading] = useState(false);
-  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
-  const [disablePassword, setDisablePassword] = useState('');
-  const [showDisable, setShowDisable] = useState(false);
-
-  const [starHover, setStarHover] = useState(0);
-  const [starRating, setStarRating] = useState(0);
-  const [ratingComment, setRatingComment] = useState('');
-  const [ratingLoading, setRatingLoading] = useState(false);
-  const [ratingDone, setRatingDone] = useState(false);
-
-  const [bugTitle, setBugTitle] = useState('');
-  const [bugDesc, setBugDesc] = useState('');
-  const [bugLoading, setBugLoading] = useState(false);
-  const [bugDone, setBugDone] = useState(false);
-
-  const handleSubmitRating = async () => {
-    if (!starRating) return;
-    setRatingLoading(true);
-    try {
-      await Promise.all([
-        feedbackService.submitRating(starRating, ratingComment || undefined),
-        new Promise(r => setTimeout(r, 900)),
-      ]);
-      setRatingDone(true);
-    } catch {
-    } finally {
-      setRatingLoading(false);
-    }
-  };
-
-  const handleSubmitBug = async () => {
-    if (!bugTitle.trim() || !bugDesc.trim()) return;
-    setBugLoading(true);
-    try {
-      await Promise.all([
-        feedbackService.submitBugReport(bugTitle.trim(), bugDesc.trim()),
-        new Promise(r => setTimeout(r, 900)),
-      ]);
-      setBugDone(true);
-      setBugTitle('');
-      setBugDesc('');
-    } catch {
-    } finally {
-      setBugLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (user) setTwoFAEnabled((user as any).twoFactorEnabled ?? false);
-  }, [user]);
-
-  const handleSetup2FA = async () => {
-    setTwoFALoading(true);
-    try {
-      const [data] = await Promise.all([
-        authService.setup2FA(),
-        new Promise(r => setTimeout(r, 900)),
-      ]);
-      setTwoFASetup(data);
-    } catch {
-    } finally {
-      setTwoFALoading(false);
-    }
-  };
-
-  const handleEnable2FA = async () => {
-    if (twoFACode.length < 6) return;
-    setTwoFALoading(true);
-    try {
-      await Promise.all([
-        authService.enable2FA(twoFACode),
-        new Promise(r => setTimeout(r, 900)),
-      ]);
-      setTwoFAEnabled(true);
-      setTwoFASetup(null);
-      setTwoFACode('');
-    } catch {
-    } finally {
-      setTwoFALoading(false);
-    }
-  };
-
-  const handleDisable2FA = async () => {
-    if (!disablePassword) return;
-    setTwoFALoading(true);
-    try {
-      await Promise.all([
-        authService.disable2FA(disablePassword),
-        new Promise(r => setTimeout(r, 900)),
-      ]);
-      setTwoFAEnabled(false);
-      setShowDisable(false);
-      setDisablePassword('');
-    } catch {
-    } finally {
-      setTwoFALoading(false);
-    }
-  };
 
   useEffect(() => {
     if (isOpen) {
@@ -372,115 +264,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               </>
             )}
 
-            {tab === 'sync' && (
-              <>
-                <div className="settings-row">
-                  <div className="lbl">Auto-save<small>Notes are saved automatically as you type.</small></div>
-                  <ToggleSwitch checked={autoSave} onChange={setAutoSave} />
-                </div>
-                <div className="settings-row">
-                  <div className="lbl">Local backup<small>Encrypted on disk.</small></div>
-                  <button className="btn-ghost" style={{ border: '0.5px solid var(--line)' }}>Export</button>
-                </div>
-
-                <div className="settings-row" style={{ alignItems: 'flex-start' }}>
-                  <div className="lbl">
-                    Two-factor authentication
-                    <small>{twoFAEnabled ? 'Your account is protected with an authenticator app.' : 'Add an extra layer of security to your account.'}</small>
-                  </div>
-                  {twoFAEnabled ? (
-                    <button
-                      className="btn-ghost"
-                      style={{ border: '0.5px solid var(--line)', color: 'var(--ink-mid)' }}
-                      onClick={() => setShowDisable(!showDisable)}
-                    >
-                      Disable
-                    </button>
-                  ) : (
-                    !twoFASetup && (
-                      <button
-                        className="btn-ghost"
-                        style={{ border: '0.5px solid var(--line)' }}
-                        onClick={handleSetup2FA}
-                        disabled={twoFALoading}
-                      >
-                        {twoFALoading ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Loader2 size={13} className="animate-spin" />Loading…</span> : 'Enable'}
-                      </button>
-                    )
-                  )}
-                </div>
-
-                {twoFASetup && !twoFAEnabled && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '0.5px solid var(--line)' }}>
-                    <p style={{ margin: 0, fontFamily: 'var(--serif-body)', fontSize: '13px', color: 'var(--ink-mid)', lineHeight: 1.6 }}>
-                      Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.), then enter the 6-digit code to confirm.
-                    </p>
-                    <img src={twoFASetup.qrCode} alt="QR Code" style={{ width: '160px', height: '160px', borderRadius: '8px', alignSelf: 'center' }} />
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <MagicInput
-                        type="text"
-                        inputMode="numeric"
-                        value={twoFACode}
-                        onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        className="input"
-                        placeholder="000000"
-                        style={{ letterSpacing: '0.2em', textAlign: 'center' }}
-                        wrapperStyle={{ flex: 1 }}
-                        maxLength={6}
-                      />
-                      <button
-                        className="btn-ghost"
-                        style={{ border: '0.5px solid var(--line)' }}
-                        onClick={handleEnable2FA}
-                        disabled={twoFALoading || twoFACode.length < 6}
-                      >
-                        {twoFALoading ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Loader2 size={13} className="animate-spin" />Verifying…</span> : 'Confirm'}
-                      </button>
-                    </div>
-                    <button
-                      className="no-press"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-dim)', textAlign: 'left' }}
-                      onClick={() => setTwoFASetup(null)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-
-                {showDisable && twoFAEnabled && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '0.5px solid var(--line)' }}>
-                    <p style={{ margin: 0, fontFamily: 'var(--serif-body)', fontSize: '13px', color: 'var(--ink-mid)' }}>
-                      Enter your password to disable two-factor authentication.
-                    </p>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <MagicInput
-                        type="password"
-                        value={disablePassword}
-                        onChange={(e) => setDisablePassword(e.target.value)}
-                        className="input"
-                        placeholder="Your password"
-                        wrapperStyle={{ flex: 1 }}
-                      />
-                      <button
-                        className="btn-ghost"
-                        style={{ border: '0.5px solid var(--line)', color: 'var(--ink-mid)' }}
-                        onClick={handleDisable2FA}
-                        disabled={twoFALoading || !disablePassword}
-                      >
-                        {twoFALoading ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Loader2 size={13} className="animate-spin" />Disabling…</span> : 'Confirm'}
-                      </button>
-                    </div>
-                    <button
-                      className="no-press"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-dim)', textAlign: 'left' }}
-                      onClick={() => { setShowDisable(false); setDisablePassword(''); }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
+            {tab === 'sync' && <SyncTab />}
 
             {tab === 'shortcuts' && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '12px 24px', fontFamily: 'var(--serif-body)', fontSize: 14 }}>
@@ -493,145 +277,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               </div>
             )}
 
-            {tab === 'feedback' && (
-              <div style={{ fontFamily: 'var(--serif-body)' }}>
-                <div style={{ marginBottom: 28 }}>
-                  <div className="lbl" style={{ marginBottom: 12 }}>
-                    Rate your experience
-                    <small>How do you feel about Dendrite so far?</small>
-                  </div>
-                  <AnimatePresence mode="wait">
-                    {ratingDone ? (
-                      <motion.div
-                        key="rating-done"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.2 }}
-                        style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-dim)', letterSpacing: '0.14em', textTransform: 'uppercase' }}
-                      >
-                        Thank you — your feedback matters.
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="rating-form"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.2 }}
-                        style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-                      >
-                        <div style={{ display: 'flex', gap: 1 }}>
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <button
-                              key={s}
-                              className="no-press"
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontSize: 22, color: s <= (starHover || starRating) ? 'var(--accent)' : 'var(--line)', transition: 'color 0.15s' }}
-                              onMouseEnter={() => setStarHover(s)}
-                              onMouseLeave={() => setStarHover(0)}
-                              onClick={() => setStarRating(s)}
-                            >
-                              ★
-                            </button>
-                          ))}
-                        </div>
-                        <AnimatePresence>
-                          {starRating > 0 && (
-                            <motion.textarea
-                              key="rating-textarea"
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.18 }}
-                              value={ratingComment}
-                              onChange={(e) => setRatingComment(e.target.value)}
-                              placeholder="Optional comment…"
-                              rows={2}
-                              style={{ fontFamily: 'var(--serif-body)', fontSize: 13, color: 'var(--ink)', background: 'var(--surface)', border: '0.5px solid var(--line)', borderRadius: 6, padding: '8px 10px', resize: 'none', outline: 'none', width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}
-                            />
-                          )}
-                        </AnimatePresence>
-                        <AnimatePresence>
-                          {starRating > 0 && (
-                            <motion.div
-                              key="rating-submit"
-                              initial={{ opacity: 0, y: 4 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: 4 }}
-                              transition={{ duration: 0.18 }}
-                            >
-                              <button
-                                className="btn-ghost"
-                                style={{ border: '0.5px solid var(--line)' }}
-                                onClick={handleSubmitRating}
-                                disabled={ratingLoading}
-                              >
-                                {ratingLoading ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Loader2 size={13} className="animate-spin" />Sending…</span> : 'Submit'}
-                              </button>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                <div style={{ borderTop: '0.5px solid var(--line)', margin: '0 0 28px' }} />
-
-                <div>
-                  <div className="lbl" style={{ marginBottom: 12 }}>
-                    Report a bug
-                    <small>Something broken? Let us know.</small>
-                  </div>
-                  <AnimatePresence mode="wait">
-                    {bugDone ? (
-                      <motion.div
-                        key="bug-done"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.2 }}
-                        style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-dim)', letterSpacing: '0.14em', textTransform: 'uppercase' }}
-                      >
-                        Report received — we'll look into it.
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="bug-form"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.2 }}
-                        style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-                      >
-                        <input
-                          type="text"
-                          value={bugTitle}
-                          onChange={(e) => setBugTitle(e.target.value)}
-                          placeholder="Short title…"
-                          style={{ fontFamily: 'var(--serif-body)', fontSize: 13, color: 'var(--ink)', background: 'var(--surface)', border: '0.5px solid var(--line)', borderRadius: 6, padding: '8px 10px', outline: 'none', width: '100%', boxSizing: 'border-box' }}
-                        />
-                        <textarea
-                          value={bugDesc}
-                          onChange={(e) => setBugDesc(e.target.value)}
-                          placeholder="Describe what happened…"
-                          rows={3}
-                          style={{ fontFamily: 'var(--serif-body)', fontSize: 13, color: 'var(--ink)', background: 'var(--surface)', border: '0.5px solid var(--line)', borderRadius: 6, padding: '8px 10px', resize: 'none', outline: 'none', width: '100%', boxSizing: 'border-box' }}
-                        />
-                        <button
-                          className="btn-ghost"
-                          style={{ border: '0.5px solid var(--line)', alignSelf: 'flex-start' }}
-                          onClick={handleSubmitBug}
-                          disabled={bugLoading || !bugTitle.trim() || !bugDesc.trim()}
-                        >
-                          {bugLoading ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Loader2 size={13} className="animate-spin" />Sending report…</span> : 'Send report'}
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            )}
+            {tab === 'feedback' && <FeedbackTab />}
 
             {tab === 'about' && (
               <div style={{ textAlign: 'center', padding: '20px 0', fontFamily: 'var(--serif-display)' }}>
