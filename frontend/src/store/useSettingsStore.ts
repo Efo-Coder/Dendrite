@@ -64,14 +64,21 @@ export const useSettingsStore = create<SettingsState>()(
         if (version < 2) {
           return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: 'cormorant', fontSize: 19, dropCap: true, activeLine: true, density: 'regular', autoSave: true, cursorStyle: 'classic' };
         }
-        if (version < 3) return { ..._, cursorStyle: 'classic' };
-        if (version < 4) {
-          const oldStyle = _?.cursorStyle;
-          return { ..._, cursorStyle: oldStyle === 'classic' ? 'modern' : 'classic' };
-        }
-        if (version < 5) return { ..._, activeLine: true };
-        return _;
+        // Migrations apply cumulatively — no early returns, otherwise an old
+        // stored version skips every later step.
+        const s = { ..._ };
+        if (version < 3) s.cursorStyle = 'classic';
+        if (version < 4) s.cursorStyle = s.cursorStyle === 'classic' ? 'modern' : 'classic';
+        if (version < 5) s.activeLine = true;
+        return s;
       },
     }
   )
 );
+
+// Cross-tab sync: zustand persist only reads localStorage on startup. Without this,
+// a second tab keeps its stale in-memory settings and writes them back wholesale on
+// its next set(), silently reverting changes made in the other tab (e.g. dropCap).
+window.addEventListener('storage', (e) => {
+  if (e.key === 'dendrite-settings') useSettingsStore.persist.rehydrate();
+});
