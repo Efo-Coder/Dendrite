@@ -1,3 +1,11 @@
+import { Note } from '../../types';
+
+export type SortOption = 'createdAt' | 'updatedAt' | 'title' | 'pinned' | 'manual';
+
+// Group a note belongs to in the list (PINNED or its month bucket)
+export const groupKeyOf = (n: Note) =>
+  n.isPinned ? 'PINNED' : new Date(n.updatedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase();
+
 export const stripHtml = (html: string) => {
   const tmp = document.createElement('DIV');
   tmp.innerHTML = html;
