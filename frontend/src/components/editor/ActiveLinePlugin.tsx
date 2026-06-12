@@ -4,9 +4,14 @@ import { BLUR_COMMAND, COMMAND_PRIORITY_LOW } from 'lexical';
 import { animate } from 'motion';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
-const EXTEND = 40;     // px extension left + right
-const LINE_PAD = 6;    // extra px above + below the cursor line
-const DURATION = 0.5;
+const EXTEND = 40;          // px extension left + right
+const LINE_PAD = 6;         // extra px above + below the cursor line
+const FADE_DURATION = 0.2;  // appear / disappear
+const MOVE_DURATION = 0.18; // slide between lines
+// Position deltas below this snap instantly instead of sliding. Estimated positions
+// (empty line, dropcap) can be a few px off the real caret rect — animating that
+// correction reads as wobble, while a real line change is at least one line height.
+const SNAP_THRESHOLD = 8;
 const EASE: [number, number, number, number] = [0.33, 1, 0.68, 1];
 
 function highlightColor() {
@@ -20,6 +25,8 @@ export function ActiveLinePlugin() {
   const visibleRef = useRef(false);
   const prevTopRef = useRef<number | null>(null);
   const lastCursorHRef = useRef<number>(0);
+  const moveAnimRef = useRef<ReturnType<typeof animate> | null>(null);
+  const fadeAnimRef = useRef<ReturnType<typeof animate> | null>(null);
 
   // Create overlay once, attach to editor-container
   useEffect(() => {
@@ -66,7 +73,8 @@ export function ActiveLinePlugin() {
     return editor.registerCommand(BLUR_COMMAND, () => {
       const overlay = overlayRef.current;
       if (overlay && visibleRef.current) {
-        animate(overlay, { opacity: 0 }, { duration: DURATION, ease: EASE });
+        fadeAnimRef.current?.stop();
+        fadeAnimRef.current = animate(overlay, { opacity: 0 }, { duration: FADE_DURATION, ease: EASE });
         visibleRef.current = false;
       }
       return false;
@@ -76,7 +84,7 @@ export function ActiveLinePlugin() {
   // Track cursor position and update overlay
   useEffect(() => {
     if (!activeLine) return;
-    return editor.registerUpdateListener(() => {
+    const updateOverlay = () => {
       const overlay = overlayRef.current;
       if (!overlay) return;
 
@@ -90,7 +98,8 @@ export function ActiveLinePlugin() {
       );
       if (!focusInEditor) {
         if (visibleRef.current) {
-          animate(overlay, { opacity: 0 }, { duration: DURATION, ease: EASE });
+          fadeAnimRef.current?.stop();
+          fadeAnimRef.current = animate(overlay, { opacity: 0 }, { duration: FADE_DURATION, ease: EASE });
           visibleRef.current = false;
         }
         return;
@@ -116,8 +125,18 @@ export function ActiveLinePlugin() {
           const rcLhRaw = rcCs.lineHeight;
           const rcLineH = rcLhRaw === 'normal' ? rcFs * 1.2 : (parseFloat(rcLhRaw) || rcFs * 1.2);
           if (cursorRect.height > rcLineH * 1.5) {
-            // Dropcap-inflated rect — clamp to one normal line
-            cursorRect = { top: cursorRect.top, height: rcLineH } as DOMRect;
+            // Caret adjacent to the floated ::first-letter — Chrome returns the dropcap
+            // GLYPH box, which overflows above the paragraph (measured ~8px above block
+            // top). The caret is always on the block's first line, so derive the caret
+            // box from the block top + half-leading instead of the glyph rect.
+            const caretH = lastCursorHRef.current > rcFs * 0.8 && lastCursorHRef.current < rcFs * 1.5
+              ? lastCursorHRef.current
+              : rcFs;
+            const block = rcEl.closest('p, h1, h2, h3, h4, h5, h6, li') ?? rcEl;
+            cursorRect = {
+              top: block.getBoundingClientRect().top + Math.max(0, (rcLineH - caretH) / 2),
+              height: caretH,
+            } as DOMRect;
           } else {
             lastCursorHRef.current = cursorRect.height;
           }
@@ -152,15 +171,26 @@ export function ActiveLinePlugin() {
         const elRect = el.getBoundingClientRect();
 
         if (elRect.height <= lineH * 1.5 || el.tagName !== 'CODE') {
-          // Single-line element or non-code element — reuse last known cursor height so
-          // the highlight matches non-empty lines exactly; fall back to fontSize if none recorded.
-          // Non-CODE elements (e.g. wrapped <p>) stay here to avoid the multi-line branch
-          // accidentally using a wrapped inline element's height as the overlay height.
-          const fs = parseFloat(cs.fontSize);
-          const h = lastCursorHRef.current > fs * 0.8 && lastCursorHRef.current < fs * 1.5
-            ? lastCursorHRef.current
-            : fs;
-          cursorRect = { top: elRect.top + (elRect.height - h) / 2, height: h } as DOMRect;
+          // Truly empty line (<p><br></p>): the <br> rect is exactly the caret box a
+          // typed character will get (measured identical in Chromium) — use it directly
+          // so the highlight doesn't shift on the first keystroke.
+          const brRect = !el.textContent ? el.querySelector('br')?.getBoundingClientRect() : null;
+          if (brRect && brRect.height > 0) {
+            // The br height IS the caret height — cache it so the dropcap branch has a
+            // correct height even before the first character of a note is typed.
+            lastCursorHRef.current = brRect.height;
+            cursorRect = { top: brRect.top, height: brRect.height } as DOMRect;
+          } else {
+            // Single-line element or non-code element — reuse last known cursor height so
+            // the highlight matches non-empty lines exactly; fall back to fontSize if none recorded.
+            // Non-CODE elements (e.g. wrapped <p>) stay here to avoid the multi-line branch
+            // accidentally using a wrapped inline element's height as the overlay height.
+            const fs = parseFloat(cs.fontSize);
+            const h = lastCursorHRef.current > fs * 0.8 && lastCursorHRef.current < fs * 1.5
+              ? lastCursorHRef.current
+              : fs;
+            cursorRect = { top: elRect.top + (elRect.height - h) / 2, height: h } as DOMRect;
+          }
         } else {
           // Multi-line <code> container — find position via siblings
           const focusEl: Element | null = rangeNode.nodeType === Node.ELEMENT_NODE
@@ -226,33 +256,47 @@ export function ActiveLinePlugin() {
       const containerRect = overlay.parentElement!.getBoundingClientRect();
       const top = cursorRect.top - containerRect.top - LINE_PAD;
       const height = cursorRect.height + LINE_PAD * 2;
-      const color = highlightColor();
 
-      const lineChanged = prevTopRef.current === null || Math.abs(prevTopRef.current - top) > 2;
+      const lineChanged = prevTopRef.current === null || Math.abs(prevTopRef.current - top) > SNAP_THRESHOLD;
       prevTopRef.current = top;
 
-      const setPosition = () => {
-        overlay.style.background = color;
-        overlay.style.top = `${top}px`;
-        overlay.style.height = `${height}px`;
-      };
+      overlay.style.background = highlightColor();
+      // Stop any in-flight slide so direct style writes below take effect
+      moveAnimRef.current?.stop();
 
       if (!visibleRef.current) {
         // First appearance: position instantly, then fade in
-        setPosition();
-        animate(overlay, { opacity: 1 }, { duration: DURATION, ease: EASE });
+        overlay.style.top = `${top}px`;
+        overlay.style.height = `${height}px`;
+        fadeAnimRef.current?.stop();
+        fadeAnimRef.current = animate(overlay, { opacity: 1 }, { duration: FADE_DURATION, ease: EASE });
         visibleRef.current = true;
       } else if (lineChanged) {
-        // Line switch: fade out → reposition → fade in
-        animate(overlay, { opacity: 0 }, { duration: DURATION / 2, ease: EASE }).then(() => {
-          setPosition();
-          animate(overlay, { opacity: 1 }, { duration: DURATION / 2, ease: EASE });
-        });
+        // Line switch: slide to the new line while staying visible.
+        // Opacity untouched — an in-flight fade-in simply continues.
+        moveAnimRef.current = animate(
+          overlay,
+          { top: `${top}px`, height: `${height}px` },
+          { duration: MOVE_DURATION, ease: EASE }
+        );
       } else {
         // Same line (typing): update position instantly, no animation
-        setPosition();
+        overlay.style.top = `${top}px`;
+        overlay.style.height = `${height}px`;
       }
-    });
+    };
+
+    const removeUpdateListener = editor.registerUpdateListener(updateOverlay);
+
+    // Reposition when the editor reflows (e.g. sidebar toggle changes line wrapping)
+    const rootEl = editor.getRootElement();
+    const resizeObserver = rootEl ? new ResizeObserver(updateOverlay) : null;
+    resizeObserver?.observe(rootEl!);
+
+    return () => {
+      removeUpdateListener();
+      resizeObserver?.disconnect();
+    };
   }, [editor, activeLine]);
 
   return null;
