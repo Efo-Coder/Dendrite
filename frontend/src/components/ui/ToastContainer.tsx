@@ -65,7 +65,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
 
       {/* Portal zu document.body → immer über allen Stacking-Contexts */}
       {createPortal(
-        <div className="fixed top-4 right-4 flex flex-col gap-2" style={{ zIndex: 99999 }}>
+        <div className="fixed top-4 right-4 flex flex-col gap-2.5" style={{ zIndex: 99999 }}>
           {toasts.map((toast) => (
             <Toast
               key={toast.id}
