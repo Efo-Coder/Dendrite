@@ -276,16 +276,8 @@ const LoginPage = () => {
                   <button
                     type="submit"
                     disabled={isLoading || twoFactorCode.length < 6}
-                    style={{
-                      marginTop: '4px', width: '100%', padding: '11px 16px', borderRadius: '10px',
-                      background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
-                      color: 'oklch(0.15 0.020 60)', border: 'none',
-                      fontFamily: 'var(--serif-display)', fontWeight: 600, fontSize: '15px', letterSpacing: '0.03em',
-                      cursor: isLoading || twoFactorCode.length < 6 ? 'not-allowed' : 'pointer',
-                      opacity: isLoading || twoFactorCode.length < 6 ? 0.6 : 1,
-                      boxShadow: '0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent)',
-                      transition: 'transform .1s, opacity .12s',
-                    }}
+                    className="btn primary"
+                    style={{ marginTop: '4px', width: '100%', padding: '11px 16px', borderRadius: '10px', fontSize: '15px' }}
                   >
                     {submitting ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Verifying...</span> : 'Verify'}
                   </button>
@@ -470,23 +462,8 @@ const LoginPage = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  style={{
-                    marginTop: '4px',
-                    width: '100%',
-                    padding: '11px 16px',
-                    borderRadius: '10px',
-                    background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
-                    color: 'oklch(0.15 0.020 60)',
-                    border: 'none',
-                    fontFamily: 'var(--serif-display)',
-                    fontWeight: 600,
-                    fontSize: '15px',
-                    letterSpacing: '0.03em',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    opacity: submitting ? 0.6 : 1,
-                    boxShadow: '0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent)',
-                    transition: 'transform .1s, opacity .12s',
-                  }}
+                  className="btn primary"
+                  style={{ marginTop: '4px', width: '100%', padding: '11px 16px', borderRadius: '10px', fontSize: '15px' }}
                 >
                   {submitting ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Signing in...</span> : 'Sign in'}
                 </button>
