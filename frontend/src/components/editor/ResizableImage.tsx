@@ -49,6 +49,7 @@ const ResizableImage = ({
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(initialMaintainAspectRatio);
   const [positionLocked, setPositionLocked] = useState(initialPositionLocked);
   const [collapsed, setCollapsed] = useState(initialCollapsed);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [anchor, setAnchor] = useState<PopupAnchor | null>(null);
 
   const imageRef = useRef<HTMLDivElement>(null);
@@ -62,8 +63,10 @@ const ResizableImage = ({
   const aspectRatioRef = useRef(1);
   const editorWidthRef = useRef(800);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Height captured right before a user collapse/expand toggle; null means no animation
-  const collapseAnimFromRef = useRef<number | null>(null);
+  const chipRef = useRef<HTMLDivElement>(null);
+  const imgWrapRef = useRef<HTMLDivElement>(null);
+  // Box geometry captured right before a user collapse/expand toggle; null means no animation
+  const collapseAnimFromRef = useRef<{ w: number; h: number } | null>(null);
   const collapseAnimatingRef = useRef(false);
 
   const { style: popupStyle } = useSmartPopupStyle(anchor, controlsRef);
@@ -79,7 +82,20 @@ const ResizableImage = ({
   useLayoutEffect(() => {
     const parent = imageRef.current?.parentElement as HTMLElement | null;
     if (!parent) return;
-    if (alignment === 'left' || alignment === 'right') {
+    // Collapsed: plain block (no float), so the surrounding text never wraps beside the
+    // chip — it flows below it. The inner container handles horizontal alignment.
+    if (collapsed) {
+      parent.style.float = 'none';
+      parent.style.width = '';
+      parent.style.height = '';
+      parent.style.marginTop = '4px';
+      parent.style.marginBottom = '4px';
+      parent.style.marginLeft = '';
+      parent.style.marginRight = '';
+      parent.style.position = 'relative';
+      parent.style.zIndex = '1';
+      parent.style.display = 'block';
+    } else if (alignment === 'left' || alignment === 'right') {
       parent.style.float = alignment;
       parent.style.width = `${width}%`;
       parent.style.height = '';
@@ -290,12 +306,21 @@ const ResizableImage = ({
   }, [showControls, isResizing]);
 
   const getContainerStyle = (): React.CSSProperties => {
+    // Collapsed: compact chip, horizontally placed by alignment (vertical margin lives on
+    // the parent block to avoid doubling it).
+    if (collapsed) {
+      const align: React.CSSProperties =
+        alignment === 'center' ? { marginLeft: 'auto', marginRight: 'auto' }
+        : alignment === 'right' ? { marginLeft: 'auto', marginRight: 0 }
+        : { marginLeft: 0, marginRight: 'auto' };
+      return { width: 'fit-content', position: 'relative', ...align };
+    }
     if (alignment === 'left' || alignment === 'right') {
-      return { width: '100%', height: collapsed ? undefined : `${height}px`, position: 'relative' };
+      return { width: '100%', height: `${height}px`, position: 'relative' };
     }
     return {
       width: `${width}%`,
-      height: collapsed ? undefined : `${height}px`,
+      height: `${height}px`,
       marginTop: '4px',
       marginBottom: '4px',
       position: 'relative',
@@ -304,58 +329,78 @@ const ResizableImage = ({
     };
   };
 
-  const handleCollapse = () => {
-    collapseAnimFromRef.current = imageRef.current?.getBoundingClientRect().height ?? null;
-    setCollapsed(true);
-    setShowControls(false);
-    setAnchor(null);
-    onCollapseChange?.(true);
+  // Capture current box geometry, flip state, then animate old → new in the layout effect.
+  const startCollapseToggle = (next: boolean) => {
+    const rect = imageRef.current?.getBoundingClientRect();
+    collapseAnimFromRef.current = rect ? { w: rect.width, h: rect.height } : null;
+    if (next) {
+      setShowControls(false);
+      setAnchor(null);
+    }
+    setIsAnimating(true);
+    setCollapsed(next);
+    onCollapseChange?.(next);
   };
 
-  const handleExpand = () => {
-    collapseAnimFromRef.current = imageRef.current?.getBoundingClientRect().height ?? null;
-    setCollapsed(false);
-    onCollapseChange?.(false);
-  };
+  const handleCollapse = () => startCollapseToggle(true);
+  const handleExpand = () => startCollapseToggle(false);
 
-  // Animate the real height (not a transform) so surrounding text reflows with the box.
-  // Runs only after a user toggle (ref set in the handlers) — undo/redo and the initial
+  // Minimize/maximize animation: the box shrinks/grows in both dimensions while the image
+  // stays visible and cross-fades with the chip — so collapsing mirrors expanding. Real
+  // width/height (not a transform) so the floated column narrows and surrounding text reflows.
+  // Runs only after a user toggle (ref set in startCollapseToggle); undo/redo and the initial
   // mount sync collapsed via props and stay instant.
   useLayoutEffect(() => {
     const from = collapseAnimFromRef.current;
     collapseAnimFromRef.current = null;
     const el = imageRef.current;
-    if (from === null || !el) return;
-    const to = el.getBoundingClientRect().height;
-    if (Math.abs(from - to) < 1) return;
+    if (!from || !el) { setIsAnimating(false); return; }
+
+    const to = el.getBoundingClientRect();
+    if (Math.abs(from.w - to.width) < 1 && Math.abs(from.h - to.height) < 1) {
+      setIsAnimating(false);
+      return;
+    }
+
+    const duration = 260;
+    const easing = 'cubic-bezier(0.33, 1, 0.68, 1)';
+    const collapsing = collapsed;
 
     // Clip only while animating — expanded state needs visible overflow for resize handles
     collapseAnimatingRef.current = true;
     el.style.overflow = 'hidden';
-    const heightAnim = el.animate(
-      [{ height: `${from}px` }, { height: `${to}px` }],
-      { duration: 240, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' }
+    const boxAnim = el.animate(
+      [
+        { width: `${from.w}px`, height: `${from.h}px` },
+        { width: `${to.width}px`, height: `${to.height}px` },
+      ],
+      { duration, easing }
     );
-    el.firstElementChild?.animate(
-      [{ opacity: 0 }, { opacity: 1 }],
-      { duration: 200, delay: 40, fill: 'backwards', easing: 'ease-out' }
+    const imgAnim = imgWrapRef.current?.animate(
+      [{ opacity: collapsing ? 1 : 0 }, { opacity: collapsing ? 0 : 1 }],
+      { duration, easing, fill: 'both' }
     );
-    const settle = () => {
+    const chipAnim = chipRef.current?.animate(
+      [{ opacity: collapsing ? 0 : 1 }, { opacity: collapsing ? 1 : 0 }],
+      { duration, easing, fill: 'both' }
+    );
+
+    const reset = () => {
       el.style.overflow = '';
       collapseAnimatingRef.current = false;
     };
-    heightAnim.addEventListener('finish', settle);
-    return () => {
-      heightAnim.cancel();
-      settle();
-    };
+    // Don't cancel the fades on finish: fill:'both' holds their end opacity until the
+    // hidden element unmounts. Cancelling would snap it back to opacity 1 for one frame.
+    boxAnim.addEventListener('finish', () => { reset(); setIsAnimating(false); });
+    return () => { boxAnim.cancel(); imgAnim?.cancel(); chipAnim?.cancel(); reset(); };
   }, [collapsed]);
 
   return (
     <div ref={imageRef} style={getContainerStyle()} className={collapsed ? '' : 'group'} onMouseEnter={handleMouseEnter} onMouseMove={handleMouseEnter}>
 
-      {collapsed && (
+      {(collapsed || isAnimating) && (
         <div
+          ref={chipRef}
           role="button"
           onClick={handleExpand}
           className="group flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:bg-(--surface-hi)"
@@ -439,7 +484,7 @@ const ResizableImage = ({
         document.body
       )}
 
-      {!collapsed && <div className="relative h-full">
+      {(!collapsed || isAnimating) && <div ref={imgWrapRef} className={isAnimating ? 'absolute inset-0' : 'relative h-full'}>
         <img
           src={src}
           alt={altText}
@@ -447,7 +492,7 @@ const ResizableImage = ({
           draggable={false}
         />
 
-        {showControls && !positionLocked && (
+        {!isAnimating && showControls && !positionLocked && (
           <>
             <div onMouseDown={(e) => handleMouseDown(e, 'right')} className="resize-handle-ew absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 z-1" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
             <div onMouseDown={(e) => handleMouseDown(e, 'bottom')} className="resize-handle-ns absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rounded-full border-2 z-1" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
