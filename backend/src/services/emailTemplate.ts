@@ -13,10 +13,11 @@ const INK = '#efeae2'; // --ink
 const INK_MID = '#bbb7b0'; // --ink-mid
 const INK_LOW = '#7d7a74'; // --ink-low
 const INK_DIM = '#504d47'; // --ink-dim
-const HAIRLINE = 'rgba(216,178,96,0.20)'; // faint gold divider
 
-const DISPLAY = "'Cormorant Garamond','Garamond','EB Garamond',Georgia,serif";
-const BODY = "'EB Garamond','Cormorant Garamond','Garamond',Georgia,serif";
+// Cambria sits after the webfonts: modern clients load Cormorant/EB Garamond, but Outlook
+// (no webfont support) falls back to Cambria — far more elegant than Georgia.
+const DISPLAY = "'Cormorant Garamond','Cambria','Garamond','EB Garamond',Georgia,serif";
+const BODY = "'EB Garamond','Cormorant Garamond','Cambria','Garamond',Georgia,serif";
 
 export function buildEmail(opts: {
   frontendUrl: string;
@@ -74,7 +75,7 @@ export function buildEmail(opts: {
         <div style="height:100%;width:100%!important;">
           <!--[if (!mso)&(!IE)]><!--><div style="box-sizing:border-box;height:100%;padding:0;border:0;"><!--<![endif]-->
           <table style="font-family:${BODY};" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" bgcolor="${CARD}">
-            <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:32px 10px 26px;font-family:${BODY};" align="left">
+            <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:32px 10px 12px;font-family:${BODY};" align="left">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr><td style="padding:0;" align="center">
                   <a href="${frontendUrl}" target="_blank" style="color:${GOLD};text-decoration:none;line-height:inherit;">
@@ -104,7 +105,7 @@ export function buildEmail(opts: {
         <div style="height:100%;width:100%!important;">
           <!--[if (!mso)&(!IE)]><!--><div style="box-sizing:border-box;height:100%;padding:0;border:0;"><!--<![endif]-->
           <table style="font-family:${DISPLAY};" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-            <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:40px 24px 6px;font-family:${DISPLAY};" align="center">
+            <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:14px 24px 6px;font-family:${DISPLAY};" align="center">
               <h1 style="margin:0;color:${INK};line-height:128%;text-align:center;word-wrap:break-word;font-family:${DISPLAY};font-size:38px;font-style:italic;font-weight:500;">${heading}</h1>
             </td></tr></tbody>
           </table>
@@ -155,7 +156,7 @@ export function buildEmail(opts: {
             <tbody><tr><td style="overflow-wrap:break-word;word-break:break-word;padding:12px 10px 24px;font-family:${BODY};background-color:${CARD};" bgcolor="${CARD}" align="left">
               <!--[if mso]><style>.v-button {background:transparent!important;}</style><![endif]-->
               <div align="center">
-                <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${buttonUrl}" style="height:58px;v-text-anchor:middle;width:270px;" arcsize="17%" stroke="f" fillcolor="${GOLD}"><w:anchorlock/><center style="color:${ON_GOLD};font-family:${DISPLAY};font-size:17px;font-weight:bold;"><![endif]-->
+                <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${buttonUrl}" style="height:58px;v-text-anchor:middle;width:270px;" arcsize="17%" stroke="f" fillcolor="${GOLD}"><v:fill type="gradient" color="${GOLD}" color2="${GOLD_DEEP}" method="linear sigma" angle="-90"/><w:anchorlock/><center style="color:${ON_GOLD};font-family:${DISPLAY};font-size:17px;font-weight:bold;"><![endif]-->
                 <a href="${buttonUrl}" target="_blank"
                    style="box-sizing:border-box;display:inline-block;text-decoration:none;text-size-adjust:none;text-align:center;color:${ON_GOLD};background:${GOLD};background:linear-gradient(180deg,${GOLD} 0%,${GOLD_DEEP} 100%);border-radius:10px;box-shadow:inset 0 1px 0 ${GOLD_HI};width:auto;max-width:100%;word-break:break-word;overflow-wrap:break-word;font-size:17px;line-height:inherit;">
                   <span style="display:block;padding:19px 44px 18px;line-height:120%;"><span style="font-size:17px;line-height:18px;font-family:${DISPLAY};font-weight:600;letter-spacing:0.03em;color:${ON_GOLD};">${buttonText}</span></span>
@@ -195,7 +196,7 @@ export function buildEmail(opts: {
           <!-- hairline -->
           <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" bgcolor="${CARD}">
             <tbody><tr><td style="padding:0 40px;" align="center">
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tr><td style="height:1px;background-color:${HAIRLINE};font-size:0;line-height:0;border-top:1px solid ${HAIRLINE};">&nbsp;</td></tr></table>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tr><td style="height:1px;background-color:${GOLD};font-size:0;line-height:0;">&nbsp;</td></tr></table>
             </td></tr></tbody>
           </table>
 
