@@ -107,9 +107,9 @@
 :root[data-palette="nacre"] {
   --bg: oklch(0.16 0.014 15); --bg-deep: oklch(0.11 0.012 15);
   --surface: oklch(0.21 0.016 15); --surface-hi: oklch(0.27 0.018 15);
-  --accent:oklch(0.8932 0.0599 1.38);
-  --accent-hi: oklch(0.9468 0.0284 1.35); 
-  --accent-deep: oklch(0.4828 0.0708 3.56);
+  --accent: oklch(0.80 0.105 45);
+  --accent-hi: oklch(0.88 0.090 48);
+  --accent-deep: oklch(0.55 0.115 40);
   --ink: oklch(0.94 0.012 40); --ink-mid: oklch(0.78 0.010 40);
 }
 
@@ -140,22 +140,22 @@
 :root[data-theme="light"][data-palette="bordeaux"] {
   --bg: oklch(0.97 0.006 80); --bg-deep: oklch(0.93 0.008 80);
   --surface: oklch(0.99 0.004 80); --surface-hi: oklch(1.00 0.000 0);
-  --accent: oklch(42.755% 0.14154 17.541); --accent-hi: oklch(62.834% 0.09079 9.005); --accent-deep: oklch(0.50 0.110 5);
+  --accent: oklch(0.43 0.10 16); --accent-hi: oklch(0.63 0.075 14); --accent-deep: oklch(0.50 0.085 14);
 }
 :root[data-theme="light"][data-palette="forest"] {
   --bg: oklch(0.97 0.006 80); --bg-deep: oklch(0.93 0.008 80);
   --surface: oklch(0.99 0.004 80); --surface-hi: oklch(1.00 0.000 0);
-  --accent: oklch(0.55 0.110 145); --accent-hi: oklch(0.45 0.120 145); --accent-deep: oklch(0.38 0.100 145);
+  --accent: oklch(0.55 0.072 150); --accent-hi: oklch(0.45 0.078 150); --accent-deep: oklch(0.38 0.066 150);
 }
 :root[data-theme="light"][data-palette="midnight"] {
   --bg: oklch(0.97 0.006 80); --bg-deep: oklch(0.93 0.008 80);
   --surface: oklch(0.99 0.004 80); --surface-hi: oklch(1.00 0.000 0);
-  --accent: oklch(0.50 0.120 260); --accent-hi: oklch(0.42 0.130 260); --accent-deep: oklch(0.35 0.110 260);
+  --accent: oklch(0.50 0.078 262); --accent-hi: oklch(0.42 0.082 262); --accent-deep: oklch(0.35 0.070 262);
 }
 :root[data-theme="light"][data-palette="obsidian"] {
   --bg: oklch(0.97 0.006 80); --bg-deep: oklch(0.93 0.008 80);
   --surface: oklch(0.99 0.004 80); --surface-hi: oklch(1.00 0.000 0);
-  --accent: oklch(0.28 0.005 0); --accent-hi: oklch(0.18 0.005 0); --accent-deep: oklch(0.40 0.005 0);
+  --accent: oklch(0.28 0.008 70); --accent-hi: oklch(0.18 0.008 70); --accent-deep: oklch(0.40 0.008 70);
 }
 :root[data-theme="light"][data-palette="nacre"] {
   --bg: oklch(0.97 0.009 15); --bg-deep: oklch(0.93 0.010 15);
@@ -265,7 +265,7 @@ html.is-theme-switching {
   .icon-btn-lg { @apply p-2.5 rounded-lg text-(--ink-low) hover:text-(--ink) hover:bg-(--surface-hi) transition-colors; }
 
   /* fill-slide — reusable right-to-left gradient reveal, shared with .btn-ghost */
-  .fill-slide { position: relative; isolation: isolate; }
+  .fill-slide { position: relative; isolation: isolate; color: var(--ink-mid); }
 
   .fill-slide::before,
   .btn-ghost::before {
@@ -298,10 +298,9 @@ html.is-theme-switching {
     border: 1px solid color-mix(in oklch, var(--accent) 30%, transparent);
     background: transparent;
     text-decoration: none; cursor: pointer;
-    transition: color 0.7s ease-out, border-color 0.7s ease-out;
   }
   .btn-ghost:hover {
-    color: oklch(0.15 0.020 60); border-color: color-mix(in oklch, var(--accent-deep) 90%, transparent);
+    border-color: color-mix(in oklch, var(--accent-deep) 90%, transparent);
   }
 
   /* Social login buttons */
@@ -347,6 +346,19 @@ html.is-theme-switching {
     border-color: color-mix(in oklch, var(--accent) 35%, transparent);
   }
 
+  /* ─── Shared ghost-fill behavior ─── */
+  /* Every fill-slide / btn-ghost behaves alike: ink flips to the filled-button
+     color and a golden glow fades in once the fill completed (~0.7s). :not(.active)
+     keeps it in sync with the fill reveal. Override per instance via inline style. */
+  .fill-slide, .btn-ghost {
+    transition: color 0.7s ease-out, border-color 0.7s ease-out, box-shadow 0.7s ease-out;
+  }
+  .fill-slide:not(.active):hover, .btn-ghost:hover {
+    color: oklch(0.15 0.020 60);
+    box-shadow: 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
+    transition: color 0.7s ease-out, border-color 0.7s ease-out, box-shadow 0.3s ease-out 0.25s;
+  }
+
   /* Animated digit counter (Counter.tsx) */
   .counter-container { position: relative; display: inline-block; }
   .counter-counter   { display: flex; overflow: hidden; line-height: 1; }
@@ -381,7 +393,6 @@ html.is-theme-switching {
 .hover-shimmer { position: relative; overflow: hidden; }
 
 .hover-shimmer::before,
-.win .notelist-new-btn::before,
 .win .notelist-trash-btn::before,
 .modal-overlay .btn.primary::before,
 .modal-overlay .btn.danger::before {
@@ -393,7 +404,6 @@ html.is-theme-switching {
 
 .hover-shimmer:not(:disabled):hover::before,
 .btn.primary:not(:disabled):hover::before,
-.win .notelist-new-btn:not(:disabled):hover::before,
 .win .notelist-trash-btn:not(:disabled):hover::before,
 .modal-overlay .btn.primary:not(:disabled):hover::before,
 .modal-overlay .btn.danger:not(:disabled):hover::before {
@@ -767,22 +777,11 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   flex-shrink: 0; height: 62px; box-sizing: border-box;
   border-top: 0.5px solid var(--line-soft); display: flex; align-items: center;
 }
+/* Layout-only add-on — visual look (gradient, glow, shimmer) comes from .btn.primary */
 .win .notelist-new-btn {
-  margin: 0 18px; padding: 6px 12px;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  background: linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep));
-  color: oklch(0.15 0.020 60);
-  border: 0; border-radius: 9px;
-  font-family: var(--serif-display); font-weight: 600; font-size: 14px; letter-spacing: 0.02em;
-  cursor: default;
-  box-shadow:
-    0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset,
-    0 0 0 0.5px color-mix(in oklch, var(--accent-deep) 80%, black),
-    0 4px 12px color-mix(in oklch, var(--accent) 30%, transparent);
-  transition: box-shadow .12s; width: calc(100% - 36px);
-  position: relative; overflow: hidden;
+  margin: 0 18px; padding: 6px 12px; gap: 10px;
+  border-radius: 9px; font-size: 14px; width: calc(100% - 36px);
 }
-:root[data-theme="light"] .win .notelist-new-btn { color: oklch(0.15 0.020 60); }
 
 .win .notelist-trash-btn {
   margin: 0 18px; padding: 6px 12px;
@@ -1098,9 +1097,13 @@ html .auth-panel .input {
   color: oklch(0.15 0.020 60);
   font-family: var(--serif-display); font-weight: 600; letter-spacing: 0.03em;
   text-decoration: none; cursor: pointer;
-  box-shadow: 0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
-  transition: opacity 0.18s ease, transform 0.1s ease;
+  box-shadow: 0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px transparent;
+  transition: opacity 0.18s ease, transform 0.1s ease, box-shadow 0.25s ease;
 }
+.btn.primary:not(:disabled):hover {
+  box-shadow: 0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
+}
+.btn.primary:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn.primary::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(-30deg, hsla(0,0%,0%,0) 60%, rgba(255,255,255,0.25) 70%, hsla(0,0%,0%,0) 85%, hsla(0,0%,0%,0) 100%);
@@ -1121,9 +1124,12 @@ html .auth-panel .input {
 .modal-overlay .btn.primary {
   background: linear-gradient(180deg, var(--accent), var(--accent-deep));
   color: oklch(0.15 0.020 60); font-weight: 600;
-  box-shadow: 0 1px 0 var(--accent-hi) inset, 0 4px 12px color-mix(in oklch, var(--accent) 30%, transparent);
+  box-shadow: 0 1px 0 var(--accent-hi) inset, 0 4px 12px transparent;
   border-color: color-mix(in oklch, var(--accent-deep) 90%, transparent);
   position: relative; overflow: hidden;
+}
+.modal-overlay .btn.primary:not(:disabled):hover {
+  box-shadow: 0 1px 0 var(--accent-hi) inset, 0 4px 12px color-mix(in oklch, var(--accent) 30%, transparent);
 }
 .modal-overlay .btn.primary:disabled { opacity: 0.45; cursor: not-allowed; }
 
