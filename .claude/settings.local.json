@@ -8,10 +8,14 @@
       "WebFetch(domain:theodorusclarence.com)",
       "Read(//c/Users/efrah/Downloads/Dashboard_v2/**)",
       "Read(//c/Users/efrah/.claude/projects/c--Users-efrah-OneDrive-git-repos-Dendrite/memory/**)",
-      "Read(//c/Users/efrah/OneDrive/claude-memory/projects/c--Users-Efrahim-OneDrive-git-repos-Dendrite/memory/**)"
+      "Read(//c/Users/efrah/OneDrive/claude-memory/projects/c--Users-Efrahim-OneDrive-git-repos-Dendrite/memory/**)",
+      "Read(//c/Users/efrah/Downloads/Dendrite Design System/**)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\efrah\\AppData\\Local\\Temp"
+      "C:\\Users\\efrah\\AppData\\Local\\Temp",
+      "C:\\Users\\efrah\\Downloads\\LegacyToast",
+      "C:\\Users\\efrah\\.claude\\projects\\c--Users-efrah-OneDrive-git-repos-Dendrite\\memory",
+      "C:\\Users\\efrah\\OneDrive\\claude-memory\\projects\\c--Users-Efrahim-OneDrive-git-repos-Dendrite\\memory"
     ]
   }
 }
