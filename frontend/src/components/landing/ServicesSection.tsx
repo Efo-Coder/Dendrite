@@ -82,16 +82,14 @@ function ServiceItem({ title, index }: { title: string; index: number }) {
 }
 
 export function ServicesSection() {
-  const sectionRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    if (!titleRef.current || !sectionRef.current || !contentRef.current) return;
+    if (!titleRef.current || !contentRef.current) return;
 
     const title = titleRef.current;
     const chars = title.querySelectorAll(".char");
-    const section = sectionRef.current;
     const content = contentRef.current;
 
     const ctx = gsap.context(() => {
@@ -104,8 +102,8 @@ export function ServicesSection() {
           scaleY: 1,
           stagger: 0.05,
           scrollTrigger: {
-            trigger: section,
-            start: "top top",
+            trigger: content,
+            start: "center center",
             end: "+=150%",
             scrub: 1.5,
             pin: content,
@@ -120,11 +118,12 @@ export function ServicesSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="services" className="services relative bg-background overflow-hidden">
-      <div ref={contentRef} className="flex min-h-dvh items-center justify-center px-6 sm:px-12 lg:px-24">
+    <section id="services" className="services relative bg-background overflow-hidden">
+      <div ref={contentRef} className="flex items-center justify-center px-6 py-24 sm:px-12 lg:px-24">
         <h2
           ref={titleRef}
-          className="text-center text-[clamp(2.5rem,7vw,7rem)] font-medium leading-[1.1] tracking-tight text-foreground max-w-350"
+          className="text-center text-[clamp(2.5rem,7vw,7rem)] leading-[1.1] tracking-tight text-foreground max-w-350"
+          style={{ fontFamily: 'var(--serif-display)', fontWeight: 300 }}
         >
           <SplitText>Your thoughts deserve a better home.</SplitText>
         </h2>

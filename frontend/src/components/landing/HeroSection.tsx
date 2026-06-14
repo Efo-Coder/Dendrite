@@ -114,7 +114,7 @@ export function HeroSection() {
           </Link>
           <a
             href="#features"
-            className="fill-slide text-(--ink-mid) hover:text-[oklch(0.15_0.02_60)] transition-colors duration-700"
+            className="fill-slide"
             style={{
               padding: '11px 26px',
               fontSize: '15px',

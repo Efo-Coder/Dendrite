@@ -1,17 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useLayoutEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   motion,
-  useScroll,
   useSpring,
   useTransform,
   useMotionValue,
   useVelocity,
-  useAnimationFrame,
   AnimatePresence,
 } from "motion/react";
 import { WaterRipple } from "./WaterRipple";
@@ -85,55 +83,6 @@ function BlobCursor({ isVisible }: { isVisible: boolean }) {
   );
 }
 
-function useElementWidth<T extends HTMLElement>(ref: React.RefObject<T | null>): number {
-  const [width, setWidth] = useState(0);
-  useLayoutEffect(() => {
-    const updateWidth = () => ref.current && setWidth(ref.current.offsetWidth);
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
-  }, [ref]);
-  return width;
-}
-
-function VelocityText({ children, baseVelocity = 100, className = "" }: { children: React.ReactNode; baseVelocity?: number; className?: string }) {
-  const baseX = useMotionValue(0);
-  const { scrollY } = useScroll();
-  const scrollVelocity = useVelocity(scrollY);
-  const smoothVelocity = useSpring(scrollVelocity, { damping: 50, stiffness: 400 });
-  const velocityFactor = useTransform(smoothVelocity, [0, 1000], [0, 5], { clamp: false });
-  const copyRef = useRef<HTMLSpanElement>(null);
-  const copyWidth = useElementWidth(copyRef);
-
-  const wrap = (min: number, max: number, v: number) => {
-    const range = max - min;
-    return ((((v - min) % range) + range) % range) + min;
-  };
-
-  const x = useTransform(baseX, (v) => (copyWidth === 0 ? "0px" : `${wrap(-copyWidth, 0, v)}px`));
-  const directionFactor = useRef(1);
-
-  useAnimationFrame((_, delta) => {
-    let moveBy = directionFactor.current * baseVelocity * (delta / 1000);
-    if (velocityFactor.get() < 0) directionFactor.current = -1;
-    else if (velocityFactor.get() > 0) directionFactor.current = 1;
-    moveBy += directionFactor.current * moveBy * velocityFactor.get();
-    baseX.set(baseX.get() + moveBy);
-  });
-
-  return (
-    <div className="relative overflow-hidden w-full">
-      <motion.div className="flex whitespace-nowrap" style={{ x }}>
-        {Array.from({ length: 6 }, (_, i) => (
-          <span className={`shrink-0 ${className}`} key={i} ref={i === 0 ? copyRef : null}>
-            {children}
-          </span>
-        ))}
-      </motion.div>
-    </div>
-  );
-}
-
 interface Feature {
   id: string;
   titleUp: string;
@@ -150,24 +99,21 @@ const features: Feature[] = [
     titleUp: "Rich",
     titleDown: "Editing",
     image: "/img/branding/notebook.webp",
-    zoom: 0.75,
-    offset: [0.13, -0.1],
+    zoom: 1.25,
+    offset: [0.06, -0.11],
     description: "Write the way you think — bold, flowing, structured, or raw. The editor bends to your style, not the other way around.",
   },
   {
     id: "2",
     titleUp: "Smart",
     titleDown: "Organization",
-    image: "/img/branding/mood.webp",
-    offset: [0.13, -0.1],
-    description: "The more you write, the more you need structure. Dendrite keeps every note findable before it becomes noise.",
+    image: "/img/branding/mood.webp",    description: "The more you write, the more you need structure. Dendrite keeps every note findable before it becomes noise.",
   },
   {
     id: "3",
     titleUp: "Calm",
     titleDown: "by Design",
-    image: "/img/branding/calm.webp",
-    description: "A writing space that feels as good as the words you put into it. Every detail is considered so your mind doesn't have to be.",
+    image: "/img/branding/calm.webp",    description: "A writing space that feels as good as the words you put into it. Every detail is considered so your mind doesn't have to be.",
   },
 ];
 
@@ -256,24 +202,14 @@ function FeatureOverlay({ feature, onClose }: { feature: Feature | null; onClose
 function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; index: number; onHover: (h: boolean) => void; onClick: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
-  const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
   const maskRadiusRef = useRef(0);
   const isEven = index % 2 === 0;
 
-  const xTo = useRef<gsap.QuickToFunc | null>(null);
-  const yTo = useRef<gsap.QuickToFunc | null>(null);
-  const scaleTo = useRef<gsap.QuickToFunc | null>(null);
+  const parallaxRef = useRef({ x: 0, y: 0 });
   const inEllipseRef = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (!canvasWrapperRef.current) return;
-    xTo.current = gsap.quickTo(canvasWrapperRef.current, "x", { duration: 0.8, ease: "power3.out" });
-    yTo.current = gsap.quickTo(canvasWrapperRef.current, "y", { duration: 0.8, ease: "power3.out" });
-    scaleTo.current = gsap.quickTo(canvasWrapperRef.current, "scale", { duration: 0.6, ease: "power2.out" });
-  }, []);
 
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => { lastMousePos.current = { x: e.clientX, y: e.clientY }; };
@@ -287,9 +223,7 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
         inEllipseRef.current = false;
         onHover(false);
         imageContainerRef.current?.classList.remove('feature-image-area');
-        xTo.current?.(0);
-        yTo.current?.(0);
-        scaleTo.current?.(1.15);
+        parallaxRef.current = { x: 0, y: 0 };
       }
     };
     window.addEventListener('mousemove', onMouseMove, { passive: true });
@@ -311,18 +245,11 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
       inEllipseRef.current = inEllipse;
       onHover(inEllipse);
       imageContainerRef.current?.classList.toggle('feature-image-area', inEllipse);
-      if (inEllipse) {
-        scaleTo.current?.(1.22);
-      } else {
-        xTo.current?.(0);
-        yTo.current?.(0);
-        scaleTo.current?.(1.15);
-      }
+      if (!inEllipse) parallaxRef.current = { x: 0, y: 0 };
     }
 
-    if (inEllipse && xTo.current && yTo.current) {
-      xTo.current(-dx / rect.width * 30);
-      yTo.current(-dy / rect.height * 30);
+    if (inEllipse) {
+      parallaxRef.current = { x: -dx / rect.width * 0.035, y: -dy / rect.height * 0.035 };
     }
   };
 
@@ -333,9 +260,7 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
       onHover(false);
       imageContainerRef.current?.classList.remove('feature-image-area');
     }
-    xTo.current?.(0);
-    yTo.current?.(0);
-    scaleTo.current?.(1.15);
+    parallaxRef.current = { x: 0, y: 0 };
   };
 
   useEffect(() => {
@@ -372,34 +297,56 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
       ref={containerRef}
       className="group py-16 md:py-24"
     >
-      <div className="mx-auto max-w-360 px-6 sm:px-12 lg:px-24">
+      <div className="px-[clamp(24px,6vw,120px)]">
         <div className={`flex flex-col gap-8 ${isEven ? "md:flex-row" : "md:flex-row-reverse"} md:items-center md:gap-16`}>
           <div
             ref={imageContainerRef}
-            className="relative aspect-4/3 w-full overflow-hidden rounded-full md:w-3/5 cursor-pointer"
+            className="relative aspect-4/3 w-full overflow-hidden rounded-full md:w-auto md:grow md:basis-90 cursor-pointer"
             onMouseMove={handleMouseMove}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             onClick={() => { if (inEllipseRef.current) onClick(); }}
           >
-            <div
-              ref={canvasWrapperRef}
-              className="absolute inset-0 w-full h-full"
-              style={{ willChange: "transform", transformStyle: "preserve-3d", backfaceVisibility: "hidden", transform: "scale(1.15)" }}
-            >
-              <WaterRipple src={feature.image} maskRadiusRef={maskRadiusRef} zoom={feature.zoom ?? 1.0} offset={feature.offset} />
-            </div>
+            <WaterRipple src={feature.image} maskRadiusRef={maskRadiusRef} parallaxRef={parallaxRef} zoom={feature.zoom ?? 1.05} offset={feature.offset} />
           </div>
 
-          <div className={`flex flex-col md:w-2/5 ${isEven ? "" : "md:text-right"}`}>
-            <span className="text-base font-medium uppercase tracking-widest text-muted-foreground mb-6">
+          <div className={`flex flex-col md:grow md:basis-80 ${isEven ? "" : "md:text-right"}`}>
+            <span
+              style={{
+                fontFamily: 'var(--mono)',
+                fontSize: '10px',
+                letterSpacing: '0.28em',
+                textTransform: 'uppercase',
+                color: 'var(--ink-dim)',
+              }}
+            >
               0{index + 1}
             </span>
-            <h3 ref={titleRef} className="text-[clamp(2.5rem,6vw,6rem)] leading-[1.05] tracking-tight text-foreground mb-8">
-              <span className="font-medium">{feature.titleUp}</span><br />
-              <span className="font-serif italic">{feature.titleDown}</span>
+            <h3
+              ref={titleRef}
+              style={{
+                fontFamily: 'var(--serif-display)',
+                fontSize: 'clamp(2.2rem, 4.5vw, 4rem)',
+                lineHeight: 1.05,
+                letterSpacing: '-0.02em',
+                color: 'var(--ink)',
+                margin: '18px 0 22px',
+              }}
+            >
+              <span style={{ fontWeight: 500 }}>{feature.titleUp}</span><br />
+              <span style={{ fontStyle: 'italic', fontWeight: 300 }}>{feature.titleDown}</span>
             </h3>
-            <p ref={descRef} className={`text-muted-foreground text-xl leading-relaxed ${isEven ? "max-w-lg" : "max-w-lg md:ml-auto"}`}>
+            <p
+              ref={descRef}
+              style={{
+                fontFamily: 'var(--serif-body)',
+                fontSize: 'clamp(16px, 1.4vw, 20px)',
+                lineHeight: 1.55,
+                color: 'var(--ink-mid)',
+                maxWidth: '34ch',
+                marginLeft: isEven ? 0 : 'auto',
+              }}
+            >
               {feature.description}
             </p>
           </div>
@@ -426,10 +373,42 @@ export function FeaturesSection() {
       <BlobCursor isVisible={isCursorVisible} />
       <FeatureOverlay feature={selectedFeature} onClose={handleClose} />
 
-      <div className="pb-16">
-        <VelocityText baseVelocity={80} className="text-[clamp(2.5rem,10vw,14rem)] font-medium italic tracking-tight text-foreground uppercase px-8">
-          Selected <span className="font-serif font-thin">Features</span>&nbsp;
-        </VelocityText>
+      <div className="px-[clamp(24px,6vw,120px)] pb-16">
+        <p
+          style={{
+            fontFamily: 'var(--mono)',
+            fontSize: '10px',
+            letterSpacing: '0.28em',
+            textTransform: 'uppercase',
+            color: 'var(--accent)',
+            margin: '0 0 14px',
+          }}
+        >
+          Selected Features
+        </p>
+        <h2
+          style={{
+            fontFamily: 'var(--serif-display)',
+            fontWeight: 300,
+            fontSize: 'clamp(2.2rem, 5vw, 4.5rem)',
+            lineHeight: 1.04,
+            letterSpacing: '-0.02em',
+            color: 'var(--ink)',
+            margin: 0,
+          }}
+        >
+          Made to be{' '}
+          <em
+            style={{
+              background: 'linear-gradient(120deg, var(--accent-hi), var(--accent-deep))',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
+            lived in.
+          </em>
+        </h2>
       </div>
 
       <div className="flex flex-col">

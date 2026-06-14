@@ -55,11 +55,11 @@ const plans: Plan[] = [
       { label: "Folders & Tags", included: true },
       { label: "Rich-Text editor", included: true },
       { label: "Public note sharing", included: true },
+      { label: "5 Version histories", included: true },
       { label: "Color Picker", included: false },
       { label: "Syntax Highlighting", included: false },
       { label: "Checklist Timer", included: false },
       { label: "Markdown export", included: false },
-      { label: "Version history (5 versions)", included: true },
       { label: "PDF export", included: false },
       { label: "Priority support", included: false },
       { label: "Early access to new features", included: false },
@@ -77,11 +77,11 @@ const plans: Plan[] = [
       { label: "Folders & Tags", included: true },
       { label: "Rich-Text editor", included: true },
       { label: "Public note sharing", included: true },
+      { label: "More Version histories", included: true },
       { label: "Color Picker", included: true },
       { label: "Syntax Highlighting", included: true },
       { label: "Checklist Timer", included: true },
       { label: "Markdown export", included: true },
-      { label: "Version history (50 versions)", included: true },
       { label: "PDF export", included: false },
       { label: "Priority support", included: false },
       { label: "Early access to new features", included: false },
@@ -99,11 +99,11 @@ const plans: Plan[] = [
       { label: "Folders & Tags", included: true },
       { label: "Rich-Text editor", included: true },
       { label: "Public note sharing", included: true },
+      { label: "Unlimited Version history", included: true },
       { label: "Color Picker", included: true },
       { label: "Syntax Highlighting", included: true },
       { label: "Checklist Timer", included: true },
       { label: "Markdown export", included: true },
-      { label: "Version history (unlimited)", included: true },
       { label: "PDF export", included: true },
       { label: "Priority support", included: true },
       { label: "Early access to new features", included: true },
@@ -125,6 +125,7 @@ function PricingCard({ plan }: { plan: Plan }) {
           border: '1px solid var(--accent-deep)',
           boxShadow: '0 0 0 1px oklch(0.55 0.110 80 / 0.3), 0 8px 48px -8px oklch(0.78 0.110 85 / 0.18)',
           pointerEvents: locked ? 'none' : undefined,
+          zIndex: 0,
         }}
       >
         {locked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: 'inherit', zIndex: 1, pointerEvents: 'none' }} />}
@@ -198,6 +199,7 @@ function PricingCard({ plan }: { plan: Plan }) {
         border: isAuthor ? '1px solid oklch(0.55 0.110 80 / 0.3)' : '1px solid var(--line)',
         pointerEvents: locked ? 'none' : undefined,
         position: 'relative',
+        zIndex: 1,
       }}
     >
       {locked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: 'inherit', zIndex: 1, pointerEvents: 'none' }} />}
@@ -236,7 +238,7 @@ function PricingCard({ plan }: { plan: Plan }) {
       {plan.name === 'Free' ? (
         <Link
           to="/register"
-          className="fill-slide w-full text-center text-sm font-medium text-(--ink-mid) hover:text-(--ink) transition-colors duration-300"
+          className="fill-slide w-full text-center text-sm font-medium"
           style={{ border: '1px solid var(--line)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', textDecoration: 'none', display: 'block' }}
         >
           {plan.cta}
@@ -247,7 +249,7 @@ function PricingCard({ plan }: { plan: Plan }) {
             sessionStorage.setItem('pending_plan', plan.name.toLowerCase());
             navigate('/register');
           }}
-          className="fill-slide w-full text-center text-sm font-medium text-(--ink-mid) hover:text-(--ink) transition-colors duration-300 cursor-pointer"
+          className="fill-slide w-full text-center text-sm font-medium cursor-pointer"
           style={{ border: '1px solid var(--line)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', background: 'transparent' }}
         >
           {plan.cta}
@@ -313,13 +315,30 @@ export function PricingSection() {
     <section ref={sectionRef} id="pricing" className="py-24 lg:py-32" style={{ background: 'var(--bg)' }}>
       <div className="px-6 sm:px-12 lg:px-24 max-w-360 mx-auto">
         <div ref={titleRef} className="text-center mb-16 lg:mb-20">
-          <h2
-            className="text-4xl lg:text-5xl font-medium tracking-tight mb-4"
-            style={{ color: 'var(--ink)' }}
+          <p
+            style={{
+              fontFamily: 'var(--mono)',
+              fontSize: '10px',
+              letterSpacing: '0.28em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+              margin: '0 0 12px',
+            }}
           >
-            Simple,{" "}
-            <span className="font-serif italic">honest</span>{" "}
-            pricing
+            Pricing
+          </p>
+          <h2
+            style={{
+              fontFamily: 'var(--serif-display)',
+              fontWeight: 400,
+              fontSize: 'clamp(2rem, 4.5vw, 3.6rem)',
+              lineHeight: 1.05,
+              letterSpacing: '-0.02em',
+              color: 'var(--ink)',
+              margin: '0 0 8px',
+            }}
+          >
+            Simple, <em>honest</em> pricing
           </h2>
           <p className="text-lg max-w-lg mx-auto" style={{ color: 'var(--ink-mid)' }}>
             Start for free. Upgrade when you're ready.

@@ -89,7 +89,7 @@ function FaqItem({ question, answer, index }: { question: string; answer: string
 
 export function FaqSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -119,14 +119,28 @@ export function FaqSection() {
   return (
     <section ref={sectionRef} id="faq" className="bg-background py-24 lg:py-32">
       <div className="px-6 sm:px-12 lg:px-24 max-w-4xl mx-auto">
-        <h2
-          ref={titleRef}
-          className="text-4xl lg:text-5xl font-medium tracking-tight text-foreground text-center mb-12 lg:mb-16"
-        >
-          Frequently Asked
-          <br />
-          Questions
-        </h2>
+        <div ref={titleRef} className="text-center mb-12 lg:mb-16">
+          <p
+            style={{
+              fontFamily: 'var(--mono)',
+              fontSize: '10px',
+              letterSpacing: '0.28em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+              margin: '0 0 12px',
+            }}
+          >
+            FAQ
+          </p>
+          <h2
+            className="text-4xl lg:text-5xl tracking-tight text-foreground"
+            style={{ fontFamily: 'var(--serif-display)', fontWeight: 400 }}
+          >
+            Frequently Asked
+            <br />
+            Questions
+          </h2>
+        </div>
 
         <div className="flex flex-col gap-4">
           {faqs.map((faq, index) => (

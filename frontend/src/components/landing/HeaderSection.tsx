@@ -106,8 +106,8 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
           {onToggleDark && (
             <button
               onClick={onToggleDark}
-              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full fill-slide transition-colors duration-700 text-(--ink-mid) hover:text-[oklch(0.15_0.02_60)]"
-              style={{ cursor: 'pointer', border: '0.5px solid var(--line)', background: 'transparent', transition: 'color 0.7s ease' }}
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full fill-slide"
+              style={{ cursor: 'pointer', border: '0.5px solid var(--line)', background: 'transparent' }}
               title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -117,7 +117,7 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
 
           <Link
             to="/login"
-            className="fill-slide hidden sm:inline-flex transition-colors duration-700 text-(--ink-mid) hover:text-[oklch(0.15_0.02_60)]"
+            className="fill-slide hidden sm:inline-flex"
             style={{
               padding: '7px 16px',
               fontSize: '14px',
@@ -127,7 +127,6 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
               border: '0.5px solid var(--line)',
               background: 'transparent',
               textDecoration: 'none',
-              transition: 'color 0.7s ease',
             }}
           >
             Sign in
@@ -209,17 +208,8 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
               <Link
                 to="/register"
                 onClick={() => setMenuOpen(false)}
-                className="block text-center mt-1"
-                style={{
-                  padding: '11px',
-                  borderRadius: '9px',
-                  background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
-                  color: 'oklch(0.15 0.020 60)',
-                  fontFamily: 'var(--serif-display)',
-                  fontWeight: 600,
-                  fontSize: '15px',
-                  textDecoration: 'none',
-                }}
+                className="btn primary mt-1"
+                style={{ padding: '11px', borderRadius: '9px', fontSize: '15px', width: '100%' }}
               >
                 Get Started
               </Link>
