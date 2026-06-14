@@ -19,17 +19,9 @@ function CheckIcon() {
   );
 }
 
-function DashIcon() {
-  return (
-    <svg className="w-4 h-4 shrink-0" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.25 }}>
-      <path d="M4 8h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 interface PlanFeature {
   label: string;
-  included: boolean;
+  description?: string;
 }
 
 interface Plan {
@@ -37,6 +29,7 @@ interface Plan {
   price: string;
   period: string;
   description: string;
+  inheritsFrom?: string;
   features: PlanFeature[];
   cta: string;
   highlighted: boolean;
@@ -45,68 +38,48 @@ interface Plan {
 const plans: Plan[] = [
   {
     name: "Free",
-    price: "$0",
+    price: "€0",
     period: "forever",
     description: "Everything you need to get started.",
-    cta: "Start for Free",
+    cta: "Start writing",
     highlighted: false,
     features: [
-      { label: "Unlimited notes", included: true },
-      { label: "Folders & Tags", included: true },
-      { label: "Rich-Text editor", included: true },
-      { label: "Public note sharing", included: true },
-      { label: "5 Version histories", included: true },
-      { label: "Color Picker", included: false },
-      { label: "Syntax Highlighting", included: false },
-      { label: "Checklist Timer", included: false },
-      { label: "Markdown export", included: false },
-      { label: "PDF export", included: false },
-      { label: "Priority support", included: false },
-      { label: "Early access to new features", included: false },
+      { label: "Unlimited notes", description: "No limits, ever" },
+      { label: "Folders & tags", description: "Organise your way" },
+      { label: "Rich-text editor", description: "Headings, lists, links" },
+      { label: "Public sharing", description: "Share via link" },
+      { label: "5 saved versions", description: "Undo recent edits" },
     ],
   },
   {
     name: "Writer",
-    price: "$5",
+    price: "€10",
     period: "per month",
     description: "For people who write seriously.",
+    inheritsFrom: "Free",
     cta: "Become a Writer",
     highlighted: true,
     features: [
-      { label: "Unlimited notes", included: true },
-      { label: "Folders & Tags", included: true },
-      { label: "Rich-Text editor", included: true },
-      { label: "Public note sharing", included: true },
-      { label: "More Version histories", included: true },
-      { label: "Color Picker", included: true },
-      { label: "Syntax Highlighting", included: true },
-      { label: "Checklist Timer", included: true },
-      { label: "Markdown export", included: true },
-      { label: "PDF export", included: false },
-      { label: "Priority support", included: false },
-      { label: "Early access to new features", included: false },
+      { label: "Color picker", description: "Custom note colours" },
+      { label: "Syntax highlighting", description: "Themed code blocks" },
+      { label: "Checklist timer", description: "Time your tasks" },
+      { label: "Markdown export", description: "Export as Markdown" },
+      { label: "10 saved versions", description: "Keep more history" },
     ],
   },
   {
     name: "Author",
-    price: "$129",
+    price: "€120",
     period: "one-time",
     description: "Everything, forever. Pay once, own it.",
-    cta: "Get Lifetime Access",
+    inheritsFrom: "Writer",
+    cta: "Write for life",
     highlighted: false,
     features: [
-      { label: "Unlimited notes", included: true },
-      { label: "Folders & Tags", included: true },
-      { label: "Rich-Text editor", included: true },
-      { label: "Public note sharing", included: true },
-      { label: "Unlimited Version history", included: true },
-      { label: "Color Picker", included: true },
-      { label: "Syntax Highlighting", included: true },
-      { label: "Checklist Timer", included: true },
-      { label: "Markdown export", included: true },
-      { label: "PDF export", included: true },
-      { label: "Priority support", included: true },
-      { label: "Early access to new features", included: true },
+      { label: "PDF export", description: "Print-ready PDFs" },
+      { label: "Priority support", description: "Front-of-queue help" },
+      { label: "Early access", description: "New features first" },
+      { label: "Unlimited version history", description: "Every edit, kept" },
     ],
   },
 ];
@@ -133,6 +106,11 @@ function PricingCard({ plan }: { plan: Plan }) {
     ? '0 0 0 1px oklch(0.55 0.110 80 / 0.3), 0 8px 48px -8px oklch(0.78 0.110 85 / 0.18)'
     : undefined;
   const nameColor = isFree ? 'var(--ink-low)' : 'var(--accent)';
+
+  // Progressive tiers prepend "Everything in <lower>, plus" as the first checked row.
+  const featureRows: PlanFeature[] = plan.inheritsFrom
+    ? [{ label: `Everything in ${plan.inheritsFrom}, plus` }, ...plan.features]
+    : plan.features;
 
   const ctaBase = 'w-full text-center text-sm font-medium';
   const ctaStyle = { padding: '12px 24px', borderRadius: '9999px' };
@@ -174,14 +152,19 @@ function PricingCard({ plan }: { plan: Plan }) {
       </div>
 
       <ul className="flex-1 mb-8" style={{ borderTop: '1px solid var(--line-soft)' }}>
-        {plan.features.map((feature) => (
-          <li
-            key={feature.label}
-            className="flex items-center gap-3 text-sm py-3"
-            style={{ color: feature.included ? 'var(--ink)' : 'var(--ink-dim)' }}
-          >
-            {feature.included ? <CheckIcon /> : <DashIcon />}
-            {feature.label}
+        {featureRows.map((feature) => (
+          <li key={feature.label} className="flex items-start gap-3 py-3">
+            <span className="flex h-6 items-center shrink-0">
+              <CheckIcon />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm" style={{ color: 'var(--ink)' }}>{feature.label}</span>
+              {feature.description && (
+                <span className="block text-xs mt-0.5" style={{ color: 'var(--ink-low)' }}>
+                  {feature.description}
+                </span>
+              )}
+            </span>
           </li>
         ))}
       </ul>
@@ -301,7 +284,7 @@ export function PricingSection() {
           </p>
         </div>
 
-        <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start pt-4">
+        <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
           {plans.map((plan) => (
             <PricingCard key={plan.name} plan={plan} />
           ))}
