@@ -135,7 +135,7 @@ function PricingCard({ plan }: { plan: Plan }) {
   const nameColor = isFree ? 'var(--ink-low)' : 'var(--accent)';
 
   const ctaBase = 'w-full text-center text-sm font-medium';
-  const ctaStyle = { padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit' };
+  const ctaStyle = { padding: '12px 24px', borderRadius: '9999px' };
 
   return (
     <div
@@ -163,7 +163,7 @@ function PricingCard({ plan }: { plan: Plan }) {
       )}
 
       <div className="mb-8">
-        <p className="text-sm font-serif italic mb-2" style={{ color: nameColor }}>
+        <p className="text-base italic mb-2" style={{ color: nameColor, fontFamily: 'var(--serif-display)' }}>
           {plan.name}
         </p>
         <div className="flex items-end gap-1 mb-2">
@@ -177,11 +177,8 @@ function PricingCard({ plan }: { plan: Plan }) {
         {plan.features.map((feature) => (
           <li
             key={feature.label}
-            className="flex items-center gap-3 text-sm py-2.5"
-            style={{
-              color: feature.included ? 'var(--ink)' : 'var(--ink-dim)',
-              borderBottom: '1px solid var(--line-soft)',
-            }}
+            className="flex items-center gap-3 text-sm py-3"
+            style={{ color: feature.included ? 'var(--ink)' : 'var(--ink-dim)' }}
           >
             {feature.included ? <CheckIcon /> : <DashIcon />}
             {feature.label}
@@ -193,15 +190,15 @@ function PricingCard({ plan }: { plan: Plan }) {
         <Link
           to="/register"
           className={`fill-slide ${ctaBase}`}
-          style={{ ...ctaStyle, border: '1px solid var(--line)', textDecoration: 'none', display: 'block' }}
+          style={{ ...ctaStyle, fontFamily: 'inherit', border: '1px solid var(--line)', textDecoration: 'none', display: 'block' }}
         >
           {plan.cta}
         </Link>
       ) : plan.highlighted ? (
         <button
           onClick={goToRegister}
-          className={`${ctaBase} cursor-pointer transition-opacity hover:opacity-90 active:opacity-80`}
-          style={{ ...ctaStyle, background: 'var(--accent)', color: 'var(--bg-deep)', border: 'none' }}
+          className={`btn primary ${ctaBase}`}
+          style={ctaStyle}
         >
           {plan.cta}
         </button>
@@ -209,7 +206,7 @@ function PricingCard({ plan }: { plan: Plan }) {
         <button
           onClick={goToRegister}
           className={`fill-slide ${ctaBase} cursor-pointer`}
-          style={{ ...ctaStyle, background: 'transparent', border: '1px solid var(--line)' }}
+          style={{ ...ctaStyle, fontFamily: 'inherit', background: 'transparent', border: '1px solid var(--line)' }}
         >
           {plan.cta}
         </button>
