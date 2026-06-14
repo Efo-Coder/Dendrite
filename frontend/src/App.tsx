@@ -18,6 +18,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 // Components
 import PrivateRoute from './components/ui/PrivateRoute';
+import { CookieConsent } from './components/ui/CookieConsent';
 
 function RouterContent() {
   const { isAuthenticated } = useAuthStore();
@@ -73,6 +74,7 @@ function App() {
           }}
         >
           <RouterContent />
+          <CookieConsent />
         </Router>
       </ToastProvider>
     </ThemeProvider>
