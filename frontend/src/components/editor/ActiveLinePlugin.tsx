@@ -114,6 +114,43 @@ export function ActiveLinePlugin() {
   // Track cursor position and update overlay
   useEffect(() => {
     if (!activeLine) return;
+
+    // A ResizeObserver only catches size changes of the editor root, not pure position
+    // shifts of the caret line. When an image collapses, the content drops below the
+    // root's min-height: the root size freezes while text keeps reflowing upward, so the
+    // observer goes silent and the overlay strands on a stale line. After any reposition
+    // we re-measure per frame until the position holds still (or a cap), which tracks the
+    // line through such animated reflows regardless of whether the root resizes.
+    const SETTLE_CAP_MS = 700;
+    const SETTLE_STABLE_FRAMES = 2;
+    let settling = false;
+    let settleRaf: number | null = null;
+    let settleStableFrames = 0;
+    let settleLastTop = Number.NaN;
+    let settleDeadline = 0;
+
+    const scheduleSettle = () => {
+      settleDeadline = performance.now() + SETTLE_CAP_MS;
+      if (settling) return; // loop already running — deadline just extended
+      settling = true;
+      settleStableFrames = 0;
+      settleLastTop = prevTopRef.current ?? Number.NaN;
+      const tick = () => {
+        updateOverlay();
+        const cur = prevTopRef.current ?? Number.NaN;
+        if (Math.abs(cur - settleLastTop) < 0.5) settleStableFrames++;
+        else settleStableFrames = 0;
+        settleLastTop = cur;
+        if (settleStableFrames < SETTLE_STABLE_FRAMES && performance.now() < settleDeadline) {
+          settleRaf = requestAnimationFrame(tick);
+        } else {
+          settling = false;
+          settleRaf = null;
+        }
+      };
+      settleRaf = requestAnimationFrame(tick);
+    };
+
     const updateOverlay = () => {
       const overlay = overlayRef.current;
       if (!overlay) return;
@@ -310,6 +347,7 @@ export function ActiveLinePlugin() {
         fadeAnimRef.current?.stop();
         fadeAnimRef.current = animate(overlay, { opacity: 1 }, { duration: FADE_DURATION, ease: EASE });
         visibleRef.current = true;
+        scheduleSettle();
       } else if (lineChanged) {
         // Line switch: slide to the new line while staying visible.
         // Opacity untouched — an in-flight fade-in simply continues.
@@ -326,6 +364,7 @@ export function ActiveLinePlugin() {
             moveTargetRef.current = null;
           }
         });
+        scheduleSettle();
       } else {
         // Same line (typing): update position instantly, no animation
         overlay.style.top = `${top}px`;
@@ -343,6 +382,8 @@ export function ActiveLinePlugin() {
     return () => {
       removeUpdateListener();
       resizeObserver?.disconnect();
+      if (settleRaf !== null) cancelAnimationFrame(settleRaf);
+      settling = false;
     };
   }, [editor, activeLine]);
 
