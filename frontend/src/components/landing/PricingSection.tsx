@@ -114,106 +114,60 @@ const plans: Plan[] = [
 function PricingCard({ plan }: { plan: Plan }) {
   const navigate = useNavigate();
   const locked = IS_BETA && plan.name !== 'Free';
-
-  if (plan.highlighted) {
-    return (
-      <div
-        className="relative rounded-2xl p-5 md:p-6 lg:p-8 flex flex-col"
-        data-locked={locked || undefined}
-        style={{
-          background: 'var(--bg-deep)',
-          border: '1px solid var(--accent-deep)',
-          boxShadow: '0 0 0 1px oklch(0.55 0.110 80 / 0.3), 0 8px 48px -8px oklch(0.78 0.110 85 / 0.18)',
-          pointerEvents: locked ? 'none' : undefined,
-          zIndex: 0,
-        }}
-      >
-        {locked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: 'inherit', zIndex: 1, pointerEvents: 'none' }} />}
-        {!IS_BETA && (
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-            <span
-              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-serif italic whitespace-nowrap"
-              style={{ background: 'var(--accent)', color: 'var(--bg-deep)' }}
-            >
-              Recommended
-            </span>
-          </div>
-        )}
-
-        <div className="mb-8">
-          <p className="text-sm font-serif italic mb-2" style={{ color: 'var(--accent)' }}>
-            {plan.name}
-          </p>
-          <div className="flex items-end gap-1 mb-2">
-            <span className="font-serif text-5xl tracking-tight" style={{ color: 'var(--ink)' }}>{plan.price}</span>
-            <span className="text-sm mb-2" style={{ color: 'var(--ink-low)' }}>/{plan.period}</span>
-          </div>
-          <p className="text-sm" style={{ color: 'var(--ink-mid)' }}>{plan.description}</p>
-        </div>
-
-        <ul className="flex-1 mb-8" style={{ borderTop: '1px solid var(--line-soft)' }}>
-          {plan.features.map((feature) => (
-            <li
-              key={feature.label}
-              className="flex items-center gap-3 text-sm py-2.5"
-              style={{
-                color: feature.included ? 'var(--ink)' : 'var(--ink-dim)',
-                borderBottom: '1px solid var(--line-soft)',
-              }}
-            >
-              {feature.included ? <CheckIcon /> : <DashIcon />}
-              {feature.label}
-            </li>
-          ))}
-        </ul>
-
-        <button
-          onClick={() => {
-            sessionStorage.setItem('pending_plan', plan.name.toLowerCase());
-            navigate('/register');
-          }}
-          className="w-full text-center text-sm font-medium cursor-pointer transition-opacity hover:opacity-90 active:opacity-80"
-          style={{
-            background: 'var(--accent)',
-            color: 'var(--bg-deep)',
-            padding: '12px 24px',
-            borderRadius: '9999px',
-            fontFamily: 'inherit',
-            border: 'none',
-          }}
-        >
-          {plan.cta}
-        </button>
-      </div>
-    );
-  }
-
+  const isFree = plan.name === 'Free';
   const isAuthor = plan.name === 'Author';
+
+  const goToRegister = () => {
+    sessionStorage.setItem('pending_plan', plan.name.toLowerCase());
+    navigate('/register');
+  };
+
+  // Per-variant visuals; Author borrows the accent border to read as premium without being the highlighted hero card.
+  const cardBg = plan.highlighted ? 'var(--bg-deep)' : 'var(--surface)';
+  const cardBorder = plan.highlighted
+    ? '1px solid var(--accent-deep)'
+    : isAuthor
+      ? '1px solid oklch(0.55 0.110 80 / 0.3)'
+      : '1px solid var(--line)';
+  const cardGlow = plan.highlighted
+    ? '0 0 0 1px oklch(0.55 0.110 80 / 0.3), 0 8px 48px -8px oklch(0.78 0.110 85 / 0.18)'
+    : undefined;
+  const nameColor = isFree ? 'var(--ink-low)' : 'var(--accent)';
+
+  const ctaBase = 'w-full text-center text-sm font-medium';
+  const ctaStyle = { padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit' };
 
   return (
     <div
-      className="rounded-2xl p-5 md:p-6 lg:p-8 flex flex-col"
+      className="relative rounded-2xl p-5 md:p-6 lg:p-8 flex flex-col"
       data-locked={locked || undefined}
       style={{
-        background: 'var(--surface)',
-        border: isAuthor ? '1px solid oklch(0.55 0.110 80 / 0.3)' : '1px solid var(--line)',
+        background: cardBg,
+        border: cardBorder,
+        boxShadow: cardGlow,
         pointerEvents: locked ? 'none' : undefined,
-        position: 'relative',
-        zIndex: 1,
+        zIndex: plan.highlighted ? 0 : 1,
       }}
     >
       {locked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: 'inherit', zIndex: 1, pointerEvents: 'none' }} />}
+
+      {plan.highlighted && !IS_BETA && (
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+          <span
+            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-serif italic whitespace-nowrap"
+            style={{ background: 'var(--accent)', color: 'var(--bg-deep)' }}
+          >
+            Recommended
+          </span>
+        </div>
+      )}
+
       <div className="mb-8">
-        <p
-          className="text-sm font-serif italic mb-2"
-          style={{ color: isAuthor ? 'var(--accent)' : 'var(--ink-low)' }}
-        >
+        <p className="text-sm font-serif italic mb-2" style={{ color: nameColor }}>
           {plan.name}
         </p>
         <div className="flex items-end gap-1 mb-2">
-          <span className="font-serif text-5xl tracking-tight" style={{ color: 'var(--ink)' }}>
-            {plan.price}
-          </span>
+          <span className="font-serif text-5xl tracking-tight" style={{ color: 'var(--ink)' }}>{plan.price}</span>
           <span className="text-sm mb-2" style={{ color: 'var(--ink-low)' }}>/{plan.period}</span>
         </div>
         <p className="text-sm" style={{ color: 'var(--ink-mid)' }}>{plan.description}</p>
@@ -235,22 +189,27 @@ function PricingCard({ plan }: { plan: Plan }) {
         ))}
       </ul>
 
-      {plan.name === 'Free' ? (
+      {isFree ? (
         <Link
           to="/register"
-          className="fill-slide w-full text-center text-sm font-medium"
-          style={{ border: '1px solid var(--line)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', textDecoration: 'none', display: 'block' }}
+          className={`fill-slide ${ctaBase}`}
+          style={{ ...ctaStyle, border: '1px solid var(--line)', textDecoration: 'none', display: 'block' }}
         >
           {plan.cta}
         </Link>
+      ) : plan.highlighted ? (
+        <button
+          onClick={goToRegister}
+          className={`${ctaBase} cursor-pointer transition-opacity hover:opacity-90 active:opacity-80`}
+          style={{ ...ctaStyle, background: 'var(--accent)', color: 'var(--bg-deep)', border: 'none' }}
+        >
+          {plan.cta}
+        </button>
       ) : (
         <button
-          onClick={() => {
-            sessionStorage.setItem('pending_plan', plan.name.toLowerCase());
-            navigate('/register');
-          }}
-          className="fill-slide w-full text-center text-sm font-medium cursor-pointer"
-          style={{ border: '1px solid var(--line)', padding: '12px 24px', borderRadius: '9999px', fontFamily: 'inherit', background: 'transparent' }}
+          onClick={goToRegister}
+          className={`fill-slide ${ctaBase} cursor-pointer`}
+          style={{ ...ctaStyle, background: 'transparent', border: '1px solid var(--line)' }}
         >
           {plan.cta}
         </button>
