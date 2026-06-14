@@ -379,7 +379,7 @@ const NoteList = ({
         </div>
         {onCreateNote && (
           <div className="notelist-footer">
-            <button type="button" onClick={onCreateNote} disabled={isCreating} className="notelist-new-btn">
+            <button type="button" onClick={onCreateNote} disabled={isCreating} className="btn primary notelist-new-btn">
               <Plus style={{ width: 14, height: 14, flexShrink: 0 }} />
               {isCreating ? 'Creating…' : 'New Note'}
             </button>
@@ -458,7 +458,7 @@ const NoteList = ({
         </div>
       {onCreateNote && (
         <div className="notelist-footer">
-          <button type="button" onClick={onCreateNote} disabled={isCreating} className="notelist-new-btn">
+          <button type="button" onClick={onCreateNote} disabled={isCreating} className="btn primary notelist-new-btn">
             <Plus style={{ width: 14, height: 14, flexShrink: 0 }} />
             {isCreating ? 'Creating…' : 'New Note'}
           </button>

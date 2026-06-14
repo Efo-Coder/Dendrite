@@ -62,20 +62,8 @@ export default function CheckoutSuccessPage() {
 
         <Link
           to="/dashboard"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '11px 28px',
-            borderRadius: '10px',
-            background: 'linear-gradient(180deg, color-mix(in oklch, var(--accent) 92%, white 5%), var(--accent-deep))',
-            color: 'oklch(0.15 0.020 60)',
-            fontFamily: 'var(--serif-display)',
-            fontWeight: 600,
-            fontSize: '15px',
-            letterSpacing: '0.03em',
-            textDecoration: 'none',
-          }}
+          className="btn primary"
+          style={{ padding: '11px 28px', borderRadius: '10px', fontSize: '15px' }}
         >
           Go to Dashboard
         </Link>
