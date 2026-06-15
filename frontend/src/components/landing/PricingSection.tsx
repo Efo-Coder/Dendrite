@@ -107,11 +107,6 @@ function PricingCard({ plan }: { plan: Plan }) {
     : undefined;
   const nameColor = isFree ? 'var(--ink-low)' : 'var(--accent)';
 
-  // Progressive tiers prepend "Everything in <lower>, plus" as the first checked row.
-  const featureRows: PlanFeature[] = plan.inheritsFrom
-    ? [{ label: `Everything in ${plan.inheritsFrom}, plus` }, ...plan.features]
-    : plan.features;
-
   const ctaBase = 'w-full text-center text-sm font-medium';
   const ctaStyle = { padding: '12px 24px', borderRadius: '9999px' };
 
@@ -127,10 +122,43 @@ function PricingCard({ plan }: { plan: Plan }) {
         zIndex: plan.highlighted ? 0 : 1,
       }}
     >
-      {locked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: 'inherit', zIndex: 1, pointerEvents: 'none' }} />}
+      {/* Beta lock layering: warm scrim (z2) dims the card content; the Recommended badge and
+          the "Available soon" status (z3) stay legible above the scrim. */}
+      {locked && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'oklch(0.09 0.015 70 / 0.55)',
+            borderRadius: 'inherit',
+            zIndex: 2,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
 
-      {plan.highlighted && !IS_BETA && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+      {locked && (
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center" style={{ zIndex: 3 }}>
+          <span
+            className="inline-flex items-center whitespace-nowrap rounded-full px-4 py-1.5"
+            style={{
+              fontFamily: 'var(--mono)',
+              fontSize: '10px',
+              letterSpacing: '0.28em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+              border: '1px solid color-mix(in oklch, var(--accent) 35%, transparent)',
+              background: 'linear-gradient(180deg, var(--surface-hi), var(--surface))',
+              boxShadow: '0 4px 16px oklch(0 0 0 / 0.35), inset 0 1px 0 oklch(1 0 0 / 0.07)',
+            }}
+          >
+            Available soon
+          </span>
+        </div>
+      )}
+
+      {plan.highlighted && (
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2" style={{ zIndex: 3 }}>
           <span
             className="inline-flex items-center px-3 py-1 rounded-full text-xs font-serif italic whitespace-nowrap"
             style={{ background: 'var(--accent)', color: 'var(--bg-deep)' }}
@@ -152,7 +180,12 @@ function PricingCard({ plan }: { plan: Plan }) {
       </div>
 
       <ul className="flex-1 mb-8" style={{ borderTop: '1px solid var(--line-soft)' }}>
-        {featureRows.map((feature) => (
+        {plan.inheritsFrom && (
+          <li className="pt-4 pb-1 text-sm italic" style={{ color: 'var(--ink-mid)', fontFamily: 'var(--serif-display)' }}>
+            Everything in {plan.inheritsFrom}, plus
+          </li>
+        )}
+        {plan.features.map((feature) => (
           <li key={feature.label} className="flex items-start gap-3 py-3">
             <span className="flex h-6 items-center shrink-0">
               <CheckIcon />
