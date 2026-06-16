@@ -15,6 +15,7 @@ import CreateTagModal from '../modals/CreateTagModal';
 import EditTagModal from '../modals/EditTagModal';
 import EditFolderModal from '../modals/EditFolderModal';
 import ContextMenu from '../ui/ContextMenu';
+import { useToast } from '../ui/ToastContainer';
 import Modal from '../modals/Modal';
 import { Tag as TagType, Folder as FolderType, User as UserType, ViewType } from '../../types';
 import UserProfileModal from '../modals/UserProfileModal';
@@ -34,6 +35,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   const { folders, fetchFolders, deleteFolder } = useFolderStore();
   const { tags, fetchTags, deleteTag } = useTagStore();
   const { noteCounts, fetchNoteCounts } = useNoteStore();
+  const toast = useToast();
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
   const [showEditTagModal, setShowEditTagModal] = useState(false);
@@ -105,9 +107,16 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   };
 
   const confirmDeleteTag = async () => {
-    if (tagToDelete) {
-      try { await deleteTag(tagToDelete.id); } catch {}
-      finally { setShowDeleteTagModal(false); setTagToDelete(null); }
+    if (!tagToDelete) return;
+    try {
+      await deleteTag(tagToDelete.id);
+      toast.success('Tag deleted');
+      handleTagUpdated();
+    } catch {
+      toast.error('Error deleting tag');
+    } finally {
+      setShowDeleteTagModal(false);
+      setTagToDelete(null);
     }
   };
 
@@ -116,9 +125,16 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
   };
 
   const confirmDeleteFolder = async () => {
-    if (folderToDelete) {
-      try { await deleteFolder(folderToDelete.id); } catch {}
-      finally { setShowDeleteFolderModal(false); setFolderToDelete(null); }
+    if (!folderToDelete) return;
+    try {
+      await deleteFolder(folderToDelete.id);
+      toast.success('Folder deleted');
+      handleFolderUpdated();
+    } catch {
+      toast.error('Error deleting folder');
+    } finally {
+      setShowDeleteFolderModal(false);
+      setFolderToDelete(null);
     }
   };
 
