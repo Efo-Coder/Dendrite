@@ -71,8 +71,8 @@ const LoginPage = () => {
     if (!shownVerified.current) {
       shownVerified.current = true;
       if (verified === 'true') toast.success('Email verified – you can now sign in.', 5000);
-      if (verified === 'expired') toast.error('The verification link has expired.', 6000);
-      if (verified === 'error') toast.error('Invalid verification link.', 6000);
+      if (verified === 'expired') toast.warning('The verification link has expired.', 6000);
+      if (verified === 'error') toast.warning('Invalid verification link.', 6000);
       if (oauthError) toast.error(oauthError, 6000);
     }
   }, []);

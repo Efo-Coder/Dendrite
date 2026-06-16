@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -29,38 +29,27 @@ const ResetPasswordPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [searchParams] = useSearchParams();
   const { themeMode, setThemeMode } = useSettingsStore();
   const toast = useToast();
   const navigate = useNavigate();
   const token = searchParams.get('token');
-  const prevError = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!token) setError('Invalid or missing reset link.');
-  }, [token]);
-
-  useEffect(() => {
-    if (error && error !== prevError.current) {
-      toast.error(error, 6000);
-      prevError.current = error;
-    }
-    if (!error) prevError.current = null;
-  }, [error]);
+    if (!token) toast.warning('Invalid or missing reset link.', 6000);
+  }, [token, toast]);
 
   const strength = getPasswordStrength(password);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      toast.warning('Passwords do not match', 6000);
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      toast.warning('Password must be at least 8 characters', 6000);
       return;
     }
     if (!token) return;
@@ -74,7 +63,7 @@ const ResetPasswordPage = () => {
       setTimeout(() => navigate('/login'), 2500);
     } catch (err) {
       await minDelay;
-      setError(getApiErrorMessage(err, 'Invalid or expired reset link'));
+      toast.error(getApiErrorMessage(err, 'Invalid or expired reset link'), 6000);
     } finally {
       setIsLoading(false);
     }

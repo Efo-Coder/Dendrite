@@ -99,7 +99,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.warning('Passwords do not match');
       return;
     }
     setPasswordLoading(true);

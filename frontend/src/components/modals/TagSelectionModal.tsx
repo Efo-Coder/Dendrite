@@ -31,7 +31,7 @@ const TagSelectionModal = ({ isOpen, onClose, onUpdateTags, currentTagIds }: Tag
   const handleTagToggle = (tagId: string) => {
     setSelectedTagIds(prev => {
       if (prev.includes(tagId)) return prev.filter(id => id !== tagId);
-      if (prev.length >= 4) { toast.error('Maximum 4 tags per note'); return prev; }
+      if (prev.length >= 4) { toast.warning('Maximum 4 tags per note'); return prev; }
       return [...prev, tagId];
     });
   };

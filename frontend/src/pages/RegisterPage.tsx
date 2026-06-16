@@ -90,7 +90,9 @@ const RegisterPage = () => {
     }
     const msg = localError || error;
     if (msg && msg !== prevError.current) {
-      toast.error(msg, 6000);
+      // localError is client-side validation (correctable) → warning; store error is a server failure → error
+      if (localError) toast.warning(localError, 6000);
+      else toast.error(msg, 6000);
       prevError.current = msg;
     }
     if (!msg) prevError.current = null;
