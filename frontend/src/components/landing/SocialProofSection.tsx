@@ -9,40 +9,17 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-// PLATZHALTER — vor Launch durch echte Beta-Stimmen ersetzen
+// PLATZHALTER — vor Launch durch echte Beta-Stimme ersetzen
 const LEAD = {
   quote:
     "The first notes app that treats my thoughts like they're worth keeping. I stopped collecting tools and started writing.",
   attribution: "Early beta writer · Product designer",
 };
 
-// PLATZHALTER — vor Launch durch echte Beta-Stimmen ersetzen
-const QUOTES = [
-  {
-    quote:
-      "It feels less like software and more like a good notebook — quiet, fast, and always where I left it.",
-    attribution: "Beta writer · PhD student",
-  },
-  {
-    quote:
-      "I moved three years of scattered notes into Dendrite in one evening. Everything finally has a place.",
-    attribution: "Beta writer · Journalist",
-  },
-];
-
-const attributionStyle: CSSProperties = {
-  margin: 0,
-  fontFamily: 'var(--mono)',
-  fontSize: '10px',
-  letterSpacing: '0.22em',
-  textTransform: 'uppercase',
-  color: 'var(--ink-low)',
-};
-
-const hairlineStyle: CSSProperties = {
+const eyebrowRuleStyle: CSSProperties = {
+  width: 'clamp(28px, 6vw, 56px)',
   height: '1px',
   background: 'var(--line)',
-  transformOrigin: 'left',
 };
 
 export function SocialProofSection() {
@@ -52,36 +29,36 @@ export function SocialProofSection() {
     if (!sectionRef.current) return;
 
     const ctx = gsap.context(() => {
+      // The recessed plate fades up first, then the single voice forms above it —
+      // a calmer, slower cadence than the About manifest's y:40 stagger.
       gsap.fromTo(
-        '.sp-reveal',
-        { y: 40, opacity: 0 },
+        '.sp-plate',
+        { opacity: 0 },
         {
-          y: 0,
           opacity: 1,
-          duration: 1,
-          ease: 'power3.out',
-          stagger: 0.12,
+          ease: 'none',
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: 'top 75%',
-            end: 'top 30%',
+            start: 'top 92%',
+            end: 'top 55%',
             scrub: 1,
           },
         }
       );
 
       gsap.fromTo(
-        '.sp-line',
-        { scaleX: 0 },
+        '.sp-reveal',
+        { y: 28, opacity: 0 },
         {
-          scaleX: 1,
+          y: 0,
+          opacity: 1,
           duration: 1.2,
-          ease: 'power2.out',
-          stagger: 0.15,
+          ease: 'power3.out',
+          stagger: 0.14,
           scrollTrigger: {
             trigger: sectionRef.current,
             start: 'top 70%',
-            end: 'top 25%',
+            end: 'top 30%',
             scrub: 1,
           },
         }
@@ -92,10 +69,35 @@ export function SocialProofSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="social-proof" className="py-24 lg:py-32">
-      <div className="px-6 sm:px-12 lg:px-24 mx-auto" style={{ maxWidth: '68rem' }}>
-        {/* Header */}
-        <div className="sp-reveal">
+    <section
+      ref={sectionRef}
+      id="social-proof"
+      className="relative overflow-hidden"
+      style={{ padding: 'clamp(96px, 15vw, 200px) 0' }}
+    >
+      {/* Recessed warm-dark plate with a faint gold haze from the top edge —
+          the brand's "gold on warm dark" moment, and the break from About's bare --bg */}
+      <div
+        aria-hidden
+        className="sp-plate absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 55% at 50% 0%, color-mix(in oklch, var(--accent) 9%, transparent), transparent 60%), var(--bg-deep)',
+          borderTop: '1px solid var(--line)',
+          borderBottom: '1px solid var(--line)',
+          // Own compositor layer: the gradient rasterizes once, so the scrubbed opacity
+          // fade stays compositor-only instead of repainting the full-bleed plate each frame
+          willChange: 'opacity',
+        }}
+      />
+
+      <div
+        className="relative px-6 sm:px-12 lg:px-24 mx-auto text-center"
+        style={{ maxWidth: '58rem' }}
+      >
+        {/* Centered eyebrow with flanking rules — a different signature than About's left-aligned label */}
+        <div className="sp-reveal flex items-center justify-center gap-4">
+          <span style={eyebrowRuleStyle} />
           <p
             style={{
               margin: 0,
@@ -108,109 +110,62 @@ export function SocialProofSection() {
           >
             From the beta
           </p>
-          <h2
-            style={{
-              margin: '14px 0 0',
-              fontFamily: 'var(--serif-display)',
-              fontStyle: 'italic',
-              fontWeight: 300,
-              fontSize: 'clamp(2rem, 4vw, 3.2rem)',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.1,
-              color: 'var(--ink)',
-            }}
-          >
-            What early writers say.
-          </h2>
+          <span style={eyebrowRuleStyle} />
         </div>
 
-        <div className="sp-line" style={{ ...hairlineStyle, marginTop: '40px' }} />
-
-        {/* Lead-Zitat — gesetzt wie ein Epigraph, hängendes Anführungszeichen in Gold */}
-        <figure className="sp-reveal" style={{ margin: 0, padding: 'clamp(40px, 6vw, 72px) 0' }}>
-          <blockquote style={{ position: 'relative', margin: 0 }}>
-            <span
-              aria-hidden
-              style={{
-                position: 'absolute',
-                left: '-0.55em',
-                top: '-0.12em',
-                fontFamily: 'var(--serif-display)',
-                fontSize: '1.6em',
-                lineHeight: 1,
-                color: 'var(--accent)',
-              }}
-            >
-              &ldquo;
-            </span>
+        <figure style={{ margin: 0 }}>
+          <span
+            aria-hidden
+            className="sp-reveal block"
+            style={{
+              fontFamily: 'var(--serif-display)',
+              fontSize: 'clamp(2.5rem, 5vw, 4rem)',
+              lineHeight: 0.9,
+              color: 'var(--accent)',
+              opacity: 0.5,
+              marginTop: 'clamp(28px, 4vw, 44px)',
+              marginBottom: 'clamp(6px, 1vw, 12px)',
+            }}
+          >
+            &ldquo;
+          </span>
+          <blockquote className="sp-reveal" style={{ margin: '0 auto', maxWidth: '22ch' }}>
             <p
               style={{
                 margin: 0,
                 fontFamily: 'var(--serif-display)',
                 fontStyle: 'italic',
                 fontWeight: 300,
-                fontSize: 'clamp(1.6rem, 3.2vw, 2.7rem)',
-                lineHeight: 1.3,
-                letterSpacing: '-0.015em',
+                fontSize: 'clamp(2rem, 4.6vw, 3.6rem)',
+                lineHeight: 1.22,
+                letterSpacing: '-0.02em',
                 color: 'var(--ink)',
-                maxWidth: '30ch',
               }}
             >
               {LEAD.quote}
             </p>
           </blockquote>
-          <figcaption style={{ ...attributionStyle, marginTop: '24px' }}>
+          <figcaption
+            className="sp-reveal"
+            style={{
+              marginTop: 'clamp(28px, 4vw, 40px)',
+              fontFamily: 'var(--mono)',
+              fontSize: '10px',
+              letterSpacing: '0.24em',
+              textTransform: 'uppercase',
+              color: 'var(--ink-low)',
+            }}
+          >
             — {LEAD.attribution}
           </figcaption>
         </figure>
 
-        <div className="sp-line" style={hairlineStyle} />
-
-        {/* Zwei kleinere Stimmen in Zeitungsspalten, vertikale Hairline dazwischen */}
-        <div className="grid md:grid-cols-2">
-          {QUOTES.map((q, i) => (
-            <figure
-              key={q.attribution}
-              className={`sp-reveal ${
-                i === 1
-                  ? 'border-t border-(--line) md:border-t-0 md:border-l md:border-(--line) md:pl-14'
-                  : 'md:pr-14'
-              }`}
-              style={{
-                margin: 0,
-                paddingTop: 'clamp(32px, 4vw, 48px)',
-                paddingBottom: 'clamp(32px, 4vw, 48px)',
-              }}
-            >
-              <blockquote style={{ margin: 0 }}>
-                <p
-                  style={{
-                    margin: 0,
-                    fontFamily: 'var(--serif-display)',
-                    fontStyle: 'italic',
-                    fontWeight: 400,
-                    fontSize: 'clamp(1.15rem, 1.7vw, 1.5rem)',
-                    lineHeight: 1.45,
-                    color: 'var(--ink-mid)',
-                  }}
-                >
-                  {q.quote}
-                </p>
-              </blockquote>
-              <figcaption style={{ ...attributionStyle, marginTop: '18px' }}>
-                — {q.attribution}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-
-        <div className="sp-line" style={hairlineStyle} />
-
-        {/* Ehrliche Fußzeile + ein einziger, leiser CTA */}
+        {/* Quiet trust line + a single low CTA, opened by a short centered hairline */}
         <div
-          className="sp-reveal flex flex-wrap items-center justify-between gap-4"
-          style={{ paddingTop: '28px' }}
+          className="sp-reveal flex flex-col items-center gap-5"
+          style={{ marginTop: 'clamp(44px, 6vw, 72px)' }}
         >
+          <span style={{ width: '40px', height: '1px', background: 'var(--line)' }} />
           <p
             style={{
               margin: 0,
