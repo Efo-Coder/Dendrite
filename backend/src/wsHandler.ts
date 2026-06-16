@@ -133,7 +133,26 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
     }
   });
 
+  // Heartbeat: the y-websocket client drops the connection after 30s without an
+  // onmessage event (raw ping frames don't count — the browser answers them
+  // automatically and they never reach onmessage). Resend sync step 1 on an
+  // interval so an idle client keeps receiving a real protocol message and stays
+  // connected; the ping/pong tracks liveness to terminate dead sockets.
+  let isAlive = true;
+  ws.on('pong', () => { isAlive = true; });
+  const heartbeat = setInterval(() => {
+    if (!isAlive) { ws.terminate(); return; }
+    if (ws.readyState !== WebSocket.OPEN) return;
+    isAlive = false;
+    const enc = encoding.createEncoder();
+    encoding.writeVarUint(enc, MSG_SYNC);
+    syncProtocol.writeSyncStep1(enc, doc);
+    ws.send(encoding.toUint8Array(enc));
+    ws.ping();
+  }, 15_000);
+
   ws.on('close', () => {
+    clearInterval(heartbeat);
     conns.delete(ws);
     awareness.off('update', onAwareness);
     awareness.off('change', onAwarenessChange);

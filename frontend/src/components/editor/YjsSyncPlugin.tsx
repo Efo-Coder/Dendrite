@@ -103,6 +103,7 @@ export function YjsSyncPlugin({
     binding.root.getSharedType().observeDeep(onYjsTreeChanges);
 
     let synced = false;
+    let didInitialSync = false;
     let firstSync = true;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const emptyPrev = { _nodeMap: new Map(), _selection: null } as any;
@@ -131,6 +132,10 @@ export function YjsSyncPlugin({
     const onSync = (isSynced: boolean) => {
       if (!isSynced) return;
       synced = true; // Unlock local→Yjs syncing now that we know the server state
+      // Only the first sync may seed/reinsert content. A reconnect resync would
+      // otherwise clear+reinsert and reset the caret to the document end.
+      if (didInitialSync) return;
+      didInitialSync = true;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sharedType = binding.root.getSharedType() as any;
       if (sharedType._length === 0) {
