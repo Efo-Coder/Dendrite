@@ -31,7 +31,6 @@ import NoteExportMenu from './NoteExportMenu';
 import NoteTagsRow from './NoteTagsRow';
 import { MenuPos, formatRelativeDate, userCursorColor } from './noteEditorUtils';
 import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
-import TagSelectionModal from '../modals/TagSelectionModal';
 import Modal from '../modals/Modal';
 
 interface NoteEditorProps {
@@ -98,7 +97,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     }
   }, [focusWritingMode]);
 
-  const [showToolbarTagModal, setShowToolbarTagModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
@@ -156,7 +154,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     try {
       await updateNote(note.id, { folderId });
       setFolderMenuPos(null);
-      toast.info('Note moved');
+      toast.success('Note moved');
       if (onNoteUpdate) onNoteUpdate();
     } catch {
       toast.error('Error moving note');
@@ -188,7 +186,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const handleArchive = async () => {
     try {
       await toggleArchive(note.id);
-      toast.info('Note archived');
+      toast.success('Note archived');
       if (onNoteUpdate) onNoteUpdate();
     } catch {
       toast.error('Error archiving note');
@@ -273,17 +271,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     </>
   );
 
-  const handleToolbarTags = async (tagIds: string[]) => {
-    try {
-      await updateNote(note.id, { tags: tagIds });
-      toast.info('Tags updated');
-      if (onNoteUpdate) onNoteUpdate();
-    } catch {
-      toast.error('Error updating tags');
-    }
-    setShowToolbarTagModal(false);
-  };
-
   return (
     <motion.div
       className="relative h-full flex flex-col bg-transparent"
@@ -332,7 +319,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                       {note.isPinned ? <span className="editor-pin-filled" /> : <Pin className="w-3.5 h-3.5" />}
                     </button>
                     <button
-                      onClick={async () => { await toggleFavorite(note.id); toast.info(note.isFavorite ? 'Removed from favorites' : 'Added to favorites'); }}
+                      onClick={async () => { await toggleFavorite(note.id); toast.success(note.isFavorite ? 'Removed from favorites' : 'Added to favorites'); }}
                       onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
                       className="icon-btn-md rounded-lg transition-colors"
                       style={note.isFavorite ? { color: 'var(--accent)' } : undefined}
@@ -476,7 +463,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 disabled={isInTrash}
                 noteId={note.id}
                 minimalChrome={focusWritingMode}
-                onManageTags={isInTrash ? undefined : () => setShowToolbarTagModal(true)}
                 onInfo={isInTrash ? undefined : () => setShowInfoModal(true)}
                 onVersionHistory={isInTrash ? undefined : () => setShowVersionHistory(v => !v)}
               />
@@ -520,13 +506,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         noteId={note.id}
         title={title}
         content={content}
-      />
-
-      <TagSelectionModal
-        isOpen={showToolbarTagModal}
-        onClose={() => setShowToolbarTagModal(false)}
-        onUpdateTags={handleToolbarTags}
-        currentTagIds={note.tags?.map((t) => t.id) || []}
       />
 
       <InviteCollaboratorModal

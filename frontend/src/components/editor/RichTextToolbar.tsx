@@ -29,7 +29,6 @@ import { canAccess } from '../../lib/planFeatures';
 interface RichTextToolbarProps {
   disabled?: boolean;
   noteId?: string;
-  onManageTags?: () => void;
   onInfo?: () => void;
   onVersionHistory?: () => void;
   minimalChrome?: boolean;

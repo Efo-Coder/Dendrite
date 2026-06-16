@@ -87,14 +87,14 @@ const NoteTagsRow = ({ note, disabled, onNoteUpdate }: NoteTagsRowProps) => {
   const handleToggleTag = async (tagId: string) => {
     const currentTagIds = note.tags?.map(t => t.id) || [];
     const isAdding = !currentTagIds.includes(tagId);
-    if (isAdding && currentTagIds.length >= 4) { toast.error('Maximum 4 tags per note'); return; }
+    if (isAdding && currentTagIds.length >= 4) { toast.warning('Maximum 4 tags per note'); return; }
     const newTagIds = isAdding
       ? [...currentTagIds, tagId]
       : currentTagIds.filter(id => id !== tagId);
 
     try {
       await updateNote(note.id, { tags: newTagIds });
-      toast.info('Tags updated');
+      toast.success(isAdding ? 'Tag added' : 'Tag removed');
       onNoteUpdate?.();
     } catch {
       toast.error('Error updating tags');
@@ -107,14 +107,15 @@ const NoteTagsRow = ({ note, disabled, onNoteUpdate }: NoteTagsRowProps) => {
     setAddingTag(false);
     setActiveSuggestion(-1);
     if (!cleanName) return;
-    if (cleanName.length > 20) { toast.error('Tag name must be 20 characters or fewer'); return; }
+    if (cleanName.length > 20) { toast.warning('Tag name must be 20 characters or fewer'); return; }
     try {
       const existing = tags.find(t => t.name.toLowerCase() === cleanName.toLowerCase());
       const tagId = existing ? existing.id : (await createTag({ name: cleanName })).id;
       const currentTagIds = note.tags?.map(t => t.id) || [];
       if (!currentTagIds.includes(tagId)) {
-        if (currentTagIds.length >= 4) { toast.error('Maximum 4 tags per note'); return; }
+        if (currentTagIds.length >= 4) { toast.warning('Maximum 4 tags per note'); return; }
         await updateNote(note.id, { tags: [...currentTagIds, tagId] });
+        toast.success('Tag added');
         onNoteUpdate?.();
       }
     } catch {
