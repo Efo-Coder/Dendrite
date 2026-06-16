@@ -631,7 +631,6 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 }
 .win .notelist-title em { font-style: italic; color: var(--accent); font-weight: 400; }
 .win .notelist-count    { font-family: var(--mono); font-size: 10px; color: var(--ink-dim); letter-spacing: 0.14em; text-transform: uppercase; }
-.win .notelist-tab-btn:hover { background: color-mix(in oklch, var(--ink-low) 8%, transparent) !important; }
 
 /* Search bar */
 .win .notelist-search-wrapper { transition: background .15s; }

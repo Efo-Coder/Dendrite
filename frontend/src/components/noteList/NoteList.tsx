@@ -1,4 +1,3 @@
-import { startOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { Note } from '../../types';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Fragment } from 'react';
@@ -10,7 +9,7 @@ import NoteContextMenu from './NoteContextMenu';
 import MoveToFolderModal from '../modals/MoveToFolderModal';
 import TagSelectionModal from '../modals/TagSelectionModal';
 import NoteListItem, { type ExitRect } from './NoteItem';
-import NoteListHeader, { type ListTab } from './NoteListHeader';
+import NoteListHeader from './NoteListHeader';
 import { getFirstLine, groupKeyOf, type SortOption } from './noteListUtils';
 import { useNoteDrag } from './useNoteDrag';
 import { usePresenceList, type PresenceItem } from './usePresenceList';
@@ -67,7 +66,6 @@ const NoteList = ({
 
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
-  const [listTab, setListTab] = useState<ListTab>('all');
 
   // ── Refs ───────────────────────────────────────────────────────────────────
 
@@ -85,25 +83,13 @@ const NoteList = ({
 
   // ── Derived values ─────────────────────────────────────────────────────────
 
-  // Filter notes by the selected time-range tab.
   const displayNotes = useMemo(() => {
     if (isTrash) {
       return notes.filter(n => n.isDeleted);
     }
-    const now = new Date();
-    const dayStart = startOfDay(now);
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-    const monthStart = startOfMonth(now);
-    return notes.filter((n) => {
-      // Drop optimistically trashed notes immediately so their exit starts right away
-      if (n.isDeleted) return false;
-      const updated = new Date(n.updatedAt);
-      if (listTab === 'today') return updated >= dayStart;
-      if (listTab === 'week')  return updated >= weekStart;
-      if (listTab === 'month') return updated >= monthStart;
-      return true;
-    });
-  }, [notes, listTab, isTrash]);
+    // Drop optimistically trashed notes immediately so their exit starts right away
+    return notes.filter(n => !n.isDeleted);
+  }, [notes, isTrash]);
 
   // Sorted/reordered notes — computed synchronously so renders never see stale data.
   // During drag, dragNotes holds the live reorder snapshot; otherwise derived from displayNotes.
@@ -316,13 +302,10 @@ const NoteList = ({
     <NoteListHeader
       viewLabel={viewLabel}
       count={displayCount}
-      isTrash={isTrash}
       sortBy={sortBy}
       sortOrder={sortOrder}
       onSortChange={onSortChange}
       onSearchCleared={onNotesReordered}
-      listTab={listTab}
-      onListTabChange={setListTab}
       focusSearchTrigger={focusSearchTrigger}
     />
   );

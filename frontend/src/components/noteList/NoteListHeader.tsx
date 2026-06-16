@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useMotionValue, useMotionTemplate, animate } from 'motion/react';
 import { Search, SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react';
@@ -9,19 +9,14 @@ import { useSmartPopupStyle, type PopupAnchor } from '../../hooks/useSmartPopupS
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import type { SortOption } from './noteListUtils';
 
-export type ListTab = 'all' | 'today' | 'week' | 'month';
-
 interface NoteListHeaderProps {
   viewLabel?: string;
   count: number;
-  isTrash?: boolean;
   sortBy: SortOption;
   sortOrder: 'asc' | 'desc';
   onSortChange: (sortBy: SortOption, sortOrder: 'asc' | 'desc') => void;
   // Called when the search box is cleared/submitted empty — parent refetches the view
   onSearchCleared?: () => void;
-  listTab: ListTab;
-  onListTabChange: (tab: ListTab) => void;
   focusSearchTrigger?: number;
 }
 
@@ -32,26 +27,15 @@ const sortLabels: Partial<Record<SortOption, string>> = {
   manual: 'Manual',
 };
 
-const listTabs: { id: ListTab; label: string }[] = [
-  { id: 'all',   label: 'All' },
-  { id: 'today', label: 'Today' },
-  { id: 'week',  label: 'This Week' },
-  { id: 'month', label: 'This Month' },
-];
-
-// List head: title + count, search field with glow, sort menu and time-range tabs
+// List head: title + count, search field with glow and sort menu
 const NoteListHeader = ({
-  viewLabel, count, isTrash,
+  viewLabel, count,
   sortBy, sortOrder, onSortChange, onSearchCleared,
-  listTab, onListTabChange, focusSearchTrigger,
+  focusSearchTrigger,
 }: NoteListHeaderProps) => {
   const searchNotes = useNoteStore((s) => s.searchNotes);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const tabContainerRef = useRef<HTMLDivElement>(null);
-  const { onItemEnter: onTabEnter, onItemLeave: onTabLeave, Indicator: TabIndicator } = useMagicHover({ mode: 'free', borderRadius: 20, ref: tabContainerRef });
 
   const sortMenuInnerRef = useRef<HTMLDivElement>(null);
   const { onItemEnter: onSortEnter, onItemLeave: onSortLeave, Indicator: SortIndicator } = useMagicHover({ mode: 'free', borderRadius: 6, ref: sortMenuInnerRef });
@@ -73,12 +57,6 @@ const NoteListHeader = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const sortPopupRef = useRef<HTMLDivElement | null>(null);
   const { style: sortPopupStyle } = useSmartPopupStyle(sortMenuAnchor, sortPopupRef, 0);
-
-  useLayoutEffect(() => {
-    const idx = listTabs.findIndex(t => t.id === listTab);
-    const el = tabRefs.current[idx];
-    if (el) setPillStyle({ left: el.offsetLeft, width: el.offsetWidth });
-  }, [listTab]);
 
   // Close sort popup on outside click
   useEffect(() => {
@@ -180,55 +158,6 @@ const NoteListHeader = ({
           </button>
         </div>
         </div>
-        {!isTrash && (
-          <div style={{ position: 'relative', marginTop: '10px' }}>
-            <div ref={tabContainerRef} style={{ position: 'relative', display: 'flex', gap: '4px' }}>
-              {TabIndicator}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  bottom: 0,
-                  left: pillStyle.left,
-                  width: pillStyle.width,
-                  background: 'color-mix(in oklch, var(--accent) 12%, transparent)',
-                  border: '0.5px solid color-mix(in oklch, var(--accent) 40%, transparent)',
-                  borderRadius: '20px',
-                  transition: 'left 0.22s cubic-bezier(0.23, 1, 0.32, 1), width 0.22s cubic-bezier(0.23, 1, 0.32, 1)',
-                  pointerEvents: 'none',
-                }}
-              />
-              {listTabs.map((t, i) => (
-                <button
-                  key={t.id}
-                  ref={el => { tabRefs.current[i] = el; }}
-                  type="button"
-                  onClick={() => onListTabChange(t.id)}
-                  onMouseEnter={onTabEnter}
-                  onMouseLeave={onTabLeave}
-                  className="notelist-tab-btn"
-                  style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: '9px',
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase' as const,
-                    padding: '3px 10px',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    zIndex: 1,
-                    color: listTab === t.id ? 'var(--accent)' : 'var(--ink-low)',
-                    transition: 'color 0.22s, background 0.15s',
-                    background: 'transparent',
-                    border: '0.5px solid color-mix(in oklch, var(--ink-low) 40%, transparent)',
-                    borderRadius: '20px',
-                  }}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {createPortal(
