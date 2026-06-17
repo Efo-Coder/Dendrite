@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -32,6 +33,25 @@ interface SettingsState {
   setCursorStyle: (style: CursorStyle) => void;
 }
 
+// View Transitions API isn't in every TS DOM lib version yet.
+type DocumentWithViewTransition = Document & {
+  startViewTransition?: (callback: () => void) => unknown;
+};
+
+// A theme swap repaints the whole page; animating the inherited color tokens per-property
+// janks badly. The View Transitions API snapshots before/after and cross-fades them
+// GPU-composited instead. flushSync forces the DOM theme mutation (a useLayoutEffect in
+// ThemeProvider) to run synchronously, so the "after" snapshot is correct.
+function applyThemeChange(apply: () => void) {
+  const doc = document as DocumentWithViewTransition;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!doc.startViewTransition || reduce) {
+    apply();
+    return;
+  }
+  doc.startViewTransition(() => flushSync(apply));
+}
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
@@ -48,7 +68,7 @@ export const useSettingsStore = create<SettingsState>()(
 
       setDateDisplayMode: (mode) => set({ dateDisplayMode: mode }),
       setPalette: (palette) => set({ palette }),
-      setThemeMode: (mode) => set({ themeMode: mode }),
+      setThemeMode: (mode) => applyThemeChange(() => set({ themeMode: mode })),
       setFont: (font) => set({ font }),
       setFontSize: (fontSize) => set({ fontSize }),
       setDropCap: (dropCap) => set({ dropCap }),

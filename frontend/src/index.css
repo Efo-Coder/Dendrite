@@ -183,23 +183,20 @@
 @property --line-soft  { syntax: '<color>'; inherits: true; initial-value: oklch(0.30 0.008 60 / 0.22); }
 @property --border     { syntax: '<color>'; inherits: true; initial-value: oklch(0.30 0.008 60 / 0.5); }
 
-html.is-theme-switching {
-  transition:
-    --avatar-color 700ms ease,
-    --bg 700ms ease,
-    --bg-deep 700ms ease,
-    --surface 700ms ease,
-    --surface-hi 700ms ease,
-    --ink 700ms ease,
-    --ink-mid 700ms ease,
-    --ink-low 700ms ease,
-    --ink-dim 700ms ease,
-    --accent 700ms ease,
-    --accent-hi 700ms ease,
-    --accent-deep 700ms ease,
-    --line 700ms ease,
-    --line-soft 700ms ease,
-    --border 700ms ease;
+/* Theme switch is a full-page cross-fade via the View Transitions API (see
+   applyThemeChange in useSettingsStore). Animating the inherited color tokens per-property
+   janked the whole page; the snapshot cross-fade is GPU-composited instead. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+  animation-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
 }
 
 @layer base {

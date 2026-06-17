@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { motion } from 'motion/react';
 import gsap from 'gsap';
@@ -21,7 +21,9 @@ export default function LandingPage() {
   const { themeMode, setThemeMode } = useSettingsStore();
   const dark = themeMode === 'dark';
 
-  useEffect(() => {
+  // useLayoutEffect so the legacy tokens are written synchronously during the View
+  // Transition's flushSync — otherwise FaqSection & co. would snap after the cross-fade.
+  useLayoutEffect(() => {
     const root = document.documentElement;
     if (dark) {
       root.removeAttribute('data-theme');
