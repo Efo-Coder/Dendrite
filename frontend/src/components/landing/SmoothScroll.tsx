@@ -19,6 +19,10 @@ const LENIS_OPTIONS = {
 
 export function SmoothScroll({ children }: { children: ReactNode }) {
   useEffect(() => {
+    // This page remounts on every route change; start it at the top. Lenis would otherwise
+    // adopt the previous page's scroll offset when it reads window.scrollY on init.
+    window.scrollTo(0, 0);
+
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) return;
 
@@ -59,6 +63,9 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       lenis.off("scroll", ScrollTrigger.update);
       document.removeEventListener("click", handleAnchorClick);
       lenis.destroy();
+      // Reset after Lenis is gone so the next page — which has no Lenis to re-zero it — starts
+      // at the top instead of inheriting this page's scroll offset.
+      window.scrollTo(0, 0);
     };
   }, []);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -92,6 +92,17 @@ interface Feature {
   zoom?: number;
   offset?: [number, number];
 }
+
+// Per-line gold gradient; inline-block + paddingBottom so WebKit text-clip
+// keeps descenders and each line spans the full bright→deep ramp regardless of alignment.
+const goldGradientText: CSSProperties = {
+  display: 'inline-block',
+  paddingBottom: '0.08em',
+  background: 'linear-gradient(120deg, var(--accent-hi), var(--accent-deep))',
+  WebkitBackgroundClip: 'text',
+  backgroundClip: 'text',
+  color: 'transparent',
+};
 
 const features: Feature[] = [
   {
@@ -329,12 +340,11 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
                 fontSize: 'clamp(2.2rem, 4.5vw, 4rem)',
                 lineHeight: 1.05,
                 letterSpacing: '-0.02em',
-                color: 'var(--ink)',
                 margin: '18px 0 22px',
               }}
             >
-              <span style={{ fontWeight: 500 }}>{feature.titleUp}</span><br />
-              <span style={{ fontStyle: 'italic', fontWeight: 300 }}>{feature.titleDown}</span>
+              <span style={{ ...goldGradientText, fontWeight: 500 }}>{feature.titleUp}</span><br />
+              <span style={{ ...goldGradientText, fontStyle: 'italic', fontWeight: 300 }}>{feature.titleDown}</span>
             </h3>
             <p
               ref={descRef}

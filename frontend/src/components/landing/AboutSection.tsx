@@ -11,25 +11,34 @@ if (typeof window !== "undefined") {
 // Destilliert aus der echten Namensgeschichte: Dendrit = verzweigter Fortsatz
 // der Nervenzelle, der Signale empfängt — und zugleich Baum mit Wurzeln.
 const PARAGRAPHS = [
-  "Every thought begins as a signal. In the brain, it arrives through the dendrite — the branched limb of a nerve cell that receives each impulse and carries it inward, toward the place where thinking takes form. The name was chosen with intention: a structure that is at once neuron and tree, root and branch, mind and nature. We built Dendrite in its image — a notebook that branches the way thinking does.",
-  "Dendrite began as a quiet refusal — of preset palettes, rigid images, formatting that resisted intention. At Dendrite, we believe your notes should work as hard as you do: beautiful by design, exact in every detail, calm in every gesture. Not software that stores text, but a notebook of genuine substance — one you open gladly, lose yourself in willingly, and trust with everything you mean to build.",
+  "Every thought begins with a signal.",
+
+  "In the brain, that signal first arrives through the dendrite — a branching structure that receives information and carries it inward, where thought begins to take form. The name was chosen deliberately: a structure that is at once branch and root, mind and nature, connection and growth. It reflects the belief that ideas grow through connection. Dendrite was built around that belief.",
+
+  "Not as a place to store notes, but as a place for thinking itself.",
+
+  "We created Dendrite in pursuit of something increasingly rare in software: focus without constraint — a space where clarity and creativity can coexist, and ideas that never limits your creative vision. A notebook free from unnecessary complexity, designed to feel calm, precise, and enduring. Every detail serves a purpose. Every interaction is considered.",
+
+  "Because the tools we use shape the way we think.",
+
+  "Dendrite is for those who seek more than a place to write — those who value a space to think, a notebook they return to willingly, trust completely, and use to build what matters.",
 ];
 
 const PRINCIPLES = [
   {
     n: "01",
-    title: "Rooted in thought",
-    text: "Named for the structure where every idea first arrives — part neuron, part tree, entirely devoted to thought.",
+    title: "Branching",
+    text: "Named after the branching structure that receives information in the brain, and the belief that thinking is not linear. It grows through connection.",
   },
   {
     n: "02",
-    title: "No small frustrations",
-    text: "Every color, every size, every image precisely where you intend it. The details others dismiss are where we begin.",
+    title: "Precision",
+    text: "Colors, typography, spacing and every element should be exactly where you intend it. Precision is not a feature — it is the foundation.",
   },
   {
     n: "03",
-    title: "A notebook to get lost in",
-    text: "Calm, considered, quietly luxurious. A place you enter to write — and stay, because you think better here.",
+    title: "Enduring",
+    text: "A notebook should invite focus, not demand it. Calm, considered, and quietly luxurious. Designed to become a place where thinking feels effortless.",
   },
 ];
 
@@ -195,16 +204,16 @@ export function AboutSection() {
             <div key={p.n}>
               <div className="ab-line" style={hairlineStyle} />
               <div
-                className="ab-reveal flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-10"
+                className="ab-reveal flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-5"
                 style={{ padding: 'clamp(20px, 3vw, 30px) 0' }}
               >
                 <span
+                  className="shrink-0 sm:self-center"
                   style={{
                     fontFamily: 'var(--mono)',
                     fontSize: '10px',
                     letterSpacing: '0.2em',
                     color: 'var(--accent)',
-                    flexShrink: 0,
                   }}
                 >
                   {p.n}
