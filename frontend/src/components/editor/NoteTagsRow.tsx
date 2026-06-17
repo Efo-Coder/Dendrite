@@ -128,17 +128,28 @@ const NoteTagsRow = ({ note, disabled, onNoteUpdate }: NoteTagsRowProps) => {
   return (
     <div className="editor-byline">
       <div className="editor-tags">
-        {note.tags?.map(t => (
-          <span key={t.id} className="editor-tag" style={(() => { const live = tags.find(x => x.id === t.id); const c = live?.color ?? t.color; return { color: c, borderColor: `color-mix(in srgb, ${c} 35%, transparent)`, background: `color-mix(in srgb, ${c} 8%, transparent)` }; })()}>
-            {t.name}
-            {!disabled && (
-              <span className="tag-remove" onClick={() => handleToggleTag(t.id)}>×</span>
-            )}
-          </span>
-        ))}
+        <AnimatePresence mode="popLayout" initial={false}>
+          {note.tags?.map(t => (
+            <motion.span
+              key={t.id}
+              layout
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
+              className="editor-tag"
+              style={(() => { const live = tags.find(x => x.id === t.id); const c = live?.color ?? t.color; return { color: c, borderColor: `color-mix(in srgb, ${c} 35%, transparent)`, background: `color-mix(in srgb, ${c} 8%, transparent)` }; })()}
+            >
+              {t.name}
+              {!disabled && (
+                <span className="tag-remove" onClick={() => handleToggleTag(t.id)}>×</span>
+              )}
+            </motion.span>
+          ))}
+        </AnimatePresence>
         {!disabled && (note.tags?.length ?? 0) < 4 && (
           addingTag ? (
-            <div ref={inputWrapperRef} className="editor-tag-wrapper">
+            <motion.div layout ref={inputWrapperRef} className="editor-tag-wrapper">
               <input
                 autoFocus
                 className="editor-tag-input"
@@ -175,11 +186,11 @@ const NoteTagsRow = ({ note, disabled, onNoteUpdate }: NoteTagsRowProps) => {
                   }
                 }}
               />
-            </div>
+            </motion.div>
           ) : (
-            <button type="button" className="editor-tag-add" onClick={() => setAddingTag(true)}>
+            <motion.button layout type="button" className="editor-tag-add" onClick={() => setAddingTag(true)}>
               + Add tag
-            </button>
+            </motion.button>
           )
         )}
       </div>

@@ -222,7 +222,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
           <div className="flex items-center gap-2 min-w-0">
             <div
               ref={miniToolbarRef}
-              className="relative flex items-center gap-0.5 rounded-full border border-[color-mix(in_srgb,var(--line)_48%,transparent)] px-1 py-1 shadow-[0_8px_28px_color-mix(in_srgb,#000_18%,transparent)] magic-hover"
+              className="relative flex items-center gap-0.5 rounded-full border border-[color-mix(in_srgb,var(--line)_75%,transparent)] bg-(--panel-bg) backdrop-blur-md px-1 py-1 shadow-[0_10px_30px_color-mix(in_srgb,#000_45%,transparent),0_0_0_1px_color-mix(in_srgb,var(--accent)_12%,transparent)] magic-hover"
             >
               {MiniIndicator}
               {miniIconBtn(formatBulletList, 'Bullet list', List, blockType === 'bullet', undefined)}

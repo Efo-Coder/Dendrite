@@ -38,7 +38,7 @@
 :root {
   --bg:           oklch(0.16 0.008 60);
   --bg-deep:      oklch(0.11 0.008 60);
-  --panel-bg:     color-mix(in oklch, var(--bg) 96%, black 2%);
+  --panel-bg:     color-mix(in oklch, var(--surface) 10%, black 10%);
   --surface:      oklch(0.21 0.010 60);
   --surface-hi:   oklch(0.26 0.012 60);
   --line:         oklch(0.30 0.008 60 / 0.5);
@@ -147,6 +147,7 @@
 :root[data-theme="light"] {
   --bg:          oklch(0.97 0.006 80);
   --bg-deep:     oklch(0.93 0.008 80);
+  --panel-bg:    color-mix(in oklch, var(--bg) 96%, black 2%);
   --surface:     oklch(0.99 0.004 80);
   --surface-hi:  oklch(1.00 0.000 0);
   --line:        oklch(0.30 0.008 60 / 0.18);
