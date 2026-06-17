@@ -56,7 +56,7 @@ const IconPickerDropdown = ({ value, onChange }: IconPickerDropdownProps) => {
         title={value ?? 'Select icon'}
         className={clsx(
           'w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 bg-(--surface)',
-          anchor ? 'ring-2 ring-(--accent) text-(--accent)' : 'ring-1 ring-white/19 text-(--ink-mid) hover:text-(--ink) hover:bg-(--surface-hi)'
+          anchor ? 'ring-2 ring-(--accent) text-(--accent)' : 'ring-1 ring-(--line) text-(--ink-mid) hover:text-(--ink) hover:bg-(--surface-hi)'
         )}
       >
         <SelectedIcon style={{ width: 14, height: 14 }} />

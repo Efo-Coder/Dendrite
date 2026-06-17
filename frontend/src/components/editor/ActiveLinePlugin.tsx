@@ -15,7 +15,7 @@ const SNAP_THRESHOLD = 8;
 const EASE: [number, number, number, number] = [0.33, 1, 0.68, 1];
 
 function highlightColor() {
-  return 'color-mix(in oklch, var(--accent-hi) 15%, transparent)';
+  return 'color-mix(in oklch, var(--accent) 15%, transparent)';
 }
 
 // Chrome's caret box is not perfectly centered in the line box (depends on font

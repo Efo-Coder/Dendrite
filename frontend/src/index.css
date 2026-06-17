@@ -80,41 +80,66 @@
 /* ─── Dark palette variants ──────────────────────────────────────────────────── */
 
 :root[data-palette="onyx"] {
-  --bg: oklch(0.16 0.008 60); --bg-deep: oklch(0.11 0.008 60);
-  --surface: oklch(0.21 0.010 60); --surface-hi: oklch(0.26 0.012 60);
-  --accent: oklch(0.78 0.110 85); --accent-hi: oklch(0.86 0.130 85); --accent-deep: oklch(0.55 0.110 80);
+  --bg: oklch(0.16 0.008 60);
+  --bg-deep: oklch(0.11 0.008 60);
+  --surface: oklch(0.21 0.010 60);
+  --surface-hi: oklch(0.26 0.012 60);
+  --accent: oklch(0.78 0.110 85);
+  --accent-hi: oklch(0.86 0.130 85);
+  --accent-deep: oklch(36.275% 0.07042 80.112);
 }
 :root[data-palette="bordeaux"] {
-  --bg: oklch(0.17 0.020 25); --bg-deep: oklch(0.11 0.025 25);
-  --surface: oklch(0.22 0.030 25); --surface-hi: oklch(0.28 0.040 25);
-  --accent: oklch(0.80 0.090 70); --accent-hi: oklch(0.87 0.110 70); --accent-deep: oklch(0.55 0.110 30);
-  --ink: oklch(0.94 0.015 70); --ink-mid: oklch(0.78 0.015 70);
+  --bg: oklch(0.17 0.020 25);
+  --bg-deep: oklch(0.11 0.025 25);
+  --surface: oklch(0.22 0.030 25);
+  --surface-hi: oklch(0.28 0.040 25);
+  --accent: oklch(0.80 0.090 70);
+  --accent-hi: oklch(0.87 0.110 70);
+  --accent-deep: oklch(29.366% 0.05034 29.792);
+  --ink: oklch(0.94 0.015 70);
+  --ink-mid: oklch(0.78 0.015 70);
 }
 :root[data-palette="forest"] {
-  --bg: oklch(0.16 0.012 165); --bg-deep: oklch(0.10 0.014 165);
-  --surface: oklch(0.21 0.014 165); --surface-hi: oklch(0.26 0.016 165);
-  --accent: oklch(0.78 0.090 90); --accent-hi: oklch(0.86 0.110 90); --accent-deep: oklch(0.55 0.090 90);
-  --ink: oklch(0.94 0.010 90); --ink-mid: oklch(0.78 0.010 90);
+  --bg: oklch(0.16 0.012 165);
+  --bg-deep: oklch(0.10 0.014 165);
+  --surface: oklch(0.21 0.014 165);
+  --surface-hi: oklch(0.26 0.016 165);
+  --accent: oklch(0.78 0.090 90);
+  --accent-hi: oklch(0.86 0.110 90);
+  --accent-deep: oklch(30.914% 0.04535 89.945);
+  --ink: oklch(0.94 0.010 90);
+  --ink-mid: oklch(0.78 0.010 90);
 }
 :root[data-palette="midnight"] {
-  --bg: oklch(0.16 0.018 260); --bg-deep: oklch(0.10 0.022 260);
-  --surface: oklch(0.21 0.022 260); --surface-hi: oklch(0.26 0.026 260);
-  --accent: oklch(0.80 0.080 50); --accent-hi: oklch(0.86 0.100 50); --accent-deep: oklch(0.58 0.080 50);
-  --ink: oklch(0.94 0.010 240); --ink-mid: oklch(0.78 0.012 240);
+  --bg: oklch(0.16 0.018 260);
+  --bg-deep: oklch(0.10 0.022 260);
+  --surface: oklch(0.21 0.022 260);
+  --surface-hi: oklch(0.26 0.026 260);
+  --accent: oklch(0.80 0.080 50);
+  --accent-hi: oklch(0.86 0.100 50);
+  --accent-deep: oklch(39.228% 0.04908 51.17);
+  --ink: oklch(0.94 0.010 240);
+  --ink-mid: oklch(0.78 0.012 240);
 }
 :root[data-palette="obsidian"] {
-  --bg: oklch(0.14 0.004 0); --bg-deep: oklch(0.08 0.002 0);
-  --surface: oklch(0.19 0.005 0); --surface-hi: oklch(0.24 0.006 0);
-  --accent: oklch(0.92 0.005 0); --accent-hi: oklch(0.98 0.005 0); --accent-deep: oklch(0.65 0.005 0);
-  --ink: oklch(0.96 0.003 0); --ink-mid: oklch(0.76 0.003 0);
+  --bg: oklch(0.14 0.004 0);
+  --bg-deep: oklch(0.08 0.002 0);
+  --surface: oklch(0.19 0.005 0);
+  --surface-hi: oklch(0.24 0.006 0);
+  --accent: oklch(0.92 0.005 0);
+  --accent-hi: oklch(0.98 0.005 0);
+  --accent-deep: oklch(37.101% 0.00442 354.385);
+  --ink: oklch(0.96 0.003 0);
+  --ink-mid: oklch(0.76 0.003 0);
 }
 :root[data-palette="nacre"] {
-  --bg: oklch(0.16 0.014 15); --bg-deep: oklch(0.11 0.012 15);
-  --surface: oklch(0.21 0.016 15); --surface-hi: oklch(0.27 0.018 15);
-  --accent: oklch(0.80 0.105 45);
-  --accent-hi: oklch(0.88 0.090 48);
-  --accent-deep: oklch(0.55 0.115 40);
-  --ink: oklch(0.94 0.012 40); --ink-mid: oklch(0.78 0.010 40);
+  --bg: oklch(13.452% 0.01663 331.758);
+  --bg-deep: oklch(0.11 0.012 15);
+  --surface: oklch(0.21 0.016 15);
+  --surface-hi: oklch(0.27 0.018 15);
+  --accent: oklch(85.649% 0.0573 33.042);
+  --accent-hi: oklch(0.6683 0.0666 32.26);
+  --accent-deep: oklch(35.017% 0.02307 22.386);
 }
 
 /* ─── Light mode ─────────────────────────────────────────────────────────────── */
@@ -130,7 +155,7 @@
   --ink-mid:     oklch(0.38 0.010 60);
   --ink-low:     oklch(0.52 0.010 60);
   --ink-dim:     oklch(0.65 0.010 60);
-  --accent:      oklch(58.955% 0.07365 85.495);
+  --accent:      oklch(45.622% 0.05119 85.349);
   --accent-hi:   oklch(67.397% 0.11209 83.948);
   --accent-deep: oklch(82.976% 0.13546 83.717);
   --avatar-color: oklch(0.15 0.020 60);
@@ -138,6 +163,13 @@
   --shadow-card: 0 1px 3px rgba(0,0,0,.06);
 }
 
+/* Light mode flips the button gradient: deep (light tone) → accent (dark tone) */
+:root[data-theme="light"] .btn.primary,
+:root[data-theme="light"] .modal-overlay .btn.primary,
+:root[data-theme="light"] .btn-ghost::before,
+:root[data-theme="light"] .fill-slide::before {
+  background: linear-gradient(180deg, var(--accent-deep), var(--accent));
+}
 /* Avatar keeps its 135deg angle, gradient direction flipped to match */
 :root[data-theme="light"] .avatar-fill {
   background: linear-gradient(135deg, var(--accent-deep), var(--accent));
@@ -147,29 +179,49 @@
 
 /* onyx + light = default warm champagne, no override needed */
 :root[data-theme="light"][data-palette="bordeaux"] {
-  --bg: oklch(0.97 0.006 80); --bg-deep: oklch(0.93 0.008 80);
-  --surface: oklch(0.99 0.004 80); --surface-hi: oklch(1.00 0.000 0);
-  --accent: oklch(0.43 0.10 16); --accent-hi: oklch(0.63 0.075 14); --accent-deep: oklch(0.50 0.085 14);
+  --bg: oklch(96.279% 0.00642 16.332);
+  --bg-deep: oklch(91.988% 0.00979 16.748);
+  --surface: oklch(98.518% 0.00424 15.776);
+  --surface-hi: oklch(100% 0.00011 271.152);
+  --accent: oklch(45.203% 0.05907 70.113);
+  --accent-hi: oklch(0.87 0.110 70);
+  --accent-deep: oklch(84.586% 0.09192 69.221);
 }
 :root[data-theme="light"][data-palette="forest"] {
-  --bg: oklch(0.97 0.006 80); --bg-deep: oklch(0.93 0.008 80);
-  --surface: oklch(0.99 0.004 80); --surface-hi: oklch(1.00 0.000 0);
-  --accent: oklch(0.55 0.072 150); --accent-hi: oklch(0.45 0.078 150); --accent-deep: oklch(0.38 0.066 150);
+  --bg: oklch(97.023% 0.00909 151.291);
+  --bg-deep: oklch(93.15% 0.01465 142.551);
+  --surface: oklch(98.993% 0.00666 146.312);
+  --surface-hi: oklch(100% 0.00011 271.152);
+  --accent: oklch(41.91% 0.06692 90.001);
+  --accent-hi: oklch(0.86 0.110 90);
+  --accent-deep: oklch(0.78 0.090 90);
 }
 :root[data-theme="light"][data-palette="midnight"] {
-  --bg: oklch(0.97 0.006 80); --bg-deep: oklch(0.93 0.008 80);
-  --surface: oklch(0.99 0.004 80); --surface-hi: oklch(1.00 0.000 0);
-  --accent: oklch(0.50 0.078 262); --accent-hi: oklch(0.42 0.082 262); --accent-deep: oklch(0.35 0.070 262);
+  --bg: oklch(96.062% 0.00814 293.617);
+  --bg-deep: oklch(91.618% 0.01226 291.111);
+  --surface: oklch(98.325% 0.0054 285.997);
+  --surface-hi: oklch(100% 0.00011 271.152);
+  --accent: oklch(35.901% 0.0448 50.782);
+  --accent-hi: oklch(0.86 0.100 50);
+  --accent-deep: oklch(0.80 0.080 50);
 }
 :root[data-theme="light"][data-palette="obsidian"] {
-  --bg: oklch(0.97 0.006 80); --bg-deep: oklch(0.93 0.008 80);
-  --surface: oklch(0.99 0.004 80); --surface-hi: oklch(1.00 0.000 0);
-  --accent: oklch(0.28 0.008 70); --accent-hi: oklch(0.18 0.008 70); --accent-deep: oklch(0.40 0.008 70);
+  --bg: oklch(96.966% 0.00555 212.029);
+  --bg-deep: oklch(93.128% 0.00873 206.526);
+  --surface: oklch(99.104% 0.00427 198.545);
+  --surface-hi: oklch(1.00 0.000 0);
+  --accent: oklch(51.901% 0.00698 350.523);
+  --accent-hi: oklch(0.98 0.005 0);
+  --accent-deep: oklch(0.92 0.005 0); 
 }
 :root[data-theme="light"][data-palette="nacre"] {
-  --bg: oklch(0.97 0.009 15); --bg-deep: oklch(0.93 0.010 15);
-  --surface: oklch(0.99 0.006 15); --surface-hi: oklch(1.00 0.003 15);
-  --accent:oklch(0.8932 0.0599 1.38); --accent-hi: oklch(88.876% 0.06188 3.2); --accent-deep: oklch(0.6208 0.0935 10.41);
+  --bg: oklch(97.059% 0.01002 31.98);
+  --bg-deep: oklch(95.009% 0.01153 36.991);
+  --surface: oklch(98.452% 0.00746 16.459);
+  --surface-hi: oklch(97.493% 0.01073 16.773);
+  --accent: oklch(0.4122 0.0293 24.7);
+  --accent-hi: oklch(0.6683 0.0666 32.26);
+  --accent-deep: oklch(85.649% 0.0573 33.042);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -753,7 +805,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   font-size: 16px; color: var(--ink); line-height: 1.3;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
 }
-.win .note-card.active .note-card-title { color: var(--accent-hi); }
+.win .note-card.active .note-card-title { color: var(--accent); }
 .win .note-card-pin     { display: inline-block; width: 11px; height: 11px; background-color: var(--accent); -webkit-mask-image: url('/icons/pin-filled.svg'); mask-image: url('/icons/pin-filled.svg'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; opacity: 0.9; flex-shrink: 0; }
 .win .editor-pin-filled { display: inline-block; width: 14px; height: 14px; background-color: var(--accent); -webkit-mask-image: url('/icons/pin-filled.svg'); mask-image: url('/icons/pin-filled.svg'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; flex-shrink: 0; }
 .win .note-card-preview {
@@ -1105,11 +1157,11 @@ html .auth-panel .input {
   color: oklch(0.15 0.020 60);
   font-family: var(--serif-display); font-weight: 600; letter-spacing: 0.03em;
   text-decoration: none; cursor: pointer;
-  box-shadow: 0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px transparent;
+  box-shadow: 0 4px 14px transparent;
   transition: opacity 0.18s ease, transform 0.1s ease, box-shadow 0.25s ease;
 }
 .btn.primary:not(:disabled):hover {
-  box-shadow: 0 1px 0 color-mix(in oklch, var(--accent-hi) 60%, white 0%) inset, 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
+  box-shadow: 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
 }
 .btn.primary:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn.primary::before {
@@ -1121,23 +1173,22 @@ html .auth-panel .input {
 
 /* Modal action buttons */
 .modal-overlay .btn {
-  appearance: none; border: 1px solid transparent; padding: 8px 32px; border-radius: 0;
+  appearance: none; padding: 8px 32px; border-radius: 0;
   font-family: var(--serif-display); font-size: 0.6875rem; font-weight: 500;
   letter-spacing: 0.3em; text-transform: uppercase; cursor: pointer; transition: all .12s;
 }
 .modal-overlay .btn-ghost {
-  padding: 8px 32px; font-family: var(--serif-display);
+  padding: 8px 32px; font-family: var(--serif-display); font-weight: 600;
   background: transparent; position: relative; isolation: isolate;
 }
 .modal-overlay .btn.primary {
   background: linear-gradient(180deg, var(--accent), var(--accent-deep));
   color: oklch(0.15 0.020 60); font-weight: 600;
-  box-shadow: 0 1px 0 var(--accent-hi) inset, 0 4px 12px transparent;
-  border-color: color-mix(in oklch, var(--accent-deep) 90%, transparent);
+  box-shadow: 0 4px 12px transparent;
   position: relative; overflow: hidden;
 }
 .modal-overlay .btn.primary:not(:disabled):hover {
-  box-shadow: 0 1px 0 var(--accent-hi) inset, 0 4px 12px color-mix(in oklch, var(--accent) 30%, transparent);
+  box-shadow: 0 4px 12px color-mix(in oklch, var(--accent) 30%, transparent);
 }
 .modal-overlay .btn.primary:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -1208,7 +1259,7 @@ html .auth-panel .input {
   cursor: pointer; border-left: 2px solid transparent; transition: all .12s;
 }
 .modal-overlay .settings-nav button.active {
-  color: var(--accent-hi); border-left-color: var(--accent);
+  color: var(--ink); border-left-color: var(--accent);
   background: color-mix(in oklch, var(--accent) 10%, transparent);
 }
 .modal-overlay .settings-pane { padding: 11px 26px; overflow-y: auto; min-height: 0; }
