@@ -138,6 +138,11 @@
   --shadow-card: 0 1px 3px rgba(0,0,0,.06);
 }
 
+/* Avatar keeps its 135deg angle, gradient direction flipped to match */
+:root[data-theme="light"] .avatar-fill {
+  background: linear-gradient(135deg, var(--accent-deep), var(--accent));
+}
+
 /* ─── Light + palette combinations ─────────────────────────────────────────── */
 
 /* onyx + light = default warm champagne, no override needed */
@@ -591,13 +596,17 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   padding: 0 18px; border-top: 0.5px solid var(--line-soft);
   display: flex; align-items: center; gap: 10px;
 }
-.win .sidebar-avatar {
-  width: 30px; height: 30px; border-radius: 50%;
+/* Shared avatar look — gradient fill at any size (sidebar, profile modal) */
+.avatar-fill {
+  border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), var(--accent-deep));
   color: var(--avatar-color); display: flex; align-items: center; justify-content: center;
-  font-family: var(--serif-display); font-weight: 600; font-size: 14px;
-  box-shadow: 0 0 0 0.5px var(--line); flex-shrink: 0;
-  transition: box-shadow 0.3s ease;
+  font-family: var(--serif-display); font-weight: 600;
+  box-shadow: 0 0 0 0.5px var(--line);
+}
+.win .sidebar-avatar {
+  width: 30px; height: 30px; font-size: 14px;
+  flex-shrink: 0; transition: box-shadow 0.3s ease;
 }
 .win .sidebar-avatar img { border-radius: 50%; }
 .win .sidebar-avatar:hover {
@@ -605,7 +614,6 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
               0 0 0 6px color-mix(in oklch, var(--accent) 70%, transparent);
 }
 .win .sidebar-avatar:focus-visible { outline: none; }
-.avatar-initials { color: var(--avatar-color); }
 .win .sidebar-user     { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
 .win .sidebar-username { font-family: var(--serif-display); font-size: 13.5px; color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .win .sidebar-role     { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; color: var(--ink-low); text-transform: uppercase; }

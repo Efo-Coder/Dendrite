@@ -312,7 +312,7 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
           <button
             type="button"
             onClick={() => setShowProfileModal(true)}
-            className="sidebar-avatar"
+            className="sidebar-avatar avatar-fill"
             title="Profile"
             style={{ fontSize: '13px', fontWeight: 600 }}
           >

@@ -195,13 +195,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                   onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                 />
               ) : (
-                <div className="avatar-initials" style={{
-                  width: '100%', height: '100%', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--accent), var(--accent-deep))',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: 'var(--serif-display)', fontWeight: 600, fontSize: '20px',
-                  boxShadow: '0 0 0 0.5px var(--line)',
-                }}>
+                <div className="avatar-fill w-full h-full" style={{ fontSize: '20px' }}>
                   {avatarLoading ? <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--ink)' }} /> : initials}
                 </div>
               )}
