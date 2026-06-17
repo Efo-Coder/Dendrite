@@ -1,11 +1,6 @@
 import { useLayoutEffect } from 'react';
 import { useSettingsStore } from '../../store/useSettingsStore';
-
-const FONTS = {
-  'cormorant':   { display: "'Cormorant Garamond', serif", body: "'EB Garamond', serif" },
-  'eb-garamond': { display: "'EB Garamond', serif",        body: "'EB Garamond', serif" },
-  'mixed':       { display: "'Cormorant Garamond', serif", body: "'JetBrains Mono', monospace" },
-};
+import { injectFontLink } from '../../hooks/useGoogleFonts';
 
 const DENSITY = { compact: 0.85, regular: 1, comfy: 1.15 };
 
@@ -25,9 +20,16 @@ const ThemeProvider = ({ children }: ThemeProviderProps) => {
     root.setAttribute('data-cursor-style', cursorStyle);
     root.style.colorScheme = themeMode;
 
-    const f = FONTS[font] || FONTS.cormorant;
-    root.style.setProperty('--serif-display', f.display);
-    root.style.setProperty('--serif-body', f.body);
+    // Typeface setting only restyles the note editor title + body, not the whole app.
+    // null falls back to the CSS-default serifs; otherwise load + apply the chosen family.
+    if (font) {
+      injectFontLink(font);
+      root.style.setProperty('--editor-display', `'${font}', serif`);
+      root.style.setProperty('--editor-body', `'${font}', serif`);
+    } else {
+      root.style.removeProperty('--editor-display');
+      root.style.removeProperty('--editor-body');
+    }
     root.style.setProperty('--editor-fs', `${fontSize}px`);
     root.style.setProperty('--density', String(DENSITY[density] ?? 1));
     root.classList.toggle('drop-cap', dropCap);

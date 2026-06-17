@@ -5,7 +5,6 @@ import { persist } from 'zustand/middleware';
 export type DateDisplayMode = 'updatedAt' | 'createdAt';
 export type PaletteId = 'onyx' | 'bordeaux' | 'forest' | 'midnight' | 'obsidian' | 'nacre';
 export type ThemeMode = 'light' | 'dark';
-export type FontId = 'cormorant' | 'eb-garamond' | 'mixed';
 export type DensityId = 'compact' | 'regular' | 'comfy';
 export type CursorStyle = 'classic' | 'modern';
 
@@ -13,7 +12,7 @@ interface SettingsState {
   dateDisplayMode: DateDisplayMode;
   palette: PaletteId;
   themeMode: ThemeMode;
-  font: FontId;
+  font: string | null; // null = default serifs; otherwise a Google Fonts family name
   fontSize: number;
   dropCap: boolean;
   activeLine: boolean;
@@ -24,7 +23,7 @@ interface SettingsState {
   setDateDisplayMode: (mode: DateDisplayMode) => void;
   setPalette: (palette: PaletteId) => void;
   setThemeMode: (mode: ThemeMode) => void;
-  setFont: (font: FontId) => void;
+  setFont: (font: string | null) => void;
   setFontSize: (size: number) => void;
   setDropCap: (on: boolean) => void;
   setActiveLine: (on: boolean) => void;
@@ -58,7 +57,7 @@ export const useSettingsStore = create<SettingsState>()(
       dateDisplayMode: 'updatedAt',
       palette: 'onyx',
       themeMode: 'light',
-      font: 'cormorant',
+      font: null,
       fontSize: 19,
       dropCap: true,
       activeLine: true,
@@ -79,10 +78,10 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'dendrite-settings',
-      version: 5,
+      version: 6,
       migrate: (persisted: unknown, version: number) => {
         if (version < 2) {
-          return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: 'cormorant', fontSize: 19, dropCap: true, activeLine: true, density: 'regular', autoSave: true, cursorStyle: 'classic' };
+          return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: null, fontSize: 19, dropCap: true, activeLine: true, density: 'regular', autoSave: true, cursorStyle: 'classic' };
         }
         // Migrations apply cumulatively — no early returns, otherwise an old
         // stored version skips every later step.
@@ -90,6 +89,10 @@ export const useSettingsStore = create<SettingsState>()(
         if (version < 3) s.cursorStyle = 'classic';
         if (version < 4) s.cursorStyle = s.cursorStyle === 'classic' ? 'modern' : 'classic';
         if (version < 5) s.activeLine = true;
+        // v6: font went from a 3-value preset enum to a Google Fonts family name (or null).
+        if (version < 6) {
+          s.font = (s.font as unknown) === 'eb-garamond' ? 'EB Garamond' : null;
+        }
         return s;
       },
     }

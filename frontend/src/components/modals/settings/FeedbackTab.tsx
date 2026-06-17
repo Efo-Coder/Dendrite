@@ -52,7 +52,7 @@ const FeedbackTab = () => {
 
   return (
     <div style={{ fontFamily: 'var(--serif-body)' }}>
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ paddingTop: 13, paddingBottom: 28 }}>
         <div className="lbl" style={{ marginBottom: 12 }}>
           Rate your experience
           <small>How do you feel about Dendrite so far?</small>

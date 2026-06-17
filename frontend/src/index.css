@@ -58,10 +58,14 @@
   --radius-win:  14px;
   --radius-card: 10px;
 
-  /* Runtime-overridden by ThemeProvider */
   --serif-display: 'Cormorant Garamond', 'Garamond', 'EB Garamond', serif;
   --serif-body:    'EB Garamond', 'Cormorant Garamond', 'Garamond', serif;
   --mono:          'JetBrains Mono', 'Courier New', monospace;
+
+  /* Note editor title + body — overridden by ThemeProvider's Typeface setting,
+     scoped to the editor so the rest of the app keeps the default serifs */
+  --editor-display: var(--serif-display);
+  --editor-body:    var(--serif-body);
 
   --editor-fs: 19px;
   --density:   1;
@@ -856,7 +860,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 
 /* Title textarea */
 .win .editor-title {
-  font-family: var(--serif-display) !important; font-weight: 500 !important;
+  font-family: var(--editor-display) !important; font-weight: 500 !important;
   font-size: 52px !important; line-height: 1.12 !important;
   color: var(--ink) !important; letter-spacing: -0.015em !important;
   margin: 0 0 8px !important;
@@ -925,7 +929,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 
 /* Body text area — font/size set by Lexical */
 .win .editor-body {
-  font-family: var(--serif-body); font-size: var(--editor-fs);
+  font-family: var(--editor-body); font-size: var(--editor-fs);
   line-height: 1.62; color: var(--ink); letter-spacing: 0.002em;
 }
 /* Drop-cap on first letter when enabled via Settings */
@@ -1199,7 +1203,7 @@ html .auth-panel .input {
   color: var(--accent-hi); border-left-color: var(--accent);
   background: color-mix(in oklch, var(--accent) 10%, transparent);
 }
-.modal-overlay .settings-pane { padding: 22px 26px; overflow-y: auto; min-height: 0; }
+.modal-overlay .settings-pane { padding: 11px 26px; overflow-y: auto; min-height: 0; }
 .modal-overlay .settings-pane.animated { animation: view-in .2s ease; }
 .modal-overlay .settings-row {
   display: flex; align-items: center; justify-content: space-between;
