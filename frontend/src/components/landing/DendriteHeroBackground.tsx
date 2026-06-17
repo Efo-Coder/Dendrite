@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // Deterministischer RNG (Mulberry32) — gleiche Struktur bei jedem Render
 function mulberry32(seed: number) {
@@ -15,9 +15,10 @@ const VIEW_W = 1440;
 const VIEW_H = 900;
 const MAX_GEN = 6;
 const GEN_DELAY = 0.4; // Sekunden pro Generation — die Zeichnung wächst nach außen
+const BREATHE_COUNT = 12; // only the largest halos animate — keeps the per-frame gradient repaint cheap
 
 interface Segment { d: string; width: number; opacity: number; delay: number }
-interface Dot { x: number; y: number; r: number; opacity: number; delay: number }
+interface Dot { x: number; y: number; r: number; opacity: number; delay: number; breathe: boolean }
 
 function grow(
   rng: () => number,
@@ -35,6 +36,7 @@ function grow(
         r: 1.2 + rng() * 1.6,
         opacity: 0.25 + rng() * 0.3,
         delay: MAX_GEN * GEN_DELAY + rng() * 0.8,
+        breathe: false,
       });
     }
     return;
@@ -69,14 +71,30 @@ function generate() {
     [VIEW_W + 30, 140, Math.PI - 0.38, 150],
   ];
   for (const [x, y, angle, len] of roots) grow(rng, segments, dots, x, y, angle, len, 0);
+  // Only the largest halos breathe: animating every gradient-filled halo per frame is the
+  // main paint cost, so the biggest few carry the effect while the rest stay static.
+  [...dots].sort((a, b) => b.r - a.r).slice(0, BREATHE_COUNT).forEach(d => { d.breathe = true; });
   return { segments, dots };
 }
 
 export default function DendriteHeroBackground({ ready }: { ready: boolean }) {
   const { segments, dots } = useMemo(generate, []);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [onscreen, setOnscreen] = useState(true);
+
+  // Pause the infinite halo breathing once the hero scrolls out of view — otherwise the
+  // gradient halos keep repainting every frame and stutter scrolling further down the page.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => setOnscreen(entry.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <div
+      ref={rootRef}
       aria-hidden
       style={{
         position: 'absolute',
@@ -95,7 +113,7 @@ export default function DendriteHeroBackground({ ready }: { ready: boolean }) {
       <svg
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
         preserveAspectRatio="xMidYMid slice"
-        className={ready ? 'dendrite-on' : undefined}
+        className={[ready && 'dendrite-on', !onscreen && 'dendrite-paused'].filter(Boolean).join(' ') || undefined}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
       >
         <defs>
@@ -122,14 +140,14 @@ export default function DendriteHeroBackground({ ready }: { ready: boolean }) {
         {dots.map((p, i) => (
           <g key={i} className="dendrite-dot" style={{ animationDelay: `${p.delay}s` }}>
             <circle
-              className="dendrite-halo"
+              className={p.breathe ? 'dendrite-halo dendrite-halo--breathe' : 'dendrite-halo'}
               cx={p.x.toFixed(1)}
               cy={p.y.toFixed(1)}
               r={(p.r * 5).toFixed(2)}
               fill="url(#dendrite-glow)"
               fillOpacity={p.opacity}
-              // Negatives Delay: startet mitten im Zyklus — die Punkte atmen versetzt
-              style={{ animationDelay: `-${(p.delay % 2.4).toFixed(2)}s` }}
+              // Negative delay starts the cycle mid-way so the breathing halos pulse out of sync
+              style={p.breathe ? { animationDelay: `-${(p.delay % 2.4).toFixed(2)}s` } : undefined}
             />
             <circle
               cx={p.x.toFixed(1)}

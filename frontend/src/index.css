@@ -1549,17 +1549,17 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 }
 @keyframes dendrite-dot-in { to { opacity: 1; } }
 
-/* Halo atmet im Rhythmus des Saved-Dots im Editor (save-glow, 2.4s ease-in-out) */
-.dendrite-halo {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.dendrite-on .dendrite-halo {
+/* Only the largest halos breathe (marked in DendriteHeroBackground); opacity-only keeps the
+   per-frame gradient repaint cheap. Paused once the hero scrolls offscreen. */
+.dendrite-on .dendrite-halo--breathe {
   animation: dendrite-glow-breathe 2.4s ease-in-out infinite;
 }
+.dendrite-paused .dendrite-halo--breathe {
+  animation-play-state: paused;
+}
 @keyframes dendrite-glow-breathe {
-  0%, 100% { opacity: 0.65; transform: scale(0.9); }
-  50%      { opacity: 1;    transform: scale(1.1); }
+  0%, 100% { opacity: 0.65; }
+  50%      { opacity: 1; }
 }
 
 .hero-caret {
@@ -1576,5 +1576,6 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 @media (prefers-reduced-motion: reduce) {
   .dendrite-seg, .dendrite-on .dendrite-seg { animation: none; stroke-dashoffset: 0; }
   .dendrite-dot, .dendrite-on .dendrite-dot { animation: none; opacity: 1; }
+  .dendrite-on .dendrite-halo--breathe { animation: none; }
   .hero-caret { animation: none; }
 }
