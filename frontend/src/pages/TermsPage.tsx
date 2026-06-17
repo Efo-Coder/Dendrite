@@ -1,8 +1,17 @@
+import { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
+import { MoveLeft, MoveRight } from 'lucide-react';
 import { LOGO_SRC } from '../config/brand';
 
 export default function TermsPage() {
+  // Reset on mount: under AnimatePresence mode="wait" the central scroll-to-top fires while the
+  // previous page is still fading out, so a long source page (Privacy/Terms) leaves this one
+  // scrolled down. Resetting once the page is actually mounted is reliable.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -12,16 +21,14 @@ export default function TermsPage() {
       style={{ background: 'var(--bg)', color: 'var(--ink)', minHeight: '100dvh' }}
     >
       {/* Header */}
-      <header style={{ borderBottom: '0.5px solid var(--line)', padding: '0 clamp(16px, 5vw, 80px)' }}>
-        <div style={{ maxWidth: '860px', margin: '0 auto', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <img src={LOGO_SRC} alt="" style={{ width: '20px', height: '20px', opacity: 0.85 }} />
-            <span style={{ fontFamily: 'var(--serif-display)', fontSize: '17px', fontWeight: 500, fontStyle: 'italic', color: 'var(--ink)' }}>
-              Dendrite
-            </span>
+      <header style={{ borderBottom: '0.5px solid var(--line)' }}>
+        <div style={{ maxWidth: '860px', margin: '0 auto', padding: '0 clamp(16px, 5vw, 80px)', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <img src={LOGO_SRC} alt="" style={{ width: '44px', height: '44px', opacity: 0.85 }} />
           </Link>
-          <Link to="/" style={{ fontFamily: 'var(--serif-body)', fontSize: '14px', color: 'var(--ink-mid)', textDecoration: 'none' }}>
-            ← Back
+          <Link to="/" className="btn-ghost" style={{ padding: '12px 32px 13px', gap: '8px' }}>
+            <MoveLeft size={14} />
+            Back
           </Link>
         </div>
       </header>
@@ -123,8 +130,9 @@ export default function TermsPage() {
           <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--ink-dim)', margin: 0 }}>
             © 2026 Dendrite
           </p>
-          <Link to="/privacy" style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--ink-dim)', textDecoration: 'none' }}>
-            Privacy Policy →
+          <Link to="/privacy" className="btn-ghost" style={{ padding: '12px 32px 13px', gap: '8px' }}>
+            Privacy Policy
+            <MoveRight size={14} />
           </Link>
         </div>
       </footer>
