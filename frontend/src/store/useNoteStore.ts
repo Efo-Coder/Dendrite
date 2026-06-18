@@ -35,6 +35,7 @@ interface NoteState {
       title?: string;
       content?: string;
       folderId?: string | null;
+      coverImage?: string | null;
       tags?: string[];
     }
   ) => Promise<void>;

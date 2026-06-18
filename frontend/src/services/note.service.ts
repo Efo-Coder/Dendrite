@@ -50,6 +50,7 @@ export const noteService = {
       title?: string;
       content?: string;
       folderId?: string | null;
+      coverImage?: string | null;
       tags?: string[];
     }
   ): Promise<Note> {
