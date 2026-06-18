@@ -106,7 +106,7 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
           {onToggleDark && (
             <button
               onClick={onToggleDark}
-              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full fill-slide"
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full btn-ghost-icon"
               style={{ cursor: 'pointer', border: '0.5px solid var(--line)', background: 'transparent' }}
               title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -117,7 +117,7 @@ export function HeaderSection({ dark = false, onToggleDark }: HeaderProps) {
 
           <Link
             to="/login"
-            className="fill-slide hidden sm:inline-flex"
+            className="btn-ghost-cta hidden sm:inline-flex"
             style={{
               padding: '7px 16px',
               fontSize: '14px',

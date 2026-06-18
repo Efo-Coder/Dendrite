@@ -350,7 +350,7 @@ const DashboardPage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.7 }}
                   transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-                  className="icon-btn-auth fill-slide rounded-full w-7 h-7 flex items-center justify-center"
+                  className="btn-ghost-icon rounded-full w-7 h-7 flex items-center justify-center"
                   onClick={() => setShowProfileModal(true)}
                   title="Profile"
                 >
@@ -358,10 +358,10 @@ const DashboardPage = () => {
                 </motion.button>
               )}
             </AnimatePresence>
-            <DarkModeToggle className="icon-btn-auth fill-slide rounded-full w-7 h-7 flex items-center justify-center" />
+            <DarkModeToggle className="btn-ghost-icon rounded-full w-7 h-7 flex items-center justify-center" />
             <button
               type="button"
-              className="icon-btn-auth fill-slide rounded-full w-7 h-7 flex items-center justify-center"
+              className="btn-ghost-icon rounded-full w-7 h-7 flex items-center justify-center"
               onClick={() => setShowSettingsModal(true)}
               title="Settings"
             >

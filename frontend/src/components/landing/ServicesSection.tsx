@@ -69,8 +69,8 @@ function ServiceItem({ title, index }: { title: string; index: number }) {
         <span className="text-[clamp(1.5rem,4vw,4rem)] font-light tracking-tight">
           <ShinyText
             text={title}
-            color="var(--accent-deep)"
-            shineColor="var(--accent-hi)"
+            color="var(--shine-deep)"
+            shineColor="var(--shine-hi)"
             speed={4}
             delay={0.3}
             spread={120}

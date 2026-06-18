@@ -205,7 +205,7 @@ function PricingCard({ plan }: { plan: Plan }) {
       {isFree ? (
         <Link
           to="/register"
-          className={`fill-slide ${ctaBase}`}
+          className={`btn-ghost-cta ${ctaBase}`}
           style={{ ...ctaStyle, fontFamily: 'inherit', border: '1px solid var(--line)', textDecoration: 'none', display: 'block' }}
         >
           {plan.cta}
@@ -221,7 +221,7 @@ function PricingCard({ plan }: { plan: Plan }) {
       ) : (
         <button
           onClick={goToRegister}
-          className={`fill-slide ${ctaBase} cursor-pointer`}
+          className={`btn-ghost-cta ${ctaBase} cursor-pointer`}
           style={{ ...ctaStyle, fontFamily: 'inherit', background: 'transparent', border: '1px solid var(--line)' }}
         >
           {plan.cta}

@@ -82,7 +82,7 @@ export function SocialProofSection() {
         className="sp-plate absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 70% 55% at 50% 0%, color-mix(in oklch, var(--accent) 9%, transparent), transparent 60%), var(--bg-deep)',
+            'radial-gradient(ellipse 70% 55% at 50% 0%, var(--radial-accent), transparent 60%), var(--bg-deep)',
           borderTop: '1px solid var(--line)',
           borderBottom: '1px solid var(--line)',
           // Own compositor layer: the gradient rasterizes once, so the scrubbed opacity

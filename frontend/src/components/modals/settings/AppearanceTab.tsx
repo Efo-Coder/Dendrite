@@ -30,7 +30,7 @@ const AppearanceTab = () => {
       <div className="settings-row">
         <div className="lbl">Theme<small>Light for daylight; dark for the small hours.</small></div>
         <button
-          className="btn-toggle fill-slide"
+          className="btn-ghost-toggle"
           onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
         >
           {themeMode === 'dark' ? '◑ Dark' : '○ Light'}
@@ -58,7 +58,7 @@ const AppearanceTab = () => {
           {([['updatedAt', 'Edited'], ['createdAt', 'Created']] as [DateDisplayMode, string][]).map(([id, label]) => (
             <button
               key={id}
-              className={`btn-toggle fill-slide${dateDisplayMode === id ? ' active' : ''}`}
+              className={`btn-ghost-toggle${dateDisplayMode === id ? ' active' : ''}`}
               onClick={() => setDateDisplayMode(id)}
             >
               {label}
@@ -73,7 +73,7 @@ const AppearanceTab = () => {
           {DENSITIES.map((d) => (
             <button
               key={d.id}
-              className={`btn-toggle fill-slide${density === d.id ? ' active' : ''}`}
+              className={`btn-ghost-toggle${density === d.id ? ' active' : ''}`}
               onClick={() => setDensity(d.id)}
             >
               {d.label}
@@ -88,7 +88,7 @@ const AppearanceTab = () => {
           {([['classic', 'Classic'], ['modern', 'Modern']] as [CursorStyle, string][]).map(([id, label]) => (
             <button
               key={id}
-              className={`btn-toggle fill-slide${cursorStyle === id ? ' active' : ''}`}
+              className={`btn-ghost-toggle${cursorStyle === id ? ' active' : ''}`}
               onClick={() => setCursorStyle(id)}
             >
               {label}

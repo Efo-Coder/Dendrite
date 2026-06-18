@@ -114,7 +114,7 @@ export function HeroSection() {
           </Link>
           <a
             href="#features"
-            className="fill-slide"
+            className="btn-ghost-cta"
             style={{
               padding: '11px 26px',
               fontSize: '15px',

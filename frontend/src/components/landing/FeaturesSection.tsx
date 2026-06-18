@@ -98,7 +98,7 @@ interface Feature {
 const goldGradientText: CSSProperties = {
   display: 'inline-block',
   paddingBottom: '0.08em',
-  background: 'linear-gradient(120deg, var(--accent-hi), var(--accent-deep))',
+  background: 'linear-gradient(120deg, var(--ramp-gold))',
   WebkitBackgroundClip: 'text',
   backgroundClip: 'text',
   color: 'transparent',
@@ -410,7 +410,7 @@ export function FeaturesSection() {
           Made to be{' '}
           <em
             style={{
-              background: 'linear-gradient(120deg, var(--accent-hi), var(--accent-deep))',
+              background: 'linear-gradient(120deg, var(--ramp-gold))',
               WebkitBackgroundClip: 'text',
               backgroundClip: 'text',
               color: 'transparent',

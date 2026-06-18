@@ -41,8 +41,8 @@
   --panel-bg:     color-mix(in oklch, var(--surface) 10%, black 10%);
   --surface:      oklch(0.21 0.010 60);
   --surface-hi:   oklch(0.26 0.012 60);
-  --line:         oklch(0.30 0.008 60 / 0.5);
-  --line-soft:    oklch(0.30 0.008 60 / 0.22);
+  --line:         oklch(0.30 0.008 60 / 0.5); /* oklch(0.30 0.008 60 / 0.5) */
+  --line-soft:    oklch(0.30 0.008 60 / 0.22); /* oklch(0.30 0.008 60 / 0.22) */
   --ink:          oklch(0.94 0.012 80);
   --ink-mid:      oklch(0.78 0.010 80);
   --ink-low:      oklch(0.58 0.010 80);
@@ -50,11 +50,17 @@
   --accent:       oklch(0.78 0.110 85);
   --accent-hi:    oklch(0.86 0.130 85);
   --accent-deep:  oklch(0.55 0.110 80);
-  --danger:       oklch(0.62 0.16 25);
-  --avatar-color: oklch(0.11 0.008 60);
+  --ramp-accent: var(--accent), var(--accent-deep);
+  --ramp-gold:   var(--accent-hi), var(--accent-deep);
+  --shine-deep: var(--accent-deep);
+  --shine-hi: var(--accent-hi);
+  --radial-accent: color-mix(in oklch, var(--accent) 10%, transparent);
 
+  --avatar-color: oklch(0.11 0.008 60);
   --shadow-deep: 0 32px 80px -16px rgba(0,0,0,.65), 0 4px 12px rgba(0,0,0,.35);
   --shadow-card: 0 2px 8px rgba(0,0,0,.25);
+
+  --danger: oklch(0.62 0.16 25);
   --radius-win:  14px;
   --radius-card: 10px;
 
@@ -156,25 +162,22 @@
   --ink-mid:     oklch(0.38 0.010 60);
   --ink-low:     oklch(0.52 0.010 60);
   --ink-dim:     oklch(0.65 0.010 60);
-  --accent:      oklch(45.622% 0.05119 85.349);
+  --accent:      oklch(55.313% 0.06236 85.581);
   --accent-hi:   oklch(67.397% 0.11209 83.948);
   --accent-deep: oklch(82.976% 0.13546 83.717);
+  --ramp-accent: var(--accent-deep), var(--accent);
+  --ramp-gold:   var(--accent-deep), var(--accent-hi);
+  --shine-deep: var(--accent-hi);
+  --shine-hi: var(--accent-deep);
+  --radial-accent: color-mix(in oklch, var(--accent) 30%, black 15%);
+
   --avatar-color: oklch(0.15 0.020 60);
   --shadow-deep: 0 32px 60px -20px rgba(80,60,30,.18), 0 4px 12px rgba(80,60,30,.06);
   --shadow-card: 0 1px 3px rgba(0,0,0,.06);
 }
 
-/* Light mode flips the button gradient: deep (light tone) → accent (dark tone) */
-:root[data-theme="light"] .btn.primary,
-:root[data-theme="light"] .modal-overlay .btn.primary,
-:root[data-theme="light"] .btn-ghost::before,
-:root[data-theme="light"] .fill-slide::before {
-  background: linear-gradient(180deg, var(--accent-deep), var(--accent));
-}
-/* Avatar keeps its 135deg angle, gradient direction flipped to match */
-:root[data-theme="light"] .avatar-fill {
-  background: linear-gradient(135deg, var(--accent-deep), var(--accent));
-}
+/* Light-mode gradient flip is handled by --ramp-accent / --ramp-gold (see :root),
+   so it applies everywhere those tokens are used — including inline landing styles. */
 
 /* ─── Light + palette combinations ─────────────────────────────────────────── */
 
@@ -323,15 +326,20 @@
   .icon-btn-md { @apply p-2   rounded-lg text-(--ink-low) hover:text-(--ink) hover:bg-(--surface-hi) transition-colors; }
   .icon-btn-lg { @apply p-2.5 rounded-lg text-(--ink-low) hover:text-(--ink) hover:bg-(--surface-hi) transition-colors; }
 
-  /* fill-slide — reusable right-to-left gradient reveal, shared with .btn-ghost */
-  .fill-slide { position: relative; isolation: isolate; color: var(--ink-mid); }
-
-  .fill-slide::before,
-  .btn-ghost::before {
+  /* ════ Ghost buttons — one fill-slide effect, four shapes ════
+     The slide / hover-fill / glow lives ONLY in the three grouped rules below.
+     To change how every ghost button animates, edit here. Each variant class
+     further down sets nothing but its own look (border, type) — shape (size,
+     radius, padding) stays at the call site via utilities / inline style. */
+  .btn-ghost, .btn-ghost-icon, .btn-ghost-cta, .btn-ghost-toggle {
+    position: relative; isolation: isolate;
+    transition: color 0.7s ease-out, border-color 0.7s ease-out, box-shadow 0.7s ease-out;
+  }
+  .btn-ghost::before, .btn-ghost-icon::before, .btn-ghost-cta::before, .btn-ghost-toggle::before {
     content: '';
     position: absolute; inset: -1px; z-index: -1;
     border-radius: inherit;
-    background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+    background: linear-gradient(180deg, var(--ramp-accent));
     -webkit-mask: linear-gradient(to right, transparent 36%, black 60%);
     mask: linear-gradient(to right, transparent 36%, black 60%);
     -webkit-mask-size: 300% 100%;
@@ -340,16 +348,22 @@
     mask-position: 0% 0%;
     transition: mask-position 0.7s ease-in-out, -webkit-mask-position 0.7s ease-in-out;
   }
-  .fill-slide:not(.active):hover::before,
-  .btn-ghost:hover::before {
+  /* Non-active buttons fill on hover: gradient slides in, ink flips dark, glow fades up. */
+  .btn-ghost:not(.active):hover::before, .btn-ghost-icon:not(.active):hover::before,
+  .btn-ghost-cta:not(.active):hover::before, .btn-ghost-toggle:not(.active):hover::before {
     -webkit-mask-position: 100% 0%;
     mask-position: 100% 0%;
   }
+  .btn-ghost:not(.active):hover, .btn-ghost-icon:not(.active):hover,
+  .btn-ghost-cta:not(.active):hover, .btn-ghost-toggle:not(.active):hover {
+    color: oklch(0.15 0.020 60);
+    box-shadow: 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
+    transition: color 0.7s ease-out, border-color 0.7s ease-out, box-shadow 0.3s ease-out 0.25s;
+  }
 
-  /* Ghost button */
+  /* Squared, accent border, mono caps — landing / legal / modal */
   .btn-ghost {
     display: inline-flex; align-items: center; justify-content: center;
-    position: relative; isolation: isolate;
     text-transform: uppercase;
     font-family: var(--mono); font-weight: 600; font-size: 0.625rem; letter-spacing: 0.3em;
     color: color-mix(in oklch, var(--accent) 70%, transparent);
@@ -360,6 +374,35 @@
   }
   .btn-ghost:hover {
     border-color: color-mix(in oklch, var(--accent-deep) 90%, transparent);
+  }
+
+  /* Round icon button, neutral border — auth pages, titlebar, dark-mode toggle */
+  .btn-ghost-icon {
+    color: var(--ink-mid);
+    border: 0.5px solid color-mix(in oklch, var(--line) 100%, white 10%);
+    background: transparent; cursor: pointer;
+  }
+  .btn-ghost-icon:hover { border-color: transparent; }
+
+  /* Text / link CTA, neutral border, serif — landing CTAs */
+  .btn-ghost-cta {
+    color: var(--ink-mid);
+    border: 0.5px solid var(--line);
+    background: transparent;
+    text-decoration: none; cursor: pointer;
+  }
+
+  /* Settings option toggle — serif caps, supports .active selected state */
+  .btn-ghost-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--serif-display); font-size: 0.625rem; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 5px 12px; border: 0.5px solid var(--line); color: var(--ink-mid); cursor: pointer;
+    background: transparent;
+  }
+  .btn-ghost-toggle.active {
+    background: var(--surface-hi); color: var(--accent);
+    border-color: color-mix(in oklch, var(--accent) 35%, transparent);
   }
 
   /* Social login buttons */
@@ -376,46 +419,6 @@
   .social-btn:hover {
     background: var(--surface-hi);
     border-color: var(--ink-dim);
-  }
-
-  /* Auth icon button — home + theme toggle on auth pages */
-  .icon-btn-auth {
-    color: var(--ink-low);
-    border: 0.5px solid var(--line);
-    background: transparent;
-    transition: color 0.7s ease-out, border-color 0.7s ease-out;
-  }
-  .icon-btn-auth:hover {
-    color: oklch(0.15 0.020 60);
-    border-color: transparent;
-  }
-
-  /* Toggle button — used in Settings for option groups */
-  .btn-toggle {
-    display: inline-flex; align-items: center; justify-content: center;
-    font-family: var(--serif-display); font-size: 0.625rem; font-weight: 500;
-    letter-spacing: 0.14em; text-transform: uppercase;
-    padding: 5px 12px; border: 0.5px solid var(--line); color: var(--ink-mid); cursor: pointer;
-    background: transparent;
-    transition: color .15s, border-color .15s;
-  }
-  .btn-toggle:hover { color: var(--ink); }
-  .btn-toggle.active {
-    background: var(--surface-hi); color: var(--accent);
-    border-color: color-mix(in oklch, var(--accent) 35%, transparent);
-  }
-
-  /* ─── Shared ghost-fill behavior ─── */
-  /* Every fill-slide / btn-ghost behaves alike: ink flips to the filled-button
-     color and a golden glow fades in once the fill completed (~0.7s). :not(.active)
-     keeps it in sync with the fill reveal. Override per instance via inline style. */
-  .fill-slide, .btn-ghost {
-    transition: color 0.7s ease-out, border-color 0.7s ease-out, box-shadow 0.7s ease-out;
-  }
-  .fill-slide:not(.active):hover, .btn-ghost:hover {
-    color: oklch(0.15 0.020 60);
-    box-shadow: 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
-    transition: color 0.7s ease-out, border-color 0.7s ease-out, box-shadow 0.3s ease-out 0.25s;
   }
 
   /* Animated digit counter (Counter.tsx) */
@@ -448,12 +451,11 @@
 .animate-fade-in  { animation: fadeIn 0.3s ease-out forwards; }
 .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
 
-/* hover-shimmer — diagonal light sweep on hover, shared across primary/danger/notelist buttons */
-.hover-shimmer { position: relative; overflow: hidden; }
-
-.hover-shimmer::before,
+/* Diagonal light-sweep on hover — built into .btn.primary, so every button using
+   that class gets it automatically. The danger and notelist-trash buttons opt in
+   via their own selectors below. Each carries its own position/overflow. */
+.btn.primary::before,
 .win .notelist-trash-btn::before,
-.modal-overlay .btn.primary::before,
 .modal-overlay .btn.danger::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(-30deg, hsla(0,0%,0%,0) 60%, rgba(255,255,255,0.25) 70%, hsla(0,0%,0%,0) 85%, hsla(0,0%,0%,0) 100%);
@@ -461,10 +463,8 @@
   background-position: -100% -100%, 0 0; transition: 800ms ease;
 }
 
-.hover-shimmer:not(:disabled):hover::before,
 .btn.primary:not(:disabled):hover::before,
 .win .notelist-trash-btn:not(:disabled):hover::before,
-.modal-overlay .btn.primary:not(:disabled):hover::before,
 .modal-overlay .btn.danger:not(:disabled):hover::before {
   background-position: 100% 100%, 0 0;
 }
@@ -583,10 +583,22 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 
 /* Scrollable nav area */
 .win .sidebar-scroll { flex: 1; overflow-y: auto; min-height: 0; scroll-behavior: smooth; position: relative; }
-.win .sidebar-scroll::-webkit-scrollbar       { width: 4px; }
-.win .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
-.win .sidebar-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 55%, transparent); border-radius: 9999px; }
-.win .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.win .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+
+/* Shared thin-scrollbar skin — sidebar, notelist, editor canvas, modal lists.
+   Each owner sets its own ::-webkit-scrollbar width nearby; track/thumb are identical. */
+.win .sidebar-scroll::-webkit-scrollbar-track,
+.win .notelist-scroll::-webkit-scrollbar-track,
+.win .editor-canvas::-webkit-scrollbar-track,
+.modal-list-scroll::-webkit-scrollbar-track { background: transparent; }
+.win .sidebar-scroll::-webkit-scrollbar-thumb,
+.win .notelist-scroll::-webkit-scrollbar-thumb,
+.win .editor-canvas::-webkit-scrollbar-thumb,
+.modal-list-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 55%, transparent); border-radius: 9999px; }
+.win .sidebar-scroll::-webkit-scrollbar-thumb:hover,
+.win .notelist-scroll::-webkit-scrollbar-thumb:hover,
+.win .editor-canvas::-webkit-scrollbar-thumb:hover,
+.modal-list-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 55%, transparent); }
 
 /* Nav lists — shared base for both nav items and tag items */
 .win .sidebar-list,
@@ -652,7 +664,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 /* Shared avatar look — gradient fill at any size (sidebar, profile modal) */
 .avatar-fill {
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  background: linear-gradient(135deg, var(--ramp-accent));
   color: var(--avatar-color); display: flex; align-items: center; justify-content: center;
   font-family: var(--serif-display); font-weight: 600;
   box-shadow: 0 0 0 0.5px var(--line);
@@ -715,10 +727,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 /* Weicher Einstieg beim Kategorie-Wechsel — der Container remountet per key */
 .win .notelist-scroll { animation: notelist-fade-in .18s ease-out; }
 @keyframes notelist-fade-in { from { opacity: 0; } }
-.win .notelist-scroll::-webkit-scrollbar       { width: 4px; }
-.win .notelist-scroll::-webkit-scrollbar-track { background: transparent; }
-.win .notelist-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 55%, transparent); border-radius: 9999px; }
-.win .notelist-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.win .notelist-scroll::-webkit-scrollbar { width: 4px; }  /* track/thumb: shared skin at .sidebar-scroll */
 
 /* Date group separator */
 .win .notelist-group-label {
@@ -807,8 +816,16 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
 }
 .win .note-card.active .note-card-title { color: var(--accent); }
-.win .note-card-pin     { display: inline-block; width: 11px; height: 11px; background-color: var(--accent); -webkit-mask-image: url('/icons/pin-filled.svg'); mask-image: url('/icons/pin-filled.svg'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; opacity: 0.9; flex-shrink: 0; }
-.win .editor-pin-filled { display: inline-block; width: 14px; height: 14px; background-color: var(--accent); -webkit-mask-image: url('/icons/pin-filled.svg'); mask-image: url('/icons/pin-filled.svg'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; flex-shrink: 0; }
+.win .note-card-pin,
+.win .editor-pin-filled {
+  display: inline-block; background-color: var(--accent);
+  -webkit-mask-image: url('/icons/pin-filled.svg'); mask-image: url('/icons/pin-filled.svg');
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  flex-shrink: 0;
+}
+.win .note-card-pin     { width: 11px; height: 11px; opacity: 0.9; }
+.win .editor-pin-filled { width: 14px; height: 14px; }
 .win .note-card-preview {
   font-family: var(--serif-body); font-size: 13.5px;
   color: var(--ink-low); line-height: 1.45;
@@ -891,10 +908,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
    never rewraps the text; the canvas scrolls horizontally instead. */
 .win .editor-canvas > div { width: var(--editor-content-w, auto); }
 
-.win .editor-canvas::-webkit-scrollbar       { width: 5px; }
-.win .editor-canvas::-webkit-scrollbar-track { background: transparent; }
-.win .editor-canvas::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 55%, transparent); border-radius: 9999px; }
-.win .editor-canvas::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.win .editor-canvas::-webkit-scrollbar { width: 5px; }  /* track/thumb: shared skin at .sidebar-scroll */
 
 /* Breadcrumb + save status bar above the title */
 .win .editor-meta {
@@ -945,9 +959,9 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   background: var(--surface); border: 0.5px solid var(--line-soft);
   color: var(--ink-mid); display: inline-flex; align-items: center; gap: 0;
 }
-.win .editor-tag .tag-remove { margin-left: 4px; }
 .win .editor-tag::before { content: "#"; opacity: 0.55; }
 .win .editor-tag .tag-remove {
+  margin-left: 4px;
   width: 12px; height: 12px; border-radius: 50%; opacity: 0.5;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 11px; line-height: 1; font-style: normal;
@@ -1154,7 +1168,7 @@ html .auth-panel .input {
 .btn.primary {
   display: inline-flex; align-items: center; justify-content: center;
   position: relative; overflow: hidden;
-  background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+  background: linear-gradient(180deg, var(--ramp-accent));
   color: oklch(0.15 0.020 60);
   font-family: var(--serif-display); font-weight: 600; letter-spacing: 0.03em;
   text-decoration: none; cursor: pointer;
@@ -1165,12 +1179,7 @@ html .auth-panel .input {
   box-shadow: 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
 }
 .btn.primary:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn.primary::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(-30deg, hsla(0,0%,0%,0) 60%, rgba(255,255,255,0.25) 70%, hsla(0,0%,0%,0) 85%, hsla(0,0%,0%,0) 100%);
-  background-size: 300% 300%, 100% 100%; background-repeat: no-repeat;
-  background-position: -100% -100%, 0 0; transition: 800ms ease;
-}
+/* .btn.primary::before (shimmer sweep) is defined in the shared light-sweep group above */
 
 /* Modal action buttons */
 .modal-overlay .btn {
@@ -1178,15 +1187,17 @@ html .auth-panel .input {
   font-family: var(--serif-display); font-size: 0.6875rem; font-weight: 500;
   letter-spacing: 0.3em; text-transform: uppercase; cursor: pointer; transition: all .12s;
 }
+/* Modal ghost = global .btn-ghost; only the shape (padding) and the serif typeface
+   differ. background/position/isolation/font-weight already match the base. */
 .modal-overlay .btn-ghost {
-  padding: 8px 32px; font-family: var(--serif-display); font-weight: 600;
-  background: transparent; position: relative; isolation: isolate;
+  padding: 8px 32px; font-family: var(--serif-display);
 }
+/* Inherits gradient/color/overflow from the global .btn.primary — only the shadow
+   depth and disabled opacity differ; font-weight pins back to 600 because
+   .modal-overlay .btn sets 500 at equal specificity. */
 .modal-overlay .btn.primary {
-  background: linear-gradient(180deg, var(--accent), var(--accent-deep));
-  color: oklch(0.15 0.020 60); font-weight: 600;
+  font-weight: 600;
   box-shadow: 0 4px 12px transparent;
-  position: relative; overflow: hidden;
 }
 .modal-overlay .btn.primary:not(:disabled):hover {
   box-shadow: 0 4px 12px color-mix(in oklch, var(--accent) 30%, transparent);
@@ -1204,8 +1215,8 @@ html .auth-panel .input {
 
 /* Form fields */
 .modal-overlay .modal-field       { display: flex; flex-direction: column; gap: 6px; }
-.modal-overlay .modal-field label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); }
-.modal-overlay .modal-label       { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); }
+.modal-overlay .modal-field label,
+.modal-overlay .modal-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); }
 .modal-overlay .modal-input {
   background: var(--bg); border: 0.5px solid var(--line);
   border-radius: 8px; padding: 10px 12px;
@@ -1287,10 +1298,7 @@ html .auth-panel .input {
 /* Scrollable list inside modals (folder/tag pickers) */
 .modal-overlay .modal-list-scroll { max-height: 16rem; overflow-y: auto; }
 .modal-list-scroll { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ink-low) 55%, transparent) transparent; }
-.modal-list-scroll::-webkit-scrollbar       { width: 4px; }
-.modal-list-scroll::-webkit-scrollbar-track { background: transparent; }
-.modal-list-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 55%, transparent); border-radius: 9999px; }
-.modal-list-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.modal-list-scroll::-webkit-scrollbar { width: 4px; }  /* track/thumb: shared skin at .sidebar-scroll */
 
 /* ══════════════════════════════════════════════════════════════════════════════
    LEXICAL RICH TEXT EDITOR
