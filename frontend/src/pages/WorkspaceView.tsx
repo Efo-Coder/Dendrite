@@ -63,7 +63,14 @@ function buildFilters(view: ViewType, folderId?: string, tagId?: string): NoteFi
   }
 }
 
-const WorkspaceView = () => {
+interface WorkspaceViewProps {
+  initialView?: ViewType;
+  initialFolderId?: string;
+  initialNoteId?: string;
+  onExitToHome: () => void;
+}
+
+const WorkspaceView = ({ initialView = 'all', initialFolderId, initialNoteId, onExitToHome }: WorkspaceViewProps) => {
   // Gezielte Selektoren statt Voll-Store-Abo: isLoading-Flips der Fetches dürfen
   // das Dashboard nicht mitten in laufenden Listen-Animationen neu rendern
   const { notes, fetchNotes, createNote, currentNote, setCurrentNote, deleteNote, togglePin, justCreatedNoteIds, clearJustCreatedNoteIds } = useNoteStore(
@@ -127,8 +134,10 @@ const WorkspaceView = () => {
     if (greetingTimer.current) clearTimeout(greetingTimer.current);
   }, []);
 
-  const [currentView, setCurrentView] = useState<ViewType>('all');
-  const [selectedFolderId, setSelectedFolderId] = useState<string>();
+  const [currentView, setCurrentView] = useState<ViewType>(initialView);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
+    initialView === 'folder' ? initialFolderId : undefined,
+  );
   const [selectedTagId, setSelectedTagId] = useState<string>();
 
   const viewLabel = useMemo(() => {
@@ -209,7 +218,15 @@ const WorkspaceView = () => {
   const [focusSearchTrigger, setFocusSearchTrigger] = useState(0);
 
   useEffect(() => {
-    fetchNotes({ archived: false, deleted: false });
+    const folderId = initialView === 'folder' ? initialFolderId : undefined;
+    void fetchNotes(buildFilters(initialView, folderId)).then(() => {
+      setLoadedViewKey(viewContextKey(initialView, folderId));
+      // Opened from a Home "Continue Thinking" card: select that note for the editor.
+      if (initialNoteId) {
+        const note = useNoteStore.getState().notes.find((n) => n.id === initialNoteId);
+        if (note) setCurrentNote(note);
+      }
+    });
   }, []);
 
   const refreshCurrentView = () => {
@@ -381,6 +398,7 @@ const WorkspaceView = () => {
             onTagUpdated={refreshCurrentView}
             user={user}
             collapsed={sidebarCollapsed}
+            onHome={onExitToHome}
           />
 
           {/* Notes panel */}

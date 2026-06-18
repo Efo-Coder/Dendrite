@@ -1591,3 +1591,213 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
   .dendrite-on .dendrite-halo--breathe { animation: none; }
   .hero-caret { animation: none; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   HOME DASHBOARD  —  .home-stage › .home-shell › .home-sidebar + .home-main
+══════════════════════════════════════════════════════════════════════════════ */
+
+.home-stage { width: 100vw; height: 100dvh; overflow: hidden; }
+
+.home-shell {
+  width: 100%; height: 100%;
+  display: flex;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--serif-body);
+  overflow: hidden;
+}
+
+/* ─── Sidebar ────────────────────────────────────────────────────────────────── */
+
+.home-sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  display: flex; flex-direction: column;
+  padding: 44px 16px 18px; position: relative;
+  border-right: 0.5px solid var(--line);
+  background: linear-gradient(180deg, color-mix(in oklch, var(--bg) 96%, var(--accent) 3%), var(--bg) 55%);
+}
+
+.home-brand {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  margin-bottom: 38px;
+}
+.home-brand-glyph { width: 36px; height: 36px; object-fit: contain; opacity: 0.9; }
+.home-brand-name {
+  font-family: var(--serif-display); font-weight: 500; font-size: 15px;
+  letter-spacing: 0.26em; color: var(--ink-mid);
+}
+
+/* Centered against the full sidebar height (out of flow), not just the gap
+   between brand and footer — brand stays top, footer is pinned bottom. */
+.home-nav {
+  position: absolute; top: 50%; left: 16px; right: 16px; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 16px;
+}
+.home-nav-item {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 9px 12px; border: 0; border-radius: 9px;
+  background: transparent; text-align: left; cursor: pointer;
+  font-family: var(--serif-body); font-size: 15px; color: color-mix(in oklch, var(--ink-low) 70%, white 5%);
+  transition: background .15s, color .15s;
+}
+.home-nav-item:hover { color: var(--ink); background: color-mix(in oklch, var(--ink) 5%, transparent); }
+.home-nav-item.active { color: var(--ink); background: color-mix(in oklch, var(--accent) 13%, transparent); }
+.home-nav-icon { display: flex; align-items: center; }
+.home-nav-item.active .home-nav-icon { color: var(--accent); }
+
+.home-user {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; margin-top: auto; padding: 8px; border: 0; border-radius: 11px;
+  background: transparent; cursor: pointer; transition: background .15s;
+}
+.home-user:hover { background: color-mix(in oklch, var(--ink) 5%, transparent); }
+.home-user-avatar { width: 30px; height: 30px; font-size: 13px; flex-shrink: 0; overflow: hidden; }
+.home-user-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.home-user-name {
+  flex: 1; min-width: 0; text-align: left;
+  font-family: var(--serif-display); font-size: 14px; color: var(--ink); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.home-user-chevron { color: var(--ink-low); flex-shrink: 0; }
+
+/* "‹ Home" back link injected into the workspace sidebar */
+.win .sidebar-home-back {
+  display: flex; align-items: center; gap: 6px;
+  margin: 0 12px 12px; padding: 7px 12px; border: 0; border-radius: 7px;
+  background: transparent; cursor: pointer;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-low); transition: color .15s, background .15s;
+}
+.win .sidebar-home-back:hover { color: var(--accent); background: color-mix(in oklch, var(--accent) 8%, transparent); }
+
+/* ─── Main content ───────────────────────────────────────────────────────────── */
+
+.home-main { flex: 1; overflow-y: auto; min-height: 0; scroll-behavior: smooth; }
+.home-main::-webkit-scrollbar { width: 8px; }
+.home-main::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 40%, transparent); border-radius: 9999px; }
+.home-content { max-width: 1500px; padding: 36px 80px 90px; position: relative; }
+
+/* Out of flow so the icons don't push the greeting/content down. */
+.home-topbar { position: absolute; top: 36px; right: 80px; z-index: 2; display: flex; gap: 8px; }
+.home-icon-btn {
+  width: 38px; height: 38px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; background: transparent; border-radius: 10px; cursor: pointer;
+  color: color-mix(in oklch, var(--ink-low) 80%, white 5%); transition: background .15s, color .15s;
+}
+.home-icon-btn:hover { background: color-mix(in oklch, var(--ink) 6%, transparent); color: var(--ink); }
+/* Uniform icon size for all three (incl. DarkModeToggle's hardcoded w-4). */
+.home-icon-btn svg { width: 21px; height: 21px; }
+
+.home-header { margin-bottom: 26px; }
+.home-greeting {
+  font-family: var(--serif-display); font-style: normal; font-size: 25px;
+  color: var(--ink-mid); margin: 0 0 8px;
+}
+.home-headline {
+  font-family: var(--serif-display); font-weight: 500; font-size: 46px; line-height: 1.08;
+  letter-spacing: -0.01em; color: var(--ink); margin: 0;
+}
+
+.home-search-wrap { position: relative; margin: 56px 0; }
+.home-search {
+  display: flex; align-items: center; gap: 13px; width: 100%;
+  padding: 16px 24px; border-radius: 16px;
+  background: var(--surface); border: 0.5px solid var(--line);
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.18);
+  transition: border-color .15s, box-shadow .15s;
+}
+/* Focus tints the whole connected shape gold (field + dropdown share the outline);
+   the field's bottom border stays transparent so the two read as one. */
+.home-search-wrap:focus-within .home-search { border-color: color-mix(in oklch, var(--accent) 55%, var(--line)); }
+.home-search-wrap:focus-within .home-search.open { border-bottom-color: transparent; }
+.home-search-wrap:focus-within .home-search-dropdown { border-color: color-mix(in oklch, var(--accent) 55%, var(--line)); }
+/* When results show, the field becomes the top of one connected shape:
+   square bottom, no bottom border, no own shadow — the dropdown continues it. */
+.home-search.open {
+  border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+  border-bottom-color: transparent; box-shadow: none;
+}
+.home-search-icon { color: var(--ink-low); flex-shrink: 0; }
+.home-search-input {
+  flex: 1; min-width: 0; appearance: none; border: 0; outline: none; background: transparent;
+  font-family: var(--serif-body); font-size: 16px; color: var(--ink);
+}
+.home-search-input::placeholder { color: var(--ink-dim); font-style: normal; }
+
+/* Inline live results — a flush extension of the field, not a floating panel. */
+.home-search-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 5;
+  background: var(--surface); border: 0.5px solid var(--line); border-top: 0;
+  border-radius: 0 0 24px 24px;
+  padding: 8px; overflow: hidden;
+}
+
+.home-section { margin-bottom: 42px; }
+.home-section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px; }
+.home-section-title { font-family: var(--serif-display); font-weight: 500; font-size: 23px; color: var(--ink); margin: 0; }
+.home-view-all {
+  display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; cursor: pointer;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-low); transition: color .15s;
+}
+.home-view-all:hover { color: var(--accent); }
+
+.home-card-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 18px; }
+/* auto-fit: the few cards stretch to fill the full width (no trailing gap), but
+   wrap onto new rows at the min width instead of being squeezed when space runs out. */
+.home-card-row.cols-4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.home-card-row.cols-5 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.home-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+.home-empty { font-family: var(--serif-body); font-style: italic; font-size: 15px; color: var(--ink-dim); padding: 6px 2px; }
+
+.home-card {
+  position: relative; display: block; padding: 0; border: 0; cursor: pointer;
+  aspect-ratio: 5 / 4; border-radius: var(--radius-card); overflow: hidden;
+  box-shadow: var(--shadow-card); text-align: left;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.home-card.compact { aspect-ratio: 16 / 11; }
+.home-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-deep); }
+.home-card-cover { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.home-card-scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.6), rgba(0,0,0,.08) 55%, transparent); }
+.home-card-text { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 30px; display: flex; flex-direction: column; gap: 6px; }
+.home-card-title { font-family: var(--serif-display); font-style: normal; font-weight: 300; font-size: 26px; line-height: 1.15; color: #fff; }
+.home-card.compact .home-card-title { font-size: 26px; padding-bottom: 8px; }
+.home-card-sub { font-family: var(--serif-body); font-size: 14px; color: rgba(255,255,255,.82); }
+
+/* ─── Global search overlay ──────────────────────────────────────────────────── */
+
+.search-overlay {
+  position: fixed; inset: 0; z-index: 6;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 14vh;
+  background: color-mix(in oklch, var(--bg-deep) 50%, transparent);
+  backdrop-filter: blur(6px);
+}
+.search-panel {
+  width: min(640px, 92vw);
+  background: var(--surface); border: 0.5px solid var(--line);
+  border-radius: 16px; box-shadow: var(--shadow-deep); overflow: hidden;
+}
+.search-field { display: flex; align-items: center; gap: 12px; padding: 18px 22px; border-bottom: 0.5px solid var(--line-soft); }
+.search-field-icon { color: var(--ink-low); flex-shrink: 0; }
+.search-field-input {
+  flex: 1; min-width: 0; appearance: none; border: 0; outline: none; background: transparent;
+  font-family: var(--serif-body); font-size: 17px; color: var(--ink);
+}
+.search-field-input::placeholder { color: var(--ink-dim); font-style: italic; }
+.search-results { max-height: 52vh; overflow-y: auto; padding: 8px; }
+.search-empty { font-family: var(--serif-body); font-style: italic; font-size: 14px; color: var(--ink-dim); padding: 16px 14px; }
+.search-group { padding: 6px 0; }
+.search-group-label {
+  display: block; padding: 6px 14px 4px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim);
+}
+.search-result {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  padding: 10px 14px; border: 0; border-radius: 9px; background: transparent; cursor: pointer; text-align: left;
+  font-family: var(--serif-body); font-size: 15px; color: var(--ink-mid); transition: background .12s, color .12s;
+}
+.search-result:hover { background: color-mix(in oklch, var(--accent) 12%, transparent); color: var(--ink); }
+.search-result-icon { color: var(--ink-low); flex-shrink: 0; }
+.search-result-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
