@@ -45,7 +45,7 @@ export const getFolderById = async (req: AuthRequest, res: Response) => {
 
 export const createFolder = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, color, icon, parentId } = req.body;
+    const { name, color, icon, coverImage, parentId } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Name ist erforderlich' });
@@ -56,6 +56,7 @@ export const createFolder = async (req: AuthRequest, res: Response) => {
         name,
         color: color || '#10b981',
         icon: icon || null,
+        coverImage: coverImage || null,
         parentId: parentId || null,
         userId: req.userId!,
       },
@@ -72,7 +73,7 @@ export const createFolder = async (req: AuthRequest, res: Response) => {
 export const updateFolder = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { name, color, icon, parentId } = req.body;
+    const { name, color, icon, coverImage, parentId } = req.body;
 
     const existingFolder = await prisma.folder.findFirst({
       where: { id, userId: req.userId },
@@ -88,6 +89,7 @@ export const updateFolder = async (req: AuthRequest, res: Response) => {
         name: name !== undefined ? name : existingFolder.name,
         color: color !== undefined ? color : existingFolder.color,
         icon: icon !== undefined ? icon : existingFolder.icon,
+        coverImage: coverImage !== undefined ? coverImage : existingFolder.coverImage,
         parentId: parentId !== undefined ? parentId : existingFolder.parentId,
       },
       include: { children: true, parent: true },

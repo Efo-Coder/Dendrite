@@ -169,7 +169,7 @@ export const searchNotes = async (req: AuthRequest, res: Response) => {
 
 export const createNote = async (req: AuthRequest, res: Response) => {
   try {
-    const { content, folderId, tags } = req.body;
+    const { content, folderId, coverImage, tags } = req.body;
 
     if (content === undefined || content === null) {
       return res.status(400).json({ error: 'Inhalt ist erforderlich' });
@@ -180,6 +180,7 @@ export const createNote = async (req: AuthRequest, res: Response) => {
         content,
         userId: req.userId!,
         folderId: folderId || null,
+        coverImage: coverImage || null,
         noteTags: tags ? { create: (tags as string[]).map((tagId: string) => ({ tagId })) } : undefined,
       },
       include: NOTE_INCLUDE,
@@ -195,7 +196,7 @@ export const createNote = async (req: AuthRequest, res: Response) => {
 export const updateNote = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { title, content, folderId, tags } = req.body;
+    const { title, content, folderId, coverImage, tags } = req.body;
 
     const existingNote = await prisma.note.findFirst({
       where: {
@@ -260,6 +261,7 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
       data: {
         title: title !== undefined ? title : existingNote.title,
         content: content !== undefined ? content : existingNote.content,
+        coverImage: coverImage !== undefined ? coverImage : existingNote.coverImage,
         folderId: isOwner && folderId !== undefined ? folderId : existingNote.folderId,
       },
       include: NOTE_INCLUDE,
