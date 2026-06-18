@@ -36,29 +36,32 @@
 /* ─── Color palette — dark mode (default, no attribute) ─────────────────────── */
 
 :root {
-  --bg:           oklch(0.16 0.008 60);
-  --bg-deep:      oklch(0.11 0.008 60);
-  --panel-bg:     color-mix(in oklch, var(--surface) 10%, black 10%);
-  --surface:      oklch(0.21 0.010 60);
-  --surface-hi:   oklch(0.26 0.012 60);
-  --line:         oklch(0.30 0.008 60 / 0.5); /* oklch(0.30 0.008 60 / 0.5) */
-  --line-soft:    oklch(0.30 0.008 60 / 0.22); /* oklch(0.30 0.008 60 / 0.22) */
-  --ink:          oklch(0.94 0.012 80);
-  --ink-mid:      oklch(0.78 0.010 80);
-  --ink-low:      oklch(0.58 0.010 80);
-  --ink-dim:      oklch(0.42 0.010 80);
-  --accent:       oklch(0.78 0.110 85);
-  --accent-hi:    oklch(0.86 0.130 85);
-  --accent-deep:  oklch(0.55 0.110 80);
-  --ramp-accent: var(--accent), var(--accent-deep);
-  --ramp-gold:   var(--accent-hi), var(--accent-deep);
-  --shine-deep: var(--accent-deep);
-  --shine-hi: var(--accent-hi);
-  --radial-accent: color-mix(in oklch, var(--accent) 10%, transparent);
+  /* Light is the base theme; dark is the [data-theme="dark"] override below.
+     So the pre-hydration paint (before ThemeProvider sets data-theme) is light,
+     not a dark flash. Every concrete theme/palette combo keeps its old values. */
+  --bg:          oklch(0.97 0.006 80);
+  --bg-deep:     oklch(0.93 0.008 80);
+  --panel-bg:    color-mix(in oklch, var(--bg) 96%, black 2%);
+  --surface:     oklch(0.99 0.004 80);
+  --surface-hi:  oklch(1.00 0.000 0);
+  --line:        oklch(0.30 0.008 60 / 0.18);
+  --line-soft:   oklch(0.30 0.008 60 / 0.10);
+  --ink:         oklch(0.20 0.010 60);
+  --ink-mid:     oklch(0.38 0.010 60);
+  --ink-low:     oklch(0.52 0.010 60);
+  --ink-dim:     oklch(0.65 0.010 60);
+  --accent:      oklch(55.313% 0.06236 85.581);
+  --accent-hi:   oklch(67.397% 0.11209 83.948);
+  --accent-deep: oklch(82.976% 0.13546 83.717);
+  --ramp-accent: var(--accent-deep), var(--accent);
+  --ramp-gold:   var(--accent-deep), var(--accent-hi);
+  --shine-deep: var(--accent-hi);
+  --shine-hi: var(--accent-deep);
+  --radial-accent: color-mix(in oklch, var(--accent) 30%, black 15%);
 
-  --avatar-color: oklch(0.11 0.008 60);
-  --shadow-deep: 0 32px 80px -16px rgba(0,0,0,.65), 0 4px 12px rgba(0,0,0,.35);
-  --shadow-card: 0 2px 8px rgba(0,0,0,.25);
+  --avatar-color: oklch(0.15 0.020 60);
+  --shadow-deep: 0 32px 60px -20px rgba(80,60,30,.18), 0 4px 12px rgba(80,60,30,.06);
+  --shadow-card: 0 1px 3px rgba(0,0,0,.06);
 
   --danger: oklch(0.62 0.16 25);
   --radius-win:  14px;
@@ -83,9 +86,36 @@
   --ring:   oklch(0.78 0.010 80);
 }
 
+/* ─── Color palette — dark mode (override of the light base) ───────────────── */
+
+:root[data-theme="dark"] {
+  --bg:           oklch(0.16 0.008 60);
+  --bg-deep:      oklch(0.11 0.008 60);
+  --panel-bg:     color-mix(in oklch, var(--surface) 10%, black 10%);
+  --surface:      oklch(0.21 0.010 60);
+  --surface-hi:   oklch(0.26 0.012 60);
+  --line:         oklch(0.30 0.008 60 / 0.5);
+  --line-soft:    oklch(0.30 0.008 60 / 0.22);
+  --ink:          oklch(0.94 0.012 80);
+  --ink-mid:      oklch(0.78 0.010 80);
+  --ink-low:      oklch(0.58 0.010 80);
+  --ink-dim:      oklch(0.42 0.010 80);
+  --accent:       oklch(0.78 0.110 85);
+  --accent-hi:    oklch(0.86 0.130 85);
+  --accent-deep:  oklch(0.55 0.110 80);
+  --ramp-accent: var(--accent), var(--accent-deep);
+  --ramp-gold:   var(--accent-hi), var(--accent-deep);
+  --shine-deep: var(--accent-deep);
+  --shine-hi: var(--accent-hi);
+  --radial-accent: color-mix(in oklch, var(--accent) 10%, transparent);
+  --avatar-color: oklch(0.11 0.008 60);
+  --shadow-deep: 0 32px 80px -16px rgba(0,0,0,.65), 0 4px 12px rgba(0,0,0,.35);
+  --shadow-card: 0 2px 8px rgba(0,0,0,.25);
+}
+
 /* ─── Dark palette variants ──────────────────────────────────────────────────── */
 
-:root[data-palette="onyx"] {
+:root[data-theme="dark"][data-palette="onyx"] {
   --bg: oklch(0.16 0.008 60);
   --bg-deep: oklch(0.11 0.008 60);
   --surface: oklch(0.21 0.010 60);
@@ -94,7 +124,7 @@
   --accent-hi: oklch(0.86 0.130 85);
   --accent-deep: oklch(36.275% 0.07042 80.112);
 }
-:root[data-palette="bordeaux"] {
+:root[data-theme="dark"][data-palette="bordeaux"] {
   --bg: oklch(0.17 0.020 25);
   --bg-deep: oklch(0.11 0.025 25);
   --surface: oklch(0.22 0.030 25);
@@ -105,7 +135,7 @@
   --ink: oklch(0.94 0.015 70);
   --ink-mid: oklch(0.78 0.015 70);
 }
-:root[data-palette="forest"] {
+:root[data-theme="dark"][data-palette="forest"] {
   --bg: oklch(0.16 0.012 165);
   --bg-deep: oklch(0.10 0.014 165);
   --surface: oklch(0.21 0.014 165);
@@ -116,7 +146,7 @@
   --ink: oklch(0.94 0.010 90);
   --ink-mid: oklch(0.78 0.010 90);
 }
-:root[data-palette="midnight"] {
+:root[data-theme="dark"][data-palette="midnight"] {
   --bg: oklch(0.16 0.018 260);
   --bg-deep: oklch(0.10 0.022 260);
   --surface: oklch(0.21 0.022 260);
@@ -127,7 +157,7 @@
   --ink: oklch(0.94 0.010 240);
   --ink-mid: oklch(0.78 0.012 240);
 }
-:root[data-palette="obsidian"] {
+:root[data-theme="dark"][data-palette="obsidian"] {
   --bg: oklch(0.14 0.004 0);
   --bg-deep: oklch(0.08 0.002 0);
   --surface: oklch(0.19 0.005 0);
@@ -138,7 +168,7 @@
   --ink: oklch(0.96 0.003 0);
   --ink-mid: oklch(0.76 0.003 0);
 }
-:root[data-palette="nacre"] {
+:root[data-theme="dark"][data-palette="nacre"] {
   --bg: oklch(13.452% 0.01663 331.758);
   --bg-deep: oklch(0.11 0.012 15);
   --surface: oklch(0.21 0.016 15);
@@ -148,36 +178,9 @@
   --accent-deep: oklch(35.017% 0.02307 22.386);
 }
 
-/* ─── Light mode ─────────────────────────────────────────────────────────────── */
-
-:root[data-theme="light"] {
-  --bg:          oklch(0.97 0.006 80);
-  --bg-deep:     oklch(0.93 0.008 80);
-  --panel-bg:    color-mix(in oklch, var(--bg) 96%, black 2%);
-  --surface:     oklch(0.99 0.004 80);
-  --surface-hi:  oklch(1.00 0.000 0);
-  --line:        oklch(0.30 0.008 60 / 0.18);
-  --line-soft:   oklch(0.30 0.008 60 / 0.10);
-  --ink:         oklch(0.20 0.010 60);
-  --ink-mid:     oklch(0.38 0.010 60);
-  --ink-low:     oklch(0.52 0.010 60);
-  --ink-dim:     oklch(0.65 0.010 60);
-  --accent:      oklch(55.313% 0.06236 85.581);
-  --accent-hi:   oklch(67.397% 0.11209 83.948);
-  --accent-deep: oklch(82.976% 0.13546 83.717);
-  --ramp-accent: var(--accent-deep), var(--accent);
-  --ramp-gold:   var(--accent-deep), var(--accent-hi);
-  --shine-deep: var(--accent-hi);
-  --shine-hi: var(--accent-deep);
-  --radial-accent: color-mix(in oklch, var(--accent) 30%, black 15%);
-
-  --avatar-color: oklch(0.15 0.020 60);
-  --shadow-deep: 0 32px 60px -20px rgba(80,60,30,.18), 0 4px 12px rgba(80,60,30,.06);
-  --shadow-card: 0 1px 3px rgba(0,0,0,.06);
-}
-
-/* Light-mode gradient flip is handled by --ramp-accent / --ramp-gold (see :root),
-   so it applies everywhere those tokens are used — including inline landing styles. */
+/* Light base now lives in :root above. Light-mode gradient flip is handled by
+   --ramp-accent / --ramp-gold (see :root), so it applies everywhere those tokens
+   are used — including inline landing styles. */
 
 /* ─── Light + palette combinations ─────────────────────────────────────────── */
 
@@ -232,20 +235,20 @@
    BASE LAYER
 ══════════════════════════════════════════════════════════════════════════════ */
 
-@property --bg         { syntax: '<color>'; inherits: true; initial-value: oklch(0.16 0.008 60); }
-@property --bg-deep    { syntax: '<color>'; inherits: true; initial-value: oklch(0.11 0.008 60); }
-@property --surface    { syntax: '<color>'; inherits: true; initial-value: oklch(0.21 0.010 60); }
-@property --surface-hi { syntax: '<color>'; inherits: true; initial-value: oklch(0.26 0.012 60); }
-@property --ink        { syntax: '<color>'; inherits: true; initial-value: oklch(0.94 0.012 80); }
-@property --ink-mid    { syntax: '<color>'; inherits: true; initial-value: oklch(0.78 0.010 80); }
-@property --ink-low    { syntax: '<color>'; inherits: true; initial-value: oklch(0.58 0.010 80); }
-@property --ink-dim    { syntax: '<color>'; inherits: true; initial-value: oklch(0.42 0.010 80); }
-@property --avatar-color { syntax: '<color>'; inherits: true; initial-value: oklch(0.11 0.008 60); }
-@property --accent     { syntax: '<color>'; inherits: true; initial-value: oklch(0.78 0.110 85); }
-@property --accent-hi  { syntax: '<color>'; inherits: true; initial-value: oklch(0.86 0.130 85); }
-@property --accent-deep { syntax: '<color>'; inherits: true; initial-value: oklch(0.55 0.110 80); }
-@property --line       { syntax: '<color>'; inherits: true; initial-value: oklch(0.30 0.008 60 / 0.5); }
-@property --line-soft  { syntax: '<color>'; inherits: true; initial-value: oklch(0.30 0.008 60 / 0.22); }
+@property --bg         { syntax: '<color>'; inherits: true; initial-value: oklch(0.97 0.006 80); }
+@property --bg-deep    { syntax: '<color>'; inherits: true; initial-value: oklch(0.93 0.008 80); }
+@property --surface    { syntax: '<color>'; inherits: true; initial-value: oklch(0.99 0.004 80); }
+@property --surface-hi { syntax: '<color>'; inherits: true; initial-value: oklch(1.00 0.000 0); }
+@property --ink        { syntax: '<color>'; inherits: true; initial-value: oklch(0.20 0.010 60); }
+@property --ink-mid    { syntax: '<color>'; inherits: true; initial-value: oklch(0.38 0.010 60); }
+@property --ink-low    { syntax: '<color>'; inherits: true; initial-value: oklch(0.52 0.010 60); }
+@property --ink-dim    { syntax: '<color>'; inherits: true; initial-value: oklch(0.65 0.010 60); }
+@property --avatar-color { syntax: '<color>'; inherits: true; initial-value: oklch(0.15 0.020 60); }
+@property --accent     { syntax: '<color>'; inherits: true; initial-value: oklch(55.313% 0.06236 85.581); }
+@property --accent-hi  { syntax: '<color>'; inherits: true; initial-value: oklch(67.397% 0.11209 83.948); }
+@property --accent-deep { syntax: '<color>'; inherits: true; initial-value: oklch(82.976% 0.13546 83.717); }
+@property --line       { syntax: '<color>'; inherits: true; initial-value: oklch(0.30 0.008 60 / 0.18); }
+@property --line-soft  { syntax: '<color>'; inherits: true; initial-value: oklch(0.30 0.008 60 / 0.10); }
 @property --border     { syntax: '<color>'; inherits: true; initial-value: oklch(0.30 0.008 60 / 0.5); }
 
 /* Theme switch is a full-page cross-fade via the View Transitions API (see
@@ -277,8 +280,8 @@
   body {
     font-family: var(--serif-body);
     background:
-      radial-gradient(1200px 600px at 70% -200px, color-mix(in oklch, var(--accent) 8%, transparent), transparent 60%),
-      radial-gradient(900px 500px at -200px 100%, color-mix(in oklch, var(--accent) 6%, transparent), transparent 60%),
+      radial-gradient(1200px 600px at 70% -200px, color-mix(in oklch, var(--accent) 14%, transparent), transparent 60%),
+      radial-gradient(900px 500px at -200px 100%, color-mix(in oklch, var(--accent) 10%, transparent), transparent 60%),
       var(--bg-deep);
     color: var(--ink);
     min-height: 100dvh;
@@ -286,10 +289,10 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  :root[data-theme="light"] body {
+  :root[data-theme="dark"] body {
     background:
-      radial-gradient(1200px 600px at 70% -200px, color-mix(in oklch, var(--accent) 14%, transparent), transparent 60%),
-      radial-gradient(900px 500px at -200px 100%, color-mix(in oklch, var(--accent) 10%, transparent), transparent 60%),
+      radial-gradient(1200px 600px at 70% -200px, color-mix(in oklch, var(--accent) 8%, transparent), transparent 60%),
+      radial-gradient(900px 500px at -200px 100%, color-mix(in oklch, var(--accent) 6%, transparent), transparent 60%),
       var(--bg-deep);
   }
 
