@@ -3,6 +3,7 @@ import { ArrowRight, SquarePen } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNoteStore } from '../store/useNoteStore';
 import { useFolderStore } from '../store/useFolderStore';
+import { useReflectionStore } from '../store/useReflectionStore';
 import { useToast } from '../components/ui/ToastContainer';
 import { getApiErrorMessage } from '../lib/apiError';
 import { Folder } from '../types';
@@ -18,6 +19,7 @@ interface HomeViewProps {
   onOpenSpace: (id: string) => void;
   onAllThoughts: () => void;
   onAllSpaces: () => void;
+  onReflection: () => void;
 }
 
 // Time-of-day greeting, mirrors the workspace titlebar logic.
@@ -45,20 +47,23 @@ function timeAgo(iso: string): string {
   return months <= 1 ? '1 month ago' : `${months} months ago`;
 }
 
-const HomeView = ({ onOpenNote, onOpenSpace, onAllThoughts, onAllSpaces }: HomeViewProps) => {
+const HomeView = ({ onOpenNote, onOpenSpace, onAllThoughts, onAllSpaces, onReflection }: HomeViewProps) => {
   const user = useAuthStore((s) => s.user);
   const notes = useNoteStore((s) => s.notes);
   const fetchNotes = useNoteStore((s) => s.fetchNotes);
   const folders = useFolderStore((s) => s.folders);
   const fetchFolders = useFolderStore((s) => s.fetchFolders);
   const createNote = useNoteStore((s) => s.createNote);
+  const reflectionPrompt = useReflectionStore((s) => s.prompt);
+  const fetchToday = useReflectionStore((s) => s.fetchToday);
   const toast = useToast();
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     fetchNotes({ archived: false, deleted: false });
     fetchFolders();
-  }, [fetchNotes, fetchFolders]);
+    fetchToday();
+  }, [fetchNotes, fetchFolders, fetchToday]);
 
   const handleNewNote = async () => {
     try {
@@ -140,6 +145,16 @@ const HomeView = ({ onOpenNote, onOpenSpace, onAllThoughts, onAllSpaces }: HomeV
             </div>
           )}
         </Section>
+
+        <section className="home-section">
+          <div className="home-section-head">
+            <h2 className="home-section-title">Daily Reflection</h2>
+          </div>
+          <button type="button" className="reflection-teaser" onClick={onReflection}>
+            <span className="reflection-teaser-prompt">{reflectionPrompt || 'A quiet question, once a day.'}</span>
+            <span className="reflection-teaser-cue">Reflect <ArrowRight size={14} /></span>
+          </button>
+        </section>
       </div>
 
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />

@@ -1671,6 +1671,8 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 
 /* ─── Main content ───────────────────────────────────────────────────────────── */
 
+/* Animated wrapper between AppSidebar and the view — must let .home-main fill it. */
+.home-page { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .home-main { flex: 1; overflow-y: auto; min-height: 0; scroll-behavior: smooth; }
 .home-main::-webkit-scrollbar { width: 8px; }
 .home-main::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 40%, transparent); border-radius: 9999px; }
@@ -1764,6 +1766,48 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 .home-card-title { font-family: var(--serif-display); font-style: normal; font-weight: 300; font-size: 26px; line-height: 1.15; color: #fff; }
 .home-card.compact .home-card-title { font-size: 26px; padding-bottom: 8px; }
 .home-card-sub { font-family: var(--serif-body); font-size: 14px; color: rgba(255,255,255,.82); }
+
+/* ─── Daily Reflection ───────────────────────────────────────────────────────── */
+
+/* Home teaser banner */
+.reflection-teaser {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px; width: 100%;
+  padding: 26px 30px; border: 0.5px solid var(--line); border-radius: 18px; cursor: pointer;
+  background: linear-gradient(135deg, color-mix(in oklch, var(--accent) 9%, var(--surface)), var(--surface));
+  text-align: left; transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.reflection-teaser:hover {
+  border-color: color-mix(in oklch, var(--accent) 45%, var(--line));
+  box-shadow: 0 8px 24px -12px color-mix(in oklch, var(--accent) 40%, transparent);
+}
+.reflection-teaser-prompt { font-family: var(--serif-display); font-style: italic; font-size: 24px; color: var(--ink); line-height: 1.2; }
+.reflection-teaser-cue {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+}
+
+/* Reflection view */
+.reflection-prompt { font-style: italic; }
+.reflection-compose { margin: 8px 0 48px; }
+.reflection-input {
+  width: 100%; resize: vertical; min-height: 150px;
+  padding: 20px 22px; border: 0.5px solid var(--line); border-radius: 16px;
+  background: var(--surface); color: var(--ink);
+  font-family: var(--serif-body); font-size: 17px; line-height: 1.6; outline: none;
+  transition: border-color .15s;
+}
+.reflection-input::placeholder { color: var(--ink-dim); font-style: italic; }
+.reflection-input:focus { border-color: color-mix(in oklch, var(--accent) 55%, var(--line)); }
+.reflection-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+/* Layout-only add-on — visual look (gradient, glow, shimmer) comes from .btn.primary */
+.reflection-save { padding: 12px 30px; border-radius: 11px; font-size: 15px; gap: 8px; }
+
+.reflection-history { margin-top: 8px; }
+.reflection-list { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.reflection-entry { padding: 18px 22px; border: 0.5px solid var(--line-soft); border-radius: 14px; background: var(--surface); }
+.reflection-entry-date { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-dim); }
+.reflection-entry-prompt { font-family: var(--serif-display); font-style: italic; font-size: 18px; color: var(--ink-mid); margin: 6px 0 8px; }
+.reflection-entry-content { font-family: var(--serif-body); font-size: 15px; line-height: 1.6; color: var(--ink); margin: 0; white-space: pre-wrap; }
 
 /* ─── Global search overlay ──────────────────────────────────────────────────── */
 

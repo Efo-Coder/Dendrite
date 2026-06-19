@@ -22,6 +22,7 @@ import { Icons } from '../components/ui/Icons';
 import { LOGO_SRC } from '../config/brand';
 import { Note, ViewType } from '../types';
 import { getApiErrorMessage } from '../lib/apiError';
+import { PAGE_FADE } from '../lib/pageMotion';
 
 type NoteFilters = {
   archived?: boolean;
@@ -308,13 +309,7 @@ const WorkspaceView = ({ initialView = 'all', initialFolderId, initialNoteId, on
   });
 
   return (
-    <motion.div
-      className="app-stage"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.18, ease: 'easeInOut' } }}
-      transition={{ duration: 0.28, ease: 'easeInOut' }}
-    >
+    <motion.div className="app-stage" {...PAGE_FADE}>
       <div className="win">
         {/* macOS window titlebar */}
         <div className="app-titlebar">

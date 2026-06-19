@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Layers, PenLine, Search, ChevronDown } from 'lucide-react';
+import { Home, Layers, PenLine, Search, Contrast, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import { LOGO_SRC } from '../../config/brand';
 import { User as UserType } from '../../types';
@@ -8,18 +8,19 @@ import UserProfileModal from '../modals/UserProfileModal';
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
 
-type HomeNav = 'home' | 'spaces';
+type HomeNav = 'home' | 'spaces' | 'reflection';
 
 interface AppSidebarProps {
   active: HomeNav;
   onHome: () => void;
   onSpaces: () => void;
   onThoughts: () => void;
+  onReflection: () => void;
   onSearch: () => void;
   user?: UserType | null;
 }
 
-const AppSidebar = ({ active, onHome, onSpaces, onThoughts, onSearch, user }: AppSidebarProps) => {
+const AppSidebar = ({ active, onHome, onSpaces, onThoughts, onReflection, onSearch, user }: AppSidebarProps) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const displayInitial = (user?.name || user?.email || '?').trim().charAt(0).toUpperCase();
 
@@ -27,8 +28,9 @@ const AppSidebar = ({ active, onHome, onSpaces, onThoughts, onSearch, user }: Ap
   const items = [
     { key: 'home',     label: 'Home',            Icon: Home,    onClick: onHome,     activeWhen: active === 'home' },
     { key: 'spaces',   label: 'Spaces',          Icon: Layers,  onClick: onSpaces,   activeWhen: active === 'spaces' },
-    { key: 'thoughts', label: 'Thoughts',        Icon: PenLine, onClick: onThoughts, activeWhen: false },
-    { key: 'search',   label: 'Search',          Icon: Search,  onClick: onSearch,   activeWhen: false },
+    { key: 'thoughts', label: 'Thoughts',        Icon: PenLine,  onClick: onThoughts,   activeWhen: false },
+    { key: 'reflect',  label: 'Daily Reflection', Icon: Contrast, onClick: onReflection, activeWhen: active === 'reflection' },
+    { key: 'search',   label: 'Search',          Icon: Search,   onClick: onSearch,     activeWhen: false },
   ];
 
   return (
