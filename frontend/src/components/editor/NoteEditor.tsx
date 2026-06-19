@@ -13,6 +13,7 @@ import {
   Info,
   Share2,
   PanelLeft,
+  MoreHorizontal,
 } from 'lucide-react';
 import { Note } from '../../types';
 import { useMagicHover } from '../../hooks/useMagicHover';
@@ -32,6 +33,7 @@ import NoteTagsRow from './NoteTagsRow';
 import { MenuPos, formatRelativeDate, userCursorColor } from './noteEditorUtils';
 import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
 import Modal from '../modals/Modal';
+import ContextMenu, { ContextMenuItem } from '../ui/ContextMenu';
 
 interface NoteEditorProps {
   note: Note;
@@ -70,10 +72,10 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
   const [folderMenuPos, setFolderMenuPos] = useState<MenuPos | null>(null);
   const [exportMenuPos, setExportMenuPos] = useState<MenuPos | null>(null);
+  const [moreMenu, setMoreMenu] = useState<{ x: number; y: number } | null>(null);
+  const moreBtnRef = useRef<HTMLButtonElement>(null);
 
-  const leftGroupRef = useRef<HTMLDivElement>(null);
   const rightGroupRef = useRef<HTMLDivElement>(null);
-  const { onItemEnter: onLeftEnter, onItemLeave: onLeftLeave, Indicator: LeftIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: leftGroupRef });
   const { onItemEnter: onRightEnter, onItemLeave: onRightLeave, Indicator: RightIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: rightGroupRef });
 
   const [focusWritingMode, setFocusWritingMode] = useState(false);
@@ -218,16 +220,46 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     setFolderMenuPos(prev => prev ? null : { x: rect.left, y: rect.bottom + 4, anchorTop: rect.top });
   };
 
-  const openExportMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+  // Opened from the More menu — anchored to the More button.
+  const openExportFromMore = () => {
+    const el = moreBtnRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
     setFolderMenuPos(null);
-    setExportMenuPos(prev => prev ? null : { x: rect.right - 220, y: rect.bottom + 4, anchorTop: rect.top });
+    setExportMenuPos({ x: rect.right - 220, y: rect.bottom + 4, anchorTop: rect.top });
   };
 
   const isInTrash = note.isDeleted;
   const isArchived = note.isArchived && !note.isDeleted;
 
   const currentFolder = note.folderId ? folders.find(f => f.id === note.folderId) : null;
+
+  // Topbar actions collapsed into one More menu — status logic mirrors the old buttons.
+  const moreItems: ContextMenuItem[] = [
+    ...(!isInTrash && !isArchived ? [
+      {
+        icon: <Pin className={clsx('w-4 h-4', note.isPinned && 'text-(--accent)')} />,
+        label: note.isPinned ? 'Unpin' : 'Pin note',
+        onClick: async () => { await togglePin(note.id); toast.success(note.isPinned ? 'Unpinned' : 'Note pinned'); },
+      },
+      {
+        icon: note.isFavorite ? <Icons.starFill size={16} /> : <Icons.star size={16} />,
+        label: note.isFavorite ? 'Remove from favorites' : 'Add to favorites',
+        onClick: async () => { await toggleFavorite(note.id); toast.success(note.isFavorite ? 'Removed from favorites' : 'Added to favorites'); },
+      },
+      { icon: <Archive className="w-4 h-4" />, label: 'Archive', onClick: handleArchive },
+    ] : []),
+    ...(isArchived ? [
+      { icon: <ArchiveRestore className="w-4 h-4" />, label: 'Unarchive', onClick: handleRestore },
+    ] : []),
+    ...(isInTrash ? [
+      { icon: <RotateCcw className="w-4 h-4" />, label: 'Restore', onClick: handleRestore },
+    ] : []),
+    ...(!isInTrash ? [
+      { icon: <Share2 className="w-4 h-4" />, label: 'Share / Export', onClick: openExportFromMore },
+    ] : []),
+    { icon: <Trash2 className="w-4 h-4" />, label: isInTrash ? 'Delete permanently' : 'Delete', onClick: handleDelete, variant: 'danger' },
+  ];
 
   const titleHeader = (
     <>
@@ -282,74 +314,17 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
       <motion.div
         className={clsx(
           'relative z-1 transition-[max-height,opacity] duration-500 ease-out',
-          focusWritingMode ? 'max-h-0 overflow-hidden opacity-0 pointer-events-none' : 'max-h-11 overflow-visible opacity-100'
+          focusWritingMode ? 'max-h-0 overflow-hidden opacity-0 pointer-events-none' : 'max-h-8 overflow-visible opacity-100'
         )}
         initial={{ y: 6 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.18, ease: 'easeOut' }}
       >
             <div
-              className="relative flex h-11 items-center justify-between bg-(--panel-bg) border-b-[0.5px] border-(--line-soft) px-4.5"
+              className="editor-topbar relative flex h-14 items-center justify-between px-6"
             >
-              {/* Left side */}
-              <div ref={leftGroupRef} className="relative flex items-center magic-hover">
-                {LeftIndicator}
-                {onToggleSidebar && (
-                  <button
-                    type="button"
-                    onClick={onToggleSidebar}
-                    onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
-                    className={clsx('icon-btn-md rounded-lg transition-colors', sidebarCollapsed && 'text-(--accent)')}
-                    title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
-                  >
-                    <PanelLeft className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                {!isInTrash && !isArchived && (
-                  <>
-                    <button
-                      onClick={async () => { await togglePin(note.id); toast.success(note.isPinned ? 'Unpinned' : 'Note pinned'); }}
-                      onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
-                      className={clsx(
-                        'icon-btn-md rounded-lg transition-colors flex items-center justify-center',
-                        note.isPinned ? 'text-(--accent)' : ''
-                      )}
-                      title="Pin note"
-                    >
-                      {note.isPinned ? <span className="editor-pin-filled" /> : <Pin className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                      onClick={async () => { await toggleFavorite(note.id); toast.success(note.isFavorite ? 'Removed from favorites' : 'Added to favorites'); }}
-                      onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
-                      className="icon-btn-md rounded-lg transition-colors"
-                      style={note.isFavorite ? { color: 'var(--accent)' } : undefined}
-                      title="Add to favorites"
-                    >
-                      {note.isFavorite ? <Icons.starFill size={14} /> : <Icons.star size={14} />}
-                    </button>
-                    <button
-                      onClick={handleArchive}
-                      onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave}
-                      className="icon-btn-md rounded-lg transition-colors"
-                      title="Archive"
-                    >
-                      <Archive className="w-3.5 h-3.5" />
-                    </button>
-
-                  </>
-                )}
-
-                {isArchived && (
-                  <button onClick={handleRestore} onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave} className="icon-btn-md rounded-lg transition-colors" title="Restore from archive">
-                    <ArchiveRestore className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                {isInTrash && (
-                  <button onClick={handleRestore} onMouseEnter={onLeftEnter} onMouseLeave={onLeftLeave} className="icon-btn-md rounded-lg transition-colors" title="Restore">
-                    <RotateCcw className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
+              {/* Left spacer keeps the collaborator avatars centered via justify-between. */}
+              <div />
 
               {activeUsers.length > 0 && collaborators.some(c => c.status === 'accepted') && (
                 <div className="flex items-center gap-2 pointer-events-none">
@@ -374,29 +349,32 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 </div>
               )}
 
-              <div ref={rightGroupRef} className="relative flex items-center magic-hover">
+              <div ref={rightGroupRef} className="relative flex items-center gap-2 magic-hover">
                 {RightIndicator}
-                {!isInTrash && (
+                <button
+                  ref={moreBtnRef}
+                  type="button"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setMoreMenu(moreMenu ? null : { x: rect.left, y: rect.bottom + 4 });
+                  }}
+                  onMouseEnter={onRightEnter} onMouseLeave={onRightLeave}
+                  className={clsx('icon-btn-md rounded-lg transition-colors', moreMenu && 'text-(--accent)')}
+                  title="More"
+                >
+                  <MoreHorizontal className="w-3.5 h-3.5" />
+                </button>
+                {onToggleSidebar && (
                   <button
-                    onClick={openExportMenu}
+                    type="button"
+                    onClick={onToggleSidebar}
                     onMouseEnter={onRightEnter} onMouseLeave={onRightLeave}
-                    className={clsx(
-                      'icon-btn-md rounded-lg transition-colors',
-                      exportMenuPos ? 'text-(--accent)' : ''
-                    )}
-                    title="Export / Share"
+                    className={clsx('icon-btn-md rounded-lg transition-colors', sidebarCollapsed && 'text-(--accent)')}
+                    title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
                   >
-                    <Share2 className="w-3.5 h-3.5" />
+                    <PanelLeft className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <button
-                  onClick={handleDelete}
-                  onMouseEnter={onRightEnter} onMouseLeave={onRightLeave}
-                  className="icon-btn-md rounded-lg hover:text-red-500"
-                  title={isInTrash ? 'Delete permanently' : 'Move to trash'}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
                 {!isInTrash && (
                   <button
                     type="button"
@@ -506,6 +484,14 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         noteId={note.id}
         title={title}
         content={content}
+      />
+
+      <ContextMenu
+        isOpen={!!moreMenu}
+        position={moreMenu ?? { x: 0, y: 0 }}
+        onClose={() => setMoreMenu(null)}
+        items={moreItems}
+        minWidth="200px"
       />
 
       <InviteCollaboratorModal

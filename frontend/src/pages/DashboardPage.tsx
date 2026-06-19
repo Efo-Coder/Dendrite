@@ -1,94 +1,136 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuthStore } from '../store/useAuthStore';
-import { ViewType } from '../types';
+import { useNoteStore } from '../store/useNoteStore';
+import { Note } from '../types';
 import { PAGE_FADE } from '../lib/pageMotion';
 import AppSidebar from '../components/sidebar/AppSidebar';
 import SearchOverlay from '../components/home/SearchOverlay';
+import NoteEditor from '../components/editor/NoteEditor';
 import HomeView from './HomeView';
 import SpacesView from './SpacesView';
 import ReflectionView from './ReflectionView';
-import WorkspaceView from './WorkspaceView';
+import FolderView from './FolderView';
+import NotesView, { type NoteCategory } from './NotesView';
 
-type AppView = 'home' | 'spaces' | 'reflection' | 'workspace';
+type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder';
 
-// Shell for authenticated users: the calm Home/Spaces dashboard and the
-// three-column workspace are two top-level modes; AppSidebar switches between them.
+// Shell for authenticated users: the calm Home dashboard with its Spaces, category,
+// folder and inline-editor views, switched via AppSidebar and card clicks.
 const DashboardPage = () => {
   const user = useAuthStore((s) => s.user);
+  const currentNote = useNoteStore((s) => s.currentNote);
+  const setCurrentNote = useNoteStore((s) => s.setCurrentNote);
   const [appView, setAppView] = useState<AppView>('home');
   const [searchOpen, setSearchOpen] = useState(false);
-
-  // Where the workspace should open when entered from the dashboard.
-  const [wsView, setWsView] = useState<ViewType>('all');
-  const [wsFolderId, setWsFolderId] = useState<string | undefined>();
-  const [wsNoteId, setWsNoteId] = useState<string | undefined>();
+  // Only the inline editor may hide the Home sidebar; reset whenever it opens.
+  const [editorSidebarCollapsed, setEditorSidebarCollapsed] = useState(false);
+  // Editor's note, kept separate from currentNote so it stays mounted through the
+  // closing transition (currentNote clears one render before appView switches).
+  const [editorNote, setEditorNote] = useState<Note | null>(null);
+  // The space whose notes the folder view shows.
+  const [folderId, setFolderId] = useState<string | undefined>();
 
   const goHome = useCallback(() => setAppView('home'), []);
   const goSpaces = useCallback(() => setAppView('spaces'), []);
   const goReflection = useCallback(() => setAppView('reflection'), []);
 
-  const openWorkspace = useCallback((view: ViewType, folderId?: string, noteId?: string) => {
-    setWsView(view);
-    setWsFolderId(folderId);
-    setWsNoteId(noteId);
-    setAppView('workspace');
+  // Each Home category opens its own full view (like Spaces).
+  const [notesCategory, setNotesCategory] = useState<NoteCategory>('all');
+  const openCategory = useCallback((cat: NoteCategory) => {
+    setNotesCategory(cat);
+    setAppView('notes');
   }, []);
 
-  const openNote = useCallback((id: string) => openWorkspace('all', undefined, id), [openWorkspace]);
-  const openSpace = useCallback((id: string) => openWorkspace('folder', id), [openWorkspace]);
+  // A space card opens that folder's notes in its own view.
+  const openSpace = useCallback((id: string) => {
+    setFolderId(id);
+    setAppView('folder');
+  }, []);
 
-  // mode="wait" + one shared PAGE_FADE → every switch fades out, then in, identically.
+  // Inline editor lives inside the Home shell (beside AppSidebar); a created or
+  // opened note shows here. currentNote is the single source.
+  const openEditor = useCallback((note: Note) => {
+    setEditorNote(note);
+    setCurrentNote(note);
+    setEditorSidebarCollapsed(false);
+    setAppView('editor');
+  }, [setCurrentNote]);
+
+  // Cards & search hand over a note id — resolve it from the store and open inline.
+  const openNote = useCallback((id: string) => {
+    const note = useNoteStore.getState().notes.find((n) => n.id === id);
+    if (note) openEditor(note);
+  }, [openEditor]);
+
+  // Follow currentNote while open (keeps pin/fav etc. fresh) but never clear it —
+  // on close the editor must stay rendered to play its fade-out.
+  useEffect(() => {
+    if (currentNote) setEditorNote(currentNote);
+  }, [currentNote]);
+
+  // The editor closes itself via setCurrentNote(null) (X / move-to-trash);
+  // fall back to Home when that happens.
+  useEffect(() => {
+    if (appView === 'editor' && !currentNote) setAppView('home');
+  }, [appView, currentNote]);
+
   return (
-    <AnimatePresence mode="wait">
-      {appView === 'workspace' ? (
-        <WorkspaceView
-          key={`workspace-${wsView}-${wsFolderId ?? ''}-${wsNoteId ?? ''}`}
-          initialView={wsView}
-          initialFolderId={wsFolderId}
-          initialNoteId={wsNoteId}
-          onExitToHome={goHome}
+    <motion.div className="home-stage" {...PAGE_FADE}>
+      <div className="home-shell">
+        <AppSidebar
+          active={appView === 'spaces' ? 'spaces' : appView === 'reflection' ? 'reflection' : 'home'}
+          collapsed={appView === 'editor' && editorSidebarCollapsed}
+          onHome={goHome}
+          onSpaces={goSpaces}
+          onThoughts={() => openCategory('all')}
+          onReflection={goReflection}
+          onSearch={() => setSearchOpen(true)}
+          user={user}
         />
-      ) : (
-        <motion.div key="home" className="home-stage" {...PAGE_FADE}>
-          <div className="home-shell">
-            <AppSidebar
-              active={appView}
-              onHome={goHome}
-              onSpaces={goSpaces}
-              onThoughts={() => openWorkspace('all')}
-              onReflection={goReflection}
-              onSearch={() => setSearchOpen(true)}
-              user={user}
-            />
-            <AnimatePresence mode="wait">
-              <motion.div key={appView} className="home-page" {...PAGE_FADE}>
-                {appView === 'spaces' ? (
-                  <SpacesView onOpenSpace={openSpace} />
-                ) : appView === 'reflection' ? (
-                  <ReflectionView />
-                ) : (
-                  <HomeView
-                    onOpenNote={openNote}
-                    onOpenSpace={openSpace}
-                    onAllThoughts={() => openWorkspace('all')}
-                    onAllSpaces={goSpaces}
-                    onReflection={goReflection}
+        {/* mode="wait" + one shared PAGE_FADE → every switch fades out, then in, identically. */}
+        <AnimatePresence mode="wait">
+          <motion.div key={appView} className="home-page" {...PAGE_FADE}>
+            {appView === 'editor' && editorNote ? (
+              // Mirror the wrapper the .win-scoped editor panel CSS expects.
+              <div className="win">
+                <div className="editor-panel">
+                  <NoteEditor
+                    note={editorNote}
+                    onToggleSidebar={() => setEditorSidebarCollapsed((v) => !v)}
+                    sidebarCollapsed={editorSidebarCollapsed}
                   />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
+                </div>
+              </div>
+            ) : appView === 'spaces' ? (
+              <SpacesView onOpenSpace={openSpace} onBack={goHome} />
+            ) : appView === 'notes' ? (
+              <NotesView category={notesCategory} onOpenInline={openEditor} onBack={goHome} />
+            ) : appView === 'folder' && folderId ? (
+              <FolderView folderId={folderId} onOpenInline={openEditor} onBack={goHome} />
+            ) : appView === 'reflection' ? (
+              <ReflectionView />
+            ) : (
+              <HomeView
+                onOpenNote={openNote}
+                onOpenInline={openEditor}
+                onOpenSpace={openSpace}
+                onOpenCategory={openCategory}
+                onAllSpaces={goSpaces}
+                onReflection={goReflection}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-          <SearchOverlay
-            isOpen={searchOpen}
-            onClose={() => setSearchOpen(false)}
-            onOpenNote={openNote}
-            onOpenSpace={openSpace}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+      <SearchOverlay
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onOpenNote={openNote}
+        onOpenSpace={openSpace}
+      />
+    </motion.div>
   );
 };
 

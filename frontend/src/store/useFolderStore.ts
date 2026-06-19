@@ -28,6 +28,7 @@ interface FolderState {
     }
   ) => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
+  reorderFolders: (ordered: Folder[]) => void;
   clearError: () => void;
 }
 
@@ -101,6 +102,14 @@ export const useFolderStore = create<FolderState>((set) => ({
       });
       throw error;
     }
+  },
+
+  // Optimistic reorder: apply the new order locally, then persist it.
+  reorderFolders: (ordered) => {
+    set({ folders: ordered });
+    folderService
+      .reorderFolders(ordered.map((f, i) => ({ id: f.id, order: i })))
+      .catch(() => {});
   },
 
   clearError: () => set({ error: null }),

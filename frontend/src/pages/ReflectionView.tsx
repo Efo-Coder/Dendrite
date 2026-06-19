@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useReflectionStore } from '../store/useReflectionStore';
+import { useLenisScroll } from '../hooks/useLenisScroll';
 import { useToast } from '../components/ui/ToastContainer';
 import { getApiErrorMessage } from '../lib/apiError';
 
@@ -19,6 +20,9 @@ const ReflectionView = () => {
 
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
+  const scrollRef = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  useLenisScroll(scrollRef, contentRef);
 
   useEffect(() => {
     fetchToday();
@@ -49,8 +53,8 @@ const ReflectionView = () => {
   const past = history.filter((r) => !today || r.id !== today.id);
 
   return (
-    <main className="home-main">
-      <div className="home-content">
+    <main ref={scrollRef} className="home-main">
+      <div ref={contentRef} className="home-content">
         <header className="home-header">
           <p className="home-greeting">Daily Reflection</p>
           <h1 className="home-headline reflection-prompt">{prompt || '…'}</h1>

@@ -828,7 +828,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   flex-shrink: 0;
 }
 .win .note-card-pin     { width: 11px; height: 11px; opacity: 0.9; }
-.win .editor-pin-filled { width: 14px; height: 14px; }
+.win .editor-pin-filled { width: 18px; height: 18px; }
 .win .note-card-preview {
   font-family: var(--serif-body); font-size: 13.5px;
   color: var(--ink-low); line-height: 1.45;
@@ -892,6 +892,11 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   display: flex; flex-direction: column;
   overflow: hidden; position: relative;
 }
+
+/* Topbar shares the editor background (no fill, no divider); icons sit larger,
+   matching the Home topbar. One rule covers every action icon regardless of how
+   its size was set in JSX (class or size prop). */
+.win .editor-topbar svg { width: 18px; height: 18px; }
 
 /* Scrollable writing canvas with fade-out masks at top/bottom edges */
 .win .editor-canvas {
@@ -1610,11 +1615,23 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 
 .home-sidebar {
   width: var(--sidebar-w); flex-shrink: 0;
-  display: flex; flex-direction: column;
-  padding: 44px 16px 18px; position: relative;
+  position: relative; overflow: hidden;
   border-right: 0.5px solid var(--line);
   background: linear-gradient(180deg, color-mix(in oklch, var(--bg) 96%, var(--accent) 3%), var(--bg) 55%);
+  transition: width .25s ease;
 }
+.home-sidebar.collapsed { width: 0; border-right: none; }
+
+/* Inner keeps its full width while the aside collapses to 0 — content clips and
+   fades instead of reflowing (mirrors .win .sidebar-inner). */
+.home-sidebar-inner {
+  position: absolute; top: 0; left: 0;
+  width: var(--sidebar-w); height: 100%;
+  display: flex; flex-direction: column;
+  padding: 44px 16px 18px;
+  transition: opacity .15s ease, transform .15s ease;
+}
+.home-sidebar.collapsed .home-sidebar-inner { opacity: 0; transform: translateX(-14px); }
 
 .home-brand {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -1673,13 +1690,33 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 
 /* Animated wrapper between AppSidebar and the view — must let .home-main fill it. */
 .home-page { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.home-main { flex: 1; overflow-y: auto; min-height: 0; scroll-behavior: smooth; }
+.home-main { flex: 1; overflow-y: auto; min-height: 0; }
 .home-main::-webkit-scrollbar { width: 8px; }
 .home-main::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 40%, transparent); border-radius: 9999px; }
 .home-content { max-width: 1500px; padding: 36px 80px 90px; position: relative; }
 
 /* Out of flow so the icons don't push the greeting/content down. */
 .home-topbar { position: absolute; top: 36px; right: 80px; z-index: 2; display: flex; gap: 8px; }
+
+/* Top-right action row for the category / spaces views: a context action + back. */
+.home-view-topbar { position: absolute; top: 36px; right: 80px; z-index: 2; display: flex; align-items: center; gap: 16px; }
+.home-back-btn, .home-view-action {
+  display: flex; align-items: center; gap: 7px;
+  border: 0; background: transparent; cursor: pointer;
+  font-family: var(--serif-body); font-size: 14px;
+  transition: color .15s;
+}
+.home-back-btn { color: color-mix(in oklch, var(--ink-low) 80%, white 5%); }
+.home-back-btn:hover { color: var(--ink); }
+.home-view-action { color: var(--ink); }
+.home-view-action:hover { color: var(--accent); }
+.home-view-action.danger:hover { color: #ef4444; }
+/* In the category/spaces views the actions read like the back button (muted → ink),
+   not the accent/danger hover used next to the Home section titles. */
+.home-view-topbar .home-view-action,
+.home-view-topbar .home-view-action.danger { color: color-mix(in oklch, var(--ink-low) 80%, white 5%); }
+.home-view-topbar .home-view-action:hover,
+.home-view-topbar .home-view-action.danger:hover { color: var(--ink); }
 .home-icon-btn {
   width: 38px; height: 38px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
@@ -1690,7 +1727,42 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 /* Uniform icon size for all three (incl. DarkModeToggle's hardcoded w-4). */
 .home-icon-btn svg { width: 21px; height: 21px; }
 
-.home-header { margin-bottom: 26px; }
+/* Invitations bell + count badge + dropdown panel. */
+.home-bell { position: relative; display: inline-flex; }
+.home-bell-badge {
+  position: absolute; top: 3px; right: 3px; pointer-events: none;
+  min-width: 15px; height: 15px; padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #fff;
+  font-family: var(--mono); font-size: 9px; font-weight: 600; line-height: 1;
+  border-radius: 999px;
+}
+.home-notif-panel {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 60;
+  width: 300px; max-height: 380px; overflow-y: auto;
+  padding: 14px; background: var(--surface);
+  border: 1px solid var(--line-soft); border-radius: 14px; box-shadow: var(--shadow-deep);
+}
+.home-notif-title {
+  margin: 0 0 10px; padding: 0 2px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim);
+}
+.home-notif-empty { margin: 0; padding: 4px 2px; font-family: var(--serif-body); font-size: 14px; color: var(--ink-dim); }
+.home-notif-list { display: flex; flex-direction: column; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.home-notif-item { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 10px; background: var(--surface-hi); }
+.home-notif-text { flex: 1; min-width: 0; }
+.home-notif-note { margin: 0; font-size: 13px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-notif-from { margin: 2px 0 0; font-size: 11px; color: var(--ink-dim); }
+.home-notif-accept, .home-notif-decline {
+  flex-shrink: 0; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 7px; cursor: pointer; transition: opacity .15s, background .15s, color .15s;
+}
+.home-notif-accept { background: var(--accent); color: #fff; }
+.home-notif-accept:hover { opacity: 0.85; }
+.home-notif-decline { background: transparent; color: var(--ink-mid); }
+.home-notif-decline:hover { color: #ef4444; background: color-mix(in oklch, #ef4444 10%, transparent); }
+
+.home-header { margin-bottom: 26px; display: flex; flex-direction: column; align-items: flex-start; }
 .home-greeting {
   font-family: var(--serif-display); font-style: normal; font-size: 25px;
   color: var(--ink-mid); margin: 0 0 8px;
@@ -1698,6 +1770,10 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 .home-headline {
   font-family: var(--serif-display); font-weight: 500; font-size: 46px; line-height: 1.08;
   letter-spacing: -0.01em; color: var(--ink); margin: 0;
+}
+.home-count {
+  margin: 14px 0 0;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim);
 }
 
 .home-search-wrap { position: relative; margin: 56px 0; }
@@ -1736,13 +1812,20 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 
 .home-section { margin-bottom: 42px; }
 .home-section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px; }
+.home-section-title-row { display: flex; align-items: baseline; gap: 18px; }
 .home-section-title { font-family: var(--serif-display); font-weight: 500; font-size: 23px; color: var(--ink); margin: 0; }
+.home-section-chevron {
+  display: flex; align-items: center;
+  border: 0; background: transparent; cursor: pointer; padding: 0;
+  color: var(--ink); transition: color .15s;
+}
+.home-section-chevron:hover { color: var(--accent); }
 .home-view-all {
   display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; cursor: pointer;
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--ink-low); transition: color .15s;
 }
-.home-view-all:hover { color: var(--accent); }
+.home-view-all:hover { color: var(--ink); }
 
 .home-card-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 18px; }
 /* auto-fit: the few cards stretch to fill the full width (no trailing gap), but
@@ -1750,7 +1833,16 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 .home-card-row.cols-4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .home-card-row.cols-5 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 .home-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
-.home-empty { font-family: var(--serif-body); font-style: italic; font-size: 15px; color: var(--ink-dim); padding: 6px 2px; }
+/* Month separators in the category views — same skin as the workspace list label. */
+.notes-month-group + .notes-month-group { margin-top: 8px; }
+.notes-month-label {
+  display: flex; align-items: center; gap: 10px; margin: 28px 0 18px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--ink-dim);
+}
+.notes-month-group:first-of-type .notes-month-label { margin-top: 0; }
+.notes-month-label::after { content: ""; flex: 1; height: 0.5px; background: var(--line-soft); }
+.home-empty { font-family: var(--serif-body); font-style: normal; font-size: 18px; color: var(--ink-dim); padding: 6px 2px; }
 
 .home-card {
   position: relative; display: block; padding: 0; border: 0; cursor: pointer;
@@ -1760,6 +1852,13 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 }
 .home-card.compact { aspect-ratio: 16 / 11; }
 .home-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-deep); }
+/* Drag-to-reorder: the dragged card tracks the cursor 1:1 (no transform-transition,
+   FLIP uses WAAPI); the hover-lift is off for every card during a drag so the
+   grabbed card doesn't jump out of its -3px hover offset. The dragged card (inline
+   transform) and FLIPping siblings (WAAPI) override transform:none as expected. */
+html.card-dragging { cursor: grabbing; user-select: none; }
+html.card-dragging .home-card { transition: none; cursor: grabbing; transform: none; }
+.home-card.dragging { box-shadow: var(--shadow-deep); }
 .home-card-cover { position: absolute; inset: 0; background-size: cover; background-position: center; }
 .home-card-scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.6), rgba(0,0,0,.08) 55%, transparent); }
 /* Cover-edit affordance — revealed on card hover */
@@ -1773,7 +1872,7 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 .home-card:hover .home-card-cover-btn { opacity: 1; }
 .home-card-cover-btn:hover { background: rgba(0, 0, 0, 0.62); }
 .home-card-text { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 30px; display: flex; flex-direction: column; gap: 6px; }
-.home-card-title { font-family: var(--serif-display); font-style: normal; font-weight: 300; font-size: 26px; line-height: 1.15; color: #fff; }
+.home-card-title { font-family: var(--serif-display); font-style: normal; font-weight: 300; font-size: 26px; line-height: 1.15; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .home-card.compact .home-card-title { font-size: 26px; padding-bottom: 8px; }
 .home-card-sub { font-family: var(--serif-body); font-size: 14px; color: rgba(255,255,255,.82); }
 

@@ -13,7 +13,7 @@ export const getAllFolders = async (req: AuthRequest, res: Response) => {
           select: { id: true },
         },
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
     });
 
     return res.json({ folders });
@@ -120,5 +120,30 @@ export const deleteFolder = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('DeleteFolder error:', error);
     return res.status(500).json({ error: 'Fehler beim Löschen des Ordners' });
+  }
+};
+
+export const reorderFolders = async (req: AuthRequest, res: Response) => {
+  try {
+    const { folderOrders } = req.body;
+
+    if (!Array.isArray(folderOrders)) {
+      return res.status(400).json({ error: 'folderOrders muss ein Array sein' });
+    }
+
+    // updateMany scoped to the owner — silently ignores ids the user doesn't own.
+    await prisma.$transaction(
+      folderOrders.map((item: { id: string; order: number }) =>
+        prisma.folder.updateMany({
+          where: { id: item.id, userId: req.userId! },
+          data: { order: item.order },
+        }),
+      ),
+    );
+
+    return res.json({ message: 'Ordner-Reihenfolge aktualisiert' });
+  } catch (error) {
+    console.error('ReorderFolders error:', error);
+    return res.status(500).json({ error: 'Fehler beim Sortieren der Ordner' });
   }
 };

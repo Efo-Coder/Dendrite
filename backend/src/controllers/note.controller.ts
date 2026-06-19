@@ -92,23 +92,6 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getNoteCounts = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    const [all, favorites, archive, trash, shared, pendingInvitations] = await Promise.all([
-      prisma.note.count({ where: { userId, isArchived: false, isDeleted: false } }),
-      prisma.note.count({ where: { userId, isFavorite: true, isArchived: false, isDeleted: false } }),
-      prisma.note.count({ where: { userId, isArchived: true, isDeleted: false } }),
-      prisma.note.count({ where: { userId, isDeleted: true } }),
-      prisma.noteCollaborator.count({ where: { userId: userId!, status: 'accepted' } }),
-      prisma.noteCollaborator.count({ where: { userId: userId!, status: 'pending' } }),
-    ]);
-    return res.json({ all, favorites, archive, trash, shared, pendingInvitations });
-  } catch {
-    return res.status(500).json({ error: 'Fehler beim Abrufen der Counts' });
-  }
-};
-
 export const getNoteById = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;

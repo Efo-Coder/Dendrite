@@ -40,4 +40,8 @@ export const folderService = {
   async deleteFolder(id: string): Promise<void> {
     await api.delete(`/folders/${id}`);
   },
+
+  async reorderFolders(folderOrders: { id: string; order: number }[]): Promise<void> {
+    await api.post('/folders/reorder', { folderOrders });
+  },
 };

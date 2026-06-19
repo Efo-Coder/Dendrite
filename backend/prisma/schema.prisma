@@ -53,6 +53,7 @@ model Folder {
   color      String?  @default("#10b981") // Grüner Akzent
   icon       String?
   coverImage String?  // Space cover for the Home dashboard
+  order      Int      @default(0) // Manual sort order on the Home dashboard
   parentId   String?
   userId    String
   createdAt DateTime @default(now())

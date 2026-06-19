@@ -20,19 +20,27 @@ interface CoverCardProps {
   compact?: boolean;
   onClick: () => void;
   onSetCover?: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  // Drag-to-reorder wiring (optional — only set on draggable sections).
+  flipId?: string;
+  dragging?: boolean;
+  onPointerDown?: (e: React.PointerEvent) => void;
 }
 
-const CoverCard = ({ title, subtitle, cover, seed, compact, onClick, onSetCover }: CoverCardProps) => {
+const CoverCard = ({ title, subtitle, cover, seed, compact, onClick, onSetCover, onContextMenu, flipId, dragging, onPointerDown }: CoverCardProps) => {
   const style = cover
     ? { backgroundImage: `url(${resolveUrl(cover)})` }
     : { backgroundImage: fallbackCover(seed) };
   // Not a <button> so the cover-edit button can nest inside (no nested buttons).
   return (
     <div
-      className={compact ? 'home-card compact' : 'home-card'}
+      className={`${compact ? 'home-card compact' : 'home-card'}${dragging ? ' dragging' : ''}`}
       role="button"
       tabIndex={0}
+      data-flip-id={flipId}
+      onPointerDown={onPointerDown}
       onClick={onClick}
+      onContextMenu={onContextMenu}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();

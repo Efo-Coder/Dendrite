@@ -39,6 +39,7 @@ import {
   TabIndentPlugin,
 } from './corePlugins';
 import { YjsSyncPlugin, type ActiveUser } from './YjsSyncPlugin';
+import { useLenisScroll } from '../../hooks/useLenisScroll';
 
 export type { ActiveUser };
 
@@ -78,8 +79,10 @@ const LexicalEditorWrapper = ({
   onUsersChange,
 }: LexicalEditorWrapperProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollContentRef = useRef<HTMLDivElement>(null);
   const checkIconRef = useRef<HTMLDivElement>(null);
   const cursorsContainerRef = useRef<HTMLDivElement>(null);
+  useLenisScroll(scrollRef, scrollContentRef);
   const onUsersChangeRef = useRef(onUsersChange);
   useLayoutEffect(() => { onUsersChangeRef.current = onUsersChange; });
 
@@ -186,9 +189,10 @@ const LexicalEditorWrapper = ({
             />
             <div
               ref={scrollRef}
-              className="editor-canvas scroll-smooth"
+              className="editor-canvas"
             >
               <motion.div
+                ref={scrollContentRef}
                 initial={{ y: 6 }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}

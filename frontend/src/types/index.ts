@@ -1,14 +1,3 @@
-export type ViewType = 'all' | 'favorites' | 'archive' | 'trash' | 'folder' | 'tag' | 'shared';
-
-export interface NoteCounts {
-  all: number;
-  favorites: number;
-  archive: number;
-  trash: number;
-  shared: number;
-  pendingInvitations: number;
-}
-
 export interface Collaborator {
   id: string;
   userId: string;

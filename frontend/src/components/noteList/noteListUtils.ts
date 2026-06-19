@@ -1,10 +1,8 @@
 import { Note } from '../../types';
 
-export type SortOption = 'createdAt' | 'updatedAt' | 'title' | 'pinned' | 'manual';
-
-// Group a note belongs to in the list (PINNED or its month bucket)
-export const groupKeyOf = (n: Note) =>
-  n.isPinned ? 'PINNED' : new Date(n.updatedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase();
+// Month bucket label of a note, e.g. "JUN 2026".
+export const monthKeyOf = (n: Note) =>
+  new Date(n.updatedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase();
 
 export const stripHtml = (html: string) => {
   const tmp = document.createElement('DIV');
@@ -46,20 +44,4 @@ export const getFirstLine = (content: string) => {
   const lines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
   const firstLine = lines[0] || 'New Note';
   return firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine;
-};
-
-export const getPreview = (content: string) => {
-  const text = stripHtml(content);
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
-
-  if (lines.length >= 2) {
-    const secondLine = lines[1];
-    return secondLine.length > 100 ? secondLine.substring(0, 100) + '...' : secondLine;
-  }
-
-  const raw = lines[0] || '';
-  const skip = raw.length > 50 ? 50 : raw.length;
-  const rest = raw.slice(skip).replace(/^\s+/, '').trim();
-  if (!rest) return 'No additional text';
-  return rest.length > 100 ? rest.slice(0, 100) + '...' : rest;
 };
