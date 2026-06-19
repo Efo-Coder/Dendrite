@@ -50,6 +50,7 @@ export interface Note {
   id: string;
   title?: string;
   content: string;
+  coverImage?: string | null;
   isPinned: boolean;
   isLocked: boolean;
   isFavorite: boolean;
@@ -70,6 +71,7 @@ export interface Folder {
   name: string;
   color: string | null;
   icon: string | null;
+  coverImage?: string | null;
   parentId: string | null;
   userId: string;
   createdAt: string;
@@ -117,4 +119,14 @@ export type LoginResponse = AuthResponse | { requiresTwoFactor: true; tempToken:
 export interface ApiError {
   error: string;
   message?: string;
+}
+
+export interface Reflection {
+  id: string;
+  userId: string;
+  prompt: string;
+  content: string;
+  date: string;
+  createdAt: string;
+  updatedAt: string;
 }

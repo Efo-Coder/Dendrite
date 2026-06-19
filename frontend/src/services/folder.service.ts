@@ -16,6 +16,7 @@ export const folderService = {
     name: string;
     color?: string;
     icon?: string;
+    coverImage?: string | null;
     parentId?: string;
   }): Promise<Folder> {
     const response = await api.post<{ folder: Folder }>('/folders', data);
@@ -28,6 +29,7 @@ export const folderService = {
       name?: string;
       color?: string;
       icon?: string;
+      coverImage?: string | null;
       parentId?: string;
     }
   ): Promise<Folder> {

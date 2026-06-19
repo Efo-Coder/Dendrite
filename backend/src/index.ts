@@ -18,6 +18,7 @@ import uploadRoutes from './routes/upload.routes';
 import collaboratorRoutes from './routes/collaborator.routes';
 import checkoutRoutes from './routes/checkout.routes';
 import feedbackRoutes from './routes/feedback.routes';
+import reflectionRoutes from './routes/reflection.routes';
 import { handleWebhook } from './controllers/checkout.controller';
 
 import { setupYjsConnection } from './wsHandler';
@@ -65,6 +66,7 @@ app.use('/api/attachments', attachmentRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api', collaboratorRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/reflections', reflectionRoutes);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });

@@ -3,7 +3,7 @@ import { useMagicHover } from '../../hooks/useMagicHover';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url: string) => url.startsWith('http') ? url : `${API_URL}${url}`;
-import { FileText, Star, Folder, Trash2, Archive, Plus, ChevronDown, Edit, Users } from 'lucide-react';
+import { FileText, Star, Folder, Trash2, Archive, Plus, ChevronDown, ChevronLeft, Edit, Users } from 'lucide-react';
 import { Icons } from '../ui/Icons';
 import { FOLDER_ICONS } from '../../lib/folderIcons';
 import { useFolderStore } from '../../store/useFolderStore';
@@ -29,9 +29,10 @@ interface SidebarProps {
   onTagUpdated?: () => void;
   user?: UserType | null;
   collapsed?: boolean;
+  onHome?: () => void;
 }
 
-const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, refreshTrigger, onTagUpdated, user, collapsed }: SidebarProps) => {
+const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, refreshTrigger, onTagUpdated, user, collapsed, onHome }: SidebarProps) => {
   const { folders, fetchFolders, deleteFolder } = useFolderStore();
   const { tags, fetchTags, deleteTag } = useTagStore();
   const { noteCounts, fetchNoteCounts } = useNoteStore();
@@ -156,6 +157,11 @@ const Sidebar = ({ currentView, onViewChange, selectedFolderId, selectedTagId, r
         <div className="sidebar-inner">
         <div className="sidebar-scroll" ref={scrollRef}>
           {Indicator}
+        {onHome && (
+          <button type="button" className="sidebar-home-back" onClick={onHome}>
+            <ChevronLeft style={{ width: 14, height: 14 }} /> Home
+          </button>
+        )}
         {/* Library */}
         <div className="sidebar-section">
           <h4>

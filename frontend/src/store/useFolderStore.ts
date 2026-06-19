@@ -14,6 +14,7 @@ interface FolderState {
     name: string;
     color?: string;
     icon?: string;
+    coverImage?: string | null;
     parentId?: string;
   }) => Promise<Folder>;
   updateFolder: (
@@ -22,6 +23,7 @@ interface FolderState {
       name?: string;
       color?: string;
       icon?: string;
+      coverImage?: string | null;
       parentId?: string;
     }
   ) => Promise<void>;
