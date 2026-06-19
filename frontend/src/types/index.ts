@@ -119,3 +119,46 @@ export interface Reflection {
   createdAt: string;
   updatedAt: string;
 }
+
+// ─── Idea Constellations ─────────────────────────────────────────────────────
+
+export type ConstellationSource = 'tag' | 'keyword';
+
+export interface Constellation {
+  id: string;
+  title: string;
+  source: ConstellationSource;
+  color: string | null; // tag colour hex; null for emergent keyword themes
+  importance: number; // 0..1, normalized — never shown as a number
+  noteCount: number;
+  keywords: string[];
+  firstActivity: string;
+  lastActivity: string;
+}
+
+export interface ConstellationLink {
+  source: string;
+  target: string;
+  weight: number; // 0..1
+}
+
+export type InsightFact =
+  | { kind: 'consistency'; theme: string; months: number }
+  | { kind: 'connection'; a: string; b: string }
+  | { kind: 'recency'; theme: string };
+
+export interface ConstellationGraph {
+  constellations: Constellation[];
+  links: ConstellationLink[];
+  insights: InsightFact[];
+  generatedAt: string;
+}
+
+// A note belonging to a theme, lazily loaded for the constellation detail view.
+export interface ThemeNote {
+  id: string;
+  title: string | null;
+  preview: string;
+  updatedAt: string;
+  folderId: string | null;
+}

@@ -1954,3 +1954,154 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
 .search-result:hover { background: color-mix(in oklch, var(--accent) 12%, transparent); color: var(--ink); }
 .search-result-icon { color: var(--ink-low); flex-shrink: 0; }
 .search-result-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ─── Idea Constellations ────────────────────────────────────────────────────── */
+
+/* A self-contained night sky, independent of the app's light/dark theme — the
+   colours are fixed here on purpose, like stepping into an observatory. */
+.constellations-stage {
+  position: relative; flex: 1; min-height: 0;
+  background: #05060c; overflow: hidden;
+}
+
+.constellations-topbar { position: absolute; top: 22px; right: 28px; z-index: 2; }
+
+/* Light-on-dark treatment for the shared back button inside the night stage. */
+.constellations-stage .home-back-btn {
+  color: color-mix(in srgb, #f3ebdc 72%, transparent);
+  border-color: color-mix(in srgb, #f3ebdc 18%, transparent);
+  background: color-mix(in srgb, #ffffff 4%, transparent);
+}
+.constellations-stage .home-back-btn:hover {
+  color: #f3ebdc;
+  border-color: color-mix(in srgb, #f3ebdc 34%, transparent);
+}
+
+/* Top-left info slot: intro by default, hovered theme on focus. */
+.constellations-info { position: absolute; top: 30px; left: 40px; z-index: 2; max-width: 340px; pointer-events: none; }
+.constellations-eyebrow {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: color-mix(in srgb, #cdd6ff 60%, transparent); margin: 0 0 10px;
+}
+.constellations-title {
+  font-family: var(--serif-display); font-style: italic; font-weight: 400;
+  font-size: 30px; line-height: 1.15; color: #f3ebdc; margin: 0;
+}
+.constellations-keywords {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  color: color-mix(in srgb, #cdd6ff 55%, transparent); margin: 12px 0 0;
+}
+.constellations-descriptor {
+  font-family: var(--serif-body); font-style: italic; font-size: 15px;
+  color: color-mix(in srgb, #f3ebdc 64%, transparent); margin: 10px 0 0;
+}
+
+/* The single reflective line, drifting at the foot of the sky. */
+.constellation-whisper {
+  position: absolute; left: 0; right: 0; bottom: 46px; z-index: 2;
+  display: flex; justify-content: center; pointer-events: none; padding: 0 40px;
+}
+.constellation-whisper-line {
+  font-family: var(--serif-display); font-style: italic; font-size: 21px;
+  text-align: center; color: color-mix(in srgb, #f3ebdc 82%, transparent);
+  margin: 0; max-width: 640px; text-shadow: 0 0 24px rgba(120, 140, 255, 0.18);
+}
+
+.constellations-empty {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 6px; padding: 0 40px;
+}
+.constellations-empty .constellations-title { font-size: 34px; }
+.constellations-empty .constellations-descriptor { max-width: 420px; }
+
+/* Level-2 detail panel — slides in from the right over the night stage. */
+.constellation-detail {
+  position: absolute; top: 0; right: 0; bottom: 0; z-index: 3;
+  width: min(360px, 86vw); padding: 34px 34px 40px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 22px;
+  background: color-mix(in srgb, #080a12 82%, transparent);
+  backdrop-filter: blur(10px);
+  border-left: 0.5px solid color-mix(in srgb, #cdd6ff 12%, transparent);
+}
+.constellation-detail-close {
+  position: absolute; top: 16px; right: 16px; z-index: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+  color: color-mix(in srgb, #f3ebdc 60%, transparent);
+  border: 0; transition: color .15s;
+}
+.constellation-detail-close:hover {
+  color: #f3ebdc;
+}
+
+.constellation-detail-title {
+  font-family: var(--serif-display); font-style: italic; font-weight: 400;
+  font-size: 32px; line-height: 1.1; color: #f3ebdc; margin: 6px 0 0;
+}
+.constellation-detail-status {
+  font-family: var(--serif-body); font-style: italic; font-size: 15px;
+  color: color-mix(in srgb, #f3ebdc 64%, transparent); margin: 8px 0 0;
+}
+.constellation-detail-block { display: flex; flex-direction: column; gap: 10px; }
+.constellation-detail-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: color-mix(in srgb, #cdd6ff 50%, transparent); margin: 0;
+}
+
+/* Growth trail — vertical month marks, never a chart with axes. */
+.constellation-timeline { display: flex; align-items: flex-end; gap: 3px; height: 40px; }
+.constellation-timeline-bar {
+  flex: 1; min-width: 2px; border-radius: 2px; opacity: 0.82;
+  background: linear-gradient(to top, color-mix(in srgb, #d8b878 70%, transparent), color-mix(in srgb, #cdd6ff 38%, transparent));
+}
+.constellation-timeline-axis {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 8px; letter-spacing: 0.14em;
+  color: color-mix(in srgb, #cdd6ff 40%, transparent);
+}
+
+.constellation-related { display: flex; flex-wrap: wrap; gap: 8px; }
+.constellation-chip {
+  font-family: var(--serif-body); font-style: italic; font-size: 14px;
+  color: color-mix(in srgb, #f3ebdc 80%, transparent);
+  padding: 5px 13px; border-radius: 999px; cursor: pointer;
+  border: 0.5px solid color-mix(in srgb, #cdd6ff 22%, transparent);
+  background: color-mix(in srgb, #ffffff 4%, transparent);
+  transition: border-color .15s, color .15s, background .15s;
+}
+.constellation-chip:hover {
+  color: #f3ebdc;
+  border-color: color-mix(in srgb, #d8b878 60%, transparent);
+  background: color-mix(in srgb, #d8b878 12%, transparent);
+}
+
+.constellation-recent { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.constellation-recent-item {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%;
+  padding: 9px 10px; border: 0; border-radius: 8px; background: transparent; cursor: pointer; text-align: left;
+  transition: background .15s;
+}
+.constellation-recent-item:hover { background: color-mix(in srgb, #ffffff 6%, transparent); }
+.constellation-recent-title {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--serif-body); font-size: 15px; color: color-mix(in srgb, #f3ebdc 86%, transparent);
+}
+.constellation-recent-time {
+  flex-shrink: 0; font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em;
+  color: color-mix(in srgb, #cdd6ff 45%, transparent);
+}
+.constellation-detail-empty {
+  font-family: var(--serif-body); font-style: italic; font-size: 14px;
+  color: color-mix(in srgb, #f3ebdc 50%, transparent); margin: 0;
+}
+
+/* Quiet gold cue to descend into a theme's actual notes (Level 3). */
+.constellation-enter {
+  align-self: flex-start; margin-top: -6px;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--serif-body); font-style: italic; font-size: 15px;
+  color: #e6c98a; background: transparent; border: 0; padding: 2px 0; cursor: pointer;
+  transition: gap .18s, color .18s;
+}
+.constellation-enter:hover { color: #f3ddb0; gap: 12px; }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Layers, PenLine, Search, Contrast, ChevronDown } from 'lucide-react';
+import { Home, Layers, PenLine, Search, Contrast, ChevronDown, Orbit } from 'lucide-react';
 import clsx from 'clsx';
 import { LOGO_SRC } from '../../config/brand';
 import { User as UserType } from '../../types';
@@ -8,7 +8,7 @@ import UserProfileModal from '../modals/UserProfileModal';
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
 
-type HomeNav = 'home' | 'spaces' | 'reflection';
+type HomeNav = 'home' | 'spaces' | 'reflection' | 'constellations';
 
 interface AppSidebarProps {
   active: HomeNav;
@@ -16,6 +16,7 @@ interface AppSidebarProps {
   onSpaces: () => void;
   onThoughts: () => void;
   onReflection: () => void;
+  onConstellations: () => void;
   onSearch: () => void;
   user?: UserType | null;
   collapsed?: boolean;
@@ -27,6 +28,7 @@ const AppSidebar = ({
   onSpaces,
   onThoughts,
   onReflection,
+  onConstellations,
   onSearch,
   user,
   collapsed,
@@ -51,6 +53,13 @@ const AppSidebar = ({
       Icon: Contrast,
       onClick: onReflection,
       activeWhen: active === 'reflection',
+    },
+    {
+      key: 'constellations',
+      label: 'Constellations',
+      Icon: Orbit,
+      onClick: onConstellations,
+      activeWhen: active === 'constellations',
     },
     { key: 'search', label: 'Search', Icon: Search, onClick: onSearch, activeWhen: false },
   ];
