@@ -1762,6 +1762,16 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 .home-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-deep); }
 .home-card-cover { position: absolute; inset: 0; background-size: cover; background-position: center; }
 .home-card-scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.6), rgba(0,0,0,.08) 55%, transparent); }
+/* Cover-edit affordance — revealed on card hover */
+.home-card-cover-btn {
+  position: absolute; top: 10px; right: 10px; z-index: 1;
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 8px; cursor: pointer;
+  background: rgba(0, 0, 0, 0.4); color: #fff; backdrop-filter: blur(4px);
+  opacity: 0; transition: opacity .15s, background .15s;
+}
+.home-card:hover .home-card-cover-btn { opacity: 1; }
+.home-card-cover-btn:hover { background: rgba(0, 0, 0, 0.62); }
 .home-card-text { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 30px; display: flex; flex-direction: column; gap: 6px; }
 .home-card-title { font-family: var(--serif-display); font-style: normal; font-weight: 300; font-size: 26px; line-height: 1.15; color: #fff; }
 .home-card.compact .home-card-title { font-size: 26px; padding-bottom: 8px; }

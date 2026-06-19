@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFolderStore } from '../store/useFolderStore';
 import CoverCard from '../components/home/CoverCard';
+import CoverPickerModal, { type CoverTarget } from '../components/home/CoverPickerModal';
 
 interface SpacesViewProps {
   onOpenSpace: (id: string) => void;
@@ -9,6 +10,7 @@ interface SpacesViewProps {
 const SpacesView = ({ onOpenSpace }: SpacesViewProps) => {
   const folders = useFolderStore((s) => s.folders);
   const fetchFolders = useFolderStore((s) => s.fetchFolders);
+  const [coverTarget, setCoverTarget] = useState<CoverTarget | null>(null);
 
   useEffect(() => {
     fetchFolders();
@@ -34,11 +36,14 @@ const SpacesView = ({ onOpenSpace }: SpacesViewProps) => {
                 cover={folder.coverImage}
                 seed={folder.id}
                 onClick={() => onOpenSpace(folder.id)}
+                onSetCover={() => setCoverTarget({ kind: 'folder', id: folder.id })}
               />
             ))}
           </div>
         )}
       </div>
+
+      <CoverPickerModal target={coverTarget} onClose={() => setCoverTarget(null)} />
     </main>
   );
 };

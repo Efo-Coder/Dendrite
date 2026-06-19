@@ -1,3 +1,5 @@
+import { ImagePlus } from 'lucide-react';
+
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveUrl = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
 
@@ -17,21 +19,44 @@ interface CoverCardProps {
   seed: string;
   compact?: boolean;
   onClick: () => void;
+  onSetCover?: () => void;
 }
 
-const CoverCard = ({ title, subtitle, cover, seed, compact, onClick }: CoverCardProps) => {
+const CoverCard = ({ title, subtitle, cover, seed, compact, onClick, onSetCover }: CoverCardProps) => {
   const style = cover
     ? { backgroundImage: `url(${resolveUrl(cover)})` }
     : { backgroundImage: fallbackCover(seed) };
+  // Not a <button> so the cover-edit button can nest inside (no nested buttons).
   return (
-    <button type="button" className={compact ? 'home-card compact' : 'home-card'} onClick={onClick}>
+    <div
+      className={compact ? 'home-card compact' : 'home-card'}
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+    >
       <span className="home-card-cover" style={style} />
       <span className="home-card-scrim" />
+      {onSetCover && (
+        <button
+          type="button"
+          className="home-card-cover-btn"
+          title="Change cover"
+          onClick={(e) => { e.stopPropagation(); onSetCover(); }}
+        >
+          <ImagePlus size={15} />
+        </button>
+      )}
       <span className="home-card-text">
         <span className="home-card-title">{title}</span>
         {subtitle && <span className="home-card-sub">{subtitle}</span>}
       </span>
-    </button>
+    </div>
   );
 };
 

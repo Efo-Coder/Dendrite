@@ -8,6 +8,7 @@ import { useToast } from '../components/ui/ToastContainer';
 import { getApiErrorMessage } from '../lib/apiError';
 import { Folder } from '../types';
 import CoverCard from '../components/home/CoverCard';
+import CoverPickerModal, { type CoverTarget } from '../components/home/CoverPickerModal';
 import HomeSearch from '../components/home/HomeSearch';
 import DarkModeToggle from '../components/sidebar/DarkModeToggle';
 import SettingsModal from '../components/modals/SettingsModal';
@@ -58,6 +59,7 @@ const HomeView = ({ onOpenNote, onOpenSpace, onAllThoughts, onAllSpaces, onRefle
   const fetchToday = useReflectionStore((s) => s.fetchToday);
   const toast = useToast();
   const [showSettings, setShowSettings] = useState(false);
+  const [coverTarget, setCoverTarget] = useState<CoverTarget | null>(null);
 
   useEffect(() => {
     fetchNotes({ archived: false, deleted: false });
@@ -121,6 +123,7 @@ const HomeView = ({ onOpenNote, onOpenSpace, onAllThoughts, onAllSpaces, onRefle
                   cover={note.coverImage}
                   seed={note.id}
                   onClick={() => onOpenNote(note.id)}
+                  onSetCover={() => setCoverTarget({ kind: 'note', id: note.id })}
                 />
               ))}
             </div>
@@ -140,6 +143,7 @@ const HomeView = ({ onOpenNote, onOpenSpace, onAllThoughts, onAllSpaces, onRefle
                   seed={folder.id}
                   compact
                   onClick={() => onOpenSpace(folder.id)}
+                  onSetCover={() => setCoverTarget({ kind: 'folder', id: folder.id })}
                 />
               ))}
             </div>
@@ -158,6 +162,7 @@ const HomeView = ({ onOpenNote, onOpenSpace, onAllThoughts, onAllSpaces, onRefle
       </div>
 
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <CoverPickerModal target={coverTarget} onClose={() => setCoverTarget(null)} />
     </main>
   );
 };
