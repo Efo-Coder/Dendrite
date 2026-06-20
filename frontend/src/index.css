@@ -669,7 +669,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   border-radius: 50%;
   background: linear-gradient(135deg, var(--ramp-accent));
   color: var(--avatar-color); display: flex; align-items: center; justify-content: center;
-  font-family: var(--serif-display); font-weight: 600;
+  font-family: var(--serif-display); font-weight: 600; line-height: 1;
   box-shadow: 0 0 0 0.5px var(--line);
 }
 .win .sidebar-avatar {
@@ -1918,28 +1918,8 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
 .reflection-entry-prompt { font-family: var(--serif-display); font-style: italic; font-size: 18px; color: var(--ink-mid); margin: 6px 0 8px; }
 .reflection-entry-content { font-family: var(--serif-body); font-size: 15px; line-height: 1.6; color: var(--ink); margin: 0; white-space: pre-wrap; }
 
-/* ─── Global search overlay ──────────────────────────────────────────────────── */
+/* ─── Home search dropdown ───────────────────────────────────────────────────── */
 
-.search-overlay {
-  position: fixed; inset: 0; z-index: 6;
-  display: flex; align-items: flex-start; justify-content: center;
-  padding-top: 14vh;
-  background: color-mix(in oklch, var(--bg-deep) 50%, transparent);
-  backdrop-filter: blur(6px);
-}
-.search-panel {
-  width: min(640px, 92vw);
-  background: var(--surface); border: 0.5px solid var(--line);
-  border-radius: 16px; box-shadow: var(--shadow-deep); overflow: hidden;
-}
-.search-field { display: flex; align-items: center; gap: 12px; padding: 18px 22px; border-bottom: 0.5px solid var(--line-soft); }
-.search-field-icon { color: var(--ink-low); flex-shrink: 0; }
-.search-field-input {
-  flex: 1; min-width: 0; appearance: none; border: 0; outline: none; background: transparent;
-  font-family: var(--serif-body); font-size: 17px; color: var(--ink);
-}
-.search-field-input::placeholder { color: var(--ink-dim); font-style: italic; }
-.search-results { max-height: 52vh; overflow-y: auto; padding: 8px; }
 .search-empty { font-family: var(--serif-body); font-style: italic; font-size: 14px; color: var(--ink-dim); padding: 16px 14px; }
 .search-group { padding: 6px 0; }
 .search-group-label {
@@ -1954,6 +1934,29 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
 .search-result:hover { background: color-mix(in oklch, var(--accent) 12%, transparent); color: var(--ink); }
 .search-result-icon { color: var(--ink-low); flex-shrink: 0; }
 .search-result-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ─── Browse ─────────────────────────────────────────────────────────────────── */
+
+.browse-section-title {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-dim); margin: 0 0 1rem;
+}
+
+.browse-grid {
+  display: grid; gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.browse-skeleton {
+  height: 220px; border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--line);
+  animation: browse-pulse 1.4s ease-in-out infinite;
+}
+@keyframes browse-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }
+
+/* Layout-only add-on — visual look (gradient, glow, shimmer) comes from .btn.primary */
+.browse-copy-btn { padding: 12px 28px; border-radius: 11px; gap: 8px; font-size: 15px; }
 
 /* ─── Idea Constellations ────────────────────────────────────────────────────── */
 

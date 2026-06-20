@@ -6,19 +6,19 @@ import { noteService } from '../services/note.service';
 import { Note } from '../types';
 import { PAGE_FADE } from '../lib/pageMotion';
 import AppSidebar from '../components/sidebar/AppSidebar';
-import SearchOverlay from '../components/home/SearchOverlay';
 import NoteEditor from '../components/editor/NoteEditor';
 import HomeView from './HomeView';
 import SpacesView from './SpacesView';
 import ReflectionView from './ReflectionView';
 import FolderView from './FolderView';
 import NotesView, { type NoteCategory } from './NotesView';
+import BrowseView from './BrowseView';
 
 // The constellations view pulls in three/R3F; load it only when opened so the
 // heavy WebGL bundle never weighs down the rest of the app.
 const ConstellationsView = lazy(() => import('./ConstellationsView'));
 
-type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder' | 'constellations';
+type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder' | 'constellations' | 'browse';
 
 // Shell for authenticated users: the calm Home dashboard with its Spaces, category,
 // folder and inline-editor views, switched via AppSidebar and card clicks.
@@ -27,7 +27,6 @@ const DashboardPage = () => {
   const currentNote = useNoteStore((s) => s.currentNote);
   const setCurrentNote = useNoteStore((s) => s.setCurrentNote);
   const [appView, setAppView] = useState<AppView>('home');
-  const [searchOpen, setSearchOpen] = useState(false);
   // Only the inline editor may hide the Home sidebar; reset whenever it opens.
   const [editorSidebarCollapsed, setEditorSidebarCollapsed] = useState(false);
   // Editor's note, kept separate from currentNote so it stays mounted through the
@@ -40,6 +39,7 @@ const DashboardPage = () => {
   const goSpaces = useCallback(() => setAppView('spaces'), []);
   const goReflection = useCallback(() => setAppView('reflection'), []);
   const goConstellations = useCallback(() => setAppView('constellations'), []);
+  const goBrowse = useCallback(() => setAppView('browse'), []);
 
   // Each Home category opens its own full view (like Spaces).
   const [notesCategory, setNotesCategory] = useState<NoteCategory>('all');
@@ -63,7 +63,7 @@ const DashboardPage = () => {
     setAppView('editor');
   }, [setCurrentNote]);
 
-  // Cards, search and constellations hand over a note id — resolve it from the
+  // Cards and constellations hand over a note id — resolve it from the
   // store, or fetch it directly when it isn't in the loaded list.
   const openNote = useCallback((id: string) => {
     const note = useNoteStore.getState().notes.find((n) => n.id === id);
@@ -94,6 +94,7 @@ const DashboardPage = () => {
             appView === 'spaces' ? 'spaces'
             : appView === 'reflection' ? 'reflection'
             : appView === 'constellations' ? 'constellations'
+            : appView === 'browse' ? 'browse'
             : 'home'
           }
           collapsed={appView === 'editor' && editorSidebarCollapsed}
@@ -102,7 +103,7 @@ const DashboardPage = () => {
           onThoughts={() => openCategory('all')}
           onReflection={goReflection}
           onConstellations={goConstellations}
-          onSearch={() => setSearchOpen(true)}
+          onBrowse={goBrowse}
           user={user}
         />
         {/* mode="wait" + one shared PAGE_FADE → every switch fades out, then in, identically. */}
@@ -131,6 +132,8 @@ const DashboardPage = () => {
               <Suspense fallback={<div className="constellations-stage" />}>
                 <ConstellationsView onBack={goHome} onOpenNote={openNote} />
               </Suspense>
+            ) : appView === 'browse' ? (
+              <BrowseView onOpenInline={openEditor} />
             ) : (
               <HomeView
                 onOpenNote={openNote}
@@ -144,13 +147,6 @@ const DashboardPage = () => {
           </motion.div>
         </AnimatePresence>
       </div>
-
-      <SearchOverlay
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onOpenNote={openNote}
-        onOpenSpace={openSpace}
-      />
     </motion.div>
   );
 };

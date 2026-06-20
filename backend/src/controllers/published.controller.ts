@@ -6,7 +6,6 @@ import { stripHtml } from '../services/constellationText';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const WORDS_PER_MINUTE = 200;
-const EXCERPT_LENGTH = 240;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
 
@@ -18,7 +17,6 @@ const cardSelect = {
   id: true,
   title: true,
   description: true,
-  excerpt: true,
   coverImage: true,
   tags: true,
   topics: true,
@@ -33,11 +31,6 @@ const cardSelect = {
 function computeReadingTime(html: string): number {
   const words = stripHtml(html).trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
-}
-
-function computeExcerpt(html: string): string {
-  const text = stripHtml(html).replace(/\s+/g, ' ').trim();
-  return text.length > EXCERPT_LENGTH ? `${text.slice(0, EXCERPT_LENGTH).trimEnd()}…` : text;
 }
 
 function stringArray(value: unknown): string[] {
@@ -73,7 +66,6 @@ export const publishNote = async (req: AuthRequest, res: Response) => {
     const snapshot = {
       title: note.title,
       content: note.content,
-      excerpt: computeExcerpt(note.content),
       readingTime: computeReadingTime(note.content),
       description,
       coverImage,

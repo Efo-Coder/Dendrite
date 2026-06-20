@@ -177,7 +177,6 @@ export interface PublishedNote {
   id: string;
   title: string | null;
   description: string | null;
-  excerpt: string;
   coverImage: string | null;
   tags: string[];
   topics: string[];

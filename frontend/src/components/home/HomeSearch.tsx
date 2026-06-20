@@ -10,7 +10,7 @@ interface HomeSearchProps {
 }
 
 // The dashboard search bar is itself the input — results drop down inline
-// beneath it (no modal). The sidebar "Search" still opens the centered overlay.
+// beneath it (no modal).
 const HomeSearch = ({ onOpenNote, onOpenSpace }: HomeSearchProps) => {
   const notes = useNoteStore((s) => s.notes);
   const folders = useFolderStore((s) => s.folders);

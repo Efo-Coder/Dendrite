@@ -278,7 +278,6 @@ model PublishedNote {
   title       String?  @db.Text
   description String?  @db.Text
   content     String   @db.Text // frozen snapshot of the note body at publish time
-  excerpt     String   @db.Text // precomputed preview for browse cards
   coverImage  String?
   tags        String[]
   topics      String[]
