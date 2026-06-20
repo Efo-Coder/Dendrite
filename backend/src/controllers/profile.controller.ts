@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { notifyNewFollower } from '../services/notification.service';
 
 // Public profile: identity + aggregate counts + whether the viewer follows them.
 export const getProfile = async (req: AuthRequest, res: Response) => {
@@ -49,11 +50,18 @@ export const followUser = async (req: AuthRequest, res: Response) => {
     const target = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } });
     if (!target) return res.status(404).json({ error: 'User not found' });
 
-    await prisma.follow.upsert({
+    // Only notify on a genuinely new follow, so unfollow/refollow doesn't spam.
+    const existing = await prisma.follow.findUnique({
       where: { followerId_followingId: { followerId: req.userId!, followingId: targetId } },
-      create: { followerId: req.userId!, followingId: targetId },
-      update: {},
     });
+    if (!existing) {
+      await prisma.follow.create({ data: { followerId: req.userId!, followingId: targetId } });
+      const me = await prisma.user.findUnique({
+        where: { id: req.userId! },
+        select: { id: true, name: true, avatarUrl: true },
+      });
+      if (me) await notifyNewFollower(targetId, me);
+    }
 
     return res.json({ following: true });
   } catch (error) {

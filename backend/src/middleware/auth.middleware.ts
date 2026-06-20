@@ -11,7 +11,10 @@ export const authenticateToken = (
   next: NextFunction
 ) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  // SSE (EventSource) can't send an Authorization header — accept ?token= for it.
+  const token =
+    (authHeader && authHeader.split(' ')[1]) ||
+    (typeof req.query.token === 'string' ? req.query.token : undefined);
 
   if (!token) {
     return res.status(401).json({ error: 'Access token required' });

@@ -13,16 +13,6 @@ export interface Collaborator {
   };
 }
 
-export interface Invitation {
-  id: string;
-  noteId: string;
-  userId: string;
-  status: string;
-  invitedAt: string;
-  note: { id: string; title?: string; content: string };
-  noteOwner: { id: string; name: string | null; email: string; avatarUrl: string | null } | null;
-}
-
 export interface User {
   id: string;
   email: string;
@@ -207,3 +197,21 @@ export interface Profile {
   isFollowing: boolean;
   isSelf: boolean;
 }
+
+// Discriminated by `type` so the bell renders the right payload. `data` is the
+// denormalized snapshot stored on the backend Notification.
+export type NotificationItem =
+  | {
+      id: string;
+      type: 'collab_invite';
+      read: boolean;
+      createdAt: string;
+      data: { collaboratorId: string; noteId: string; noteTitle: string | null; fromName: string | null };
+    }
+  | {
+      id: string;
+      type: 'new_follower';
+      read: boolean;
+      createdAt: string;
+      data: { followerId: string; name: string | null; avatarUrl: string | null };
+    };

@@ -156,6 +156,7 @@ const DashboardPage = () => {
                 onOpenCategory={openCategory}
                 onAllSpaces={goSpaces}
                 onReflection={goReflection}
+                onOpenProfile={goProfile}
               />
             )}
           </motion.div>

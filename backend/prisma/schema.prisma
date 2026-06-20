@@ -47,6 +47,7 @@ model User {
   publishedNotes     PublishedNote[]
   following          Follow[]             @relation("UserFollowing")
   followers          Follow[]             @relation("UserFollowers")
+  notifications      Notification[]
 
   @@unique([provider, providerId])
 }
@@ -313,4 +314,22 @@ model Follow {
   @@index([followerId])
   @@index([followingId])
   @@map("follows")
+}
+
+// Generic notification feed for the bell. `data` holds a type-specific snapshot so
+// the bell can render without extra joins (e.g. { collaboratorId, noteId, noteTitle,
+// fromName } for collab_invite; { followerId, name, avatarUrl } for new_follower).
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String // recipient
+  type      String // 'collab_invite' | 'new_follower'
+  data      Json
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
