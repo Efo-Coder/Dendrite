@@ -24,8 +24,8 @@ export const authService = {
     return response.data.user;
   },
 
-  async updateProfile(name: string): Promise<User> {
-    const response = await api.put<{ user: User }>('/auth/profile', { name });
+  async updateProfile(data: { name?: string; bio?: string }): Promise<User> {
+    const response = await api.put<{ user: User }>('/auth/profile', data);
     return response.data.user;
   },
 

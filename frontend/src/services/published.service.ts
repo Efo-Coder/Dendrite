@@ -28,9 +28,10 @@ export const publishedService = {
     return res.data.publication;
   },
 
-  /** Recently published notes, paginated. */
-  async list(page = 1, limit = 20): Promise<PublishedList> {
-    const res = await api.get<PublishedList>('/published', { params: { page, limit } });
+  /** Published notes, paginated. Optionally filtered to a single author. */
+  async list(opts: { page?: number; limit?: number; author?: string } = {}): Promise<PublishedList> {
+    const { page = 1, limit = 20, author } = opts;
+    const res = await api.get<PublishedList>('/published', { params: { page, limit, author } });
     return res.data;
   },
 

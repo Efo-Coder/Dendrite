@@ -2,24 +2,22 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Note, PublishedNote } from '../types';
 import { publishedService } from '../services/published.service';
-import { noteService } from '../services/note.service';
 import { useLenisScroll } from '../hooks/useLenisScroll';
-import { useToast } from '../components/ui/ToastContainer';
-import { getApiErrorMessage } from '../lib/apiError';
 import { PAGE_FADE } from '../lib/pageMotion';
+import { usePublishedCopy } from '../components/browse/usePublishedCopy';
 import PublishedNoteCard from '../components/browse/PublishedNoteCard';
 import PublishedNoteReader from '../components/browse/PublishedNoteReader';
 
 interface BrowseViewProps {
   onOpenInline: (note: Note) => void;
+  onOpenProfile: (userId: string) => void;
 }
 
-const BrowseView = ({ onOpenInline }: BrowseViewProps) => {
+const BrowseView = ({ onOpenInline, onOpenProfile }: BrowseViewProps) => {
   const [items, setItems] = useState<PublishedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [readingId, setReadingId] = useState<string | null>(null);
-  const [copyingId, setCopyingId] = useState<string | null>(null);
-  const toast = useToast();
+  const { copyingId, copy } = usePublishedCopy(onOpenInline);
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   useLenisScroll(scrollRef, contentRef);
@@ -33,23 +31,6 @@ const BrowseView = ({ onOpenInline }: BrowseViewProps) => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Copy a published note into the user's own workspace as a fully independent
-  // note — no link back to the original.
-  const handleCopy = async (pub: PublishedNote) => {
-    setCopyingId(pub.id);
-    try {
-      // List cards omit content; fetch the full publication when copying from one.
-      const full = pub.content !== undefined ? pub : await publishedService.getById(pub.id);
-      const note = await noteService.createNote({ title: full.title ?? '', content: full.content ?? '' });
-      toast.success('Copied to your workspace');
-      onOpenInline(note);
-    } catch (e) {
-      toast.error(getApiErrorMessage(e, 'Could not copy note'));
-    } finally {
-      setCopyingId(null);
-    }
-  };
-
   // Same shared PAGE_FADE + mode="wait" as the app shell, so opening a note and
   // returning to the grid fades consistently instead of snapping.
   return (
@@ -59,7 +40,8 @@ const BrowseView = ({ onOpenInline }: BrowseViewProps) => {
           <PublishedNoteReader
             id={readingId}
             onBack={() => setReadingId(null)}
-            onCopy={handleCopy}
+            onCopy={copy}
+            onOpenAuthor={onOpenProfile}
             copying={copyingId !== null}
           />
         </motion.div>
@@ -89,7 +71,8 @@ const BrowseView = ({ onOpenInline }: BrowseViewProps) => {
                         key={pub.id}
                         pub={pub}
                         onOpen={() => setReadingId(pub.id)}
-                        onCopy={() => handleCopy(pub)}
+                        onCopy={() => copy(pub)}
+                        onOpenAuthor={() => onOpenProfile(pub.owner.id)}
                         copying={copyingId === pub.id}
                       />
                     ))}

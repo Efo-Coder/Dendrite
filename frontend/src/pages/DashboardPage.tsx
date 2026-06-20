@@ -13,12 +13,13 @@ import ReflectionView from './ReflectionView';
 import FolderView from './FolderView';
 import NotesView, { type NoteCategory } from './NotesView';
 import BrowseView from './BrowseView';
+import ProfileView from './ProfileView';
 
 // The constellations view pulls in three/R3F; load it only when opened so the
 // heavy WebGL bundle never weighs down the rest of the app.
 const ConstellationsView = lazy(() => import('./ConstellationsView'));
 
-type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder' | 'constellations' | 'browse';
+type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder' | 'constellations' | 'browse' | 'profile';
 
 // Shell for authenticated users: the calm Home dashboard with its Spaces, category,
 // folder and inline-editor views, switched via AppSidebar and card clicks.
@@ -34,12 +35,18 @@ const DashboardPage = () => {
   const [editorNote, setEditorNote] = useState<Note | null>(null);
   // The space whose notes the folder view shows.
   const [folderId, setFolderId] = useState<string | undefined>();
+  // The author whose public profile is shown.
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
 
   const goHome = useCallback(() => setAppView('home'), []);
   const goSpaces = useCallback(() => setAppView('spaces'), []);
   const goReflection = useCallback(() => setAppView('reflection'), []);
   const goConstellations = useCallback(() => setAppView('constellations'), []);
   const goBrowse = useCallback(() => setAppView('browse'), []);
+  const goProfile = useCallback((id: string) => {
+    setProfileUserId(id);
+    setAppView('profile');
+  }, []);
 
   // Each Home category opens its own full view (like Spaces).
   const [notesCategory, setNotesCategory] = useState<NoteCategory>('all');
@@ -94,7 +101,7 @@ const DashboardPage = () => {
             appView === 'spaces' ? 'spaces'
             : appView === 'reflection' ? 'reflection'
             : appView === 'constellations' ? 'constellations'
-            : appView === 'browse' ? 'browse'
+            : appView === 'browse' || appView === 'profile' ? 'browse'
             : 'home'
           }
           collapsed={appView === 'editor' && editorSidebarCollapsed}
@@ -133,7 +140,14 @@ const DashboardPage = () => {
                 <ConstellationsView onBack={goHome} onOpenNote={openNote} />
               </Suspense>
             ) : appView === 'browse' ? (
-              <BrowseView onOpenInline={openEditor} />
+              <BrowseView onOpenInline={openEditor} onOpenProfile={goProfile} />
+            ) : appView === 'profile' && profileUserId ? (
+              <ProfileView
+                userId={profileUserId}
+                onOpenInline={openEditor}
+                onOpenProfile={goProfile}
+                onBack={goBrowse}
+              />
             ) : (
               <HomeView
                 onOpenNote={openNote}

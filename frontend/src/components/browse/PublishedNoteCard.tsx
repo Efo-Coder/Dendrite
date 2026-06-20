@@ -8,13 +8,14 @@ interface Props {
   pub: PublishedNote;
   onOpen: () => void;
   onCopy: () => void;
+  onOpenAuthor: () => void;
   copying?: boolean;
 }
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 
-const PublishedNoteCard = ({ pub, onOpen, onCopy, copying }: Props) => {
+const PublishedNoteCard = ({ pub, onOpen, onCopy, onOpenAuthor, copying }: Props) => {
   const authorName = pub.owner.name || 'Someone';
 
   return (
@@ -54,7 +55,14 @@ const PublishedNoteCard = ({ pub, onOpen, onCopy, copying }: Props) => {
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-1 text-xs text-(--ink-dim)">
-          <span className="flex items-center gap-1.5 text-(--ink-mid)">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenAuthor();
+            }}
+            className="flex items-center gap-1.5 text-(--ink-mid) transition-colors hover:text-(--accent)"
+          >
             {pub.owner.avatarUrl ? (
               <img src={resolveAsset(pub.owner.avatarUrl)} alt="" className="h-5 w-5 rounded-full object-cover" />
             ) : (
@@ -63,7 +71,7 @@ const PublishedNoteCard = ({ pub, onOpen, onCopy, copying }: Props) => {
               </span>
             )}
             {authorName}
-          </span>
+          </button>
           <span>·</span>
           <span>{formatDate(pub.publishedAt)}</span>
           <span>·</span>

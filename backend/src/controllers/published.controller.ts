@@ -135,7 +135,9 @@ export const listPublished = async (req: AuthRequest, res: Response) => {
       Math.max(1, parseInt(String(req.query.limit ?? DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE),
     );
 
-    const where = { visibility: 'public' };
+    // Optional author filter — used by profiles and (later) the Following section.
+    const author = typeof req.query.author === 'string' ? req.query.author : undefined;
+    const where = { visibility: 'public', ...(author ? { ownerId: author } : {}) };
 
     const [items, total] = await Promise.all([
       prisma.publishedNote.findMany({

@@ -12,6 +12,7 @@ interface Props {
   id: string;
   onBack: () => void;
   onCopy: (pub: PublishedNote) => void;
+  onOpenAuthor: (userId: string) => void;
   copying?: boolean;
 }
 
@@ -21,7 +22,7 @@ const formatDate = (iso: string) =>
 // Read-only twin of the inline editor: same writing canvas (LexicalEditorWrapper
 // disabled, no collaboration/toolbar/panels), only a Back action in the topbar and
 // Copy in the footer. Lexical's HTML import drops scripts, so no extra sanitizing.
-const PublishedNoteReader = ({ id, onBack, onCopy, copying }: Props) => {
+const PublishedNoteReader = ({ id, onBack, onCopy, onOpenAuthor, copying }: Props) => {
   const [pub, setPub] = useState<PublishedNote | null>(null);
   const [loading, setLoading] = useState(true);
   const toast = useToast();
@@ -38,7 +39,11 @@ const PublishedNoteReader = ({ id, onBack, onCopy, copying }: Props) => {
   const header = pub && (
     <>
       <div className="editor-meta">
-        <span className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onOpenAuthor(pub.owner.id)}
+          className="flex items-center gap-1.5 transition-colors hover:text-(--accent)"
+        >
           {pub.owner.avatarUrl ? (
             <img src={resolveAsset(pub.owner.avatarUrl)} alt="" className="h-5.5 w-5.5 rounded-full object-cover" />
           ) : (
@@ -47,7 +52,7 @@ const PublishedNoteReader = ({ id, onBack, onCopy, copying }: Props) => {
             </span>
           )}
           {pub.owner.name || 'Someone'}
-        </span>
+        </button>
         <span className="editor-sep">·</span>
         <span>{formatDate(pub.publishedAt)}</span>
         <span className="editor-sep">·</span>

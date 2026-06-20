@@ -25,6 +25,7 @@ const USER_SELECT = {
   email: true,
   name: true,
   avatarUrl: true,
+  bio: true,
   plan: true,
   provider: true,
   twoFactorEnabled: true,
@@ -162,10 +163,14 @@ export const login = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const { name } = req.body;
+    const { name, bio } = req.body;
+    // Partial update: only touch the fields the client actually sent.
+    const data: { name?: string | null; bio?: string | null } = {};
+    if (name !== undefined) data.name = name ?? null;
+    if (bio !== undefined) data.bio = typeof bio === 'string' && bio.trim() ? bio : null;
     const user = await prisma.user.update({
       where: { id: req.userId },
-      data: { name: name ?? null },
+      data,
       select: USER_SELECT,
     });
     return res.json({ user });

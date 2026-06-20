@@ -28,6 +28,7 @@ export interface User {
   email: string;
   name: string | null;
   avatarUrl?: string | null;
+  bio?: string | null;
   plan: string;
   provider?: string | null;
   twoFactorEnabled?: boolean;
@@ -192,4 +193,17 @@ export interface PublishedList {
   total: number;
   page: number;
   limit: number;
+}
+
+export interface Profile {
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  createdAt: string;
+  followerCount: number;
+  followingCount: number;
+  publishedCount: number;
+  isFollowing: boolean;
+  isSelf: boolean;
 }

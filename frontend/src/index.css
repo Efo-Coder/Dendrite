@@ -1958,6 +1958,16 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
 /* Layout-only add-on — visual look (gradient, glow, shimmer) comes from .btn.primary */
 .browse-copy-btn { padding: 12px 28px; border-radius: 11px; gap: 8px; font-size: 15px; }
 
+/* Follow button: primary CTA when not following, neutral outline when following. */
+.profile-follow { padding: 9px 22px; border-radius: 11px; gap: 8px; font-size: 14px; }
+.profile-following {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; padding: 9px 22px; border-radius: 11px; font-size: 14px;
+  border: 1px solid var(--line); color: var(--ink-mid); background: transparent;
+  cursor: pointer; transition: border-color .2s ease, color .2s ease;
+}
+.profile-following:hover { border-color: color-mix(in oklch, var(--accent) 40%, transparent); color: var(--accent); }
+
 /* ─── Idea Constellations ────────────────────────────────────────────────────── */
 
 /* A self-contained night sky, independent of the app's light/dark theme — the

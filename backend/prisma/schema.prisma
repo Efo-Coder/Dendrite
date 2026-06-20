@@ -18,6 +18,7 @@ model User {
   providerId                  String?
   name                        String?
   avatarUrl                   String?
+  bio                         String?   @db.Text
   plan                        String    @default("free")
   stripeCustomerId            String?
   stripeSubscriptionId        String?
@@ -44,6 +45,8 @@ model User {
   bugReports         BugReport[]
   reflections        Reflection[]
   publishedNotes     PublishedNote[]
+  following          Follow[]             @relation("UserFollowing")
+  followers          Follow[]             @relation("UserFollowers")
 
   @@unique([provider, providerId])
 }
@@ -293,4 +296,21 @@ model PublishedNote {
   @@index([publishedAt])
   @@index([visibility])
   @@map("published_notes")
+}
+
+// Directed follow: followerId follows followingId. Immediate, no approval (public
+// discovery, not a private social graph). One row per (follower, following) pair.
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
 }
