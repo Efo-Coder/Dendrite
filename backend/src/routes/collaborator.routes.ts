@@ -5,7 +5,6 @@ import {
   listCollaborators,
   removeCollaborator,
   updateCollaboratorRole,
-  getInvitations,
   acceptInvitation,
   declineInvitation,
   leaveCollaboration,
@@ -20,7 +19,6 @@ router.delete('/notes/:id/collaborators/:userId', authenticateToken, removeColla
 router.patch('/notes/:id/collaborators/:userId', authenticateToken, updateCollaboratorRole);
 
 // Invited-user operations
-router.get('/invitations', authenticateToken, getInvitations);
 router.post('/invitations/:id/accept', authenticateToken, acceptInvitation);
 router.delete('/invitations/:id', authenticateToken, declineInvitation);
 

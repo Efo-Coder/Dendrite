@@ -20,6 +20,9 @@ import checkoutRoutes from './routes/checkout.routes';
 import feedbackRoutes from './routes/feedback.routes';
 import reflectionRoutes from './routes/reflection.routes';
 import constellationRoutes from './routes/constellation.routes';
+import publishedRoutes from './routes/published.routes';
+import profileRoutes from './routes/profile.routes';
+import notificationRoutes from './routes/notification.routes';
 import { handleWebhook } from './controllers/checkout.controller';
 
 import { setupYjsConnection } from './wsHandler';
@@ -69,6 +72,9 @@ app.use('/api', collaboratorRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/reflections', reflectionRoutes);
 app.use('/api/constellations', constellationRoutes);
+app.use('/api/published', publishedRoutes);
+app.use('/api/users', profileRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });

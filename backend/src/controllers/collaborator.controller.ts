@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { notifyCollabInvite } from '../services/notification.service';
 
 export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
   try {
@@ -21,6 +22,8 @@ export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
     if (!invitee) return res.status(404).json({ error: 'User not found' });
     if (invitee.id === req.userId) return res.status(400).json({ error: 'You cannot invite yourself' });
 
+    const inviter = await prisma.user.findUnique({ where: { id: req.userId! }, select: { name: true } });
+
     const existing = await prisma.noteCollaborator.findUnique({
       where: { noteId_userId: { noteId, userId: invitee.id } },
     });
@@ -34,6 +37,12 @@ export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
         data: { status: 'pending', invitedAt: new Date(), acceptedAt: null },
         include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
       });
+      await notifyCollabInvite(invitee.id, {
+        collaboratorId: updated.id,
+        noteId,
+        noteTitle: note.title,
+        fromName: inviter?.name ?? null,
+      });
       return res.json({ collaborator: updated });
     }
 
@@ -42,6 +51,13 @@ export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
     const collab = await prisma.noteCollaborator.create({
       data: { noteId, userId: invitee.id, role, status: 'pending' },
       include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+    });
+
+    await notifyCollabInvite(invitee.id, {
+      collaboratorId: collab.id,
+      noteId,
+      noteTitle: note.title,
+      fromName: inviter?.name ?? null,
     });
 
     return res.status(201).json({ collaborator: collab });
@@ -93,31 +109,6 @@ export const removeCollaborator = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('RemoveCollaborator error:', error);
     return res.status(500).json({ error: 'Failed to remove collaborator' });
-  }
-};
-
-export const getInvitations = async (req: AuthRequest, res: Response) => {
-  try {
-    const invitations = await prisma.noteCollaborator.findMany({
-      where: { userId: req.userId!, status: 'pending' },
-      include: {
-        // Fetch note content + note owner in a single query
-        note: { select: { id: true, title: true, content: true, user: { select: { id: true, name: true, email: true, avatarUrl: true } } } },
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
-      },
-      orderBy: { invitedAt: 'desc' },
-    });
-
-    const result = invitations.map(inv => ({
-      ...inv,
-      noteOwner: inv.note.user ?? null,
-      note: { id: inv.note.id, title: inv.note.title, content: inv.note.content },
-    }));
-
-    return res.json({ invitations: result });
-  } catch (error) {
-    console.error('GetInvitations error:', error);
-    return res.status(500).json({ error: 'Failed to load invitations' });
   }
 };
 

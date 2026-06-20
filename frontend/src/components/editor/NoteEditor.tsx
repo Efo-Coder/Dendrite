@@ -12,6 +12,7 @@ import {
   Minimize2,
   Info,
   Share2,
+  Globe,
   PanelLeft,
   MoreHorizontal,
 } from 'lucide-react';
@@ -32,6 +33,7 @@ import NoteExportMenu from './NoteExportMenu';
 import NoteTagsRow from './NoteTagsRow';
 import { MenuPos, formatRelativeDate, userCursorColor } from './noteEditorUtils';
 import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
+import PublishModal from '../modals/PublishModal';
 import Modal from '../modals/Modal';
 import ContextMenu, { ContextMenuItem } from '../ui/ContextMenu';
 
@@ -101,6 +103,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [restoreKey, setRestoreKey] = useState(0);
   // Local collaborator list — refreshed after invitations
@@ -254,6 +257,9 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     ] : []),
     ...(isInTrash ? [
       { icon: <RotateCcw className="w-4 h-4" />, label: 'Restore', onClick: handleRestore },
+    ] : []),
+    ...(!isInTrash && note.userId === user?.id ? [
+      { icon: <Globe className="w-4 h-4" />, label: 'Publish', onClick: () => setShowPublishModal(true) },
     ] : []),
     ...(!isInTrash ? [
       { icon: <Share2 className="w-4 h-4" />, label: 'Share / Export', onClick: openExportFromMore },
@@ -507,6 +513,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             setCollaborators(list);
           } catch { /* ignore */ }
         }}
+      />
+
+      <PublishModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        note={note}
       />
 
       <Modal isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} title={getNoteTitle(note) || 'Note'}>

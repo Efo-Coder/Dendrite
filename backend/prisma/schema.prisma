@@ -18,6 +18,7 @@ model User {
   providerId                  String?
   name                        String?
   avatarUrl                   String?
+  bio                         String?   @db.Text
   plan                        String    @default("free")
   stripeCustomerId            String?
   stripeSubscriptionId        String?
@@ -43,6 +44,11 @@ model User {
   feedback           Feedback?
   bugReports         BugReport[]
   reflections        Reflection[]
+  publishedNotes     PublishedNote[]
+  following          Follow[]             @relation("UserFollowing")
+  followers          Follow[]             @relation("UserFollowers")
+  notifications      Notification[]
+  publishedLikes     PublishedNoteLike[]
 
   @@unique([provider, providerId])
 }
@@ -92,6 +98,7 @@ model Note {
   notePreferences UserNotePreference[]
   userNoteTags    UserNoteTag[]
   versions        NoteVersion[]
+  publishedNote   PublishedNote?
 
   @@index([userId])
   @@index([folderId])
@@ -264,4 +271,87 @@ model Reflection {
 
   @@unique([userId, date])
   @@index([userId])
+}
+
+// A note made public for Browse. Snapshot model: title/content/excerpt/readingTime
+// are frozen at publish time and only refreshed on an explicit "Update publication",
+// so private edits never leak. Copying a published note clones it without any link.
+model PublishedNote {
+  id          String   @id @default(uuid())
+  noteId      String   @unique
+  ownerId     String
+  title       String?  @db.Text
+  description String?  @db.Text
+  content     String   @db.Text // frozen snapshot of the note body at publish time
+  coverImage  String?
+  tags        String[]
+  topics      String[]
+  readingTime Int      @default(1) // minutes, derived from the snapshot
+  visibility  String   @default("public")
+  viewCount   Int      @default(0)
+  likeCount   Int      @default(0) // denormalized total, kept in sync on like toggle
+  publishedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  note        Note                @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  likes       PublishedNoteLike[]
+
+  @@index([ownerId])
+  @@index([publishedAt])
+  @@index([visibility])
+  @@index([likeCount])
+  @@map("published_notes")
+}
+
+// One like per user per published note. PublishedNote.likeCount is the denormalized
+// total kept in sync on toggle (so trending can sort without a join).
+model PublishedNoteLike {
+  id              String   @id @default(uuid())
+  userId          String
+  publishedNoteId String
+  createdAt       DateTime @default(now())
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publishedNote PublishedNote @relation(fields: [publishedNoteId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, publishedNoteId])
+  @@index([userId])
+  @@index([publishedNoteId])
+  @@map("published_note_likes")
+}
+
+// Directed follow: followerId follows followingId. Immediate, no approval (public
+// discovery, not a private social graph). One row per (follower, following) pair.
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+// Generic notification feed for the bell. `data` holds a type-specific snapshot so
+// the bell can render without extra joins (e.g. { collaboratorId, noteId, noteTitle,
+// fromName } for collab_invite; { followerId, name, avatarUrl } for new_follower).
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String // recipient
+  type      String // 'collab_invite' | 'new_follower'
+  data      Json
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

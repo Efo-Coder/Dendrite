@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Layers, PenLine, Search, Contrast, ChevronDown, Orbit } from 'lucide-react';
+import { Home, Layers, PenLine, Compass, Contrast, ChevronDown, Orbit } from 'lucide-react';
 import clsx from 'clsx';
 import { LOGO_SRC } from '../../config/brand';
 import { User as UserType } from '../../types';
@@ -8,7 +8,7 @@ import UserProfileModal from '../modals/UserProfileModal';
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
 
-type HomeNav = 'home' | 'spaces' | 'reflection' | 'constellations';
+type HomeNav = 'home' | 'spaces' | 'reflection' | 'constellations' | 'browse';
 
 interface AppSidebarProps {
   active: HomeNav;
@@ -17,7 +17,7 @@ interface AppSidebarProps {
   onThoughts: () => void;
   onReflection: () => void;
   onConstellations: () => void;
-  onSearch: () => void;
+  onBrowse: () => void;
   user?: UserType | null;
   collapsed?: boolean;
 }
@@ -29,14 +29,14 @@ const AppSidebar = ({
   onThoughts,
   onReflection,
   onConstellations,
-  onSearch,
+  onBrowse,
   user,
   collapsed,
 }: AppSidebarProps) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const displayInitial = (user?.name || user?.email || '?').trim().charAt(0).toUpperCase();
 
-  // 'active' tracks the persistent home views; Thoughts/Search are one-shot actions.
+  // 'active' tracks the persistent home views; Thoughts is a one-shot action.
   const items = [
     { key: 'home', label: 'Home', Icon: Home, onClick: onHome, activeWhen: active === 'home' },
     {
@@ -61,7 +61,13 @@ const AppSidebar = ({
       onClick: onConstellations,
       activeWhen: active === 'constellations',
     },
-    { key: 'search', label: 'Search', Icon: Search, onClick: onSearch, activeWhen: false },
+    {
+      key: 'browse',
+      label: 'Browse',
+      Icon: Compass,
+      onClick: onBrowse,
+      activeWhen: active === 'browse',
+    },
   ];
 
   return (

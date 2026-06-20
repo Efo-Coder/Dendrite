@@ -32,6 +32,7 @@ interface HomeViewProps {
   onOpenCategory: (cat: NoteCategory) => void;
   onAllSpaces: () => void;
   onReflection: () => void;
+  onOpenProfile: (userId: string) => void;
 }
 
 // Time-of-day greeting, mirrors the workspace titlebar logic. Split out so the
@@ -74,7 +75,7 @@ function fillers(visible: number, slots: number) {
   ));
 }
 
-const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAllSpaces, onReflection }: HomeViewProps) => {
+const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAllSpaces, onReflection, onOpenProfile }: HomeViewProps) => {
   const user = useAuthStore((s) => s.user);
   const notes = useNoteStore((s) => s.notes);
   const fetchNotes = useNoteStore((s) => s.fetchNotes);
@@ -230,7 +231,7 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
           <button type="button" className="home-icon-btn" onClick={() => setShowSettings(true)} title="Settings">
             <Icons.settings size={18} />
           </button>
-          <NotificationsBell onAccepted={refresh} />
+          <NotificationsBell onAccepted={refresh} onOpenProfile={onOpenProfile} />
           <button type="button" className="home-icon-btn" onClick={handleNewNote} title="New note">
             <SquarePen size={18} strokeWidth={1.75} />
           </button>

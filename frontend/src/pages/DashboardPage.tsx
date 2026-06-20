@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNoteStore } from '../store/useNoteStore';
@@ -6,19 +6,20 @@ import { noteService } from '../services/note.service';
 import { Note } from '../types';
 import { PAGE_FADE } from '../lib/pageMotion';
 import AppSidebar from '../components/sidebar/AppSidebar';
-import SearchOverlay from '../components/home/SearchOverlay';
 import NoteEditor from '../components/editor/NoteEditor';
 import HomeView from './HomeView';
 import SpacesView from './SpacesView';
 import ReflectionView from './ReflectionView';
 import FolderView from './FolderView';
 import NotesView, { type NoteCategory } from './NotesView';
+import BrowseView from './BrowseView';
+import ProfileView from './ProfileView';
 
 // The constellations view pulls in three/R3F; load it only when opened so the
 // heavy WebGL bundle never weighs down the rest of the app.
 const ConstellationsView = lazy(() => import('./ConstellationsView'));
 
-type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder' | 'constellations';
+type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder' | 'constellations' | 'browse' | 'profile';
 
 // Shell for authenticated users: the calm Home dashboard with its Spaces, category,
 // folder and inline-editor views, switched via AppSidebar and card clicks.
@@ -27,7 +28,6 @@ const DashboardPage = () => {
   const currentNote = useNoteStore((s) => s.currentNote);
   const setCurrentNote = useNoteStore((s) => s.setCurrentNote);
   const [appView, setAppView] = useState<AppView>('home');
-  const [searchOpen, setSearchOpen] = useState(false);
   // Only the inline editor may hide the Home sidebar; reset whenever it opens.
   const [editorSidebarCollapsed, setEditorSidebarCollapsed] = useState(false);
   // Editor's note, kept separate from currentNote so it stays mounted through the
@@ -35,11 +35,39 @@ const DashboardPage = () => {
   const [editorNote, setEditorNote] = useState<Note | null>(null);
   // The space whose notes the folder view shows.
   const [folderId, setFolderId] = useState<string | undefined>();
+  // The author whose public profile is shown.
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  // Where the profile's back button returns to (+ a Browse reader to restore).
+  const [profileReturn, setProfileReturn] = useState<{ view: AppView; readerId: string | null }>({
+    view: 'browse',
+    readerId: null,
+  });
+  const [browseInitialReader, setBrowseInitialReader] = useState<string | null>(null);
+  // Latest appView, so goProfile can capture where it was opened from.
+  const appViewRef = useRef(appView);
+  useEffect(() => {
+    appViewRef.current = appView;
+  }, [appView]);
 
   const goHome = useCallback(() => setAppView('home'), []);
   const goSpaces = useCallback(() => setAppView('spaces'), []);
   const goReflection = useCallback(() => setAppView('reflection'), []);
   const goConstellations = useCallback(() => setAppView('constellations'), []);
+  const goBrowse = useCallback(() => {
+    setBrowseInitialReader(null);
+    setAppView('browse');
+  }, []);
+  const goProfile = useCallback((id: string, fromReaderId?: string) => {
+    setProfileReturn({ view: appViewRef.current, readerId: fromReaderId ?? null });
+    setProfileUserId(id);
+    setAppView('profile');
+  }, []);
+  // Back from a profile returns to wherever it was opened from (Browse list,
+  // a Browse reader, or Home), restoring the reader when applicable.
+  const profileBack = useCallback(() => {
+    setBrowseInitialReader(profileReturn.readerId);
+    setAppView(profileReturn.view);
+  }, [profileReturn]);
 
   // Each Home category opens its own full view (like Spaces).
   const [notesCategory, setNotesCategory] = useState<NoteCategory>('all');
@@ -63,7 +91,7 @@ const DashboardPage = () => {
     setAppView('editor');
   }, [setCurrentNote]);
 
-  // Cards, search and constellations hand over a note id — resolve it from the
+  // Cards and constellations hand over a note id — resolve it from the
   // store, or fetch it directly when it isn't in the loaded list.
   const openNote = useCallback((id: string) => {
     const note = useNoteStore.getState().notes.find((n) => n.id === id);
@@ -94,6 +122,7 @@ const DashboardPage = () => {
             appView === 'spaces' ? 'spaces'
             : appView === 'reflection' ? 'reflection'
             : appView === 'constellations' ? 'constellations'
+            : appView === 'browse' || appView === 'profile' ? 'browse'
             : 'home'
           }
           collapsed={appView === 'editor' && editorSidebarCollapsed}
@@ -102,7 +131,7 @@ const DashboardPage = () => {
           onThoughts={() => openCategory('all')}
           onReflection={goReflection}
           onConstellations={goConstellations}
-          onSearch={() => setSearchOpen(true)}
+          onBrowse={goBrowse}
           user={user}
         />
         {/* mode="wait" + one shared PAGE_FADE → every switch fades out, then in, identically. */}
@@ -131,6 +160,19 @@ const DashboardPage = () => {
               <Suspense fallback={<div className="constellations-stage" />}>
                 <ConstellationsView onBack={goHome} onOpenNote={openNote} />
               </Suspense>
+            ) : appView === 'browse' ? (
+              <BrowseView
+                onOpenInline={openEditor}
+                onOpenProfile={goProfile}
+                initialReadingId={browseInitialReader}
+              />
+            ) : appView === 'profile' && profileUserId ? (
+              <ProfileView
+                userId={profileUserId}
+                onOpenInline={openEditor}
+                onOpenProfile={goProfile}
+                onBack={profileBack}
+              />
             ) : (
               <HomeView
                 onOpenNote={openNote}
@@ -139,18 +181,12 @@ const DashboardPage = () => {
                 onOpenCategory={openCategory}
                 onAllSpaces={goSpaces}
                 onReflection={goReflection}
+                onOpenProfile={goProfile}
               />
             )}
           </motion.div>
         </AnimatePresence>
       </div>
-
-      <SearchOverlay
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onOpenNote={openNote}
-        onOpenSpace={openSpace}
-      />
     </motion.div>
   );
 };

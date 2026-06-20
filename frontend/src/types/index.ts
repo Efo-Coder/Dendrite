@@ -13,21 +13,12 @@ export interface Collaborator {
   };
 }
 
-export interface Invitation {
-  id: string;
-  noteId: string;
-  userId: string;
-  status: string;
-  invitedAt: string;
-  note: { id: string; title?: string; content: string };
-  noteOwner: { id: string; name: string | null; email: string; avatarUrl: string | null } | null;
-}
-
 export interface User {
   id: string;
   email: string;
   name: string | null;
   avatarUrl?: string | null;
+  bio?: string | null;
   plan: string;
   provider?: string | null;
   twoFactorEnabled?: boolean;
@@ -162,3 +153,81 @@ export interface ThemeNote {
   updatedAt: string;
   folderId: string | null;
 }
+
+// ─── Browse & Community Discovery ────────────────────────────────────────────
+
+export interface PublishedAuthor {
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+// A published note as returned by the API. `content` is only present on the
+// detail endpoint (reading view); list/card responses omit it to stay light.
+export interface PublishedNote {
+  id: string;
+  title: string | null;
+  description: string | null;
+  coverImage: string | null;
+  tags: string[];
+  topics: string[];
+  readingTime: number;
+  viewCount: number;
+  likeCount: number;
+  isLiked?: boolean; // present on list + detail responses, not on owner status
+  publishedAt: string;
+  updatedAt: string;
+  owner: PublishedAuthor;
+  content?: string;
+}
+
+export interface PublishedList {
+  items: PublishedNote[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface Profile {
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  createdAt: string;
+  followerCount: number;
+  followingCount: number;
+  publishedCount: number;
+  isFollowing: boolean;
+  isSelf: boolean;
+}
+
+// Discriminated by `type` so the bell renders the right payload. `data` is the
+// denormalized snapshot stored on the backend Notification.
+export type NotificationItem =
+  | {
+      id: string;
+      type: 'collab_invite';
+      read: boolean;
+      createdAt: string;
+      data: { collaboratorId: string; noteId: string; noteTitle: string | null; fromName: string | null };
+    }
+  | {
+      id: string;
+      type: 'new_follower';
+      read: boolean;
+      createdAt: string;
+      data: { followerId: string; name: string | null; avatarUrl: string | null };
+    }
+  | {
+      id: string;
+      type: 'note_like';
+      read: boolean;
+      createdAt: string;
+      data: {
+        publishedNoteId: string;
+        noteTitle: string | null;
+        fromUserId: string;
+        fromName: string | null;
+        fromAvatarUrl: string | null;
+      };
+    };

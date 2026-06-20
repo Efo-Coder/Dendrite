@@ -1,5 +1,5 @@
 import api from './api';
-import { Collaborator, Invitation } from '../types';
+import { Collaborator } from '../types';
 
 export const collaborationService = {
   /** Alle Kollaboratoren einer Notiz laden (nur Owner) */
@@ -27,12 +27,6 @@ export const collaborationService = {
   /** Kollaboration verlassen (Kollaborator selbst) */
   async leave(noteId: string): Promise<void> {
     await api.delete(`/notes/${noteId}/leave`);
-  },
-
-  /** Offene Einladungen des eingeloggten Users abrufen */
-  async getInvitations(): Promise<Invitation[]> {
-    const res = await api.get<{ invitations: Invitation[] }>('/invitations');
-    return res.data.invitations;
   },
 
   /** Einladung annehmen */

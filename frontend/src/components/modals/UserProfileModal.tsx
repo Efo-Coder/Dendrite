@@ -54,6 +54,8 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
 
   const [name, setName] = useState(user?.name || '');
   const [nameLoading, setNameLoading] = useState(false);
+  const [bio, setBio] = useState(user?.bio || '');
+  const [bioLoading, setBioLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,6 +72,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   useEffect(() => {
     if (!isOpen) {
       setName(user?.name || '');
+      setBio(user?.bio || '');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -78,14 +81,14 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
       setShowConfirm(false);
       setShowDeleteModal(false);
     }
-  }, [isOpen, user?.name]);
+  }, [isOpen, user?.name, user?.bio]);
 
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault();
     setNameLoading(true);
     try {
       await Promise.all([
-        updateProfile(name.trim()),
+        updateProfile({ name: name.trim() }),
         new Promise(r => setTimeout(r, 900)),
       ]);
       toast.success('Name updated successfully');
@@ -93,6 +96,22 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
       toast.error(getApiErrorMessage(err, 'Could not update name'));
     } finally {
       setNameLoading(false);
+    }
+  };
+
+  const handleUpdateBio = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBioLoading(true);
+    try {
+      await Promise.all([
+        updateProfile({ bio: bio.trim() }),
+        new Promise(r => setTimeout(r, 900)),
+      ]);
+      toast.success('Bio updated successfully');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not update bio'));
+    } finally {
+      setBioLoading(false);
     }
   };
 
@@ -266,6 +285,29 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               className="btn group relative disabled:opacity-50"
             >
               {nameLoading ? <span className="flex items-center gap-1.5"><Loader2 size={13} className="animate-spin" />Saving…</span> : <span className="nav-underline">Save</span>}
+            </button>
+          </form>
+        </div>
+
+        {/* Bio ändern */}
+        <div>
+          <label className="text-xs font-medium text-(--ink) mb-3 uppercase tracking-wide flex items-center gap-1.5">
+            <Pencil className="w-3 h-3" /> Bio
+          </label>
+          <form onSubmit={handleUpdateBio} className="flex flex-col gap-2">
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="A sentence about yourself, shown on your public profile…"
+              rows={3}
+              className="modal-input resize-none"
+            />
+            <button
+              type="submit"
+              disabled={bioLoading || bio.trim() === (user?.bio ?? '')}
+              className="btn group relative self-end disabled:opacity-50"
+            >
+              {bioLoading ? <span className="flex items-center gap-1.5"><Loader2 size={13} className="animate-spin" />Saving…</span> : <span className="nav-underline">Save</span>}
             </button>
           </form>
         </div>
