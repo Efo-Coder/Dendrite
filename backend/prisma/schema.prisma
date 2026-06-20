@@ -43,6 +43,7 @@ model User {
   feedback           Feedback?
   bugReports         BugReport[]
   reflections        Reflection[]
+  publishedNotes     PublishedNote[]
 
   @@unique([provider, providerId])
 }
@@ -92,6 +93,7 @@ model Note {
   notePreferences UserNotePreference[]
   userNoteTags    UserNoteTag[]
   versions        NoteVersion[]
+  publishedNote   PublishedNote?
 
   @@index([userId])
   @@index([folderId])
@@ -264,4 +266,32 @@ model Reflection {
 
   @@unique([userId, date])
   @@index([userId])
+}
+
+// A note made public for Browse. Snapshot model: title/content/excerpt/readingTime
+// are frozen at publish time and only refreshed on an explicit "Update publication",
+// so private edits never leak. Copying a published note clones it without any link.
+model PublishedNote {
+  id          String   @id @default(uuid())
+  noteId      String   @unique
+  ownerId     String
+  title       String?  @db.Text
+  description String?  @db.Text
+  content     String   @db.Text // frozen snapshot of the note body at publish time
+  excerpt     String   @db.Text // precomputed preview for browse cards
+  coverImage  String?
+  tags        String[]
+  topics      String[]
+  readingTime Int      @default(1) // minutes, derived from the snapshot
+  visibility  String   @default("public")
+  publishedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  note        Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([publishedAt])
+  @@index([visibility])
+  @@map("published_notes")
 }
