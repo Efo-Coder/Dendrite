@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Bell, Check, X, User } from 'lucide-react';
 import { NotificationItem } from '../../types';
 import { notificationService } from '../../services/notification.service';
@@ -120,50 +121,65 @@ const NotificationsBell = ({ onAccepted, onOpenProfile }: NotificationsBellProps
       </button>
 
       {open && (
-        <div className="home-notif-panel">
+        <div className="home-notif-panel" data-lenis-prevent>
           <p className="home-notif-title">Notifications</p>
           {items.length === 0 ? (
-            <p className="home-notif-empty">Nothing new.</p>
+            <p className="home-notif-empty">No notifications.</p>
           ) : (
             <ul className="home-notif-list">
-              {items.map((n) =>
-                n.type === 'collab_invite' ? (
-                  <li key={n.id} className="home-notif-item">
-                    <div className="home-notif-text">
-                      <p className="home-notif-note">{n.data.noteTitle || 'Untitled note'}</p>
-                      <p className="home-notif-from">invite from {n.data.fromName || 'someone'}</p>
-                    </div>
-                    <button type="button" className="home-notif-accept" onClick={() => handleAccept(n)} title="Accept">
-                      <Check size={14} strokeWidth={2} />
-                    </button>
-                    <button type="button" className="home-notif-decline" onClick={() => handleDecline(n)} title="Decline">
-                      <X size={14} strokeWidth={2} />
-                    </button>
-                  </li>
-                ) : (
-                  <li key={n.id} className="home-notif-item">
-                    <div className="home-notif-text">
-                      <p className="home-notif-note">{n.data.name || 'Someone'} started following you</p>
-                    </div>
-                    <button
-                      type="button"
-                      className="home-notif-accept"
-                      onClick={() => handleViewProfile(n.data.followerId)}
-                      title="View profile"
-                    >
-                      <User size={14} strokeWidth={2} />
-                    </button>
-                    <button
-                      type="button"
-                      className="home-notif-decline"
-                      onClick={() => handleDismiss(n.id)}
-                      title="Dismiss"
-                    >
-                      <X size={14} strokeWidth={2} />
-                    </button>
-                  </li>
-                ),
-              )}
+              {/* layout + exit so a removed item collapses smoothly and the rest
+                  slide up instead of snapping. */}
+              <AnimatePresence initial={false}>
+                {items.map((n) => (
+                  <motion.li
+                    key={n.id}
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, height: 0, paddingTop: 0, paddingBottom: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    className="home-notif-item"
+                    style={{ overflow: 'hidden' }}
+                  >
+                    {n.type === 'collab_invite' ? (
+                      <>
+                        <div className="home-notif-text">
+                          <p className="home-notif-note">{n.data.noteTitle || 'Untitled note'}</p>
+                          <p className="home-notif-from">invite from {n.data.fromName || 'someone'}</p>
+                        </div>
+                        <button type="button" className="home-notif-accept" onClick={() => handleAccept(n)} title="Accept">
+                          <Check size={14} strokeWidth={2} />
+                        </button>
+                        <button type="button" className="home-notif-decline" onClick={() => handleDecline(n)} title="Decline">
+                          <X size={14} strokeWidth={2} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="home-notif-text">
+                          <p className="home-notif-note">{n.data.name || 'Someone'} started following you.</p>
+                        </div>
+                        <button
+                          type="button"
+                          className="home-notif-accept"
+                          onClick={() => handleViewProfile(n.data.followerId)}
+                          title="View profile"
+                        >
+                          <User size={14} strokeWidth={2} />
+                        </button>
+                        <button
+                          type="button"
+                          className="home-notif-decline"
+                          onClick={() => handleDismiss(n.id)}
+                          title="Dismiss"
+                        >
+                          <X size={14} strokeWidth={2} />
+                        </button>
+                      </>
+                    )}
+                  </motion.li>
+                ))}
+              </AnimatePresence>
             </ul>
           )}
         </div>

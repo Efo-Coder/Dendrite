@@ -1740,27 +1740,35 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 .home-notif-panel {
   position: absolute; top: calc(100% + 8px); right: 0; z-index: 60;
   width: 300px; max-height: 380px; overflow-y: auto;
+  /* Reserve the scrollbar lane (no shift) and keep wheel scrolling inside. */
+  scrollbar-gutter: stable; overscroll-behavior: contain;
   padding: 14px; background: var(--surface);
   border: 1px solid var(--line-soft); border-radius: 14px; box-shadow: var(--shadow-deep);
 }
+/* Thin scrollbar with a transparent track, so it doesn't square off the panel's
+   rounded corner like the native one does. */
+.home-notif-panel::-webkit-scrollbar { width: 6px; }
+.home-notif-panel::-webkit-scrollbar-track { background: transparent; }
+.home-notif-panel::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 45%, transparent); border-radius: 9999px; }
+.home-notif-panel::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 55%, transparent); }
 .home-notif-title {
   margin: 0 0 10px; padding: 0 2px;
   font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim);
 }
 .home-notif-empty { margin: 0; padding: 4px 2px; font-family: var(--serif-body); font-size: 14px; color: var(--ink-dim); }
 .home-notif-list { display: flex; flex-direction: column; gap: 7px; margin: 0; padding: 0; list-style: none; }
-.home-notif-item { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 10px; background: var(--surface-hi); }
+.home-notif-item { display: flex; align-items: center; gap: 9px; padding: 7px 2px; }
 .home-notif-text { flex: 1; min-width: 0; }
 .home-notif-note { margin: 0; font-size: 13px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .home-notif-from { margin: 2px 0 0; font-size: 11px; color: var(--ink-dim); }
 .home-notif-accept, .home-notif-decline {
-  flex-shrink: 0; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  border: 0; border-radius: 7px; cursor: pointer; transition: opacity .15s, background .15s, color .15s;
+  flex-shrink: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  border: 0; background: transparent; cursor: pointer; transition: color .15s;
 }
-.home-notif-accept { background: var(--accent); color: #fff; }
-.home-notif-accept:hover { opacity: 0.85; }
-.home-notif-decline { background: transparent; color: var(--ink-mid); }
-.home-notif-decline:hover { color: #ef4444; background: color-mix(in oklch, #ef4444 10%, transparent); }
+.home-notif-accept { color: var(--accent); }
+.home-notif-accept:hover { color: var(--accent-hi); }
+.home-notif-decline { color: var(--ink-dim); }
+.home-notif-decline:hover { color: #ef4444; }
 
 .home-header { margin-bottom: 26px; display: flex; flex-direction: column; align-items: flex-start; }
 .home-greeting {
@@ -1960,10 +1968,10 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
 
 /* Follow button: primary CTA when not following, neutral outline when following. */
 /* Transparent border matches .profile-following's 1px, so toggling doesn't shift layout. */
-.profile-follow { padding: 9px 22px; border: 1px solid transparent; border-radius: 11px; gap: 8px; font-size: 14px; }
+.profile-follow { padding: 9px 22px; border-radius: 11px; gap: 8px; font-size: 14px; }
 .profile-following {
   display: inline-flex; align-items: center; justify-content: center;
-  gap: 8px; padding: 9px 22px; border-radius: 11px; font-size: 14px;
+  gap: 8px; padding: 8px 21px; border-radius: 11px; font-size: 14px;
   border: 1px solid var(--line); color: var(--ink-mid); background: transparent;
   cursor: pointer; transition: border-color .2s ease, color .2s ease;
 }
