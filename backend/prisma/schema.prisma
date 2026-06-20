@@ -273,7 +273,7 @@ model Reflection {
   @@index([userId])
 }
 
-// A note made public for Browse. Snapshot model: title/content/excerpt/readingTime
+// A note made public for Explore. Snapshot model: title/content/excerpt/readingTime
 // are frozen at publish time and only refreshed on an explicit "Update publication",
 // so private edits never leak. Copying a published note clones it without any link.
 model PublishedNote {

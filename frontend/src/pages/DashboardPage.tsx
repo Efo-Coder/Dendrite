@@ -6,20 +6,20 @@ import { noteService } from '../services/note.service';
 import { Note } from '../types';
 import { PAGE_FADE } from '../lib/pageMotion';
 import AppSidebar from '../components/sidebar/AppSidebar';
-import NoteEditor from '../components/editor/NoteEditor';
+import WorkspaceView from './WorkspaceView';
 import HomeView from './HomeView';
 import SpacesView from './SpacesView';
 import ReflectionView from './ReflectionView';
 import FolderView from './FolderView';
 import NotesView, { type NoteCategory } from './NotesView';
-import BrowseView from './BrowseView';
+import ExploreView from './ExploreView';
 import ProfileView from './ProfileView';
 
 // The constellations view pulls in three/R3F; load it only when opened so the
 // heavy WebGL bundle never weighs down the rest of the app.
 const ConstellationsView = lazy(() => import('./ConstellationsView'));
 
-type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder' | 'constellations' | 'browse' | 'profile';
+type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder' | 'constellations' | 'explore' | 'profile';
 
 // Shell for authenticated users: the calm Home dashboard with its Spaces, category,
 // folder and inline-editor views, switched via AppSidebar and card clicks.
@@ -37,12 +37,12 @@ const DashboardPage = () => {
   const [folderId, setFolderId] = useState<string | undefined>();
   // The author whose public profile is shown.
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
-  // Where the profile's back button returns to (+ a Browse reader to restore).
+  // Where the profile's back button returns to (+ an Explore reader to restore).
   const [profileReturn, setProfileReturn] = useState<{ view: AppView; readerId: string | null }>({
-    view: 'browse',
+    view: 'explore',
     readerId: null,
   });
-  const [browseInitialReader, setBrowseInitialReader] = useState<string | null>(null);
+  const [exploreInitialReader, setExploreInitialReader] = useState<string | null>(null);
   // Latest appView, so goProfile can capture where it was opened from.
   const appViewRef = useRef(appView);
   useEffect(() => {
@@ -53,19 +53,19 @@ const DashboardPage = () => {
   const goSpaces = useCallback(() => setAppView('spaces'), []);
   const goReflection = useCallback(() => setAppView('reflection'), []);
   const goConstellations = useCallback(() => setAppView('constellations'), []);
-  const goBrowse = useCallback(() => {
-    setBrowseInitialReader(null);
-    setAppView('browse');
+  const goExplore = useCallback(() => {
+    setExploreInitialReader(null);
+    setAppView('explore');
   }, []);
   const goProfile = useCallback((id: string, fromReaderId?: string) => {
     setProfileReturn({ view: appViewRef.current, readerId: fromReaderId ?? null });
     setProfileUserId(id);
     setAppView('profile');
   }, []);
-  // Back from a profile returns to wherever it was opened from (Browse list,
-  // a Browse reader, or Home), restoring the reader when applicable.
+  // Back from a profile returns to wherever it was opened from (Explore list,
+  // an Explore reader, or Home), restoring the reader when applicable.
   const profileBack = useCallback(() => {
-    setBrowseInitialReader(profileReturn.readerId);
+    setExploreInitialReader(profileReturn.readerId);
     setAppView(profileReturn.view);
   }, [profileReturn]);
 
@@ -122,32 +122,26 @@ const DashboardPage = () => {
             appView === 'spaces' ? 'spaces'
             : appView === 'reflection' ? 'reflection'
             : appView === 'constellations' ? 'constellations'
-            : appView === 'browse' || appView === 'profile' ? 'browse'
+            : appView === 'explore' || appView === 'profile' ? 'explore'
             : 'home'
           }
           collapsed={appView === 'editor' && editorSidebarCollapsed}
           onHome={goHome}
           onSpaces={goSpaces}
-          onThoughts={() => openCategory('all')}
           onReflection={goReflection}
           onConstellations={goConstellations}
-          onBrowse={goBrowse}
+          onExplore={goExplore}
           user={user}
         />
         {/* mode="wait" + one shared PAGE_FADE → every switch fades out, then in, identically. */}
         <AnimatePresence mode="wait">
           <motion.div key={appView} className="home-page" {...PAGE_FADE}>
             {appView === 'editor' && editorNote ? (
-              // Mirror the wrapper the .win-scoped editor panel CSS expects.
-              <div className="win">
-                <div className="editor-panel">
-                  <NoteEditor
-                    note={editorNote}
-                    onToggleSidebar={() => setEditorSidebarCollapsed((v) => !v)}
-                    sidebarCollapsed={editorSidebarCollapsed}
-                  />
-                </div>
-              </div>
+              <WorkspaceView
+                note={editorNote}
+                onToggleSidebar={() => setEditorSidebarCollapsed((v) => !v)}
+                sidebarCollapsed={editorSidebarCollapsed}
+              />
             ) : appView === 'spaces' ? (
               <SpacesView onOpenSpace={openSpace} onBack={goHome} />
             ) : appView === 'notes' ? (
@@ -160,11 +154,11 @@ const DashboardPage = () => {
               <Suspense fallback={<div className="constellations-stage" />}>
                 <ConstellationsView onBack={goHome} onOpenNote={openNote} />
               </Suspense>
-            ) : appView === 'browse' ? (
-              <BrowseView
+            ) : appView === 'explore' ? (
+              <ExploreView
                 onOpenInline={openEditor}
                 onOpenProfile={goProfile}
-                initialReadingId={browseInitialReader}
+                initialReadingId={exploreInitialReader}
               />
             ) : appView === 'profile' && profileUserId ? (
               <ProfileView

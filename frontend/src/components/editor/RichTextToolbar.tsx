@@ -215,11 +215,11 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
           )}
           aria-hidden
         />
-        <div className="flex h-15.5 shrink-0 items-center justify-between gap-3 px-6 sm:px-12">
+        <div className="relative flex h-15.5 shrink-0 items-center gap-3 px-6 sm:px-12">
           <span className="text-xs text-(--ink-dim) tabular-nums tracking-wide select-none">
             <motion.span>{roundedCount}</motion.span> {wordCount === 1 ? 'word' : 'words'}
           </span>
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 min-w-0">
             <div
               ref={miniToolbarRef}
               className="relative flex items-center gap-0.5 rounded-full border border-[color-mix(in_srgb,var(--line)_75%,transparent)] bg-(--panel-bg) backdrop-blur-md px-1 py-1 shadow-[0_10px_30px_color-mix(in_srgb,#000_45%,transparent),0_0_0_1px_color-mix(in_srgb,var(--accent)_12%,transparent)] magic-hover"

@@ -6,7 +6,7 @@ import { useToast } from '../ui/ToastContainer';
 import { getApiErrorMessage } from '../../lib/apiError';
 
 // Copy a published note into the user's own workspace as a fully independent note
-// (no link back). Shared by Browse and profile pages.
+// (no link back). Shared by Explore and profile pages.
 export function usePublishedCopy(onOpenInline: (note: Note) => void) {
   const [copyingId, setCopyingId] = useState<string | null>(null);
   const toast = useToast();

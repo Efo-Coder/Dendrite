@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Layers, PenLine, Compass, Contrast, ChevronDown, Orbit } from 'lucide-react';
+import { Home, Layers, Compass, Contrast, ChevronDown, Orbit } from 'lucide-react';
 import clsx from 'clsx';
 import { LOGO_SRC } from '../../config/brand';
 import { User as UserType } from '../../types';
@@ -8,16 +8,15 @@ import UserProfileModal from '../modals/UserProfileModal';
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
 
-type HomeNav = 'home' | 'spaces' | 'reflection' | 'constellations' | 'browse';
+type HomeNav = 'home' | 'spaces' | 'reflection' | 'constellations' | 'explore';
 
 interface AppSidebarProps {
   active: HomeNav;
   onHome: () => void;
   onSpaces: () => void;
-  onThoughts: () => void;
   onReflection: () => void;
   onConstellations: () => void;
-  onBrowse: () => void;
+  onExplore: () => void;
   user?: UserType | null;
   collapsed?: boolean;
 }
@@ -26,17 +25,15 @@ const AppSidebar = ({
   active,
   onHome,
   onSpaces,
-  onThoughts,
   onReflection,
   onConstellations,
-  onBrowse,
+  onExplore,
   user,
   collapsed,
 }: AppSidebarProps) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const displayInitial = (user?.name || user?.email || '?').trim().charAt(0).toUpperCase();
 
-  // 'active' tracks the persistent home views; Thoughts is a one-shot action.
   const items = [
     { key: 'home', label: 'Home', Icon: Home, onClick: onHome, activeWhen: active === 'home' },
     {
@@ -46,7 +43,6 @@ const AppSidebar = ({
       onClick: onSpaces,
       activeWhen: active === 'spaces',
     },
-    { key: 'thoughts', label: 'Thoughts', Icon: PenLine, onClick: onThoughts, activeWhen: false },
     {
       key: 'reflect',
       label: 'Daily Reflection',
@@ -62,11 +58,11 @@ const AppSidebar = ({
       activeWhen: active === 'constellations',
     },
     {
-      key: 'browse',
-      label: 'Browse',
+      key: 'explore',
+      label: 'Explore',
       Icon: Compass,
-      onClick: onBrowse,
-      activeWhen: active === 'browse',
+      onClick: onExplore,
+      activeWhen: active === 'explore',
     },
   ];
 

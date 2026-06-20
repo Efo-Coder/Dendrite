@@ -8,10 +8,10 @@ import { useLenisScroll } from '../hooks/useLenisScroll';
 import { useColumnCount } from '../hooks/useColumnCount';
 import { useToast } from '../components/ui/ToastContainer';
 import { PAGE_FADE } from '../lib/pageMotion';
-import { usePublishedCopy } from '../components/browse/usePublishedCopy';
+import { usePublishedCopy } from '../components/explore/usePublishedCopy';
 import BackButton from '../components/home/BackButton';
-import PublishedNoteCard from '../components/browse/PublishedNoteCard';
-import PublishedNoteReader from '../components/browse/PublishedNoteReader';
+import PublishedNoteCard from '../components/explore/PublishedNoteCard';
+import PublishedNoteReader from '../components/explore/PublishedNoteReader';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAsset = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
@@ -168,17 +168,17 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
                   </header>
 
                   <section ref={gridRef}>
-                    <p className="browse-section-title">Published notes</p>
+                    <p className="explore-section-title">Published notes</p>
                     {notesLoading ? (
-                      <div className="browse-grid">
+                      <div className="explore-grid">
                         {Array.from({ length: 3 }).map((_, i) => (
-                          <div key={i} className="browse-skeleton" />
+                          <div key={i} className="explore-skeleton" />
                         ))}
                       </div>
                     ) : notes.length === 0 ? (
                       <p className="home-empty">No published notes yet.</p>
                     ) : (
-                      <div className="browse-grid">
+                      <div className="explore-grid">
                         {notes.map((pub) => (
                           <PublishedNoteCard
                             key={pub.id}

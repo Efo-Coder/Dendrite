@@ -273,14 +273,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         <button className="editor-breadcrumb" onClick={openFolderMenu} disabled={isInTrash}>{currentFolder ? currentFolder.name : 'All Notes'}</button>
         <span className="editor-sep">·</span>
         <span>{formatRelativeDate(note.updatedAt)}</span>
-        {!isInTrash && (
-          <span className="editor-save-status">
-            {isSaving
-              ? <><span className="editor-save-dot saving" style={{ background: 'var(--ink-dim)', boxShadow: 'none' }} /> Saving…</>
-              : <><span className="editor-save-dot" /> Saved</>
-            }
-          </span>
-        )}
       </div>
       <textarea
         ref={titleAreaRef}
@@ -357,6 +349,14 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
               <div ref={rightGroupRef} className="relative flex items-center gap-2 magic-hover">
                 {RightIndicator}
+                {!isInTrash && (
+                  <span className="editor-save-status mr-3">
+                    {isSaving
+                      ? <><span className="editor-save-dot saving" style={{ background: 'var(--ink-dim)', boxShadow: 'none' }} /> Saving…</>
+                      : <><span className="editor-save-dot" /> Saved</>
+                    }
+                  </span>
+                )}
                 <button
                   ref={moreBtnRef}
                   type="button"
@@ -451,29 +451,30 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 onVersionHistory={isInTrash ? undefined : () => setShowVersionHistory(v => !v)}
               />
             }
-            sidePanel={
-              <VersionHistoryPanel
-                isOpen={showVersionHistory}
-                onClose={() => setShowVersionHistory(false)}
-                noteId={note.id}
-                userPlan={user?.plan ?? 'free'}
-                onRestore={async (noteId, versionId) => {
-                  const restored = await noteService.restoreNoteVersion(noteId, versionId);
-                  updateNoteInStore(restored);
-                  contentRef.current = restored.content;
-                  titleRef.current = restored.title ?? '';
-                  lastSavedTitleRef.current = restored.title ?? '';
-                  setContent(restored.content);
-                  setTitle(restored.title ?? '');
-                  setRestoreKey((k) => k + 1);
-                  toast.success('Version restored');
-                }}
-              />
-            }
           />
             );
           })()}
           </div>
+
+      {/* Version history spans the full editor height (over topbar + footer),
+          so it lives at the editor root, not inside the writing canvas. */}
+      <VersionHistoryPanel
+        isOpen={showVersionHistory}
+        onClose={() => setShowVersionHistory(false)}
+        noteId={note.id}
+        userPlan={user?.plan ?? 'free'}
+        onRestore={async (noteId, versionId) => {
+          const restored = await noteService.restoreNoteVersion(noteId, versionId);
+          updateNoteInStore(restored);
+          contentRef.current = restored.content;
+          titleRef.current = restored.title ?? '';
+          lastSavedTitleRef.current = restored.title ?? '';
+          setContent(restored.content);
+          setTitle(restored.title ?? '');
+          setRestoreKey((k) => k + 1);
+          toast.success('Version restored');
+        }}
+      />
 
       <FolderMenu
         pos={folderMenuPos}

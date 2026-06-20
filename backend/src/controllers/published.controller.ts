@@ -11,10 +11,10 @@ const WORDS_PER_MINUTE = 200;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
 
-// Slim author shape shared by browse list + detail (never leak email here).
+// Slim author shape shared by explore list + detail (never leak email here).
 const authorSelect = { id: true, name: true, avatarUrl: true } as const;
 
-// Browse cards never need the full body — omit `content` to keep lists light.
+// Explore cards never need the full body — omit `content` to keep lists light.
 const cardSelect = {
   id: true,
   title: true,
@@ -241,7 +241,7 @@ export const listPublished = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Full published note (with content) for the Browse reading view.
+// Full published note (with content) for the Explore reading view.
 export const getPublishedById = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;

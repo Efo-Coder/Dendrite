@@ -4,11 +4,11 @@ import { publishedService } from '../../services/published.service';
 import { useColumnCount } from '../../hooks/useColumnCount';
 import PublishedNoteCard from './PublishedNoteCard';
 
-export type BrowseFeed = 'featured' | 'trending' | 'following' | 'recent';
+export type ExploreFeed = 'featured' | 'trending' | 'following' | 'recent';
 
 interface Props {
   title: string;
-  feed: BrowseFeed;
+  feed: ExploreFeed;
   limit?: number;
   large?: boolean; // featured: fewer, wider cards
   emptyText?: string; // shown when empty; sections without it hide when empty
@@ -20,7 +20,7 @@ interface Props {
   onOpenProfile: (userId: string) => void;
 }
 
-const BrowseSection = ({
+const ExploreSection = ({
   title,
   feed,
   limit = 8,
@@ -54,15 +54,15 @@ const BrowseSection = ({
     );
   }, [likeUpdate]);
 
-  const gridClass = large ? 'browse-grid browse-grid-lg' : 'browse-grid';
+  const gridClass = large ? 'explore-grid explore-grid-lg' : 'explore-grid';
 
   if (loading) {
     return (
       <section className="mb-10">
-        <p className="browse-section-title">{title}</p>
+        <p className="explore-section-title">{title}</p>
         <div className={gridClass}>
           {Array.from({ length: large ? 2 : 4 }).map((_, i) => (
-            <div key={i} className="browse-skeleton" />
+            <div key={i} className="explore-skeleton" />
           ))}
         </div>
       </section>
@@ -73,7 +73,7 @@ const BrowseSection = ({
     if (!emptyText) return null;
     return (
       <section className="mb-10">
-        <p className="browse-section-title">{title}</p>
+        <p className="explore-section-title">{title}</p>
         <p className="home-empty">{emptyText}</p>
       </section>
     );
@@ -81,7 +81,7 @@ const BrowseSection = ({
 
   return (
     <section className="mb-10">
-      <p className="browse-section-title">{title}</p>
+      <p className="explore-section-title">{title}</p>
       <div ref={gridRef} className={gridClass}>
         {items.map((pub) => (
           <PublishedNoteCard
@@ -101,4 +101,4 @@ const BrowseSection = ({
   );
 };
 
-export default BrowseSection;
+export default ExploreSection;

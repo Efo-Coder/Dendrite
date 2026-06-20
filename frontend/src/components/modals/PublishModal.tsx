@@ -5,7 +5,7 @@ import Modal from './Modal';
 import { MagicInput } from '../ui/MagicInput';
 import { Note, PublishedNote } from '../../types';
 import { publishedService } from '../../services/published.service';
-import { BROWSE_TOPICS } from '../../lib/browseTopics';
+import { EXPLORE_TOPICS } from '../../lib/exploreTopics';
 import { useToast } from '../ui/ToastContainer';
 import { getApiErrorMessage } from '../../lib/apiError';
 
@@ -66,8 +66,8 @@ const PublishModal = ({ isOpen, onClose, note, onPublishedChange }: Props) => {
   // Curated topics plus any custom ones already chosen, so newly created topics
   // show up as selectable chips alongside the predefined set.
   const topicOptions = [
-    ...BROWSE_TOPICS,
-    ...topics.filter((t) => !(BROWSE_TOPICS as readonly string[]).includes(t)),
+    ...EXPLORE_TOPICS,
+    ...topics.filter((t) => !(EXPLORE_TOPICS as readonly string[]).includes(t)),
   ];
 
   const addTag = () => {
@@ -137,7 +137,7 @@ const PublishModal = ({ isOpen, onClose, note, onPublishedChange }: Props) => {
           <p className="flex items-start gap-2 text-sm text-(--ink-mid)">
             <Globe className="w-4 h-4 shrink-0 mt-0.5 text-(--accent)" />
             <span>
-              A read-only copy appears in Browse. Edits to your note stay private until you update
+              A read-only copy appears in Explore. Edits to your note stay private until you update
               the publication.
             </span>
           </p>
@@ -275,7 +275,7 @@ const PublishModal = ({ isOpen, onClose, note, onPublishedChange }: Props) => {
                 className="flex items-center gap-1.5 text-sm text-(--ink) hover:text-red-400 transition-colors disabled:opacity-50"
               >
                 {unpublishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                Remove from Browse
+                Remove from Explore
               </button>
             </div>
           )}

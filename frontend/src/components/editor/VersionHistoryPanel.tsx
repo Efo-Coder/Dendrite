@@ -76,7 +76,7 @@ export default function VersionHistoryPanel({ isOpen, onClose, noteId, userPlan,
 
   return (
     <div
-      className="absolute right-0 top-0 bottom-0 w-64 border-l border-(--line-soft) transition-transform duration-300 ease-out z-20"
+      className="absolute right-0 top-0 bottom-0 w-70 border-l border-(--line-soft) transition-transform duration-300 ease-out z-20"
       style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
     >
       <div className="w-full h-full flex flex-col bg-(--surface)">

@@ -61,7 +61,6 @@ interface LexicalEditorWrapperProps {
   disabled?: boolean;
   toolbar?: ReactNode;
   headerSlot?: ReactNode;
-  sidePanel?: ReactNode;
   key?: string;
   collaboration?: CollaborationConfig | null;
   onUsersChange?: (users: ActiveUser[]) => void;
@@ -74,7 +73,6 @@ const LexicalEditorWrapper = ({
   disabled = false,
   toolbar,
   headerSlot,
-  sidePanel,
   collaboration = null,
   onUsersChange,
 }: LexicalEditorWrapperProps) => {
@@ -243,7 +241,6 @@ const LexicalEditorWrapper = ({
               </div>
               </motion.div>
             </div>
-            {sidePanel}
           </div>
 
           {toolbar && (

@@ -154,7 +154,7 @@ export interface ThemeNote {
   folderId: string | null;
 }
 
-// ─── Browse & Community Discovery ────────────────────────────────────────────
+// ─── Explore & Community Discovery ────────────────────────────────────────────
 
 export interface PublishedAuthor {
   id: string;

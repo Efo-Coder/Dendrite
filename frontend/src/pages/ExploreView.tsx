@@ -4,18 +4,18 @@ import { Search } from 'lucide-react';
 import clsx from 'clsx';
 import { Note, PublishedNote } from '../types';
 import { publishedService } from '../services/published.service';
-import { BROWSE_TOPICS } from '../lib/browseTopics';
+import { EXPLORE_TOPICS } from '../lib/exploreTopics';
 import { useLenisScroll } from '../hooks/useLenisScroll';
 import { useColumnCount } from '../hooks/useColumnCount';
 import { PAGE_FADE } from '../lib/pageMotion';
-import { usePublishedCopy } from '../components/browse/usePublishedCopy';
+import { usePublishedCopy } from '../components/explore/usePublishedCopy';
 import { MagicInput } from '../components/ui/MagicInput';
-import FilterDropdown from '../components/browse/FilterDropdown';
-import PublishedNoteCard from '../components/browse/PublishedNoteCard';
-import PublishedNoteReader from '../components/browse/PublishedNoteReader';
-import BrowseSection from '../components/browse/BrowseSection';
+import FilterDropdown from '../components/explore/FilterDropdown';
+import PublishedNoteCard from '../components/explore/PublishedNoteCard';
+import PublishedNoteReader from '../components/explore/PublishedNoteReader';
+import ExploreSection from '../components/explore/ExploreSection';
 
-interface BrowseViewProps {
+interface ExploreViewProps {
   onOpenInline: (note: Note) => void;
   onOpenProfile: (userId: string, fromReaderId?: string) => void;
   initialReadingId?: string | null;
@@ -27,7 +27,7 @@ const chipClass = (active: boolean) =>
     active ? 'border-(--accent) text-(--accent)' : 'border-(--line) text-(--ink-mid) hover:text-(--ink)',
   );
 
-const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: BrowseViewProps) => {
+const ExploreView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: ExploreViewProps) => {
   const [items, setItems] = useState<PublishedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(true);
@@ -96,7 +96,7 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
           <main ref={scrollRef} className="home-main">
             <div ref={contentRef} className="home-content">
               <header className="home-header">
-                <p className="home-greeting">Browse</p>
+                <p className="home-greeting">Explore</p>
                 <h1 className="home-headline">A library of shared thinking.</h1>
               </header>
 
@@ -118,7 +118,7 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
                 <button type="button" onClick={() => setTopic(null)} className={chipClass(topic === null)}>
                   All
                 </button>
-                {BROWSE_TOPICS.map((t) => (
+                {EXPLORE_TOPICS.map((t) => (
                   <button
                     key={t}
                     type="button"
@@ -154,11 +154,11 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
 
               {filtering ? (
                 <section ref={gridRef}>
-                  <p className="browse-section-title">Results</p>
+                  <p className="explore-section-title">Results</p>
                   {firstLoad ? (
-                    <div className="browse-grid">
+                    <div className="explore-grid">
                       {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="browse-skeleton" />
+                        <div key={i} className="explore-skeleton" />
                       ))}
                     </div>
                   ) : items.length === 0 ? (
@@ -166,7 +166,7 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
                   ) : (
                     // Keep results visible while refetching; a gentle dim instead of a
                     // skeleton flash on every keystroke.
-                    <div className={clsx('browse-grid transition-opacity duration-200', loading && 'opacity-50')}>
+                    <div className={clsx('explore-grid transition-opacity duration-200', loading && 'opacity-50')}>
                       {items.map((pub) => (
                         <PublishedNoteCard
                           key={pub.id}
@@ -185,7 +185,7 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
                 </section>
               ) : (
                 <>
-                  <BrowseSection
+                  <ExploreSection
                     title="Featured"
                     feed="featured"
                     large
@@ -196,7 +196,7 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
                     onCopy={copy}
                     onOpenProfile={onOpenProfile}
                   />
-                  <BrowseSection
+                  <ExploreSection
                     title="Trending"
                     feed="trending"
                     limit={8}
@@ -206,7 +206,7 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
                     onCopy={copy}
                     onOpenProfile={onOpenProfile}
                   />
-                  <BrowseSection
+                  <ExploreSection
                     title="From people you follow"
                     feed="following"
                     limit={8}
@@ -216,7 +216,7 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
                     onCopy={copy}
                     onOpenProfile={onOpenProfile}
                   />
-                  <BrowseSection
+                  <ExploreSection
                     title="Recently published"
                     feed="recent"
                     limit={12}
@@ -237,4 +237,4 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
   );
 };
 
-export default BrowseView;
+export default ExploreView;

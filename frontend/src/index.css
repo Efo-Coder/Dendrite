@@ -929,9 +929,10 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 .win .editor-meta .editor-breadcrumb:hover { opacity: 0.7; }
 .win .editor-meta .editor-breadcrumb:disabled { cursor: default; opacity: 1; }
 .win .editor-meta .editor-sep        { font-family: var(--serif-display); font-size: 25px; color: var(--ink-dim); line-height: 0; letter-spacing: 0; text-transform: none; position: relative; top: -3px; margin: 0 -6px; }
-.win .editor-meta .editor-save-status { margin-left: auto; display: flex; align-items: center; gap: 6px; }
-.win .editor-meta .editor-save-dot         { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: save-glow 2.4s ease-in-out infinite; }
-.win .editor-meta .editor-save-dot.saving  { animation: save-pulse 1.2s ease-in-out infinite; }
+/* Save status moved to the editor topbar; keep the editor-meta typo it used to inherit. */
+.win .editor-save-status { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--ink-dim); letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; }
+.win .editor-save-dot         { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: save-glow 2.4s ease-in-out infinite; }
+.win .editor-save-dot.saving  { animation: save-pulse 1.2s ease-in-out infinite; }
 @keyframes save-pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.3; }
@@ -1943,35 +1944,32 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
 .search-result-icon { color: var(--ink-low); flex-shrink: 0; }
 .search-result-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ─── Browse ─────────────────────────────────────────────────────────────────── */
+/* ─── Explore ─────────────────────────────────────────────────────────────────── */
 
-.browse-section-title {
+.explore-section-title {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
   text-transform: uppercase; color: var(--ink-dim); margin: 0 0 1rem;
 }
 
 /* auto-fit so the cards fill the row width; transparent placeholders (home-card-ph)
    pad the last row in JS so cards keep a constant width instead of stretching. */
-.browse-grid {
+.explore-grid {
   display: grid; gap: 1.25rem;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 /* Featured: fewer, wider cards for the lead section. */
-.browse-grid-lg {
+.explore-grid-lg {
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
 }
 
-.browse-skeleton {
+.explore-skeleton {
   height: 220px; border-radius: 1rem;
   background: color-mix(in srgb, var(--surface) 70%, transparent);
   border: 1px solid var(--line);
-  animation: browse-pulse 1.4s ease-in-out infinite;
+  animation: explore-pulse 1.4s ease-in-out infinite;
 }
-@keyframes browse-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }
-
-/* Layout-only add-on — visual look (gradient, glow, shimmer) comes from .btn.primary */
-.browse-copy-btn { padding: 12px 28px; border-radius: 11px; gap: 8px; font-size: 15px; }
+@keyframes explore-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }
 
 /* Follow button: primary CTA when not following, neutral outline when following. */
 /* Transparent border matches .profile-following's 1px, so toggling doesn't shift layout. */

@@ -15,7 +15,7 @@ export const publishedService = {
     return res.data.publication;
   },
 
-  /** Remove a note from Browse — the original note stays untouched. */
+  /** Remove a note from Explore — the original note stays untouched. */
   async unpublish(noteId: string): Promise<void> {
     await api.delete(`/published/notes/${noteId}`);
   },

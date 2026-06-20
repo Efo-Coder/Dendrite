@@ -144,7 +144,7 @@ const PublishedNoteReader = ({ id, onBack, onCopy, onOpenAuthor, onLikeChange, c
                 </button>
               </>
             )}
-            <button type="button" onClick={onBack} title="Back to Browse" className="icon-btn-md">
+            <button type="button" onClick={onBack} title="Back to Explore" className="icon-btn-md">
               <ArrowLeft className="h-4 w-4" />
             </button>
           </div>

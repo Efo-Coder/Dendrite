@@ -1,7 +1,7 @@
-// Curated discovery categories offered in the publish dialog and Browse filters.
+// Curated discovery categories offered in the publish dialog and Explore filters.
 // Stored free-form on PublishedNote.topics[], so this list can grow without a
 // migration — the backend never enforces a fixed set.
-export const BROWSE_TOPICS = [
+export const EXPLORE_TOPICS = [
   'Learning',
   'Technology',
   'Programming',
@@ -12,4 +12,4 @@ export const BROWSE_TOPICS = [
   'Science',
 ] as const;
 
-export type BrowseTopic = (typeof BROWSE_TOPICS)[number];
+export type ExploreTopic = (typeof EXPLORE_TOPICS)[number];
