@@ -131,7 +131,8 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
                       <span>
                         <span className="font-medium text-(--ink-mid)">{profile.followingCount}</span> following
                       </span>
-                      <span><span className="mr-6">·</span>Joined {formatJoin(profile.createdAt)}</span>
+                      <span>·</span>
+                      <span>Joined {formatJoin(profile.createdAt)}</span>
                     </div>
 
                     {!profile.isSelf && (
