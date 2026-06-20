@@ -15,6 +15,7 @@ interface ModalProps {
   confirmVariant?: 'default' | 'danger';
   confirmDisabled?: boolean;
   isConfirming?: boolean;
+  confirmingLabel?: string;
 }
 
 const Modal = ({
@@ -29,6 +30,7 @@ const Modal = ({
   confirmVariant = 'default',
   confirmDisabled = false,
   isConfirming = false,
+  confirmingLabel = 'Loading…',
 }: ModalProps) => {
   const [visible, setVisible] = useState(isOpen);
   const [closing, setClosing] = useState(false);
@@ -79,7 +81,7 @@ const Modal = ({
                 disabled={confirmDisabled || isConfirming}
                 className={confirmVariant === 'danger' ? 'btn danger' : 'btn primary'}
               >
-                {isConfirming ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Loader2 size={13} className="animate-spin" />Loading…</span> : confirmLabel}
+                {isConfirming ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Loader2 size={13} className="animate-spin" />{confirmingLabel}</span> : confirmLabel}
               </button>
             )}
           </div>

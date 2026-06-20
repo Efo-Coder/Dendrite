@@ -162,3 +162,35 @@ export interface ThemeNote {
   updatedAt: string;
   folderId: string | null;
 }
+
+// ─── Browse & Community Discovery ────────────────────────────────────────────
+
+export interface PublishedAuthor {
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+// A published note as returned by the API. `content` is only present on the
+// detail endpoint (reading view); list/card responses omit it to stay light.
+export interface PublishedNote {
+  id: string;
+  title: string | null;
+  description: string | null;
+  excerpt: string;
+  coverImage: string | null;
+  tags: string[];
+  topics: string[];
+  readingTime: number;
+  publishedAt: string;
+  updatedAt: string;
+  owner: PublishedAuthor;
+  content?: string;
+}
+
+export interface PublishedList {
+  items: PublishedNote[];
+  total: number;
+  page: number;
+  limit: number;
+}

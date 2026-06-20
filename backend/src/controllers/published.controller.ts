@@ -59,8 +59,14 @@ export const publishNote = async (req: AuthRequest, res: Response) => {
     if (!note) return res.status(404).json({ error: 'Note not found' });
 
     const description = typeof req.body.description === 'string' ? req.body.description : null;
+    // Only fall back to the note's cover when the client omits the field entirely;
+    // an explicit null means "publish without a cover".
     const coverImage =
-      typeof req.body.coverImage === 'string' ? req.body.coverImage : note.coverImage;
+      'coverImage' in req.body
+        ? typeof req.body.coverImage === 'string'
+          ? req.body.coverImage
+          : null
+        : note.coverImage;
     const tags = stringArray(req.body.tags);
     const topics = stringArray(req.body.topics);
 
