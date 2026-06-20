@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { stripHtml } from '../services/constellationText';
+import { notifyNoteLike } from '../services/notification.service';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -22,6 +23,8 @@ const cardSelect = {
   tags: true,
   topics: true,
   readingTime: true,
+  viewCount: true,
+  likeCount: true,
   publishedAt: true,
   updatedAt: true,
   owner: { select: authorSelect },
@@ -161,18 +164,34 @@ export const listPublished = async (req: AuthRequest, res: Response) => {
       ];
     }
 
+    const orderBy: Prisma.PublishedNoteOrderByWithRelationInput[] =
+      req.query.sort === 'trending'
+        ? [{ likeCount: 'desc' }, { publishedAt: 'desc' }]
+        : [{ publishedAt: 'desc' }];
+
     const [items, total] = await Promise.all([
       prisma.publishedNote.findMany({
         where,
         select: cardSelect,
-        orderBy: { publishedAt: 'desc' },
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),
       prisma.publishedNote.count({ where }),
     ]);
 
-    return res.json({ items, total, page, limit });
+    // Mark which of these the viewer has liked — one extra query, no N+1.
+    const likedSet = new Set<string>();
+    if (items.length > 0) {
+      const liked = await prisma.publishedNoteLike.findMany({
+        where: { userId: req.userId!, publishedNoteId: { in: items.map((i) => i.id) } },
+        select: { publishedNoteId: true },
+      });
+      for (const l of liked) likedSet.add(l.publishedNoteId);
+    }
+    const withLiked = items.map((i) => ({ ...i, isLiked: likedSet.has(i.id) }));
+
+    return res.json({ items: withLiked, total, page, limit });
   } catch (error) {
     console.error('ListPublished error:', error);
     return res.status(500).json({ error: 'Failed to load published notes' });
@@ -191,9 +210,89 @@ export const getPublishedById = async (req: AuthRequest, res: Response) => {
 
     if (!publication) return res.status(404).json({ error: 'Published note not found' });
 
-    return res.json({ publication });
+    // Count a view, but never the author's own opens.
+    let viewCount = publication.viewCount;
+    if (publication.owner.id !== req.userId) {
+      await prisma.publishedNote.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+      viewCount += 1;
+    }
+
+    const liked = await prisma.publishedNoteLike.findUnique({
+      where: { userId_publishedNoteId: { userId: req.userId!, publishedNoteId: id } },
+    });
+
+    return res.json({ publication: { ...publication, viewCount, isLiked: !!liked } });
   } catch (error) {
     console.error('GetPublishedById error:', error);
     return res.status(500).json({ error: 'Failed to load published note' });
+  }
+};
+
+// Like / unlike a published note. Idempotent; keeps the denormalized likeCount in
+// sync with the like rows via a transaction.
+export const likeNote = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const pub = await prisma.publishedNote.findFirst({
+      where: { id, visibility: 'public' },
+      select: { id: true, ownerId: true, title: true },
+    });
+    if (!pub) return res.status(404).json({ error: 'Published note not found' });
+
+    const existing = await prisma.publishedNoteLike.findUnique({
+      where: { userId_publishedNoteId: { userId: req.userId!, publishedNoteId: id } },
+    });
+    if (!existing) {
+      await prisma.$transaction([
+        prisma.publishedNoteLike.create({ data: { userId: req.userId!, publishedNoteId: id } }),
+        prisma.publishedNote.update({ where: { id }, data: { likeCount: { increment: 1 } } }),
+      ]);
+      // Notify the author of a genuinely new like (never their own).
+      if (pub.ownerId !== req.userId) {
+        const liker = await prisma.user.findUnique({
+          where: { id: req.userId! },
+          select: { id: true, name: true, avatarUrl: true },
+        });
+        if (liker) {
+          await notifyNoteLike(pub.ownerId, {
+            publishedNoteId: id,
+            noteTitle: pub.title,
+            fromUserId: liker.id,
+            fromName: liker.name,
+            fromAvatarUrl: liker.avatarUrl,
+          });
+        }
+      }
+    }
+
+    const updated = await prisma.publishedNote.findUnique({ where: { id }, select: { likeCount: true } });
+    return res.json({ liked: true, likeCount: updated?.likeCount ?? 0 });
+  } catch (error) {
+    console.error('LikeNote error:', error);
+    return res.status(500).json({ error: 'Failed to like note' });
+  }
+};
+
+export const unlikeNote = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+
+    const existing = await prisma.publishedNoteLike.findUnique({
+      where: { userId_publishedNoteId: { userId: req.userId!, publishedNoteId: id } },
+    });
+    if (existing) {
+      await prisma.$transaction([
+        prisma.publishedNoteLike.delete({
+          where: { userId_publishedNoteId: { userId: req.userId!, publishedNoteId: id } },
+        }),
+        prisma.publishedNote.update({ where: { id }, data: { likeCount: { decrement: 1 } } }),
+      ]);
+    }
+
+    const updated = await prisma.publishedNote.findUnique({ where: { id }, select: { likeCount: true } });
+    return res.json({ liked: false, likeCount: updated?.likeCount ?? 0 });
+  } catch (error) {
+    console.error('UnlikeNote error:', error);
+    return res.status(500).json({ error: 'Failed to unlike note' });
   }
 };

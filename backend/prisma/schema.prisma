@@ -48,6 +48,7 @@ model User {
   following          Follow[]             @relation("UserFollowing")
   followers          Follow[]             @relation("UserFollowers")
   notifications      Notification[]
+  publishedLikes     PublishedNoteLike[]
 
   @@unique([provider, providerId])
 }
@@ -287,16 +288,37 @@ model PublishedNote {
   topics      String[]
   readingTime Int      @default(1) // minutes, derived from the snapshot
   visibility  String   @default("public")
+  viewCount   Int      @default(0)
+  likeCount   Int      @default(0) // denormalized total, kept in sync on like toggle
   publishedAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  note        Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  owner       User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  note        Note                @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  likes       PublishedNoteLike[]
 
   @@index([ownerId])
   @@index([publishedAt])
   @@index([visibility])
+  @@index([likeCount])
   @@map("published_notes")
+}
+
+// One like per user per published note. PublishedNote.likeCount is the denormalized
+// total kept in sync on toggle (so trending can sort without a join).
+model PublishedNoteLike {
+  id              String   @id @default(uuid())
+  userId          String
+  publishedNoteId String
+  createdAt       DateTime @default(now())
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publishedNote PublishedNote @relation(fields: [publishedNoteId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, publishedNoteId])
+  @@index([userId])
+  @@index([publishedNoteId])
+  @@map("published_note_likes")
 }
 
 // Directed follow: followerId follows followingId. Immediate, no approval (public

@@ -28,3 +28,19 @@ export async function notifyCollabInvite(
   });
   pushToUser(recipientId, notification);
 }
+
+export async function notifyNoteLike(
+  recipientId: string,
+  payload: {
+    publishedNoteId: string;
+    noteTitle: string | null;
+    fromUserId: string;
+    fromName: string | null;
+    fromAvatarUrl: string | null;
+  },
+): Promise<void> {
+  const notification = await prisma.notification.create({
+    data: { userId: recipientId, type: 'note_like', data: payload },
+  });
+  pushToUser(recipientId, notification);
+}

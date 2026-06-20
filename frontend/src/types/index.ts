@@ -172,6 +172,9 @@ export interface PublishedNote {
   tags: string[];
   topics: string[];
   readingTime: number;
+  viewCount: number;
+  likeCount: number;
+  isLiked?: boolean; // present on list + detail responses, not on owner status
   publishedAt: string;
   updatedAt: string;
   owner: PublishedAuthor;
@@ -214,4 +217,17 @@ export type NotificationItem =
       read: boolean;
       createdAt: string;
       data: { followerId: string; name: string | null; avatarUrl: string | null };
+    }
+  | {
+      id: string;
+      type: 'note_like';
+      read: boolean;
+      createdAt: string;
+      data: {
+        publishedNoteId: string;
+        noteTitle: string | null;
+        fromUserId: string;
+        fromName: string | null;
+        fromAvatarUrl: string | null;
+      };
     };

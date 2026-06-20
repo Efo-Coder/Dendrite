@@ -52,4 +52,15 @@ export const publishedService = {
     const res = await api.get<{ publication: PublishedNote }>(`/published/${id}`);
     return res.data.publication;
   },
+
+  /** Like / unlike — returns the new state and total. */
+  async like(id: string): Promise<{ liked: boolean; likeCount: number }> {
+    const res = await api.post<{ liked: boolean; likeCount: number }>(`/published/${id}/like`);
+    return res.data;
+  },
+
+  async unlike(id: string): Promise<{ liked: boolean; likeCount: number }> {
+    const res = await api.delete<{ liked: boolean; likeCount: number }>(`/published/${id}/like`);
+    return res.data;
+  },
 };

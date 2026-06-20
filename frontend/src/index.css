@@ -1950,9 +1950,11 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
   text-transform: uppercase; color: var(--ink-dim); margin: 0 0 1rem;
 }
 
+/* auto-fit so the cards fill the row width; transparent placeholders (home-card-ph)
+   pad the last row in JS so cards keep a constant width instead of stretching. */
 .browse-grid {
   display: grid; gap: 1.25rem;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .browse-skeleton {

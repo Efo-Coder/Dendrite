@@ -1,4 +1,4 @@
-import { Copy, Clock, Loader2 } from 'lucide-react';
+import { Copy, Clock, Loader2, Eye, Heart } from 'lucide-react';
 import { PublishedNote } from '../../types';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -77,6 +77,15 @@ const PublishedNoteCard = ({ pub, onOpen, onCopy, onOpenAuthor, copying }: Props
           <span>·</span>
           <span className="flex items-center gap-1">
             <Clock size={12} /> {pub.readingTime} min
+          </span>
+          <span>·</span>
+          <span className="flex items-center gap-2.5">
+            <span className="flex items-center gap-1">
+              <Eye size={12} /> {pub.viewCount}
+            </span>
+            <span className="flex items-center gap-1">
+              <Heart size={12} /> {pub.likeCount}
+            </span>
           </span>
         </div>
 

@@ -6,6 +6,8 @@ import {
   getMyPublication,
   listPublished,
   getPublishedById,
+  likeNote,
+  unlikeNote,
 } from '../controllers/published.controller';
 
 const router = Router();
@@ -18,5 +20,7 @@ router.get('/notes/:id/status', authenticateToken, getMyPublication);
 // Discovery (read-only). `/` and `/:id` stay after the `/notes/...` paths.
 router.get('/', authenticateToken, listPublished);
 router.get('/:id', authenticateToken, getPublishedById);
+router.post('/:id/like', authenticateToken, likeNote);
+router.delete('/:id/like', authenticateToken, unlikeNote);
 
 export default router;

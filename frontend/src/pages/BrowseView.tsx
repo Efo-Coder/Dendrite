@@ -6,6 +6,7 @@ import { Note, PublishedNote } from '../types';
 import { publishedService } from '../services/published.service';
 import { BROWSE_TOPICS } from '../lib/browseTopics';
 import { useLenisScroll } from '../hooks/useLenisScroll';
+import { useColumnCount } from '../hooks/useColumnCount';
 import { PAGE_FADE } from '../lib/pageMotion';
 import { usePublishedCopy } from '../components/browse/usePublishedCopy';
 import { MagicInput } from '../components/ui/MagicInput';
@@ -15,7 +16,8 @@ import PublishedNoteReader from '../components/browse/PublishedNoteReader';
 
 interface BrowseViewProps {
   onOpenInline: (note: Note) => void;
-  onOpenProfile: (userId: string) => void;
+  onOpenProfile: (userId: string, fromReaderId?: string) => void;
+  initialReadingId?: string | null;
 }
 
 const chipClass = (active: boolean) =>
@@ -24,7 +26,7 @@ const chipClass = (active: boolean) =>
     active ? 'border-(--accent) text-(--accent)' : 'border-(--line) text-(--ink-mid) hover:text-(--ink)',
   );
 
-const BrowseView = ({ onOpenInline, onOpenProfile }: BrowseViewProps) => {
+const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: BrowseViewProps) => {
   const [items, setItems] = useState<PublishedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(true);
@@ -33,11 +35,14 @@ const BrowseView = ({ onOpenInline, onOpenProfile }: BrowseViewProps) => {
   const [topic, setTopic] = useState<string | null>(null);
   const [days, setDays] = useState<number | undefined>(undefined);
   const [maxReadingTime, setMaxReadingTime] = useState<number | undefined>(undefined);
-  const [readingId, setReadingId] = useState<string | null>(null);
+  // Restores the reader when returning from a profile opened out of it.
+  const [readingId, setReadingId] = useState<string | null>(initialReadingId);
   const { copyingId, copy } = usePublishedCopy(onOpenInline);
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLElement>(null);
   useLenisScroll(scrollRef, contentRef);
+  const cols = useColumnCount(gridRef, 280, 20);
 
   // Debounce the search box so typing doesn't fire a request per keystroke.
   useEffect(() => {
@@ -57,6 +62,10 @@ const BrowseView = ({ onOpenInline, onOpenProfile }: BrowseViewProps) => {
       });
   }, [debouncedQ, topic, days, maxReadingTime]);
 
+  // Reflect a like toggled in the reader back onto its grid card (no reload).
+  const handleLikeChange = (likedId: string, liked: boolean, likeCount: number) =>
+    setItems((prev) => prev.map((p) => (p.id === likedId ? { ...p, isLiked: liked, likeCount } : p)));
+
   const filtering =
     debouncedQ !== '' || topic !== null || days !== undefined || maxReadingTime !== undefined;
 
@@ -70,7 +79,8 @@ const BrowseView = ({ onOpenInline, onOpenProfile }: BrowseViewProps) => {
             id={readingId}
             onBack={() => setReadingId(null)}
             onCopy={copy}
-            onOpenAuthor={onOpenProfile}
+            onOpenAuthor={(uid) => onOpenProfile(uid, readingId ?? undefined)}
+            onLikeChange={handleLikeChange}
             copying={copyingId !== null}
           />
         </motion.div>
@@ -135,7 +145,7 @@ const BrowseView = ({ onOpenInline, onOpenProfile }: BrowseViewProps) => {
                 />
               </div>
 
-              <section>
+              <section ref={gridRef}>
                 <p className="browse-section-title">{filtering ? 'Results' : 'Recently published'}</p>
                 {firstLoad ? (
                   <div className="browse-grid">
@@ -160,6 +170,9 @@ const BrowseView = ({ onOpenInline, onOpenProfile }: BrowseViewProps) => {
                         onOpenAuthor={() => onOpenProfile(pub.owner.id)}
                         copying={copyingId === pub.id}
                       />
+                    ))}
+                    {Array.from({ length: (cols - (items.length % cols)) % cols }, (_, i) => (
+                      <div key={`ph-${i}`} className="home-card-ph" aria-hidden />
                     ))}
                   </div>
                 )}

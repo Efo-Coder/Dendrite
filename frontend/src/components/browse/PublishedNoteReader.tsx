@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Copy, Loader2 } from 'lucide-react';
+import { ArrowLeft, Copy, Loader2, Heart } from 'lucide-react';
+import { motion } from 'motion/react';
+import clsx from 'clsx';
 import { PublishedNote } from '../../types';
 import { publishedService } from '../../services/published.service';
 import LexicalEditorWrapper from '../editor/LexicalEditorWrapper';
@@ -13,6 +15,7 @@ interface Props {
   onBack: () => void;
   onCopy: (pub: PublishedNote) => void;
   onOpenAuthor: (userId: string) => void;
+  onLikeChange?: (id: string, liked: boolean, likeCount: number) => void;
   copying?: boolean;
 }
 
@@ -22,9 +25,10 @@ const formatDate = (iso: string) =>
 // Read-only twin of the inline editor: same writing canvas (LexicalEditorWrapper
 // disabled, no collaboration/toolbar/panels), only a Back action in the topbar and
 // Copy in the footer. Lexical's HTML import drops scripts, so no extra sanitizing.
-const PublishedNoteReader = ({ id, onBack, onCopy, onOpenAuthor, copying }: Props) => {
+const PublishedNoteReader = ({ id, onBack, onCopy, onOpenAuthor, onLikeChange, copying }: Props) => {
   const [pub, setPub] = useState<PublishedNote | null>(null);
   const [loading, setLoading] = useState(true);
+  const [likeBusy, setLikeBusy] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -35,6 +39,29 @@ const PublishedNoteReader = ({ id, onBack, onCopy, onOpenAuthor, copying }: Prop
       .catch(() => toast.error('Could not load this note'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Optimistic like toggle, reconciled with the server's authoritative count.
+  const toggleLike = async () => {
+    if (!pub || likeBusy) return;
+    const next = !pub.isLiked;
+    const originalLiked = pub.isLiked ?? false;
+    const originalCount = pub.likeCount;
+    const optimisticCount = originalCount + (next ? 1 : -1);
+    setLikeBusy(true);
+    setPub((p) => (p ? { ...p, isLiked: next, likeCount: optimisticCount } : p));
+    onLikeChange?.(id, next, optimisticCount);
+    try {
+      const res = next ? await publishedService.like(id) : await publishedService.unlike(id);
+      setPub((p) => (p ? { ...p, isLiked: res.liked, likeCount: res.likeCount } : p));
+      onLikeChange?.(id, res.liked, res.likeCount);
+    } catch {
+      setPub((p) => (p ? { ...p, isLiked: originalLiked, likeCount: originalCount } : p));
+      onLikeChange?.(id, originalLiked, originalCount);
+      toast.error('Could not update like');
+    } finally {
+      setLikeBusy(false);
+    }
+  };
 
   const header = pub && (
     <>
@@ -57,6 +84,8 @@ const PublishedNoteReader = ({ id, onBack, onCopy, onOpenAuthor, copying }: Prop
         <span>{formatDate(pub.publishedAt)}</span>
         <span className="editor-sep">·</span>
         <span>{pub.readingTime} min read</span>
+        <span className="editor-sep">·</span>
+        <span>{pub.viewCount} views</span>
       </div>
       <h1 className="editor-title">{pub.title || 'Untitled'}</h1>
       {pub.description && (
@@ -80,13 +109,43 @@ const PublishedNoteReader = ({ id, onBack, onCopy, onOpenAuthor, copying }: Prop
     <div className="win">
       <div className="editor-panel">
         <div className="relative flex h-full flex-col bg-transparent">
-          <div className="editor-topbar relative flex h-14 shrink-0 items-center justify-end px-6">
-            <button
-              type="button"
-              onClick={onBack}
-              className="flex items-center gap-1.5 text-sm text-(--ink-mid) transition-colors hover:text-(--ink)"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to Browse
+          <div className="editor-topbar relative flex h-14 shrink-0 items-center justify-end gap-1 px-6">
+            {pub && (
+              <>
+                <button
+                  type="button"
+                  onClick={toggleLike}
+                  disabled={likeBusy}
+                  title={pub.isLiked ? 'Unlike' : 'Like'}
+                  className={clsx(
+                    'flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-(--surface-hi) disabled:opacity-50',
+                    pub.isLiked ? 'text-(--accent)' : 'text-(--ink-low) hover:text-(--ink)',
+                  )}
+                >
+                  <motion.span
+                    key={pub.isLiked ? 'liked' : 'unliked'}
+                    className="inline-flex"
+                    initial={{ scale: 0.7 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 16 }}
+                  >
+                    <Heart size={15} fill={pub.isLiked ? 'currentColor' : 'none'} />
+                  </motion.span>
+                  {pub.likeCount}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onCopy(pub)}
+                  disabled={copying}
+                  title="Copy to workspace"
+                  className="icon-btn-md disabled:opacity-50"
+                >
+                  {copying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+                </button>
+              </>
+            )}
+            <button type="button" onClick={onBack} title="Back to Browse" className="icon-btn-md">
+              <ArrowLeft className="h-4 w-4" />
             </button>
           </div>
 
@@ -95,28 +154,15 @@ const PublishedNoteReader = ({ id, onBack, onCopy, onOpenAuthor, copying }: Prop
               <Loader2 className="h-5 w-5 animate-spin text-(--ink-dim)" />
             </div>
           ) : (
-            <>
-              <div className="min-h-0 min-w-0 flex-1">
-                <LexicalEditorWrapper
-                  key={pub.id}
-                  content={pub.content ?? ''}
-                  onChange={() => {}}
-                  disabled
-                  headerSlot={header}
-                />
-              </div>
-              <div className="flex shrink-0 justify-center border-t border-(--line) py-4">
-                <button
-                  type="button"
-                  onClick={() => onCopy(pub)}
-                  disabled={copying}
-                  className="btn primary browse-copy-btn"
-                >
-                  {copying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
-                  Copy to workspace
-                </button>
-              </div>
-            </>
+            <div className="min-h-0 min-w-0 flex-1">
+              <LexicalEditorWrapper
+                key={pub.id}
+                content={pub.content ?? ''}
+                onChange={() => {}}
+                disabled
+                headerSlot={header}
+              />
+            </div>
           )}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNoteStore } from '../store/useNoteStore';
@@ -37,16 +37,37 @@ const DashboardPage = () => {
   const [folderId, setFolderId] = useState<string | undefined>();
   // The author whose public profile is shown.
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  // Where the profile's back button returns to (+ a Browse reader to restore).
+  const [profileReturn, setProfileReturn] = useState<{ view: AppView; readerId: string | null }>({
+    view: 'browse',
+    readerId: null,
+  });
+  const [browseInitialReader, setBrowseInitialReader] = useState<string | null>(null);
+  // Latest appView, so goProfile can capture where it was opened from.
+  const appViewRef = useRef(appView);
+  useEffect(() => {
+    appViewRef.current = appView;
+  }, [appView]);
 
   const goHome = useCallback(() => setAppView('home'), []);
   const goSpaces = useCallback(() => setAppView('spaces'), []);
   const goReflection = useCallback(() => setAppView('reflection'), []);
   const goConstellations = useCallback(() => setAppView('constellations'), []);
-  const goBrowse = useCallback(() => setAppView('browse'), []);
-  const goProfile = useCallback((id: string) => {
+  const goBrowse = useCallback(() => {
+    setBrowseInitialReader(null);
+    setAppView('browse');
+  }, []);
+  const goProfile = useCallback((id: string, fromReaderId?: string) => {
+    setProfileReturn({ view: appViewRef.current, readerId: fromReaderId ?? null });
     setProfileUserId(id);
     setAppView('profile');
   }, []);
+  // Back from a profile returns to wherever it was opened from (Browse list,
+  // a Browse reader, or Home), restoring the reader when applicable.
+  const profileBack = useCallback(() => {
+    setBrowseInitialReader(profileReturn.readerId);
+    setAppView(profileReturn.view);
+  }, [profileReturn]);
 
   // Each Home category opens its own full view (like Spaces).
   const [notesCategory, setNotesCategory] = useState<NoteCategory>('all');
@@ -140,13 +161,17 @@ const DashboardPage = () => {
                 <ConstellationsView onBack={goHome} onOpenNote={openNote} />
               </Suspense>
             ) : appView === 'browse' ? (
-              <BrowseView onOpenInline={openEditor} onOpenProfile={goProfile} />
+              <BrowseView
+                onOpenInline={openEditor}
+                onOpenProfile={goProfile}
+                initialReadingId={browseInitialReader}
+              />
             ) : appView === 'profile' && profileUserId ? (
               <ProfileView
                 userId={profileUserId}
                 onOpenInline={openEditor}
                 onOpenProfile={goProfile}
-                onBack={goBrowse}
+                onBack={profileBack}
               />
             ) : (
               <HomeView

@@ -5,6 +5,7 @@ import { Note, Profile, PublishedNote } from '../types';
 import { profileService } from '../services/profile.service';
 import { publishedService } from '../services/published.service';
 import { useLenisScroll } from '../hooks/useLenisScroll';
+import { useColumnCount } from '../hooks/useColumnCount';
 import { useToast } from '../components/ui/ToastContainer';
 import { PAGE_FADE } from '../lib/pageMotion';
 import { usePublishedCopy } from '../components/browse/usePublishedCopy';
@@ -18,7 +19,7 @@ const resolveAsset = (url: string) => (url.startsWith('http') ? url : `${API_URL
 interface ProfileViewProps {
   userId: string;
   onOpenInline: (note: Note) => void;
-  onOpenProfile: (userId: string) => void;
+  onOpenProfile: (userId: string, fromReaderId?: string) => void;
   onBack: () => void;
 }
 
@@ -37,7 +38,9 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
   const toast = useToast();
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLElement>(null);
   useLenisScroll(scrollRef, contentRef);
+  const cols = useColumnCount(gridRef, 280, 20);
 
   useEffect(() => {
     setLoading(true);
@@ -77,6 +80,10 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
     }
   };
 
+  // Reflect a like toggled in the reader back onto the profile's note card.
+  const handleLikeChange = (likedId: string, liked: boolean, likeCount: number) =>
+    setNotes((prev) => prev.map((p) => (p.id === likedId ? { ...p, isLiked: liked, likeCount } : p)));
+
   return (
     <AnimatePresence mode="wait">
       {readingId ? (
@@ -85,7 +92,8 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
             id={readingId}
             onBack={() => setReadingId(null)}
             onCopy={copy}
-            onOpenAuthor={onOpenProfile}
+            onOpenAuthor={(uid) => onOpenProfile(uid, readingId ?? undefined)}
+            onLikeChange={handleLikeChange}
             copying={copyingId !== null}
           />
         </motion.div>
@@ -94,7 +102,7 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
           <main ref={scrollRef} className="home-main">
             <div ref={contentRef} className="home-content">
               <div className="home-view-topbar">
-                <BackButton onClick={onBack} />
+                <BackButton onClick={onBack} label="Back" />
               </div>
 
               {loading || !profile ? (
@@ -160,7 +168,7 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
                     )}
                   </header>
 
-                  <section>
+                  <section ref={gridRef}>
                     <p className="browse-section-title">Published notes</p>
                     {notesLoading ? (
                       <div className="browse-grid">
@@ -181,6 +189,9 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
                             onOpenAuthor={() => onOpenProfile(pub.owner.id)}
                             copying={copyingId === pub.id}
                           />
+                        ))}
+                        {Array.from({ length: (cols - (notes.length % cols)) % cols }, (_, i) => (
+                          <div key={`ph-${i}`} className="home-card-ph" aria-hidden />
                         ))}
                       </div>
                     )}
