@@ -28,10 +28,22 @@ export const publishedService = {
     return res.data.publication;
   },
 
-  /** Published notes, paginated. Optionally filtered to a single author. */
-  async list(opts: { page?: number; limit?: number; author?: string } = {}): Promise<PublishedList> {
-    const { page = 1, limit = 20, author } = opts;
-    const res = await api.get<PublishedList>('/published', { params: { page, limit, author } });
+  /** Published notes, paginated. Optional author/search/topic/recency/length filters. */
+  async list(
+    opts: {
+      page?: number;
+      limit?: number;
+      author?: string;
+      q?: string;
+      topic?: string;
+      days?: number;
+      maxReadingTime?: number;
+    } = {},
+  ): Promise<PublishedList> {
+    const { page = 1, limit = 20, author, q, topic, days, maxReadingTime } = opts;
+    const res = await api.get<PublishedList>('/published', {
+      params: { page, limit, author, q, topic, days, maxReadingTime },
+    });
     return res.data;
   },
 

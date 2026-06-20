@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { stripHtml } from '../services/constellationText';
@@ -135,9 +136,30 @@ export const listPublished = async (req: AuthRequest, res: Response) => {
       Math.max(1, parseInt(String(req.query.limit ?? DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE),
     );
 
-    // Optional author filter — used by profiles and (later) the Following section.
+    // Filters: author (profiles/following), full-text q, topic, recency, reading time.
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
     const author = typeof req.query.author === 'string' ? req.query.author : undefined;
-    const where = { visibility: 'public', ...(author ? { ownerId: author } : {}) };
+    const topic = typeof req.query.topic === 'string' ? req.query.topic : undefined;
+    const days = parseInt(String(req.query.days ?? ''), 10);
+    const maxReadingTime = parseInt(String(req.query.maxReadingTime ?? ''), 10);
+
+    const where: Prisma.PublishedNoteWhereInput = { visibility: 'public' };
+    if (author) where.ownerId = author;
+    if (topic) where.topics = { has: topic };
+    if (Number.isFinite(days) && days > 0) {
+      where.publishedAt = { gte: new Date(Date.now() - days * 86_400_000) };
+    }
+    if (Number.isFinite(maxReadingTime) && maxReadingTime > 0) {
+      where.readingTime = { lte: maxReadingTime };
+    }
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { content: { contains: q, mode: 'insensitive' } },
+        { tags: { has: q } },
+        { owner: { name: { contains: q, mode: 'insensitive' } } },
+      ];
+    }
 
     const [items, total] = await Promise.all([
       prisma.publishedNote.findMany({
