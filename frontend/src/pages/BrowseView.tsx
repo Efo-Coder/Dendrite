@@ -13,6 +13,7 @@ import { MagicInput } from '../components/ui/MagicInput';
 import FilterDropdown from '../components/browse/FilterDropdown';
 import PublishedNoteCard from '../components/browse/PublishedNoteCard';
 import PublishedNoteReader from '../components/browse/PublishedNoteReader';
+import BrowseSection from '../components/browse/BrowseSection';
 
 interface BrowseViewProps {
   onOpenInline: (note: Note) => void;
@@ -37,12 +38,13 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
   const [maxReadingTime, setMaxReadingTime] = useState<number | undefined>(undefined);
   // Restores the reader when returning from a profile opened out of it.
   const [readingId, setReadingId] = useState<string | null>(initialReadingId);
+  // A like toggled in the reader, broadcast to the feed sections to keep cards in sync.
+  const [likeUpdate, setLikeUpdate] = useState<{ id: string; liked: boolean; likeCount: number } | null>(null);
   const { copyingId, copy } = usePublishedCopy(onOpenInline);
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<HTMLElement>(null);
   useLenisScroll(scrollRef, contentRef);
-  const cols = useColumnCount(gridRef, 280, 20);
+  const [gridRef, cols] = useColumnCount(280, 20);
 
   // Debounce the search box so typing doesn't fire a request per keystroke.
   useEffect(() => {
@@ -50,7 +52,12 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
     return () => clearTimeout(t);
   }, [query]);
 
+  const filtering =
+    debouncedQ !== '' || topic !== null || days !== undefined || maxReadingTime !== undefined;
+
+  // Flat results exist only for search/filter; the default view is the feed sections.
   useEffect(() => {
+    if (!filtering) return;
     setLoading(true);
     publishedService
       .list({ q: debouncedQ || undefined, topic: topic || undefined, days, maxReadingTime })
@@ -60,14 +67,14 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
         setLoading(false);
         setFirstLoad(false);
       });
-  }, [debouncedQ, topic, days, maxReadingTime]);
+  }, [filtering, debouncedQ, topic, days, maxReadingTime]);
 
-  // Reflect a like toggled in the reader back onto its grid card (no reload).
-  const handleLikeChange = (likedId: string, liked: boolean, likeCount: number) =>
+  // A like toggled in the reader: update the flat list and broadcast to the feed
+  // sections so every card showing this note stays in sync (no reload).
+  const handleLikeChange = (likedId: string, liked: boolean, likeCount: number) => {
+    setLikeUpdate({ id: likedId, liked, likeCount });
     setItems((prev) => prev.map((p) => (p.id === likedId ? { ...p, isLiked: liked, likeCount } : p)));
-
-  const filtering =
-    debouncedQ !== '' || topic !== null || days !== undefined || maxReadingTime !== undefined;
+  };
 
   // Same shared PAGE_FADE + mode="wait" as the app shell, so opening a note and
   // returning to the grid fades consistently instead of snapping.
@@ -145,38 +152,83 @@ const BrowseView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: Br
                 />
               </div>
 
-              <section ref={gridRef}>
-                <p className="browse-section-title">{filtering ? 'Results' : 'Recently published'}</p>
-                {firstLoad ? (
-                  <div className="browse-grid">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="browse-skeleton" />
-                    ))}
-                  </div>
-                ) : items.length === 0 ? (
-                  <p className="home-empty">
-                    {filtering ? 'Nothing matches your search.' : 'Nothing has been published yet.'}
-                  </p>
-                ) : (
-                  // Keep results visible while refetching; a gentle dim instead of a
-                  // skeleton flash on every keystroke.
-                  <div className={clsx('browse-grid transition-opacity duration-200', loading && 'opacity-50')}>
-                    {items.map((pub) => (
-                      <PublishedNoteCard
-                        key={pub.id}
-                        pub={pub}
-                        onOpen={() => setReadingId(pub.id)}
-                        onCopy={() => copy(pub)}
-                        onOpenAuthor={() => onOpenProfile(pub.owner.id)}
-                        copying={copyingId === pub.id}
-                      />
-                    ))}
-                    {Array.from({ length: (cols - (items.length % cols)) % cols }, (_, i) => (
-                      <div key={`ph-${i}`} className="home-card-ph" aria-hidden />
-                    ))}
-                  </div>
-                )}
-              </section>
+              {filtering ? (
+                <section ref={gridRef}>
+                  <p className="browse-section-title">Results</p>
+                  {firstLoad ? (
+                    <div className="browse-grid">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="browse-skeleton" />
+                      ))}
+                    </div>
+                  ) : items.length === 0 ? (
+                    <p className="home-empty">Nothing matches your search.</p>
+                  ) : (
+                    // Keep results visible while refetching; a gentle dim instead of a
+                    // skeleton flash on every keystroke.
+                    <div className={clsx('browse-grid transition-opacity duration-200', loading && 'opacity-50')}>
+                      {items.map((pub) => (
+                        <PublishedNoteCard
+                          key={pub.id}
+                          pub={pub}
+                          onOpen={() => setReadingId(pub.id)}
+                          onCopy={() => copy(pub)}
+                          onOpenAuthor={() => onOpenProfile(pub.owner.id)}
+                          copying={copyingId === pub.id}
+                        />
+                      ))}
+                      {Array.from({ length: (cols - (items.length % cols)) % cols }, (_, i) => (
+                        <div key={`ph-${i}`} className="home-card-ph" aria-hidden />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              ) : (
+                <>
+                  <BrowseSection
+                    title="Featured"
+                    feed="featured"
+                    large
+                    limit={3}
+                    copyingId={copyingId}
+                    likeUpdate={likeUpdate}
+                    onOpen={setReadingId}
+                    onCopy={copy}
+                    onOpenProfile={onOpenProfile}
+                  />
+                  <BrowseSection
+                    title="Trending"
+                    feed="trending"
+                    limit={8}
+                    copyingId={copyingId}
+                    likeUpdate={likeUpdate}
+                    onOpen={setReadingId}
+                    onCopy={copy}
+                    onOpenProfile={onOpenProfile}
+                  />
+                  <BrowseSection
+                    title="From people you follow"
+                    feed="following"
+                    limit={8}
+                    copyingId={copyingId}
+                    likeUpdate={likeUpdate}
+                    onOpen={setReadingId}
+                    onCopy={copy}
+                    onOpenProfile={onOpenProfile}
+                  />
+                  <BrowseSection
+                    title="Recently published"
+                    feed="recent"
+                    limit={12}
+                    emptyText="Nothing has been published yet."
+                    copyingId={copyingId}
+                    likeUpdate={likeUpdate}
+                    onOpen={setReadingId}
+                    onCopy={copy}
+                    onOpenProfile={onOpenProfile}
+                  />
+                </>
+              )}
             </div>
           </main>
         </motion.div>

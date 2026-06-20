@@ -1,26 +1,21 @@
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useState } from 'react';
 
-// How many grid columns currently fit in `ref`, so a partial last row can be
-// padded with transparent placeholders (keeps card width constant — no stretch).
-export function useColumnCount(
-  ref: RefObject<HTMLElement | null>,
-  minCardPx: number,
-  gapPx: number,
-): number {
+// Returns [ref, columns]: how many grid columns currently fit, so a partial last
+// row can be padded with transparent placeholders (cards keep a constant width).
+// Uses a callback ref so it still measures when the grid mounts after an async load.
+export function useColumnCount(minCardPx: number, gapPx: number) {
+  const [el, setEl] = useState<HTMLElement | null>(null);
   const [cols, setCols] = useState(1);
 
   useEffect(() => {
-    const el = ref.current;
     if (!el) return;
-    const measure = () => {
-      const w = el.clientWidth;
-      setCols(Math.max(1, Math.floor((w + gapPx) / (minCardPx + gapPx))));
-    };
+    const measure = () =>
+      setCols(Math.max(1, Math.floor((el.clientWidth + gapPx) / (minCardPx + gapPx))));
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [ref, minCardPx, gapPx]);
+  }, [el, minCardPx, gapPx]);
 
-  return cols;
+  return [setEl, cols] as const;
 }

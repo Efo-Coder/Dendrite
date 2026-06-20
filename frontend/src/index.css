@@ -1957,6 +1957,11 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
+/* Featured: fewer, wider cards for the lead section. */
+.browse-grid-lg {
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+}
+
 .browse-skeleton {
   height: 220px; border-radius: 1rem;
   background: color-mix(in srgb, var(--surface) 70%, transparent);

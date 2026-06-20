@@ -38,9 +38,8 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
   const toast = useToast();
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<HTMLElement>(null);
   useLenisScroll(scrollRef, contentRef);
-  const cols = useColumnCount(gridRef, 280, 20);
+  const [gridRef, cols] = useColumnCount(280, 20);
 
   useEffect(() => {
     setLoading(true);

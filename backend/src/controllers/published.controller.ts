@@ -42,6 +42,20 @@ function stringArray(value: unknown): string[] {
   return value.filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
 }
 
+// Attach the viewer's `isLiked` to a set of cards in one query (no N+1).
+async function attachLiked<T extends { id: string }>(
+  items: T[],
+  userId: string,
+): Promise<(T & { isLiked: boolean })[]> {
+  if (items.length === 0) return [];
+  const liked = await prisma.publishedNoteLike.findMany({
+    where: { userId, publishedNoteId: { in: items.map((i) => i.id) } },
+    select: { publishedNoteId: true },
+  });
+  const set = new Set(liked.map((l) => l.publishedNoteId));
+  return items.map((i) => ({ ...i, isLiked: set.has(i.id) }));
+}
+
 // ─── Owner operations ────────────────────────────────────────────────────────
 
 // Publish or update a publication. Snapshot (title/content/excerpt/readingTime) is
@@ -130,7 +144,10 @@ export const getMyPublication = async (req: AuthRequest, res: Response) => {
 
 // ─── Discovery (read-only) ───────────────────────────────────────────────────
 
-// Recently published, paginated. Foundation for trending/featured later.
+// Discovery list. `feed` chooses a section (trending/featured/following); otherwise
+// it's search + filters over the most recent notes.
+const TRENDING_WINDOW_DAYS = 7;
+
 export const listPublished = async (req: AuthRequest, res: Response) => {
   try {
     const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
@@ -138,8 +155,42 @@ export const listPublished = async (req: AuthRequest, res: Response) => {
       MAX_PAGE_SIZE,
       Math.max(1, parseInt(String(req.query.limit ?? DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE),
     );
+    const feed = typeof req.query.feed === 'string' ? req.query.feed : '';
 
-    // Filters: author (profiles/following), full-text q, topic, recency, reading time.
+    // Trending = velocity: most likes within the recent window (not all-time totals).
+    if (feed === 'trending') {
+      const since = new Date(Date.now() - TRENDING_WINDOW_DAYS * 86_400_000);
+      const grouped = await prisma.publishedNoteLike.groupBy({
+        by: ['publishedNoteId'],
+        where: { createdAt: { gte: since } },
+        _count: { publishedNoteId: true },
+        orderBy: { _count: { publishedNoteId: 'desc' } },
+        take: limit,
+      });
+      const ids = grouped.map((g) => g.publishedNoteId);
+      if (ids.length === 0) return res.json({ items: [], total: 0, page, limit });
+      const notes = await prisma.publishedNote.findMany({
+        where: { id: { in: ids }, visibility: 'public' },
+        select: cardSelect,
+      });
+      const byId = new Map(notes.map((n) => [n.id, n]));
+      const ordered = ids.map((id) => byId.get(id)).filter((n): n is (typeof notes)[number] => Boolean(n));
+      const items = await attachLiked(ordered, req.userId!);
+      return res.json({ items, total: items.length, page, limit });
+    }
+
+    // Following = notes by authors the viewer follows.
+    let followingIds: string[] | undefined;
+    if (feed === 'following') {
+      const follows = await prisma.follow.findMany({
+        where: { followerId: req.userId! },
+        select: { followingId: true },
+      });
+      followingIds = follows.map((f) => f.followingId);
+      if (followingIds.length === 0) return res.json({ items: [], total: 0, page, limit });
+    }
+
+    // Filters: author, full-text q, topic, recency, reading time.
     const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
     const author = typeof req.query.author === 'string' ? req.query.author : undefined;
     const topic = typeof req.query.topic === 'string' ? req.query.topic : undefined;
@@ -148,6 +199,7 @@ export const listPublished = async (req: AuthRequest, res: Response) => {
 
     const where: Prisma.PublishedNoteWhereInput = { visibility: 'public' };
     if (author) where.ownerId = author;
+    if (followingIds) where.ownerId = { in: followingIds };
     if (topic) where.topics = { has: topic };
     if (Number.isFinite(days) && days > 0) {
       where.publishedAt = { gte: new Date(Date.now() - days * 86_400_000) };
@@ -164,12 +216,13 @@ export const listPublished = async (req: AuthRequest, res: Response) => {
       ];
     }
 
+    // Featured = authority: most engaged overall (likes, then views).
     const orderBy: Prisma.PublishedNoteOrderByWithRelationInput[] =
-      req.query.sort === 'trending'
-        ? [{ likeCount: 'desc' }, { publishedAt: 'desc' }]
+      feed === 'featured'
+        ? [{ likeCount: 'desc' }, { viewCount: 'desc' }, { publishedAt: 'desc' }]
         : [{ publishedAt: 'desc' }];
 
-    const [items, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.publishedNote.findMany({
         where,
         select: cardSelect,
@@ -180,18 +233,8 @@ export const listPublished = async (req: AuthRequest, res: Response) => {
       prisma.publishedNote.count({ where }),
     ]);
 
-    // Mark which of these the viewer has liked — one extra query, no N+1.
-    const likedSet = new Set<string>();
-    if (items.length > 0) {
-      const liked = await prisma.publishedNoteLike.findMany({
-        where: { userId: req.userId!, publishedNoteId: { in: items.map((i) => i.id) } },
-        select: { publishedNoteId: true },
-      });
-      for (const l of liked) likedSet.add(l.publishedNoteId);
-    }
-    const withLiked = items.map((i) => ({ ...i, isLiked: likedSet.has(i.id) }));
-
-    return res.json({ items: withLiked, total, page, limit });
+    const items = await attachLiked(rows, req.userId!);
+    return res.json({ items, total, page, limit });
   } catch (error) {
     console.error('ListPublished error:', error);
     return res.status(500).json({ error: 'Failed to load published notes' });
