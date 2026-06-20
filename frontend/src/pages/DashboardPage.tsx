@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNoteStore } from '../store/useNoteStore';
+import { noteService } from '../services/note.service';
 import { Note } from '../types';
 import { PAGE_FADE } from '../lib/pageMotion';
 import AppSidebar from '../components/sidebar/AppSidebar';
@@ -13,7 +14,11 @@ import ReflectionView from './ReflectionView';
 import FolderView from './FolderView';
 import NotesView, { type NoteCategory } from './NotesView';
 
-type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder';
+// The constellations view pulls in three/R3F; load it only when opened so the
+// heavy WebGL bundle never weighs down the rest of the app.
+const ConstellationsView = lazy(() => import('./ConstellationsView'));
+
+type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder' | 'constellations';
 
 // Shell for authenticated users: the calm Home dashboard with its Spaces, category,
 // folder and inline-editor views, switched via AppSidebar and card clicks.
@@ -34,6 +39,7 @@ const DashboardPage = () => {
   const goHome = useCallback(() => setAppView('home'), []);
   const goSpaces = useCallback(() => setAppView('spaces'), []);
   const goReflection = useCallback(() => setAppView('reflection'), []);
+  const goConstellations = useCallback(() => setAppView('constellations'), []);
 
   // Each Home category opens its own full view (like Spaces).
   const [notesCategory, setNotesCategory] = useState<NoteCategory>('all');
@@ -57,10 +63,15 @@ const DashboardPage = () => {
     setAppView('editor');
   }, [setCurrentNote]);
 
-  // Cards & search hand over a note id — resolve it from the store and open inline.
+  // Cards, search and constellations hand over a note id — resolve it from the
+  // store, or fetch it directly when it isn't in the loaded list.
   const openNote = useCallback((id: string) => {
     const note = useNoteStore.getState().notes.find((n) => n.id === id);
-    if (note) openEditor(note);
+    if (note) {
+      openEditor(note);
+      return;
+    }
+    noteService.getNoteById(id).then(openEditor).catch(() => {});
   }, [openEditor]);
 
   // Follow currentNote while open (keeps pin/fav etc. fresh) but never clear it —
@@ -79,12 +90,18 @@ const DashboardPage = () => {
     <motion.div className="home-stage" {...PAGE_FADE}>
       <div className="home-shell">
         <AppSidebar
-          active={appView === 'spaces' ? 'spaces' : appView === 'reflection' ? 'reflection' : 'home'}
+          active={
+            appView === 'spaces' ? 'spaces'
+            : appView === 'reflection' ? 'reflection'
+            : appView === 'constellations' ? 'constellations'
+            : 'home'
+          }
           collapsed={appView === 'editor' && editorSidebarCollapsed}
           onHome={goHome}
           onSpaces={goSpaces}
           onThoughts={() => openCategory('all')}
           onReflection={goReflection}
+          onConstellations={goConstellations}
           onSearch={() => setSearchOpen(true)}
           user={user}
         />
@@ -110,6 +127,10 @@ const DashboardPage = () => {
               <FolderView folderId={folderId} onOpenInline={openEditor} onBack={goHome} />
             ) : appView === 'reflection' ? (
               <ReflectionView />
+            ) : appView === 'constellations' ? (
+              <Suspense fallback={<div className="constellations-stage" />}>
+                <ConstellationsView onBack={goHome} onOpenNote={openNote} />
+              </Suspense>
             ) : (
               <HomeView
                 onOpenNote={openNote}
