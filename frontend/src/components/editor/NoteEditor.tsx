@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { Note } from '../../types';
 import { useMagicHover } from '../../hooks/useMagicHover';
-import { getNoteTitle } from '../noteList/noteListUtils';
 import { useNoteStore } from '../../store/useNoteStore';
 import { useFolderStore } from '../../store/useFolderStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -522,7 +521,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         note={note}
       />
 
-      <Modal isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} title={getNoteTitle(note) || 'Note'}>
+      <Modal isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} title={note.title?.trim() || 'Note'}>
         <div className="text-base text-(--ink-mid)">
           <p className="flex items-start gap-2">
             <Info className="w-4 h-4 shrink-0 mt-1.5 text-(--accent)" />
