@@ -123,15 +123,15 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
 
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-(--ink-dim)">
                       <span>
-                        <span className="font-semibold text-(--ink)">{profile.publishedCount}</span> published
+                        <span className="font-medium text-(--ink-mid)">{profile.publishedCount}</span> published
                       </span>
                       <span>
-                        <span className="font-semibold text-(--ink)">{profile.followerCount}</span> followers
+                        <span className="font-medium text-(--ink-mid)">{profile.followerCount}</span> followers
                       </span>
                       <span>
-                        <span className="font-semibold text-(--ink)">{profile.followingCount}</span> following
+                        <span className="font-medium text-(--ink-mid)">{profile.followingCount}</span> following
                       </span>
-                      <span>· Joined {formatJoin(profile.createdAt)}</span>
+                      <span><span className="mr-6">·</span>Joined {formatJoin(profile.createdAt)}</span>
                     </div>
 
                     {!profile.isSelf && (
