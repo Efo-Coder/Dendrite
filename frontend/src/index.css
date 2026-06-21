@@ -95,7 +95,7 @@
   --surface:      oklch(0.21 0.010 60);
   --surface-hi:   oklch(0.26 0.012 60);
   --line:         oklch(0.30 0.008 60 / 0.5);
-  --line-soft:    oklch(0.30 0.008 60 / 0.22);
+  --line-soft:    oklch(0.42 0.008 60 / 0.22);
   --ink:          oklch(0.94 0.012 80);
   --ink-mid:      oklch(0.78 0.010 80);
   --ink-low:      oklch(0.58 0.010 80);
@@ -352,13 +352,13 @@
     transition: mask-position 0.7s ease-in-out, -webkit-mask-position 0.7s ease-in-out;
   }
   /* Non-active buttons fill on hover: gradient slides in, ink flips dark, glow fades up. */
-  .btn-ghost:not(.active):hover::before, .btn-ghost-icon:not(.active):hover::before,
-  .btn-ghost-cta:not(.active):hover::before, .btn-ghost-toggle:not(.active):hover::before {
+  .btn-ghost:not(.active):not(:disabled):hover::before, .btn-ghost-icon:not(.active):not(:disabled):hover::before,
+  .btn-ghost-cta:not(.active):not(:disabled):hover::before, .btn-ghost-toggle:not(.active):not(:disabled):hover::before {
     -webkit-mask-position: 100% 0%;
     mask-position: 100% 0%;
   }
-  .btn-ghost:not(.active):hover, .btn-ghost-icon:not(.active):hover,
-  .btn-ghost-cta:not(.active):hover, .btn-ghost-toggle:not(.active):hover {
+  .btn-ghost:not(.active):not(:disabled):hover, .btn-ghost-icon:not(.active):not(:disabled):hover,
+  .btn-ghost-cta:not(.active):not(:disabled):hover, .btn-ghost-toggle:not(.active):not(:disabled):hover {
     color: oklch(0.15 0.020 60);
     box-shadow: 0 4px 14px color-mix(in oklch, var(--accent) 25%, transparent);
     transition: color 0.7s ease-out, border-color 0.7s ease-out, box-shadow 0.3s ease-out 0.25s;
@@ -1254,10 +1254,7 @@ html .auth-panel .input {
 .modal-overlay .modal.folder-picker-modal { max-height: min(820px, calc(100dvh - 40px)); }
 
 /* Settings modal — wider, fixed height */
-.modal-overlay .modal.settings-modal { width: min(640px, 90%); height: 500px; max-height: min(500px, calc(100dvh - 80px)); }
-/* Profile modal — taller, non-scrolling body */
-.modal-overlay .modal.profile-modal { max-height: min(860px, calc(100dvh - 40px)); }
-.modal-overlay .modal.profile-modal .modal-body { overflow-y: visible; }
+.modal-overlay .modal.settings-modal { width: min(720px, 90%); height: 560px; max-height: min(560px, calc(100dvh - 80px)); }
 
 /* Settings two-column layout */
 .modal-overlay .settings-grid {
@@ -1278,7 +1275,7 @@ html .auth-panel .input {
   color: var(--ink); border-left-color: var(--accent);
   background: color-mix(in oklch, var(--accent) 10%, transparent);
 }
-.modal-overlay .settings-pane { padding: 11px 26px; overflow-y: auto; min-height: 0; }
+.modal-overlay .settings-pane { padding: 11px 26px; overflow-y: auto; min-height: 0; scrollbar-gutter: stable; }
 .modal-overlay .settings-pane.animated { animation: view-in .2s ease; }
 .modal-overlay .settings-row {
   display: flex; align-items: center; justify-content: space-between;
@@ -1288,7 +1285,20 @@ html .auth-panel .input {
 .modal-overlay .settings-row .lbl { font-family: var(--serif-display); font-size: 15px; color: var(--ink); }
 .modal-overlay .lbl small {
   display: block; font-family: var(--serif-body); font-size: 12.5px;
-  color: var(--ink-low); font-style: italic; margin-top: 3px;
+  color: var(--ink-low); margin-top: 3px;
+}
+
+/* 2FA manual setup key — click to copy, subtle hover */
+.modal-overlay .twofa-key {
+  font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em;
+  color: var(--ink-mid); background: var(--bg);
+  border: 0.5px solid var(--line); border-radius: 8px;
+  padding: 8px 14px; cursor: pointer; word-break: break-all;
+  text-align: center; max-width: 100%;
+  transition: color .2s ease, border-color .2s ease;
+}
+.modal-overlay .twofa-key:hover {
+  color: var(--ink); border-color: color-mix(in oklch, var(--accent) 45%, var(--line));
 }
 .modal-overlay .swatch-row { display: flex; gap: 8px; }
 .modal-overlay .swatch {
