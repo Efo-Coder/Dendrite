@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'motion/react';
 import { Share2, Download, Copy, Users } from 'lucide-react';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { canAccess, requiredPlan } from '../../lib/planFeatures';
@@ -16,6 +17,9 @@ interface NoteExportMenuProps {
   noteId: string;
   title: string;
   content: string;
+  // Exposes the menu's root element so the parent menu can exclude it from its
+  // outside-click (cascading submenu).
+  panelRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const NoteExportMenu = ({
@@ -26,10 +30,19 @@ const NoteExportMenu = ({
   noteId,
   title,
   content,
+  panelRef,
 }: NoteExportMenuProps) => {
   const { user } = useAuthStore();
   const toast = useToast();
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  // Merge the internal ref with an optional external panelRef.
+  const assignRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      menuRef.current = el;
+      if (panelRef) (panelRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    },
+    [panelRef]
+  );
   useMenuClamp(pos, menuRef);
 
   useEffect(() => {
@@ -92,66 +105,112 @@ const NoteExportMenu = ({
   if (!pos) return null;
 
   return createPortal(
-    <>
-      <div className="fixed inset-0" onClick={onClose} />
-      <div
-        ref={menuRef}
-        className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden"
-        style={{ left: pos.x, top: pos.y, minWidth: '220px' }}
+    <motion.div
+      ref={assignRef}
+      initial={{ opacity: 0, x: 16 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed glass-popup rounded-xl shadow-lg py-1 overflow-hidden z-4"
+      style={{ left: pos.x, top: pos.y, minWidth: '220px' }}
+    >
+      <button
+        onClick={() => {
+          onShareNote();
+          onClose();
+        }}
+        className="w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors hover:bg-(--surface-hi)"
       >
-        <button
-          onClick={() => { onShareNote(); onClose(); }}
-          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)"
-        >
-          <Users className="w-4 h-4 shrink-0 text-(--accent)" />
-          <span className="flex-1 text-left">
-            Share note
-            {hasActiveCollaborators && <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-(--accent) align-middle" />}
+        <Users className="w-4 h-4 shrink-0 text-(--accent)" />
+        <span className="flex-1 text-left">
+          Share note
+          {hasActiveCollaborators && (
+            <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-(--accent) align-middle" />
+          )}
+        </span>
+      </button>
+      <div />
+      {(() => {
+        const canMd = canAccess(user?.plan, 'markdownExport');
+        const canHtml = canAccess(user?.plan, 'htmlExport');
+        const canPdf = canAccess(user?.plan, 'pdfExport');
+        const canCopy = canAccess(user?.plan, 'copyMarkdown');
+        const badge = (feature: Parameters<typeof requiredPlan>[0]) => (
+          <span
+            style={{
+              fontSize: '9px',
+              fontFamily: 'var(--mono)',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase' as const,
+              color: 'var(--accent)',
+              opacity: 0.85,
+              background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+              padding: '0px 4px',
+              borderRadius: '3px',
+              marginLeft: 'auto',
+              boxShadow: '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)',
+            }}
+          >
+            {requiredPlan(feature)}
           </span>
-        </button>
-        <div className="my-1 mx-2 border-t border-[color-mix(in_srgb,var(--line)_50%,transparent)]" />
-        {(() => {
-          const canMd   = canAccess(user?.plan, 'markdownExport');
-          const canHtml = canAccess(user?.plan, 'htmlExport');
-          const canPdf  = canAccess(user?.plan, 'pdfExport');
-          const canCopy = canAccess(user?.plan, 'copyMarkdown');
-          const badge = (feature: Parameters<typeof requiredPlan>[0]) => (
-            <span style={{ fontSize: '9px', fontFamily: 'var(--mono)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--accent)', opacity: 0.85, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '1px 4px', borderRadius: '3px', marginLeft: 'auto', boxShadow: '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)' }}>
-              {requiredPlan(feature)}
-            </span>
-          );
-          return (
-            <>
-              <button onClick={canMd ? handleExportMarkdown : undefined} disabled={!canMd} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canMd ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
-                <Download className={`w-4 h-4 shrink-0${!canMd ? ' opacity-40' : ''}`} />
-                <span className={`flex-1 text-left${!canMd ? ' opacity-40' : ''}`}>Export as Markdown</span>
-                {!canMd && badge('markdownExport')}
-              </button>
-              <button onClick={canHtml ? handleExportHtml : undefined} disabled={!canHtml} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canHtml ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
-                <Download className={`w-4 h-4 shrink-0${!canHtml ? ' opacity-40' : ''}`} />
-                <span className={`flex-1 text-left${!canHtml ? ' opacity-40' : ''}`}>Export as HTML</span>
-                {!canHtml && badge('htmlExport')}
-              </button>
-              <button onClick={canPdf ? handleExportPdf : undefined} disabled={!canPdf} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canPdf ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
-                <Download className={`w-4 h-4 shrink-0${!canPdf ? ' opacity-40' : ''}`} />
-                <span className={`flex-1 text-left${!canPdf ? ' opacity-40' : ''}`}>Export as PDF</span>
-                {!canPdf && badge('pdfExport')}
-              </button>
-              <div className="my-1 mx-2 border-t border-[color-mix(in_srgb,var(--line)_50%,transparent)]" />
-              <button onClick={canCopy ? handleCopyMarkdown : undefined} disabled={!canCopy} className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors${canCopy ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}>
-                <Copy className={`w-4 h-4 shrink-0${!canCopy ? ' opacity-40' : ''}`} />
-                <span className={`flex-1 text-left${!canCopy ? ' opacity-40' : ''}`}>Copy Markdown</span>
-                {!canCopy && badge('copyMarkdown')}
-              </button>
-            </>
-          );
-        })()}
-        <button onClick={handleShare} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-(--surface-hi)">
-          <Share2 className="w-4 h-4 shrink-0" />
-          <span className="flex-1 text-left">Share</span>
-        </button>
-      </div>
-    </>,
+        );
+
+        return (
+          <>
+            <button
+              onClick={canMd ? handleExportMarkdown : undefined}
+              disabled={!canMd}
+              className={`w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors${canMd ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}
+            >
+              <Download className={`w-4 h-4 shrink-0${!canMd ? ' opacity-40' : ''}`} />
+              <span className={`flex-1 text-left${!canMd ? ' opacity-40' : ''}`}>
+                Export as Markdown
+              </span>
+              {!canMd && badge('markdownExport')}
+            </button>
+            <button
+              onClick={canHtml ? handleExportHtml : undefined}
+              disabled={!canHtml}
+              className={`w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors${canHtml ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}
+            >
+              <Download className={`w-4 h-4 shrink-0${!canHtml ? ' opacity-40' : ''}`} />
+              <span className={`flex-1 text-left${!canHtml ? ' opacity-40' : ''}`}>
+                Export as HTML
+              </span>
+              {!canHtml && badge('htmlExport')}
+            </button>
+            <button
+              onClick={canPdf ? handleExportPdf : undefined}
+              disabled={!canPdf}
+              className={`w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors${canPdf ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}
+            >
+              <Download className={`w-4 h-4 shrink-0${!canPdf ? ' opacity-40' : ''}`} />
+              <span className={`flex-1 text-left${!canPdf ? ' opacity-40' : ''}`}>
+                Export as PDF
+              </span>
+              {!canPdf && badge('pdfExport')}
+            </button>
+            <button
+              onClick={canCopy ? handleCopyMarkdown : undefined}
+              disabled={!canCopy}
+              className={`w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors${canCopy ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}
+            >
+              <Copy className={`w-4 h-4 shrink-0${!canCopy ? ' opacity-40' : ''}`} />
+              <span className={`flex-1 text-left${!canCopy ? ' opacity-40' : ''}`}>
+                Copy Markdown
+              </span>
+              {!canCopy && badge('copyMarkdown')}
+            </button>
+          </>
+        );
+      })()}
+      <button
+        onClick={handleShare}
+        className="w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors hover:bg-(--surface-hi)"
+      >
+        <Share2 className="w-4 h-4 shrink-0" />
+        <span className="flex-1 text-left">Share</span>
+      </button>
+    </motion.div>,
     getModalPortalRoot()
   );
 };

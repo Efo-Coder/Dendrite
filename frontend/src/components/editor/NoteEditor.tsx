@@ -75,6 +75,8 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const [exportMenuPos, setExportMenuPos] = useState<MenuPos | null>(null);
   const [moreMenu, setMoreMenu] = useState<{ x: number; y: number } | null>(null);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   const rightGroupRef = useRef<HTMLDivElement>(null);
   const { onItemEnter: onRightEnter, onItemLeave: onRightLeave, Indicator: RightIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: rightGroupRef });
@@ -222,13 +224,17 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     setFolderMenuPos(prev => prev ? null : { x: rect.left, y: rect.bottom + 4, anchorTop: rect.top });
   };
 
-  // Opened from the More menu — anchored to the More button.
-  const openExportFromMore = () => {
-    const el = moreBtnRef.current;
+  // Toggled from the More menu — cascades to the left of the More popup, its right
+  // edge anchored to the popup's left edge (top-aligned with it).
+  const toggleExportFromMore = () => {
+    if (exportMenuPos) { setExportMenuPos(null); return; }
+    const el = moreMenuRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
+    const SHARE_WIDTH = 220;
+    const GAP = 12;
     setFolderMenuPos(null);
-    setExportMenuPos({ x: rect.right - 220, y: rect.bottom + 4, anchorTop: rect.top });
+    setExportMenuPos({ x: rect.left - GAP - SHARE_WIDTH, y: rect.top, anchorTop: rect.top });
   };
 
   const isInTrash = note.isDeleted;
@@ -261,7 +267,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
       { icon: <Globe className="w-4 h-4" />, label: 'Publish', onClick: () => setShowPublishModal(true) },
     ] : []),
     ...(!isInTrash ? [
-      { icon: <Share2 className="w-4 h-4" />, label: 'Share / Export', onClick: openExportFromMore },
+      { icon: <Share2 className="w-4 h-4" />, label: 'Share / Export', onClick: toggleExportFromMore, keepOpen: true },
     ] : []),
     { icon: <Trash2 className="w-4 h-4" />, label: isInTrash ? 'Delete permanently' : 'Delete', onClick: handleDelete, variant: 'danger' },
   ];
@@ -361,7 +367,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                   type="button"
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
-                    setMoreMenu(moreMenu ? null : { x: rect.left, y: rect.bottom + 4 });
+                    setMoreMenu(moreMenu ? null : { x: rect.right, y: rect.bottom + 8 });
                   }}
                   onMouseEnter={onRightEnter} onMouseLeave={onRightLeave}
                   className={clsx('icon-btn-md rounded-lg transition-colors', moreMenu && 'text-(--accent)')}
@@ -484,20 +490,26 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
       <NoteExportMenu
         pos={exportMenuPos}
-        onClose={() => setExportMenuPos(null)}
+        onClose={() => { setExportMenuPos(null); setMoreMenu(null); }}
         onShareNote={() => setShowInviteModal(true)}
         hasActiveCollaborators={collaborators.some(c => c.status === 'accepted')}
         noteId={note.id}
         title={title}
         content={content}
+        panelRef={exportMenuRef}
       />
 
       <ContextMenu
         isOpen={!!moreMenu}
         position={moreMenu ?? { x: 0, y: 0 }}
-        onClose={() => setMoreMenu(null)}
+        onClose={() => { setMoreMenu(null); setExportMenuPos(null); }}
         items={moreItems}
         minWidth="200px"
+        align="right"
+        triggerRef={moreBtnRef}
+        ignoreRef={exportMenuRef}
+        panelRef={moreMenuRef}
+        className="z-5"
       />
 
       <InviteCollaboratorModal
