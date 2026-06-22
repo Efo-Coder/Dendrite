@@ -3,17 +3,22 @@ import { Upload, X, Image } from 'lucide-react';
 import Modal from './Modal';
 import { MagicInput } from '../ui/MagicInput';
 import { attachmentService } from '../../services/attachment.service';
+import { COVER_PRESETS } from '../../config/coverPresets';
 import clsx from 'clsx';
 
 interface ImageInsertModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInsert: (src: string, altText?: string) => void;
+  // Adds a "Presets" tab with the bundled cover images (used by the cover picker).
+  showPresets?: boolean;
 }
 
-const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) => {
+type ImageMode = 'presets' | 'url' | 'upload';
+
+const ImageInsertModal = ({ isOpen, onClose, onInsert, showPresets = false }: ImageInsertModalProps) => {
   const [imageUrl, setImageUrl] = useState('');
-  const [imageMode, setImageMode] = useState<'url' | 'upload'>('url');
+  const [imageMode, setImageMode] = useState<ImageMode>(showPresets ? 'presets' : 'url');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -21,7 +26,7 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
   const prevHeightRef = useRef<number>(0);
   const transitionEndRef = useRef<(() => void) | null>(null);
 
-  const handleModeChange = (mode: 'url' | 'upload') => {
+  const handleModeChange = (mode: ImageMode) => {
     if (contentRef.current) {
       prevHeightRef.current = contentRef.current.offsetHeight;
     }
@@ -63,10 +68,10 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
   useEffect(() => {
     if (!isOpen) {
       setImageUrl('');
-      setImageMode('url');
+      setImageMode(showPresets ? 'presets' : 'url');
       setSelectedFile(null);
     }
-  }, [isOpen]);
+  }, [isOpen, showPresets]);
 
   const handleClose = () => {
     if (isUploading) return;
@@ -79,6 +84,11 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
     if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
     if (file.size > 10 * 1024 * 1024) { alert('The file is too large. Maximum size: 10 MB'); return; }
     setSelectedFile(file);
+  };
+
+  const handlePresetSelect = (src: string) => {
+    onInsert(src);
+    onClose();
   };
 
   const handleSubmit = async () => {
@@ -108,15 +118,15 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
       isOpen={isOpen}
       onClose={handleClose}
       title="Add image"
-      showFooter
+      showFooter={imageMode !== 'presets'}
       confirmLabel="Add"
       onConfirm={handleSubmit}
       confirmDisabled={isUploading || (imageMode === 'url' && !imageUrl.trim()) || (imageMode === 'upload' && !selectedFile)}
       isConfirming={isUploading}
     >
       <div ref={contentRef}>
-      <div className="grid grid-cols-2 -mt-2 mb-5">
-        {(['url', 'upload'] as const).map((mode) => (
+      <div className={clsx('grid -mt-2 mb-5', showPresets ? 'grid-cols-3' : 'grid-cols-2')}>
+        {(showPresets ? (['presets', 'url', 'upload'] as const) : (['url', 'upload'] as const)).map((mode) => (
           <div key={mode} className="flex justify-center">
             <button
               onClick={() => handleModeChange(mode)}
@@ -126,11 +136,27 @@ const ImageInsertModal = ({ isOpen, onClose, onInsert }: ImageInsertModalProps) 
                 imageMode === mode ? 'text-(--accent)' : 'text-(--ink-mid)',
               )}
             >
-              <span className="nav-underline">{mode === 'url' ? 'URL' : 'Upload'}</span>
+              <span className="nav-underline">{mode === 'url' ? 'URL' : mode === 'upload' ? 'Upload' : 'Presets'}</span>
             </button>
           </div>
         ))}
       </div>
+
+      {imageMode === 'presets' && (
+        <div className="mb-5 grid grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1">
+          {COVER_PRESETS.map((preset) => (
+            <button
+              key={preset.src}
+              type="button"
+              onClick={() => handlePresetSelect(preset.src)}
+              title={preset.label}
+              aria-label={preset.label}
+              className="aspect-4/3 rounded-lg bg-cover bg-center border border-(--line) hover:border-(--accent) transition-colors"
+              style={{ backgroundImage: `url(${preset.src})` }}
+            />
+          ))}
+        </div>
+      )}
 
       {imageMode === 'url' && (
         <div className="mb-5">

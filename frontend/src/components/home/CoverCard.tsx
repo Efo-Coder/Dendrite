@@ -1,7 +1,10 @@
 import { ImagePlus } from 'lucide-react';
+import { useRename } from './RenameContext';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
-const resolveUrl = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
+// Bundled presets live under /img on the frontend origin; only backend uploads get the API prefix.
+const resolveUrl = (url: string) =>
+  url.startsWith('http') || url.startsWith('/img/') ? url : `${API_URL}${url}`;
 
 // Deterministic warm gradient when a card has no cover image yet.
 function fallbackCover(seed: string): string {
@@ -21,27 +24,35 @@ interface CoverCardProps {
   onClick: () => void;
   onSetCover?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
+  // Position in its grid — drives the staggered entrance (--enter-i).
+  index?: number;
+  // Set while the card is being removed — plays the exit animation.
+  leaving?: boolean;
   // Drag-to-reorder wiring (optional — only set on draggable sections).
   flipId?: string;
   dragging?: boolean;
   onPointerDown?: (e: React.PointerEvent) => void;
 }
 
-const CoverCard = ({ title, subtitle, cover, seed, compact, onClick, onSetCover, onContextMenu, flipId, dragging, onPointerDown }: CoverCardProps) => {
+const CoverCard = ({ title, subtitle, cover, seed, compact, index, leaving, onClick, onSetCover, onContextMenu, flipId, dragging, onPointerDown }: CoverCardProps) => {
+  const rename = useRename();
+  const editing = flipId != null && rename.editingId === flipId;
   const style = cover
     ? { backgroundImage: `url(${resolveUrl(cover)})` }
     : { backgroundImage: fallbackCover(seed) };
   // Not a <button> so the cover-edit button can nest inside (no nested buttons).
   return (
     <div
-      className={`${compact ? 'home-card compact' : 'home-card'}${dragging ? ' dragging' : ''}`}
+      className={`${compact ? 'home-card compact' : 'home-card'}${dragging ? ' dragging' : ''}${leaving ? ' leaving' : ''}`}
+      style={{ ['--enter-i']: index ?? 0 } as React.CSSProperties}
       role="button"
       tabIndex={0}
       data-flip-id={flipId}
-      onPointerDown={onPointerDown}
-      onClick={onClick}
+      // While renaming the title input owns all interaction — no open, no drag.
+      onPointerDown={editing ? undefined : onPointerDown}
+      onClick={editing ? undefined : onClick}
       onContextMenu={onContextMenu}
-      onKeyDown={(e) => {
+      onKeyDown={editing ? undefined : (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onClick();
@@ -61,7 +72,24 @@ const CoverCard = ({ title, subtitle, cover, seed, compact, onClick, onSetCover,
         </button>
       )}
       <span className="home-card-text">
-        <span className="home-card-title">{title}</span>
+        {editing ? (
+          <input
+            className="home-card-title-input"
+            defaultValue={title}
+            autoFocus
+            onFocus={(e) => e.currentTarget.select()}
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Enter') { e.preventDefault(); rename.commit(e.currentTarget.value); }
+              else if (e.key === 'Escape') { e.preventDefault(); rename.cancel(); }
+            }}
+            onBlur={(e) => rename.commit(e.currentTarget.value)}
+          />
+        ) : (
+          <span className="home-card-title">{title}</span>
+        )}
         {subtitle && <span className="home-card-sub">{subtitle}</span>}
       </span>
     </div>

@@ -6,6 +6,7 @@ import {
   updateFolder,
   deleteFolder,
   reorderFolders,
+  togglePinFolder,
 } from '../controllers/folder.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
@@ -18,6 +19,7 @@ router.post('/reorder', reorderFolders);
 router.get('/:id', getFolderById);
 router.post('/', createFolder);
 router.put('/:id', updateFolder);
+router.patch('/:id/pin', togglePinFolder);
 router.delete('/:id', deleteFolder);
 
 export default router;

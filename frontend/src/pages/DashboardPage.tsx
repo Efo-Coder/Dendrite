@@ -5,13 +5,16 @@ import { useNoteStore } from '../store/useNoteStore';
 import { noteService } from '../services/note.service';
 import { Note } from '../types';
 import { PAGE_FADE } from '../lib/pageMotion';
+import { loadNav, saveNav, markNavigated } from '../lib/viewState';
+import { RenameProvider } from '../components/home/RenameContext';
 import AppSidebar from '../components/sidebar/AppSidebar';
-import WorkspaceView from './WorkspaceView';
+import EditorOverlay from './EditorOverlay';
 import HomeView from './HomeView';
 import SpacesView from './SpacesView';
 import ReflectionView from './ReflectionView';
-import FolderView from './FolderView';
+import ContainerView from './ContainerView';
 import NotesView, { type NoteCategory } from './NotesView';
+import { Folder } from '../types';
 import ExploreView from './ExploreView';
 import ProfileView from './ProfileView';
 
@@ -19,7 +22,15 @@ import ProfileView from './ProfileView';
 // heavy WebGL bundle never weighs down the rest of the app.
 const ConstellationsView = lazy(() => import('./ConstellationsView'));
 
-type AppView = 'home' | 'spaces' | 'reflection' | 'editor' | 'notes' | 'folder' | 'constellations' | 'explore' | 'profile';
+// The editor is not a view here — it renders as an overlay above the current view
+// (so closing it reveals exactly where you were, scroll and all).
+type AppView = 'home' | 'spaces' | 'reflection' | 'notes' | 'container' | 'constellations' | 'explore' | 'profile';
+
+interface ContainerRef {
+  kind: 'space' | 'folder';
+  id: string;
+  name: string;
+}
 
 // Shell for authenticated users: the calm Home dashboard with its Spaces, category,
 // folder and inline-editor views, switched via AppSidebar and card clicks.
@@ -27,36 +38,47 @@ const DashboardPage = () => {
   const user = useAuthStore((s) => s.user);
   const currentNote = useNoteStore((s) => s.currentNote);
   const setCurrentNote = useNoteStore((s) => s.setCurrentNote);
-  const [appView, setAppView] = useState<AppView>('home');
+  // Restore the last view/drill-path/open-note from the previous page load.
+  const [persisted] = useState(loadNav);
+  const [appView, setAppView] = useState<AppView>((persisted?.appView as AppView) ?? 'home');
   // Only the inline editor may hide the Home sidebar; reset whenever it opens.
   const [editorSidebarCollapsed, setEditorSidebarCollapsed] = useState(false);
-  // Editor's note, kept separate from currentNote so it stays mounted through the
-  // closing transition (currentNote clears one render before appView switches).
+  // The note shown in the editor overlay; origin is the rect it grows from, and
+  // editorClosing drives the shrink-back morph before it actually unmounts.
   const [editorNote, setEditorNote] = useState<Note | null>(null);
-  // The space whose notes the folder view shows.
-  const [folderId, setFolderId] = useState<string | undefined>();
+  const [editorOrigin, setEditorOrigin] = useState<DOMRect | null>(null);
+  const [editorClosing, setEditorClosing] = useState(false);
+  // Bumped when the editor closes so the local-list views refetch (a just-created
+  // note then appears, and edits reflect).
+  const [refreshSignal, setRefreshSignal] = useState(0);
+  // Drill-down stack for spaces → folders → subfolders; the last entry is shown.
+  const [containerStack, setContainerStack] = useState<ContainerRef[]>(persisted?.stack ?? []);
+  // Where the back button returns once the drill-down is fully popped.
+  const [containerReturn, setContainerReturn] = useState<AppView>((persisted?.containerReturn as AppView) ?? 'home');
   // The author whose public profile is shown.
-  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(persisted?.profileUserId ?? null);
   // Where the profile's back button returns to (+ an Explore reader to restore).
   const [profileReturn, setProfileReturn] = useState<{ view: AppView; readerId: string | null }>({
     view: 'explore',
     readerId: null,
   });
   const [exploreInitialReader, setExploreInitialReader] = useState<string | null>(null);
-  // Latest appView, so goProfile can capture where it was opened from.
+
   const appViewRef = useRef(appView);
   useEffect(() => {
     appViewRef.current = appView;
   }, [appView]);
 
-  const goHome = useCallback(() => setAppView('home'), []);
-  const goSpaces = useCallback(() => setAppView('spaces'), []);
-  const goReflection = useCallback(() => setAppView('reflection'), []);
-  const goConstellations = useCallback(() => setAppView('constellations'), []);
+  // Sidebar navigation also dismisses an open editor overlay (it sits above the view).
+  const goHome = useCallback(() => { setCurrentNote(null); setAppView('home'); }, [setCurrentNote]);
+  const goSpaces = useCallback(() => { setCurrentNote(null); setAppView('spaces'); }, [setCurrentNote]);
+  const goReflection = useCallback(() => { setCurrentNote(null); setAppView('reflection'); }, [setCurrentNote]);
+  const goConstellations = useCallback(() => { setCurrentNote(null); setAppView('constellations'); }, [setCurrentNote]);
   const goExplore = useCallback(() => {
+    setCurrentNote(null);
     setExploreInitialReader(null);
     setAppView('explore');
-  }, []);
+  }, [setCurrentNote]);
   const goProfile = useCallback((id: string, fromReaderId?: string) => {
     setProfileReturn({ view: appViewRef.current, readerId: fromReaderId ?? null });
     setProfileUserId(id);
@@ -70,25 +92,45 @@ const DashboardPage = () => {
   }, [profileReturn]);
 
   // Each Home category opens its own full view (like Spaces).
-  const [notesCategory, setNotesCategory] = useState<NoteCategory>('all');
+  const [notesCategory, setNotesCategory] = useState<NoteCategory>((persisted?.category as NoteCategory) ?? 'all');
   const openCategory = useCallback((cat: NoteCategory) => {
     setNotesCategory(cat);
     setAppView('notes');
   }, []);
 
-  // A space card opens that folder's notes in its own view.
-  const openSpace = useCallback((id: string) => {
-    setFolderId(id);
-    setAppView('folder');
+  // A space card opens that space (its folders + notes); folder cards drill deeper.
+  const openSpace = useCallback((id: string, name: string) => {
+    setContainerReturn(appViewRef.current === 'spaces' ? 'spaces' : 'home');
+    setContainerStack([{ kind: 'space', id, name }]);
+    setAppView('container');
   }, []);
+  const openFolder = useCallback((folder: Folder) => {
+    setContainerStack((prev) => [...prev, { kind: 'folder', id: folder.id, name: folder.name }]);
+    setAppView('container');
+  }, []);
+  // Where back goes: the parent container's name, else the root return (Home/Spaces).
+  const containerBackLabel =
+    containerStack.length > 1
+      ? containerStack[containerStack.length - 2].name
+      : containerReturn === 'spaces' ? 'Spaces' : 'Home';
+  // Back goes up one level; once the stack holds only the space, leave the drill-down.
+  const containerBack = useCallback(() => {
+    setContainerStack((prev) => {
+      if (prev.length > 1) return prev.slice(0, -1);
+      setAppView(containerReturn);
+      return prev;
+    });
+  }, [containerReturn]);
 
-  // Inline editor lives inside the Home shell (beside AppSidebar); a created or
-  // opened note shows here. currentNote is the single source.
-  const openEditor = useCallback((note: Note) => {
+  // The inline editor opens as an overlay above the current view; it grows from the
+  // origin rect (the clicked card, found by id, or an explicit rect for new notes).
+  const openEditor = useCallback((note: Note, originRect?: DOMRect) => {
+    const origin = originRect ?? document.querySelector(`[data-flip-id="${note.id}"]`)?.getBoundingClientRect() ?? null;
+    setEditorOrigin(origin);
+    setEditorClosing(false);
     setEditorNote(note);
     setCurrentNote(note);
     setEditorSidebarCollapsed(false);
-    setAppView('editor');
   }, [setCurrentNote]);
 
   // Cards and constellations hand over a note id — resolve it from the
@@ -99,33 +141,59 @@ const DashboardPage = () => {
       openEditor(note);
       return;
     }
-    noteService.getNoteById(id).then(openEditor).catch(() => {});
+    noteService.getNoteById(id).then((n) => openEditor(n)).catch(() => {});
   }, [openEditor]);
 
-  // Follow currentNote while open (keeps pin/fav etc. fresh) but never clear it —
-  // on close the editor must stay rendered to play its fade-out.
+  // Keep the overlay's note fresh while open (pin/fav/title edits).
   useEffect(() => {
     if (currentNote) setEditorNote(currentNote);
   }, [currentNote]);
 
-  // The editor closes itself via setCurrentNote(null) (X / move-to-trash);
-  // fall back to Home when that happens.
+  // Editor closed itself (X / move-to-trash) → play the shrink-back morph.
   useEffect(() => {
-    if (appView === 'editor' && !currentNote) setAppView('home');
-  }, [appView, currentNote]);
+    if (!currentNote && editorNote) setEditorClosing(true);
+  }, [currentNote, editorNote]);
+
+  const handleEditorClosed = useCallback(() => {
+    setEditorNote(null);
+    setEditorOrigin(null);
+    setEditorClosing(false);
+    setRefreshSignal((n) => n + 1);
+  }, []);
+
+  // Reopen the note that was open before a reload (no origin → fades in).
+  useEffect(() => {
+    const id = persisted?.openNoteId;
+    if (!id) return;
+    noteService.getNoteById(id).then((n) => { setEditorNote(n); setCurrentNote(n); }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist the nav state for the next reload; the first change away from the
+  // initial state counts as an in-app navigation (stops scroll-restoring). The open
+  // note isn't part of the signature, so opening/closing it doesn't disable restore.
+  const openNoteId = currentNote?.id ?? null;
+  const initialSig = useRef<string | null>(null);
+  useEffect(() => {
+    const sig = JSON.stringify({ appView, category: notesCategory, stack: containerStack, containerReturn, profileUserId });
+    saveNav({ appView, category: notesCategory, stack: containerStack, containerReturn, profileUserId, openNoteId });
+    if (initialSig.current === null) initialSig.current = sig;
+    else if (sig !== initialSig.current) markNavigated();
+  }, [appView, notesCategory, containerStack, containerReturn, profileUserId, openNoteId]);
 
   return (
     <motion.div className="home-stage" {...PAGE_FADE}>
+      <RenameProvider>
       <div className="home-shell">
         <AppSidebar
           active={
-            appView === 'spaces' ? 'spaces'
+            appView === 'spaces' || appView === 'container' ? 'spaces'
             : appView === 'reflection' ? 'reflection'
             : appView === 'constellations' ? 'constellations'
             : appView === 'explore' || appView === 'profile' ? 'explore'
             : 'home'
           }
-          collapsed={appView === 'editor' && editorSidebarCollapsed}
+          collapsed={!!editorNote && editorSidebarCollapsed}
           onHome={goHome}
           onSpaces={goSpaces}
           onReflection={goReflection}
@@ -133,54 +201,75 @@ const DashboardPage = () => {
           onExplore={goExplore}
           user={user}
         />
-        {/* mode="wait" + one shared PAGE_FADE → every switch fades out, then in, identically. */}
-        <AnimatePresence mode="wait">
-          <motion.div key={appView} className="home-page" {...PAGE_FADE}>
-            {appView === 'editor' && editorNote ? (
-              <WorkspaceView
-                note={editorNote}
-                onToggleSidebar={() => setEditorSidebarCollapsed((v) => !v)}
-                sidebarCollapsed={editorSidebarCollapsed}
-              />
-            ) : appView === 'spaces' ? (
-              <SpacesView onOpenSpace={openSpace} onBack={goHome} />
-            ) : appView === 'notes' ? (
-              <NotesView category={notesCategory} onOpenInline={openEditor} onBack={goHome} />
-            ) : appView === 'folder' && folderId ? (
-              <FolderView folderId={folderId} onOpenInline={openEditor} onBack={goHome} />
-            ) : appView === 'reflection' ? (
-              <ReflectionView />
-            ) : appView === 'constellations' ? (
-              <Suspense fallback={<div className="constellations-stage" />}>
-                <ConstellationsView onBack={goHome} onOpenNote={openNote} />
-              </Suspense>
-            ) : appView === 'explore' ? (
-              <ExploreView
-                onOpenInline={openEditor}
-                onOpenProfile={goProfile}
-                initialReadingId={exploreInitialReader}
-              />
-            ) : appView === 'profile' && profileUserId ? (
-              <ProfileView
-                userId={profileUserId}
-                onOpenInline={openEditor}
-                onOpenProfile={goProfile}
-                onBack={profileBack}
-              />
-            ) : (
-              <HomeView
-                onOpenNote={openNote}
-                onOpenInline={openEditor}
-                onOpenSpace={openSpace}
-                onOpenCategory={openCategory}
-                onAllSpaces={goSpaces}
-                onReflection={goReflection}
-                onOpenProfile={goProfile}
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
+        <div className="home-page">
+          {/* mode="wait" + one shared PAGE_FADE → every switch fades out, then in, identically. */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={appView === 'container' ? `container-${containerStack.length}-${containerStack[containerStack.length - 1]?.id}` : appView}
+              className="home-page-view"
+              {...PAGE_FADE}
+            >
+              {appView === 'spaces' ? (
+                <SpacesView onOpenSpace={openSpace} onBack={goHome} />
+              ) : appView === 'notes' ? (
+                <NotesView category={notesCategory} onOpenInline={openEditor} onBack={goHome} refreshSignal={refreshSignal} />
+              ) : appView === 'container' && containerStack.length > 0 ? (
+                <ContainerView
+                  kind={containerStack[containerStack.length - 1].kind}
+                  id={containerStack[containerStack.length - 1].id}
+                  backLabel={containerBackLabel}
+                  onOpenFolder={openFolder}
+                  onOpenInline={openEditor}
+                  onBack={containerBack}
+                  refreshSignal={refreshSignal}
+                />
+              ) : appView === 'reflection' ? (
+                <ReflectionView />
+              ) : appView === 'constellations' ? (
+                <Suspense fallback={<div className="constellations-stage" />}>
+                  <ConstellationsView onBack={goHome} onOpenNote={openNote} />
+                </Suspense>
+              ) : appView === 'explore' ? (
+                <ExploreView
+                  onOpenInline={openEditor}
+                  onOpenProfile={goProfile}
+                  initialReadingId={exploreInitialReader}
+                />
+              ) : appView === 'profile' && profileUserId ? (
+                <ProfileView
+                  userId={profileUserId}
+                  onOpenInline={openEditor}
+                  onOpenProfile={goProfile}
+                  onBack={profileBack}
+                />
+              ) : (
+                <HomeView
+                  onOpenNote={openNote}
+                  onOpenInline={openEditor}
+                  onOpenSpace={openSpace}
+                  onOpenCategory={openCategory}
+                  onAllSpaces={goSpaces}
+                  onReflection={goReflection}
+                  onOpenProfile={goProfile}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Editor overlays the current view, growing from / shrinking back into the card. */}
+          {editorNote && (
+            <EditorOverlay
+              note={editorNote}
+              origin={editorOrigin}
+              closing={editorClosing}
+              onClosed={handleEditorClosed}
+              onToggleSidebar={() => setEditorSidebarCollapsed((v) => !v)}
+              sidebarCollapsed={editorSidebarCollapsed}
+            />
+          )}
+        </div>
       </div>
+      </RenameProvider>
     </motion.div>
   );
 };

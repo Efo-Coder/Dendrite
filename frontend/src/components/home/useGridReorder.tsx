@@ -23,6 +23,12 @@ interface Options<T> {
   getId: (item: T) => string;
   containerRef: RefObject<HTMLElement | null>;
   onReorder: (items: T[]) => void;
+  // 'x' locks dragging to the horizontal axis — needed inside an overflow-x scroller,
+  // where any vertical movement would be clipped at the row's edge.
+  axis?: 'x' | 'y';
+  // Gates the list-update FLIP so the initial cache→network reconcile on mount doesn't
+  // glide; set true once the view's first network load has landed. Drag FLIP is unaffected.
+  armed?: boolean;
 }
 
 const FLIP_MS = 280;
@@ -33,11 +39,13 @@ const THRESHOLD = 5;
 // Pointer drag-to-reorder for a CSS grid: the dragged card sticks to the cursor
 // via transform, siblings glide to their new slots via FLIP (2D), and on release
 // the card settles springily. Mirrors the NoteList feel, adapted to a 2D grid.
-export function useGridReorder<T>({ items, getId, containerRef, onReorder }: Options<T>) {
+export function useGridReorder<T>({ items, getId, containerRef, onReorder, axis, armed = true }: Options<T>) {
   const [dragOrder, setDragOrder] = useState<T[] | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
   const flipRef = useRef<Map<string, Pos>>(new Map());
+  // See useCardFlip: track armed one commit behind so the reconcile commit stays silent.
+  const wasArmed = useRef(false);
 
   const order = dragOrder ?? items;
   // Live refs so the pointer handlers never read stale closures.
@@ -57,7 +65,8 @@ export function useGridReorder<T>({ items, getId, containerRef, onReorder }: Opt
     if (!container) return;
     const els = Array.from(container.querySelectorAll<HTMLElement>('[data-flip-id]'));
     const st = dragStateRef.current;
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // A live drag is always past arming, so gating only ever suppresses the mount reconcile.
+    if (armed && wasArmed.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       els.forEach((el) => {
         const id = el.dataset.flipId!;
         if (st && id === st.id) return; // dragged card follows the cursor, not FLIP
@@ -75,6 +84,7 @@ export function useGridReorder<T>({ items, getId, containerRef, onReorder }: Opt
     const next = new Map<string, Pos>();
     els.forEach((el) => next.set(el.dataset.flipId!, { left: el.offsetLeft, top: el.offsetTop }));
     flipRef.current = next;
+    wasArmed.current = armed;
   });
 
   const onCardPointerDown = useCallback((e: React.PointerEvent, item: T) => {
@@ -100,10 +110,14 @@ export function useGridReorder<T>({ items, getId, containerRef, onReorder }: Opt
     dragStateRef.current = st;
 
     const onMove = (ev: PointerEvent) => {
-      const dx = ev.clientX - st.startX;
-      const dy = ev.clientY - st.startY;
+      // Effective deltas honour the locked axis; the threshold still uses raw movement
+      // so the drag picks up regardless of direction.
+      const rawDx = ev.clientX - st.startX;
+      const rawDy = ev.clientY - st.startY;
+      const dx = axis === 'y' ? 0 : rawDx;
+      const dy = axis === 'x' ? 0 : rawDy;
       if (!st.moved) {
-        if (Math.abs(dx) < THRESHOLD && Math.abs(dy) < THRESHOLD) return;
+        if (Math.abs(rawDx) < THRESHOLD && Math.abs(rawDy) < THRESHOLD) return;
         st.moved = true;
         setDraggingId(st.id);
         document.documentElement.classList.add('card-dragging');
@@ -174,7 +188,7 @@ export function useGridReorder<T>({ items, getId, containerRef, onReorder }: Opt
     window.addEventListener('pointermove', onMove, { signal: abort.signal });
     window.addEventListener('pointerup', finish, { signal: abort.signal });
     window.addEventListener('pointercancel', finish, { signal: abort.signal });
-  }, [getId, onReorder]);
+  }, [getId, onReorder, axis]);
 
   return { order, draggingId, onCardPointerDown };
 }

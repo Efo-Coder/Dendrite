@@ -36,14 +36,32 @@ export interface Note {
   isFavorite: boolean;
   isArchived: boolean;
   isDeleted: boolean;
+  spaceId: string | null;
   folderId: string | null;
   userId: string;
   createdAt: string;
   updatedAt: string;
+  space?: Space;
   folder?: Folder;
   tags?: Tag[];
   attachments?: Attachment[];
   collaborators?: Collaborator[];
+}
+
+// Top-level container shown on Home; holds folders and notes directly.
+export interface Space {
+  id: string;
+  name: string;
+  color: string | null;
+  icon: string | null;
+  coverImage?: string | null;
+  isPinned: boolean;
+  order: number;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  folders?: { id: string }[];
+  notes?: { id: string }[];
 }
 
 export interface Folder {
@@ -52,12 +70,14 @@ export interface Folder {
   color: string | null;
   icon: string | null;
   coverImage?: string | null;
+  isPinned: boolean;
+  spaceId: string;
   parentId: string | null;
   userId: string;
   createdAt: string;
   updatedAt: string;
-  children?: Folder[];
-  notes?: Note[];
+  children?: { id: string }[];
+  notes?: { id: string }[];
   parent?: Folder;
 }
 

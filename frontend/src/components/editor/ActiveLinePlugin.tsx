@@ -18,6 +18,20 @@ function highlightColor() {
   return 'color-mix(in oklch, var(--accent) 15%, transparent)';
 }
 
+// Live vertical scale of the editor's open-morph transform (1 when none/identity), used to
+// map viewport measurements back into the overlay's own (pre-transform) coordinate space.
+function readScaleY(node: Element): number {
+  const morphEl = node.closest('.editor-overlay');
+  if (!morphEl) return 1;
+  const t = getComputedStyle(morphEl).transform;
+  if (!t || t === 'none') return 1;
+  try {
+    return new DOMMatrixReadOnly(t).d || 1;
+  } catch {
+    return 1;
+  }
+}
+
 // Chrome's caret box is not perfectly centered in the line box (depends on font
 // ascent/descent), so (lineH - h) / 2 estimates are ~1px off. Measure the real
 // caret box (offset within the line box + height) for a text style via a hidden
@@ -314,8 +328,14 @@ export function ActiveLinePlugin() {
       }
 
       const containerRect = overlay.parentElement!.getBoundingClientRect();
-      const top = cursorRect.top - containerRect.top - LINE_PAD;
-      const height = cursorRect.height + LINE_PAD * 2;
+      // The editor opens via a transform-morph (scale): viewport rects come back scaled,
+      // but the overlay's top/height are written in the container's own pre-transform space.
+      // Read the exact live Y-scale off the morph element's matrix (1 at rest / identity) and
+      // divide the vertical measurements by it, so the line lands right at any morph frame
+      // without introducing any sub-px error when no morph is running.
+      const scaleY = readScaleY(overlay);
+      const top = (cursorRect.top - containerRect.top) / scaleY - LINE_PAD;
+      const height = cursorRect.height / scaleY + LINE_PAD * 2;
 
       // A slide toward this exact target is already in flight — let it finish.
       // Stopping it and rewriting the style races motion's trailing frame

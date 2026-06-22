@@ -2,18 +2,27 @@
 import Modal from './Modal';
 import { MagicInput } from '../ui/MagicInput';
 import { useFolderStore } from '../../store/useFolderStore';
+import { useSpaceStore } from '../../store/useSpaceStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { canAccess } from '../../lib/planFeatures';
-import { Folder } from '../../types';
 import ColorPickerInline from '../editor/ColorPickerInline';
 import IconPickerDropdown from '../ui/IconPickerDropdown';
 import { getApiErrorMessage } from '../../lib/apiError';
+
+// Edits either a space or a folder — both carry name/color/icon.
+export interface EditTarget {
+  id: string;
+  name: string;
+  color: string | null;
+  icon: string | null;
+}
 
 interface EditFolderModalProps {
   isOpen: boolean;
   onClose: () => void;
   onFolderUpdated?: () => void;
-  folder: Folder | null;
+  kind: 'space' | 'folder';
+  folder: EditTarget | null;
 }
 
 const presets = [
@@ -22,8 +31,9 @@ const presets = [
   '#ffffff', '#000000',
 ];
 
-const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolderModalProps) => {
+const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, kind, folder }: EditFolderModalProps) => {
   const { updateFolder } = useFolderStore();
+  const { updateSpace } = useSpaceStore();
   const { user } = useAuthStore();
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#10b981');
@@ -49,17 +59,19 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
     }
 
     if (!folder) {
-      setError('Folder not found');
+      setError(kind === 'space' ? 'Space not found' : 'Folder not found');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await updateFolder(folder.id, { name: name.trim(), color: selectedColor, icon: selectedIcon ?? undefined });
+      const data = { name: name.trim(), color: selectedColor, icon: selectedIcon ?? undefined };
+      if (kind === 'space') await updateSpace(folder.id, data);
+      else await updateFolder(folder.id, data);
       onFolderUpdated?.();
       onClose();
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Error updating folder'));
+      setError(getApiErrorMessage(err, kind === 'space' ? 'Error updating space' : 'Error updating folder'));
     } finally {
       setIsSubmitting(false);
     }
@@ -76,7 +88,7 @@ const EditFolderModal = ({ isOpen, onClose, onFolderUpdated, folder }: EditFolde
   if (!folder) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Folder" className="folder-picker-modal">
+    <Modal isOpen={isOpen} onClose={handleClose} title={kind === 'space' ? 'Edit Space' : 'Edit Folder'} className="folder-picker-modal">
       <form onSubmit={handleSubmit}>
         {error && <div className="modal-error">{error}</div>}
 

@@ -2,7 +2,9 @@ import { Copy, Clock, Loader2, Eye, Heart } from 'lucide-react';
 import { PublishedNote } from '../../types';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
-const resolveAsset = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
+// Bundled presets live under /img on the frontend origin; only backend uploads get the API prefix.
+const resolveAsset = (url: string) =>
+  url.startsWith('http') || url.startsWith('/img/') ? url : `${API_URL}${url}`;
 
 interface Props {
   pub: PublishedNote;

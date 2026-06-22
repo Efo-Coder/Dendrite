@@ -4,6 +4,7 @@ import { useReflectionStore } from '../store/useReflectionStore';
 import { useLenisScroll } from '../hooks/useLenisScroll';
 import { useToast } from '../components/ui/ToastContainer';
 import { getApiErrorMessage } from '../lib/apiError';
+import { quotePrompt } from '../lib/reflectionText';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
@@ -22,7 +23,7 @@ const ReflectionView = () => {
   const [saving, setSaving] = useState(false);
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  useLenisScroll(scrollRef, contentRef);
+  useLenisScroll(scrollRef, contentRef, 'reflection');
 
   useEffect(() => {
     fetchToday();
@@ -57,7 +58,7 @@ const ReflectionView = () => {
       <div ref={contentRef} className="home-content">
         <header className="home-header">
           <p className="home-greeting">Daily Reflection</p>
-          <h1 className="home-headline reflection-prompt">{prompt || '…'}</h1>
+          <h1 className="home-headline reflection-prompt">{prompt ? quotePrompt(prompt) : '…'}</h1>
         </header>
 
         <div className="reflection-compose">
@@ -84,7 +85,7 @@ const ReflectionView = () => {
               {past.map((r) => (
                 <li key={r.id} className="reflection-entry">
                   <span className="reflection-entry-date">{formatDate(r.date)}</span>
-                  <p className="reflection-entry-prompt">{r.prompt}</p>
+                  <p className="reflection-entry-prompt">{quotePrompt(r.prompt)}</p>
                   <p className="reflection-entry-content">{r.content}</p>
                 </li>
               ))}

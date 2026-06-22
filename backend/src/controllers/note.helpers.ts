@@ -2,6 +2,7 @@ import { Folder, Prisma, Tag } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
 export const NOTE_INCLUDE = {
+  space: true,
   folder: true,
   attachments: true,
   noteTags: { include: { tag: true }, orderBy: { createdAt: 'asc' as const } },
@@ -32,6 +33,30 @@ export function sortPinnedFirst(a: ApiNote, b: ApiNote): number {
   if (a.isPinned && !b.isPinned) return -1;
   if (!a.isPinned && b.isPinned) return 1;
   return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+}
+
+// Context order for a note list: pinned first, then — within pinned and within the
+// rest — the cards without a saved order (i.e. newly added) lead by recency, ahead of
+// the manually ordered ones. So a freshly created/added card always lands up front.
+export function sortByContextOrder(notes: ApiNote[], orderMap: Map<string, number>): ApiNote[] {
+  const byRecency = (a: ApiNote, b: ApiNote) =>
+    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  const byOrder = (a: ApiNote, b: ApiNote) => orderMap.get(a.id)! - orderMap.get(b.id)!;
+
+  const pinnedOrdered: ApiNote[] = [];
+  const pinnedNew: ApiNote[] = [];
+  const restNew: ApiNote[] = [];
+  const restOrdered: ApiNote[] = [];
+  for (const n of notes) {
+    const has = orderMap.has(n.id);
+    if (n.isPinned) (has ? pinnedOrdered : pinnedNew).push(n);
+    else (has ? restOrdered : restNew).push(n);
+  }
+  pinnedOrdered.sort(byOrder);
+  pinnedNew.sort(byRecency);
+  restNew.sort(byRecency);
+  restOrdered.sort(byOrder);
+  return [...pinnedOrdered, ...pinnedNew, ...restNew, ...restOrdered];
 }
 
 // Shared notes carry per-user state: collaborators pin, favorite, tag and

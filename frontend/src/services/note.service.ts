@@ -3,6 +3,7 @@ import { Note, NoteVersion } from '../types';
 
 export const noteService = {
   async getAllNotes(filters?: {
+    spaceId?: string;
     folderId?: string;
     tagId?: string;
     pinned?: boolean;
@@ -12,6 +13,7 @@ export const noteService = {
     shared?: boolean;
   }): Promise<Note[]> {
     const params = new URLSearchParams();
+    if (filters?.spaceId) params.append('spaceId', filters.spaceId);
     if (filters?.folderId) params.append('folderId', filters.folderId);
     if (filters?.tagId) params.append('tagId', filters.tagId);
     if (filters?.pinned !== undefined) params.append('pinned', String(filters.pinned));
@@ -32,7 +34,9 @@ export const noteService = {
   async createNote(data: {
     title: string;
     content: string;
+    spaceId?: string;
     folderId?: string;
+    coverImage?: string | null;
     tags?: string[];
   }): Promise<Note> {
     const response = await api.post<{ note: Note }>('/notes', data);
@@ -44,6 +48,7 @@ export const noteService = {
     data: {
       title?: string;
       content?: string;
+      spaceId?: string | null;
       folderId?: string | null;
       coverImage?: string | null;
       tags?: string[];

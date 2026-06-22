@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Folder } from '../types';
 import { folderService } from '../services/folder.service';
 import { getApiErrorMessage } from '../lib/apiError';
+import { randomCoverPreset } from '../config/coverPresets';
 
 interface FolderState {
   folders: Folder[];
@@ -12,10 +13,11 @@ interface FolderState {
   fetchFolders: () => Promise<void>;
   createFolder: (data: {
     name: string;
+    spaceId: string;
+    parentId?: string;
     color?: string;
     icon?: string;
     coverImage?: string | null;
-    parentId?: string;
   }) => Promise<Folder>;
   updateFolder: (
     id: string,
@@ -40,7 +42,7 @@ export const useFolderStore = create<FolderState>((set) => ({
   fetchFolders: async () => {
     set({ isLoading: true, error: null });
     try {
-      const folders = await folderService.getAllFolders();
+      const folders = await folderService.getFolders();
       set({ folders, isLoading: false });
     } catch (error) {
       set({
@@ -53,7 +55,11 @@ export const useFolderStore = create<FolderState>((set) => ({
   createFolder: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const folder = await folderService.createFolder(data);
+      const folder = await folderService.createFolder({
+        ...data,
+        // New spaces get a random preset cover unless one is explicitly provided.
+        coverImage: data.coverImage === undefined ? randomCoverPreset() : data.coverImage,
+      });
       set((state) => ({
         folders: [...state.folders, folder],
         isLoading: false,

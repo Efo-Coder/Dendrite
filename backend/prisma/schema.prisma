@@ -35,6 +35,7 @@ model User {
   updatedAt                   DateTime  @updatedAt
 
   notes              Note[]
+  spaces             Space[]
   folders            Folder[]
   tags               Tag[]
   noteOrders         NoteOrder[]
@@ -53,25 +54,52 @@ model User {
   @@unique([provider, providerId])
 }
 
+// Top-level container on the Home dashboard. Holds folders and notes directly.
+model Space {
+  id         String   @id @default(uuid())
+  name       String
+  color      String?  @default("#10b981")
+  icon       String?
+  coverImage String?
+  isPinned   Boolean  @default(false)
+  order      Int      @default(0)
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folders    Folder[]
+  notes      Note[]
+
+  @@index([userId])
+  @@index([isPinned])
+}
+
+// Lives inside a space; can nest into other folders (recursive).
 model Folder {
   id        String   @id @default(uuid())
   name       String
   color      String?  @default("#10b981") // Grüner Akzent
   icon       String?
-  coverImage String?  // Space cover for the Home dashboard
-  order      Int      @default(0) // Manual sort order on the Home dashboard
+  coverImage String?  // Folder cover for the Home dashboard
+  isPinned   Boolean  @default(false) // Pinned folders surface first
+  order      Int      @default(0) // Manual sort order
+  spaceId    String
   parentId   String?
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   parent    Folder?  @relation("SubFolders", fields: [parentId], references: [id], onDelete: Cascade)
   children  Folder[] @relation("SubFolders")
   notes     Note[]
 
   @@index([userId])
+  @@index([spaceId])
   @@index([parentId])
+  @@index([isPinned])
 }
 
 model Note {
@@ -85,12 +113,14 @@ model Note {
   isArchived  Boolean  @default(false)
   isDeleted   Boolean  @default(false)
   order       Int      @default(0)
+  spaceId     String?
   folderId    String?
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  space           Space?             @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   folder          Folder?            @relation(fields: [folderId], references: [id], onDelete: SetNull)
   noteTags        NoteTag[]
   attachments     Attachment[]
@@ -101,6 +131,7 @@ model Note {
   publishedNote   PublishedNote?
 
   @@index([userId])
+  @@index([spaceId])
   @@index([folderId])
   @@index([isPinned])
   @@index([isFavorite])

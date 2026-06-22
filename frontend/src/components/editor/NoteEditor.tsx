@@ -29,7 +29,6 @@ import LexicalEditorWrapper, { ActiveUser } from './LexicalEditorWrapper';
 import VersionHistoryPanel from './VersionHistoryPanel';
 import FolderMenu from './FolderMenu';
 import NoteExportMenu from './NoteExportMenu';
-import NoteTagsRow from './NoteTagsRow';
 import { MenuPos, formatRelativeDate, userCursorColor } from './noteEditorUtils';
 import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
 import PublishModal from '../modals/PublishModal';
@@ -302,7 +301,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         className="editor-title"
         style={{ height: 'auto', opacity: isInTrash ? 0.6 : 1 }}
       />
-      <NoteTagsRow note={note} disabled={isInTrash} onNoteUpdate={onNoteUpdate} />
     </>
   );
 

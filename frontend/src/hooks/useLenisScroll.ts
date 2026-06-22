@@ -1,5 +1,6 @@
-import { useEffect, type RefObject } from 'react';
+import { useLayoutEffect, type RefObject } from 'react';
 import Lenis from 'lenis';
+import { getScroll, setScroll, isInitialLoad } from '../lib/viewState';
 
 // Same feel as the landing page's SmoothScroll, but bound to an internal scroll
 // container instead of the window.
@@ -13,30 +14,50 @@ const LENIS_OPTIONS = {
   touchMultiplier: 2,
 };
 
-// Drive Lenis smooth-scroll on a wrapper element (overflow container) and its
-// content child. No-op under prefers-reduced-motion.
+// Drive Lenis smooth-scroll on a wrapper element (overflow container) and its content
+// child. With a memoryKey the scroll position is saved per view and — only for the
+// first view after a page reload (isInitialLoad) — restored synchronously before paint.
+// Because lists are hydrated from cache, the layout is already final at this point, so
+// the restore is exact with no flash; Lenis then initialises at the restored position.
 export function useLenisScroll(
   wrapper: RefObject<HTMLElement | null>,
   content: RefObject<HTMLElement | null>,
+  memoryKey?: string,
 ) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const w = wrapper.current;
     const c = content.current;
     if (!w || !c) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const lenis = new Lenis({ wrapper: w, content: c, ...LENIS_OPTIONS });
+    if (memoryKey && isInitialLoad()) {
+      const saved = getScroll(memoryKey);
+      if (saved > 0) {
+        const max = w.scrollHeight - w.clientHeight;
+        w.scrollTop = Math.min(saved, Math.max(0, max));
+      }
+    }
 
+    let lenis: Lenis | null = null;
     let raf = 0;
-    const loop = (time: number) => {
-      lenis.raf(time);
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      lenis = new Lenis({ wrapper: w, content: c, ...LENIS_OPTIONS });
+      const loop = (time: number) => {
+        lenis!.raf(time);
+        raf = requestAnimationFrame(loop);
+      };
       raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
+    }
+
+    let onScroll: (() => void) | undefined;
+    if (memoryKey) {
+      onScroll = () => setScroll(memoryKey, w.scrollTop);
+      w.addEventListener('scroll', onScroll, { passive: true });
+    }
 
     return () => {
-      cancelAnimationFrame(raf);
-      lenis.destroy();
+      if (raf) cancelAnimationFrame(raf);
+      if (onScroll) w.removeEventListener('scroll', onScroll);
+      lenis?.destroy();
     };
-  }, [wrapper, content]);
+  }, [wrapper, content, memoryKey]);
 }

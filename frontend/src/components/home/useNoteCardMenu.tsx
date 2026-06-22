@@ -5,18 +5,22 @@ import { useToast } from '../ui/ToastContainer';
 import NoteContextMenu from '../noteList/NoteContextMenu';
 import MoveToFolderModal from '../modals/MoveToFolderModal';
 import TagSelectionModal from '../modals/TagSelectionModal';
+import { useRename } from './RenameContext';
 
 interface Options {
   onEdit: (note: Note) => void;
   onAfterChange?: () => void;
+  // Opens the view's cover picker for this note (the view owns the modal).
+  onSetCover?: (note: Note) => void;
 }
 
 const EMPTY_FLAGS = { isPinned: false, isFavorite: false, isArchived: false, isDeleted: false };
 
 // Right-click actions for note cards — reuses the list's NoteContextMenu plus the
 // move/tag modals so the behaviour matches the workspace exactly.
-export function useNoteCardMenu({ onEdit, onAfterChange }: Options) {
-  const { updateNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, deleteNote } = useNoteStore();
+export function useNoteCardMenu({ onEdit, onAfterChange, onSetCover }: Options) {
+  const { updateNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, deleteNote, setNoteTitleOptimistic } = useNoteStore();
+  const rename = useRename();
   const toast = useToast();
 
   const [menu, setMenu] = useState<{ isOpen: boolean; position: { x: number; y: number }; note: Note | null }>(
@@ -68,6 +72,20 @@ export function useNoteCardMenu({ onEdit, onAfterChange }: Options) {
     catch { toast.error('Error restoring note'); }
   };
 
+  const handleSetCover = () => { if (note) onSetCover?.(note); };
+
+  const handleRename = () => {
+    if (!note) return;
+    const n = note;
+    rename.begin(n.id, async (value) => {
+      const title = value.trim();
+      if (title === (n.title ?? '')) return;
+      setNoteTitleOptimistic(n.id, title);
+      try { await updateNote(n.id, { title }); onAfterChange?.(); }
+      catch { toast.error('Error renaming note'); }
+    });
+  };
+
   const handleMoveToFolder = async (folderId: string | null) => {
     if (!note) return;
     try { await updateNote(note.id, { folderId }); toast.success('Note moved'); onAfterChange?.(); }
@@ -87,6 +105,8 @@ export function useNoteCardMenu({ onEdit, onAfterChange }: Options) {
         position={menu.position}
         onClose={closeMenu}
         onEdit={() => note && onEdit(note)}
+        onRename={handleRename}
+        onSetCover={handleSetCover}
         onMove={() => setShowMoveModal(true)}
         onPin={handlePin}
         onFavorite={handleFavorite}

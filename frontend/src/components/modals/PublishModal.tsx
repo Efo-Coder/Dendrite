@@ -10,7 +10,9 @@ import { useToast } from '../ui/ToastContainer';
 import { getApiErrorMessage } from '../../lib/apiError';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
-const resolveCover = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
+// Bundled presets live under /img on the frontend origin; only backend uploads get the API prefix.
+const resolveCover = (url: string) =>
+  url.startsWith('http') || url.startsWith('/img/') ? url : `${API_URL}${url}`;
 
 // Minimum time the confirm button stays in its loading state, so the spinner
 // reads as an intentional moment rather than flickering on fast responses.

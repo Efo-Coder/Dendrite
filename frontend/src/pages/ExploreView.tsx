@@ -43,7 +43,7 @@ const ExploreView = ({ onOpenInline, onOpenProfile, initialReadingId = null }: E
   const { copyingId, copy } = usePublishedCopy(onOpenInline);
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  useLenisScroll(scrollRef, contentRef);
+  useLenisScroll(scrollRef, contentRef, 'explore');
   const [gridRef, cols] = useColumnCount(280, 20);
 
   // Debounce the search box so typing doesn't fire a request per keystroke.

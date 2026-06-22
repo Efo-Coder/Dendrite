@@ -2,12 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ChevronDown, Plus, SquarePen, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNoteStore } from '../store/useNoteStore';
-import { useFolderStore } from '../store/useFolderStore';
+import { useSpaceStore } from '../store/useSpaceStore';
 import { useReflectionStore } from '../store/useReflectionStore';
 import { useToast } from '../components/ui/ToastContainer';
 import { getApiErrorMessage } from '../lib/apiError';
 import { noteService } from '../services/note.service';
-import { Folder, Note } from '../types';
+import { Note, Space } from '../types';
 import type { NoteCategory } from './NotesView';
 import CoverCard from '../components/home/CoverCard';
 import CoverPickerModal, { type CoverTarget } from '../components/home/CoverPickerModal';
@@ -21,14 +21,19 @@ import CreateFolderModal from '../components/modals/CreateFolderModal';
 import EmptyTrashModal from '../components/modals/EmptyTrashModal';
 import { Icons } from '../components/ui/Icons';
 import { noteLabel } from '../lib/noteText';
+import { quotePrompt } from '../lib/reflectionText';
+import { getCachedList, setCachedList } from '../lib/listCache';
 import { useNoteCardMenu } from '../components/home/useNoteCardMenu';
-import { useFolderCardMenu } from '../components/home/useFolderCardMenu';
+import { useSpaceCardMenu } from '../components/home/useSpaceCardMenu';
 import { useGridReorder } from '../components/home/useGridReorder';
+import { useWheelHorizontal } from '../hooks/useWheelHorizontal';
+import { useLeaving } from '../hooks/useLeaving';
+import { useCardFlip } from '../hooks/useCardFlip';
 
 interface HomeViewProps {
   onOpenNote: (id: string) => void;
-  onOpenInline: (note: Note) => void;
-  onOpenSpace: (id: string) => void;
+  onOpenInline: (note: Note, originRect?: DOMRect) => void;
+  onOpenSpace: (id: string, name: string) => void;
   onOpenCategory: (cat: NoteCategory) => void;
   onAllSpaces: () => void;
   onReflection: () => void;
@@ -66,22 +71,13 @@ function timeAgo(iso: string): string {
   return months <= 1 ? '1 month ago' : `${months} months ago`;
 }
 
-// Transparent placeholders top a row up to `slots` items, so the real cards keep
-// their column width instead of stretching when there are only a few of them.
-function fillers(visible: number, slots: number) {
-  if (visible === 0 || visible >= slots) return null;
-  return Array.from({ length: slots - visible }, (_, i) => (
-    <div key={`ph-${i}`} className="home-card-ph" aria-hidden />
-  ));
-}
-
 const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAllSpaces, onReflection, onOpenProfile }: HomeViewProps) => {
   const user = useAuthStore((s) => s.user);
   const notes = useNoteStore((s) => s.notes);
   const fetchNotes = useNoteStore((s) => s.fetchNotes);
-  const folders = useFolderStore((s) => s.folders);
-  const fetchFolders = useFolderStore((s) => s.fetchFolders);
-  const reorderFolders = useFolderStore((s) => s.reorderFolders);
+  const spaces = useSpaceStore((s) => s.spaces);
+  const fetchSpaces = useSpaceStore((s) => s.fetchSpaces);
+  const reorderSpaces = useSpaceStore((s) => s.reorderSpaces);
   const createNote = useNoteStore((s) => s.createNote);
   const deleteNote = useNoteStore((s) => s.deleteNote);
   const reflectionPrompt = useReflectionStore((s) => s.prompt);
@@ -91,23 +87,32 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
   const [coverTarget, setCoverTarget] = useState<CoverTarget | null>(null);
   const [showCreateSpace, setShowCreateSpace] = useState(false);
   const [showEmptyTrash, setShowEmptyTrash] = useState(false);
-  // Active notes live in the store; favorites/archived/deleted are fetched separately
-  // so the store's main list isn't overwritten. Favorites is loaded in full (not
-  // sliced) so drag-reorder can persist the complete order, not just the top 5.
-  const [pinned, setPinned] = useState<Note[]>([]);
-  const [favorites, setFavorites] = useState<Note[]>([]);
-  const [archived, setArchived] = useState<Note[]>([]);
-  const [deleted, setDeleted] = useState<Note[]>([]);
-  const [shared, setShared] = useState<Note[]>([]);
+  // Active notes live in the store; favorites/archived/deleted/shared are fetched
+  // separately so the store's main list isn't overwritten, and in full (not sliced)
+  // so drag-reorder can persist the complete order. Pinned has no own section anymore
+  // — pinned notes surface first inside the category views instead.
+  // Hydrated from the session cache so the sections render at full height instantly on
+  // reload (stable layout for scroll restore); refreshed from the network below.
+  const [favorites, setFavorites] = useState<Note[]>(() => getCachedList<Note>('home:favorites') ?? []);
+  const [archived, setArchived] = useState<Note[]>(() => getCachedList<Note>('home:archived') ?? []);
+  const [deleted, setDeleted] = useState<Note[]>(() => getCachedList<Note>('home:deleted') ?? []);
+  const [shared, setShared] = useState<Note[]>(() => getCachedList<Note>('home:shared') ?? []);
+  // FLIP stays silent until the first full load lands, so the cache→network reconcile
+  // doesn't glide the cards when Home opens. allSettled below resolves after every
+  // section's reconcile, so arming can never race ahead of one.
+  const [armed, setArmed] = useState(false);
 
-  const refresh = useCallback(() => {
-    fetchNotes({ archived: false, deleted: false });
-    noteService.getAllNotes({ pinned: true, archived: false, deleted: false }).then(setPinned).catch(() => {});
-    noteService.getAllNotes({ favorite: true, archived: false, deleted: false }).then(setFavorites).catch(() => {});
-    noteService.getAllNotes({ archived: true, deleted: false }).then(setArchived).catch(() => {});
-    noteService.getAllNotes({ deleted: true }).then(setDeleted).catch(() => {});
-    noteService.getAllNotes({ shared: true }).then(setShared).catch(() => {});
-  }, [fetchNotes]);
+  const refresh = useCallback(
+    () =>
+      Promise.allSettled([
+        fetchNotes({ archived: false, deleted: false }),
+        noteService.getAllNotes({ favorite: true, archived: false, deleted: false }).then((d) => { setFavorites(d); setCachedList('home:favorites', d); }),
+        noteService.getAllNotes({ archived: true, deleted: false }).then((d) => { setArchived(d); setCachedList('home:archived', d); }),
+        noteService.getAllNotes({ deleted: true }).then((d) => { setDeleted(d); setCachedList('home:deleted', d); }),
+        noteService.getAllNotes({ shared: true }).then((d) => { setShared(d); setCachedList('home:shared', d); }),
+      ]),
+    [fetchNotes],
+  );
 
   // Reorder the visible cards, keep the rest after them, then persist the full order.
   const makeReorder = useCallback(
@@ -123,27 +128,37 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
       },
     [],
   );
-  const handlePinReorder = useMemo(() => makeReorder(setPinned, 'all'), [makeReorder]);
   const handleFavReorder = useMemo(() => makeReorder(setFavorites, 'favorites'), [makeReorder]);
   const handleArchReorder = useMemo(() => makeReorder(setArchived, 'archive'), [makeReorder]);
+  const handleSharedReorder = useMemo(() => makeReorder(setShared, 'shared'), [makeReorder]);
+
+  // `recent`/spaces are store-backed and update on their own; these sections hold their
+  // own copies, so patch the new cover in instead of waiting for the next refetch.
+  const handleCoverChange = useCallback((target: CoverTarget, coverImage: string) => {
+    if (target.kind !== 'note') return;
+    const patch = (prev: Note[]) => prev.map((n) => (n.id === target.id ? { ...n, coverImage } : n));
+    setFavorites(patch);
+    setArchived(patch);
+    setShared(patch);
+    setDeleted(patch);
+  }, []);
   const handleSpaceReorder = useCallback(
-    (reordered: Folder[]) => reorderFolders([...reordered, ...folders.slice(reordered.length)]),
-    [folders, reorderFolders],
+    (reordered: Space[]) => reorderSpaces([...reordered, ...spaces.slice(reordered.length)]),
+    [spaces, reorderSpaces],
   );
 
-  const noteMenu = useNoteCardMenu({ onEdit: onOpenInline, onAfterChange: refresh });
-  const folderMenu = useFolderCardMenu({ onAfterChange: fetchFolders });
+  const noteMenu = useNoteCardMenu({ onEdit: onOpenInline, onAfterChange: refresh, onSetCover: (n) => setCoverTarget({ kind: 'note', id: n.id }) });
+  const spaceMenu = useSpaceCardMenu({ onAfterChange: fetchSpaces, onSetCover: (s) => setCoverTarget({ kind: 'space', id: s.id }) });
 
   useEffect(() => {
-    refresh();
-    fetchFolders();
+    Promise.allSettled([refresh(), fetchSpaces()]).then(() => setArmed(true));
     fetchToday();
-  }, [refresh, fetchFolders, fetchToday]);
+  }, [refresh, fetchSpaces, fetchToday]);
 
-  const handleNewNote = async () => {
+  const handleNewNote = async (originRect?: DOMRect) => {
     try {
       const note = await createNote({ content: '' });
-      onOpenInline(note);
+      onOpenInline(note, originRect);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Could not create note'));
     }
@@ -167,7 +182,7 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
   const greeting = greetingFor(firstName);
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  useLenisScroll(scrollRef, contentRef);
+  useLenisScroll(scrollRef, contentRef, 'home');
 
   // The greeting only plays its entrance animation on a fresh login or when the
   // time-of-day bucket flips while open — not on reload or in-app navigation.
@@ -191,24 +206,31 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
     return () => clearInterval(id);
   }, []);
 
+  // Full sorted list; the whole section scrolls horizontally, so no slice. Pinned
+  // first (then by recency) so the order matches the all-notes view's pinned group.
   const recent = useMemo(
     () =>
-      [...notes]
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 4),
+      // Trashing/archiving only flips the flag in the store (and bumps updatedAt) until
+      // the refetch lands — filter those out so the card doesn't resort to the front
+      // before it leaves, which would make the exit animation jump.
+      notes
+        .filter((n) => !n.isDeleted && !n.isArchived)
+        .sort((a, b) => {
+          if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        }),
     [notes],
   );
-
-  const spaces = useMemo(() => folders.slice(0, 5), [folders]);
-  const sharedTop = useMemo(() => shared.slice(0, 5), [shared]);
-  const pinnedTop = useMemo(() => pinned.slice(0, 5), [pinned]);
-  const favoritesTop = useMemo(() => favorites.slice(0, 5), [favorites]);
-  const archivedTop = useMemo(() => archived.slice(0, 5), [archived]);
-  const deletedTop = useMemo(() => deleted.slice(0, 5), [deleted]);
+  const recentWheelRef = useWheelHorizontal();
+  const recentContainerRef = useRef<HTMLDivElement | null>(null);
+  // One node, two refs: useCardFlip owns the RefObject, useWheelHorizontal the listener.
+  const recentRowRef = useCallback((node: HTMLDivElement | null) => { recentContainerRef.current = node; recentWheelRef(node); }, [recentWheelRef]);
+  useCardFlip(recentContainerRef, armed);
+  const recentRendered = useLeaving(recent, (n) => n.id);
 
   // Per-section actions, rendered next to the section title (mirrors the views).
   const newNoteBtn = (
-    <button type="button" className="home-view-action" onClick={handleNewNote} title="New note">
+    <button type="button" className="home-view-action" onClick={(e) => handleNewNote(e.currentTarget.getBoundingClientRect())} title="New note">
       <Plus size={16} strokeWidth={1.75} />
     </button>
   );
@@ -217,7 +239,7 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
       <Plus size={16} strokeWidth={1.75} />
     </button>
   );
-  const emptyTrashBtn = deletedTop.length > 0 ? (
+  const emptyTrashBtn = deleted.length > 0 ? (
     <button type="button" className="home-view-action danger" onClick={() => setShowEmptyTrash(true)} title="Delete all">
       <Trash2 size={16} strokeWidth={1.75} />
     </button>
@@ -232,7 +254,7 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
             <Icons.settings size={18} />
           </button>
           <NotificationsBell onAccepted={refresh} onOpenProfile={onOpenProfile} />
-          <button type="button" className="home-icon-btn" onClick={handleNewNote} title="New note">
+          <button type="button" className="home-icon-btn" onClick={(e) => handleNewNote(e.currentTarget.getBoundingClientRect())} title="New note">
             <SquarePen size={18} strokeWidth={1.75} />
           </button>
         </div>
@@ -264,47 +286,6 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
 
         <HomeSearch onOpenNote={onOpenNote} onOpenSpace={onOpenSpace} />
 
-        <Section title="Continue Thinking" action={newNoteBtn} onViewAll={() => onOpenCategory('all')}>
-          {recent.length === 0 ? (
-            <p className="home-empty">Nothing yet — your recent thoughts will gather here.</p>
-          ) : (
-            <div className="home-card-row cols-4">
-              {recent.map((note) => (
-                <CoverCard
-                  key={note.id}
-                  title={noteLabel(note)}
-                  subtitle={`Last explored ${timeAgo(note.updatedAt)}`}
-                  cover={note.coverImage}
-                  seed={note.id}
-                  onClick={() => onOpenInline(note)}
-                  onSetCover={() => setCoverTarget({ kind: 'note', id: note.id })}
-                  onContextMenu={(e) => noteMenu.openMenu(e, note)}
-                />
-              ))}
-              {fillers(recent.length, 4)}
-            </div>
-          )}
-        </Section>
-
-        <DraggableFolderSection
-          title="Spaces"
-          folders={spaces}
-          emptyText="No spaces yet — create one to organise your thinking."
-          action={newSpaceBtn}
-          onViewAll={onAllSpaces}
-          onOpen={onOpenSpace}
-          onMenu={folderMenu.openMenu}
-          onSetCover={(f) => setCoverTarget({ kind: 'folder', id: f.id })}
-          onReorder={handleSpaceReorder}
-        />
-
-        <NoteSection title="Shared with me" notes={sharedTop} emptyText="Nothing shared with you yet." onViewAll={() => onOpenCategory('shared')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} />
-
-        <DraggableNoteSection title="Pinned" notes={pinnedTop} emptyText="No pinned notes yet." onViewAll={() => onOpenCategory('pinned')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} onReorder={handlePinReorder} />
-        <DraggableNoteSection title="Favorites" notes={favoritesTop} emptyText="No favorites yet." onViewAll={() => onOpenCategory('favorites')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} onReorder={handleFavReorder} />
-        <DraggableNoteSection title="Archived" notes={archivedTop} emptyText="Nothing archived." onViewAll={() => onOpenCategory('archived')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} onReorder={handleArchReorder} />
-        <NoteSection title="Deleted" notes={deletedTop} emptyText="Trash is empty." action={emptyTrashBtn} onViewAll={() => onOpenCategory('trash')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} />
-
         <section className="home-section">
           <div className="home-section-head">
             <div className="home-section-title-row">
@@ -325,20 +306,63 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
           >
             <div style={{ minHeight: 0 }}>
               <button type="button" className="reflection-teaser" onClick={onReflection}>
-                <span className="reflection-teaser-prompt">{reflectionPrompt || 'A quiet question, once a day.'}</span>
+                <span className="reflection-teaser-prompt">{reflectionPrompt ? quotePrompt(reflectionPrompt) : 'A quiet question, once a day.'}</span>
                 <span className="reflection-teaser-cue">Reflect <ArrowRight size={14} /></span>
               </button>
             </div>
           </div>
         </section>
+
+        <Section title="Continue Thinking" action={newNoteBtn} onViewAll={() => onOpenCategory('all')}>
+          {recent.length === 0 ? (
+            <p className="home-empty">Nothing yet — your recent thoughts will gather here.</p>
+          ) : (
+            <div ref={recentRowRef} className="home-card-row cols-4">
+              {recentRendered.map(({ item: note, leaving }, i) => (
+                <CoverCard
+                  key={note.id}
+                  index={i}
+                  leaving={leaving}
+                  flipId={note.id}
+                  title={noteLabel(note)}
+                  subtitle={`Last explored ${timeAgo(note.updatedAt)}`}
+                  cover={note.coverImage}
+                  seed={note.id}
+                  onClick={() => onOpenInline(note)}
+                  onSetCover={() => setCoverTarget({ kind: 'note', id: note.id })}
+                  onContextMenu={(e) => noteMenu.openMenu(e, note)}
+                />
+              ))}
+            </div>
+          )}
+        </Section>
+
+        <DraggableSpaceSection
+          title="Spaces"
+          spaces={spaces}
+          emptyText="No spaces yet — create one to organise your thinking."
+          action={newSpaceBtn}
+          onViewAll={onAllSpaces}
+          onOpen={onOpenSpace}
+          onMenu={spaceMenu.openMenu}
+          onSetCover={(s) => setCoverTarget({ kind: 'space', id: s.id })}
+          onReorder={handleSpaceReorder}
+          armed={armed}
+        />
+
+        <DraggableNoteSection title="Shared with me" notes={shared} emptyText="Nothing shared with you yet." onViewAll={() => onOpenCategory('shared')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} onReorder={handleSharedReorder} armed={armed} />
+
+        <DraggableNoteSection title="Favorites" notes={favorites} emptyText="No favorites yet." onViewAll={() => onOpenCategory('favorites')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} onReorder={handleFavReorder} armed={armed} />
+        <DraggableNoteSection title="Archived" notes={archived} emptyText="Nothing archived." onViewAll={() => onOpenCategory('archived')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} onReorder={handleArchReorder} armed={armed} />
+        <NoteSection title="Deleted" notes={deleted} emptyText="Trash is empty." action={emptyTrashBtn} onViewAll={() => onOpenCategory('trash')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} armed={armed} />
       </div>
 
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
-      <CoverPickerModal target={coverTarget} onClose={() => setCoverTarget(null)} />
-      <CreateFolderModal isOpen={showCreateSpace} onClose={() => setShowCreateSpace(false)} onFolderCreated={fetchFolders} />
+      <CoverPickerModal target={coverTarget} onClose={() => setCoverTarget(null)} onCoverChange={handleCoverChange} />
+      <CreateFolderModal isOpen={showCreateSpace} onClose={() => setShowCreateSpace(false)} onFolderCreated={fetchSpaces} />
       <EmptyTrashModal isOpen={showEmptyTrash} onClose={() => setShowEmptyTrash(false)} onConfirm={handleEmptyTrash} />
       {noteMenu.element}
-      {folderMenu.element}
+      {spaceMenu.element}
     </main>
   );
 };
@@ -377,10 +401,12 @@ const Section = ({ title, action, onViewAll, children }: SectionProps) => {
         </button>
       </div>
       <div
-        style={{ display: 'grid', gridTemplateRows: collapsed ? '0fr' : '1fr', transition: 'grid-template-rows .22s ease', overflow: collapsed || animating ? 'hidden' : 'visible' }}
+        // minmax(0,1fr) column: without it the auto grid column grows to the row's
+        // max-content (all cards), defeating the row's overflow-x scroll.
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gridTemplateRows: collapsed ? '0fr' : '1fr', transition: 'grid-template-rows .22s ease', overflow: collapsed || animating ? 'hidden' : 'visible' }}
         onTransitionEnd={(e) => { if (e.target === e.currentTarget) setAnimating(false); }}
       >
-        <div style={{ minHeight: 0 }}>{children}</div>
+        <div style={{ minHeight: 0, minWidth: 0 }}>{children}</div>
       </div>
     </section>
   );
@@ -395,58 +421,30 @@ interface NoteSectionProps {
   onOpen: (note: Note) => void;
   onMenu: (e: React.MouseEvent, note: Note) => void;
   onSetCover: (note: Note) => void;
+  // Set true once Home's first load has landed (gates the mount FLIP).
+  armed?: boolean;
 }
 
-// Compact note grid — same shape and card size as the Spaces section.
-const NoteSection = ({ title, notes, emptyText, action, onViewAll, onOpen, onMenu, onSetCover }: NoteSectionProps) => (
-  <Section title={title} action={action} onViewAll={onViewAll}>
-    {notes.length === 0 ? (
-      <p className="home-empty">{emptyText}</p>
-    ) : (
-      <div className="home-card-row cols-5">
-        {notes.map((note) => (
-          <CoverCard
-            key={note.id}
-            title={noteLabel(note)}
-            cover={note.coverImage}
-            seed={note.id}
-            compact
-            onClick={() => onOpen(note)}
-            onSetCover={() => onSetCover(note)}
-            onContextMenu={(e) => onMenu(e, note)}
-          />
-        ))}
-        {fillers(notes.length, 5)}
-      </div>
-    )}
-  </Section>
-);
-
-interface DraggableNoteSectionProps extends NoteSectionProps {
-  onReorder: (notes: Note[]) => void;
-}
-
-// Same as NoteSection, but the cards can be dragged to reorder (2D FLIP + persist).
-const DraggableNoteSection = ({ title, notes, emptyText, onViewAll, onOpen, onMenu, onSetCover, onReorder }: DraggableNoteSectionProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { order, draggingId, onCardPointerDown } = useGridReorder({
-    items: notes,
-    getId: (n) => n.id,
-    containerRef,
-    onReorder,
-  });
+// Compact note grid — same shape and card size as the Spaces section. The full
+// list lives in one horizontally scrolling row.
+const NoteSection = ({ title, notes, emptyText, action, onViewAll, onOpen, onMenu, onSetCover, armed }: NoteSectionProps) => {
+  const wheelRef = useWheelHorizontal();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const rowRef = useCallback((node: HTMLDivElement | null) => { containerRef.current = node; wheelRef(node); }, [wheelRef]);
+  useCardFlip(containerRef, armed);
+  const rendered = useLeaving(notes, (n) => n.id);
   return (
-    <Section title={title} onViewAll={onViewAll}>
+    <Section title={title} action={action} onViewAll={onViewAll}>
       {notes.length === 0 ? (
         <p className="home-empty">{emptyText}</p>
       ) : (
-        <div ref={containerRef} className="home-card-row cols-5">
-          {order.map((note) => (
+        <div ref={rowRef} className="home-card-row cols-5">
+          {rendered.map(({ item: note, leaving }, i) => (
             <CoverCard
               key={note.id}
+              index={i}
+              leaving={leaving}
               flipId={note.id}
-              dragging={draggingId === note.id}
-              onPointerDown={(e) => onCardPointerDown(e, note)}
               title={noteLabel(note)}
               cover={note.coverImage}
               seed={note.id}
@@ -456,56 +454,112 @@ const DraggableNoteSection = ({ title, notes, emptyText, onViewAll, onOpen, onMe
               onContextMenu={(e) => onMenu(e, note)}
             />
           ))}
-          {fillers(order.length, 5)}
         </div>
       )}
     </Section>
   );
 };
 
-interface DraggableFolderSectionProps {
+interface DraggableNoteSectionProps extends NoteSectionProps {
+  onReorder: (notes: Note[]) => void;
+}
+
+// Same as NoteSection, but the cards can be dragged to reorder (2D FLIP + persist).
+const DraggableNoteSection = ({ title, notes, emptyText, onViewAll, onOpen, onMenu, onSetCover, onReorder, armed }: DraggableNoteSectionProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const wheelRef = useWheelHorizontal();
+  const { order, draggingId, onCardPointerDown } = useGridReorder({
+    items: notes,
+    getId: (n) => n.id,
+    containerRef,
+    onReorder,
+    axis: 'x',
+    armed,
+  });
+  // One node, two refs: useGridReorder owns the RefObject, useWheelHorizontal the listener.
+  const setGrid = useCallback((node: HTMLDivElement | null) => { containerRef.current = node; wheelRef(node); }, [wheelRef]);
+  const rendered = useLeaving(order, (n) => n.id);
+  return (
+    <Section title={title} onViewAll={onViewAll}>
+      {notes.length === 0 ? (
+        <p className="home-empty">{emptyText}</p>
+      ) : (
+        <div ref={setGrid} className="home-card-row cols-5">
+          {rendered.map(({ item: note, leaving }, i) => (
+            <CoverCard
+              key={note.id}
+              index={i}
+              leaving={leaving}
+              flipId={note.id}
+              dragging={draggingId === note.id}
+              onPointerDown={leaving ? undefined : (e) => onCardPointerDown(e, note)}
+              title={noteLabel(note)}
+              cover={note.coverImage}
+              seed={note.id}
+              compact
+              onClick={() => onOpen(note)}
+              onSetCover={() => onSetCover(note)}
+              onContextMenu={(e) => onMenu(e, note)}
+            />
+          ))}
+        </div>
+      )}
+    </Section>
+  );
+};
+
+interface DraggableSpaceSectionProps {
   title: string;
-  folders: Folder[];
+  spaces: Space[];
   emptyText: string;
   action?: React.ReactNode;
   onViewAll: () => void;
-  onOpen: (id: string) => void;
-  onMenu: (e: React.MouseEvent, folder: Folder) => void;
-  onSetCover: (folder: Folder) => void;
-  onReorder: (folders: Folder[]) => void;
+  onOpen: (id: string, name: string) => void;
+  onMenu: (e: React.MouseEvent, space: Space) => void;
+  onSetCover: (space: Space) => void;
+  onReorder: (spaces: Space[]) => void;
+  // Set true once Home's first load has landed (gates the mount FLIP).
+  armed?: boolean;
 }
 
-// Spaces variant of DraggableNoteSection — folders can be dragged to reorder.
-const DraggableFolderSection = ({ title, folders, emptyText, action, onViewAll, onOpen, onMenu, onSetCover, onReorder }: DraggableFolderSectionProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+// Spaces variant of DraggableNoteSection — space cards can be dragged to reorder.
+const DraggableSpaceSection = ({ title, spaces, emptyText, action, onViewAll, onOpen, onMenu, onSetCover, onReorder, armed }: DraggableSpaceSectionProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const wheelRef = useWheelHorizontal();
   const { order, draggingId, onCardPointerDown } = useGridReorder({
-    items: folders,
-    getId: (f) => f.id,
+    items: spaces,
+    getId: (s) => s.id,
     containerRef,
     onReorder,
+    axis: 'x',
+    armed,
   });
+  // One node, two refs: useGridReorder owns the RefObject, useWheelHorizontal the listener.
+  const setGrid = useCallback((node: HTMLDivElement | null) => { containerRef.current = node; wheelRef(node); }, [wheelRef]);
+  const rendered = useLeaving(order, (s) => s.id);
   return (
     <Section title={title} action={action} onViewAll={onViewAll}>
-      {folders.length === 0 ? (
+      {spaces.length === 0 ? (
         <p className="home-empty">{emptyText}</p>
       ) : (
-        <div ref={containerRef} className="home-card-row cols-5">
-          {order.map((folder) => (
+        <div ref={setGrid} className="home-card-row cols-5">
+          {rendered.map(({ item: space, leaving }, i) => (
             <CoverCard
-              key={folder.id}
-              flipId={folder.id}
-              dragging={draggingId === folder.id}
-              onPointerDown={(e) => onCardPointerDown(e, folder)}
-              title={folder.name}
-              cover={folder.coverImage}
-              seed={folder.id}
+              key={space.id}
+              index={i}
+              leaving={leaving}
+              flipId={space.id}
+              dragging={draggingId === space.id}
+              onPointerDown={leaving ? undefined : (e) => onCardPointerDown(e, space)}
+              title={space.name}
+              cover={space.coverImage}
+              seed={space.id}
               compact
-              onClick={() => onOpen(folder.id)}
-              onSetCover={() => onSetCover(folder)}
-              onContextMenu={(e) => onMenu(e, folder)}
+              onClick={() => onOpen(space.id, space.name)}
+              onSetCover={() => onSetCover(space)}
+              onContextMenu={(e) => onMenu(e, space)}
             />
           ))}
-          {fillers(order.length, 5)}
         </div>
       )}
     </Section>

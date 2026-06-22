@@ -1,19 +1,24 @@
 import { useCallback, useState } from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, ImagePlus, Pencil, Pin, Trash2 } from 'lucide-react';
 import { Folder } from '../../types';
 import { useFolderStore } from '../../store/useFolderStore';
+import { folderService } from '../../services/folder.service';
 import { useToast } from '../ui/ToastContainer';
 import ContextMenu from '../ui/ContextMenu';
 import EditFolderModal from '../modals/EditFolderModal';
 import Modal from '../modals/Modal';
+import { useRename } from './RenameContext';
 
 interface Options {
   onAfterChange?: () => void;
+  // Opens the view's cover picker for this folder (the view owns the modal).
+  onSetCover?: (folder: Folder) => void;
 }
 
 // Right-click actions for space (folder) cards — mirrors the sidebar's folder menu.
-export function useFolderCardMenu({ onAfterChange }: Options) {
-  const { deleteFolder } = useFolderStore();
+export function useFolderCardMenu({ onAfterChange, onSetCover }: Options) {
+  const { deleteFolder, updateFolder } = useFolderStore();
+  const rename = useRename();
   const toast = useToast();
 
   const [menu, setMenu] = useState<{ isOpen: boolean; position: { x: number; y: number }; folder: Folder | null }>(
@@ -32,8 +37,25 @@ export function useFolderCardMenu({ onAfterChange }: Options) {
 
   const closeMenu = useCallback(() => setMenu((p) => ({ ...p, isOpen: false })), []);
 
+  const handlePin = async () => {
+    if (!menu.folder) return;
+    const wasPinned = menu.folder.isPinned;
+    try { await folderService.togglePin(menu.folder.id); toast.success(wasPinned ? 'Unpinned' : 'Space pinned'); onAfterChange?.(); }
+    catch { toast.error('Could not pin space'); }
+  };
   const handleEdit = () => { if (menu.folder) { setTarget(menu.folder); setShowEditModal(true); } };
   const handleDelete = () => { if (menu.folder) { setTarget(menu.folder); setShowDeleteModal(true); } };
+  const handleSetCover = () => { if (menu.folder) onSetCover?.(menu.folder); };
+  const handleRename = () => {
+    const folder = menu.folder;
+    if (!folder) return;
+    rename.begin(folder.id, async (value) => {
+      const name = value.trim();
+      if (!name || name === folder.name) return;
+      try { await updateFolder(folder.id, { name }); onAfterChange?.(); }
+      catch { toast.error('Could not rename folder'); }
+    });
+  };
 
   const confirmDelete = async () => {
     if (!target) return;
@@ -49,7 +71,10 @@ export function useFolderCardMenu({ onAfterChange }: Options) {
         position={menu.position}
         onClose={closeMenu}
         items={[
+          { icon: <Pencil className="w-4 h-4" />, label: 'Rename', onClick: handleRename },
           { icon: <Edit className="w-4 h-4" />, label: 'Edit', onClick: handleEdit },
+          { icon: <ImagePlus className="w-4 h-4" />, label: 'Add cover', onClick: handleSetCover },
+          { icon: <Pin className="w-4 h-4" />, label: menu.folder?.isPinned ? 'Unpin' : 'Pin', onClick: handlePin },
           { icon: <Trash2 className="w-4 h-4" />, label: 'Delete', onClick: handleDelete, variant: 'danger' },
         ]}
         minWidth="160px"
@@ -58,6 +83,7 @@ export function useFolderCardMenu({ onAfterChange }: Options) {
         isOpen={showEditModal}
         onClose={() => { setShowEditModal(false); setTarget(null); }}
         onFolderUpdated={onAfterChange}
+        kind="folder"
         folder={target}
       />
       <Modal

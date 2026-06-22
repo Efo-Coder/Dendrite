@@ -59,6 +59,9 @@ postgres_data/
 # Assets (lokale Dateien, nicht versionieren)
 assets/
 
+# Preset cover originals (stashed PNG sources; only the optimized webp under public/ ship)
+frontend/preset-sources/
+
 *.txt
 
 # Uploads (user-generated files at runtime)

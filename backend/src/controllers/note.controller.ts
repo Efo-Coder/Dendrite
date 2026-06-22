@@ -3,14 +3,32 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { extractUploadUrls, deleteFiles } from '../utils/imageCleanup';
-import { NOTE_INCLUDE, applyPreferences, sortPinnedFirst, transformNote } from './note.helpers';
+import { NOTE_INCLUDE, applyPreferences, sortByContextOrder, transformNote } from './note.helpers';
 import { maybeCreateVersion } from '../services/noteVersion.service';
+
+// A note's space is the folder's space when filed in a folder, otherwise the
+// explicitly given space (validated to belong to the user), else null.
+async function resolveNoteSpace(
+  userId: string,
+  folderId?: string | null,
+  spaceId?: string | null,
+): Promise<string | null> {
+  if (folderId) {
+    const folder = await prisma.folder.findFirst({ where: { id: folderId, userId }, select: { spaceId: true } });
+    return folder?.spaceId ?? null;
+  }
+  if (spaceId) {
+    const space = await prisma.space.findFirst({ where: { id: spaceId, userId }, select: { id: true } });
+    return space ? spaceId : null;
+  }
+  return null;
+}
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
 export const getAllNotes = async (req: AuthRequest, res: Response) => {
   try {
-    const { folderId, tagId, pinned, favorite, archived, deleted, shared } = req.query;
+    const { spaceId, folderId, tagId, pinned, favorite, archived, deleted, shared } = req.query;
 
     // Shared-with-me view
     if (shared === 'true') {
@@ -23,13 +41,29 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
         collabs.map(c => transformNote(c.note)),
         req.userId!
       );
-      notes.sort(sortPinnedFirst);
+
+      // Personal drag order for the shared view (mirrors the owned-notes branch).
+      if (notes.length > 0) {
+        const noteOrders = await prisma.noteOrder.findMany({
+          where: {
+            userId: req.userId,
+            contextType: 'shared',
+            contextId: '_none',
+            noteId: { in: notes.map(n => n.id) },
+          },
+        });
+        const orderMap = new Map(noteOrders.map(no => [no.noteId, no.order]));
+        return res.json({ notes: sortByContextOrder(notes, orderMap) });
+      }
+
       return res.json({ notes });
     }
 
     const where: Prisma.NoteWhereInput = { userId: req.userId };
 
+    // A folder shows its own notes; a space shows only its direct (folderless) notes.
     if (folderId) where.folderId = folderId as string;
+    else if (spaceId) { where.spaceId = spaceId as string; where.folderId = null; }
     if (tagId) where.noteTags = { some: { tagId: tagId as string } };
     if (pinned !== undefined) where.isPinned = pinned === 'true';
     if (favorite !== undefined) where.isFavorite = favorite === 'true';
@@ -50,6 +84,9 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
     if (folderId) {
       contextType = 'folder';
       contextId = folderId as string;
+    } else if (spaceId) {
+      contextType = 'space';
+      contextId = spaceId as string;
     } else if (tagId) {
       contextType = 'tag';
       contextId = tagId as string;
@@ -70,19 +107,7 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
       });
 
       const orderMap = new Map(noteOrders.map(no => [no.noteId, no.order]));
-
-      const notesWithOrder = notes.filter(n => orderMap.has(n.id));
-      const notesWithoutOrder = notes.filter(n => !orderMap.has(n.id));
-
-      notesWithOrder.sort((a, b) => {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return orderMap.get(a.id)! - orderMap.get(b.id)!;
-      });
-
-      notesWithoutOrder.sort(sortPinnedFirst);
-
-      return res.json({ notes: [...notesWithOrder, ...notesWithoutOrder] });
+      return res.json({ notes: sortByContextOrder(notes, orderMap) });
     }
 
     return res.json({ notes });
@@ -152,16 +177,21 @@ export const searchNotes = async (req: AuthRequest, res: Response) => {
 
 export const createNote = async (req: AuthRequest, res: Response) => {
   try {
-    const { content, folderId, coverImage, tags } = req.body;
+    const { content, spaceId, folderId, coverImage, tags } = req.body;
 
     if (content === undefined || content === null) {
       return res.status(400).json({ error: 'Inhalt ist erforderlich' });
     }
 
+    // A note in a folder always belongs to that folder's space; otherwise it sits
+    // directly in the given space (or top-level when neither is set).
+    const resolvedSpaceId = await resolveNoteSpace(req.userId!, folderId, spaceId);
+
     const raw = await prisma.note.create({
       data: {
         content,
         userId: req.userId!,
+        spaceId: resolvedSpaceId,
         folderId: folderId || null,
         coverImage: coverImage || null,
         noteTags: tags ? { create: (tags as string[]).map((tagId: string) => ({ tagId })) } : undefined,
@@ -179,7 +209,7 @@ export const createNote = async (req: AuthRequest, res: Response) => {
 export const updateNote = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { title, content, folderId, coverImage, tags } = req.body;
+    const { title, content, spaceId, folderId, coverImage, tags } = req.body;
 
     const existingNote = await prisma.note.findFirst({
       where: {
@@ -239,13 +269,20 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    const nextFolderId = isOwner && folderId !== undefined ? (folderId || null) : existingNote.folderId;
+    const nextSpaceId =
+      isOwner && (folderId !== undefined || spaceId !== undefined)
+        ? await resolveNoteSpace(req.userId!, nextFolderId, spaceId)
+        : existingNote.spaceId;
+
     const raw = await prisma.note.update({
       where: { id },
       data: {
         title: title !== undefined ? title : existingNote.title,
         content: content !== undefined ? content : existingNote.content,
         coverImage: coverImage !== undefined ? coverImage : existingNote.coverImage,
-        folderId: isOwner && folderId !== undefined ? folderId : existingNote.folderId,
+        folderId: nextFolderId,
+        spaceId: nextSpaceId,
       },
       include: NOTE_INCLUDE,
     });

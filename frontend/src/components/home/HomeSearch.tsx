@@ -1,19 +1,19 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Search, FileText, Layers } from 'lucide-react';
 import { useNoteStore } from '../../store/useNoteStore';
-import { useFolderStore } from '../../store/useFolderStore';
+import { useSpaceStore } from '../../store/useSpaceStore';
 import { noteLabel } from '../../lib/noteText';
 
 interface HomeSearchProps {
   onOpenNote: (id: string) => void;
-  onOpenSpace: (id: string) => void;
+  onOpenSpace: (id: string, name: string) => void;
 }
 
 // The dashboard search bar is itself the input — results drop down inline
 // beneath it (no modal).
 const HomeSearch = ({ onOpenNote, onOpenSpace }: HomeSearchProps) => {
   const notes = useNoteStore((s) => s.notes);
-  const folders = useFolderStore((s) => s.folders);
+  const spaces = useSpaceStore((s) => s.spaces);
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
 
@@ -22,8 +22,8 @@ const HomeSearch = ({ onOpenNote, onOpenSpace }: HomeSearchProps) => {
     [q, notes],
   );
   const spaceHits = useMemo(
-    () => (q ? folders.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 6) : []),
-    [q, folders],
+    () => (q ? spaces.filter((s) => s.name.toLowerCase().includes(q)).slice(0, 6) : []),
+    [q, spaces],
   );
   const hasResults = noteHits.length > 0 || spaceHits.length > 0;
 
@@ -77,10 +77,10 @@ const HomeSearch = ({ onOpenNote, onOpenSpace }: HomeSearchProps) => {
           {spaceHits.length > 0 && (
             <div className="search-group">
               <span className="search-group-label">Spaces</span>
-              {spaceHits.map((f) => (
-                <button key={f.id} type="button" className="search-result" onClick={() => onOpenSpace(f.id)}>
+              {spaceHits.map((s) => (
+                <button key={s.id} type="button" className="search-result" onClick={() => onOpenSpace(s.id, s.name)}>
                   <Layers size={15} className="search-result-icon" />
-                  <span className="search-result-label">{f.name}</span>
+                  <span className="search-result-label">{s.name}</span>
                 </button>
               ))}
             </div>

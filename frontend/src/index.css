@@ -62,6 +62,9 @@
   --avatar-color: oklch(0.15 0.020 60);
   --shadow-deep: 0 32px 60px -20px rgba(80,60,30,.18), 0 4px 12px rgba(80,60,30,.06);
   --shadow-card: 0 1px 3px rgba(0,0,0,.06);
+  /* Tighter lift for cards inside the horizontally-clipped card row, where the full
+     --shadow-deep would be cut off by the row's forced vertical overflow clipping. */
+  --shadow-lift: 0 14px 30px -12px rgba(80,60,30,.20), 0 3px 8px rgba(80,60,30,.07);
 
   --danger: oklch(0.62 0.16 25);
   --radius-win:  14px;
@@ -111,6 +114,7 @@
   --avatar-color: oklch(0.11 0.008 60);
   --shadow-deep: 0 32px 80px -16px rgba(0,0,0,.65), 0 4px 12px rgba(0,0,0,.35);
   --shadow-card: 0 2px 8px rgba(0,0,0,.25);
+  --shadow-lift: 0 14px 34px -14px rgba(0,0,0,.6), 0 3px 10px rgba(0,0,0,.4);
 }
 
 /* ─── Dark palette variants ──────────────────────────────────────────────────── */
@@ -949,63 +953,6 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 }
 .win .editor-title::placeholder { color: var(--ink-dim); font-style: italic; }
 
-/* Tag byline below the title */
-.win .editor-byline {
-  display: flex; align-items: center; gap: 12px;
-  margin-bottom: 22px; padding-bottom: 22px;
-  border-bottom: 0.5px solid var(--line-soft);
-}
-.win .editor-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-height: 26px; }
-.win .editor-tag  {
-  font-family: var(--serif-body); font-size: 12.5px; font-style: italic;
-  padding: 0 10px 0 8px; border-radius: 999px;
-  height: 26px; box-sizing: border-box;
-  background: var(--surface); border: 0.5px solid var(--line-soft);
-  color: var(--ink-mid); display: inline-flex; align-items: center; gap: 0;
-}
-.win .editor-tag::before { content: "#"; opacity: 0.55; }
-.win .editor-tag .tag-remove {
-  margin-left: 4px;
-  width: 12px; height: 12px; border-radius: 50%; opacity: 0.5;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 11px; line-height: 1; font-style: normal;
-  font-family: var(--mono); flex-shrink: 0;
-}
-.win .editor-tag .tag-remove:hover { opacity: 1; background: var(--bg); }
-
-.win .editor-tag-add {
-  font-family: var(--mono); font-size: 10px;
-  color: var(--ink-dim); letter-spacing: 0.16em; text-transform: uppercase;
-  cursor: default; padding: 3px 8px; border-radius: 6px;
-  border: 0.5px dashed var(--line); background: transparent;
-  height: 26px; box-sizing: border-box;
-}
-.win .editor-tag-add:hover { color: var(--accent); border-color: var(--accent); transform: none; }
-
-.win .editor-tag-input {
-  font-family: var(--serif-body); font-size: 12.5px; font-style: italic;
-  background: var(--surface); border: 0.5px solid var(--accent);
-  color: var(--ink); border-radius: 999px; padding: 3px 10px;
-  outline: none; width: 110px;
-  height: 26px; box-sizing: border-box;
-}
-.win .editor-tag-wrapper { position: relative; display: inline-flex; }
-.win .editor-tag-suggestions {
-  position: absolute; top: calc(100% + 4px); left: 0;
-  background: var(--surface-hi); border: 0.5px solid var(--line);
-  border-radius: 8px; padding: 3px; z-index: 4;
-  display: flex; flex-direction: column; min-width: 130px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
-}
-.win .editor-tag-suggestion {
-  display: flex; align-items: center; gap: 6px;
-  font-family: var(--serif-body); font-size: 12px; font-style: italic;
-  color: var(--ink-mid); padding: 4px 8px; border-radius: 5px;
-  text-align: left; background: none; border: none; cursor: pointer; white-space: nowrap;
-}
-.win .editor-tag-suggestion:hover,
-.win .editor-tag-suggestion.active { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--ink); }
-
 /* Body text area — font/size set by Lexical */
 .win .editor-body {
   font-family: var(--editor-body); font-size: var(--editor-fs);
@@ -1694,18 +1641,26 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 
 /* ─── Main content ───────────────────────────────────────────────────────────── */
 
-/* Animated wrapper between AppSidebar and the view — must let .home-main fill it. */
-.home-page { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+/* Stable wrapper between AppSidebar and the view; positions the editor overlay. */
+.home-page { flex: 1; min-width: 0; position: relative; display: flex; flex-direction: column; }
+/* The animated view layer must let .home-main fill it. */
+.home-page-view { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+/* The inline editor overlays the current view (which stays mounted behind it), so
+   closing it reveals exactly where you were — scroll position and all. */
+.editor-overlay { position: absolute; inset: 0; z-index: 4; background: var(--bg); display: flex; flex-direction: column; }
 .home-main { flex: 1; overflow-y: auto; min-height: 0; }
 .home-main::-webkit-scrollbar { width: 8px; }
 .home-main::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-low) 40%, transparent); border-radius: 9999px; }
-.home-content { max-width: 1500px; padding: 36px 80px 90px; position: relative; }
+/* Centered, fluid-gutter column so wide screens fill out instead of leaving the
+   whole right half empty. The gutter is shared with the absolute topbars below so
+   their icons stay glued to the content's right edge as the padding scales. */
+.home-content { --home-gutter: clamp(56px, 5vw, 112px); max-width: 2100px; margin-inline: auto; padding: 36px var(--home-gutter) 90px; position: relative; }
 
 /* Out of flow so the icons don't push the greeting/content down. */
-.home-topbar { position: absolute; top: 36px; right: 80px; z-index: 2; display: flex; gap: 8px; }
+.home-topbar { position: absolute; top: 36px; right: var(--home-gutter); z-index: 2; display: flex; gap: 8px; }
 
 /* Top-right action row for the category / spaces views: a context action + back. */
-.home-view-topbar { position: absolute; top: 36px; right: 80px; z-index: 2; display: flex; align-items: center; gap: 16px; }
+.home-view-topbar { position: absolute; top: 36px; right: var(--home-gutter); z-index: 2; display: flex; align-items: center; gap: 16px; }
 .home-back-btn, .home-view-action {
   display: flex; align-items: center; gap: 7px;
   border: 0; background: transparent; cursor: pointer;
@@ -1714,6 +1669,10 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 }
 .home-back-btn { color: color-mix(in oklch, var(--ink-low) 80%, white 5%); }
 .home-back-btn:hover { color: var(--ink); }
+/* Arrow slides outward (left) on hover — the back-button mirror of the
+   "Enter the thoughts" cue. */
+.home-back-btn svg { transition: transform .18s ease; }
+.home-back-btn:hover svg { transform: translateX(-3px); }
 .home-view-action { color: var(--ink); }
 .home-view-action:hover { color: var(--accent); }
 .home-view-action.danger:hover { color: #ef4444; }
@@ -1841,11 +1800,37 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 }
 .home-view-all:hover { color: var(--ink); }
 
-.home-card-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 18px; }
-/* auto-fit: the few cards stretch to fill the full width (no trailing gap), but
-   wrap onto new rows at the min width instead of being squeezed when space runs out. */
-.home-card-row.cols-4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
-.home-card-row.cols-5 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+/* One horizontally scrolling row holding all of a section's cards, fixed width so
+   they never resize. overflow-x forces overflow-y to auto (CSS has no x:auto/y:visible),
+   which would clip the hover-lift + deep shadow — the asymmetric padding gives them
+   room and the matching negative margin keeps the section's vertical rhythm. Mouse
+   wheel is mapped to horizontal scroll by useWheelHorizontal; the bar is hidden. */
+/* --fade-* are driven by useWheelHorizontal from the scroll position so cards fade
+   out toward the edge they overflow (and never at an end that has no more cards).
+   @property makes the mask edges animate instead of popping. */
+@property --fade-start { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --fade-end { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.home-card-row {
+  /* Positioned so card offsetTop/offsetLeft are measured relative to the row, not a
+     far ancestor — keeps the FLIP hooks from firing when a section above collapses. */
+  position: relative;
+  --fade-start: 0px;
+  --fade-end: 0px;
+  display: grid;
+  grid-auto-flow: column;
+  gap: 18px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 12px 2px 40px;
+  margin: -12px -2px -40px;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+  transition: --fade-start .2s ease, --fade-end .2s ease;
+}
+.home-card-row::-webkit-scrollbar { display: none; }
+.home-card-row.cols-4 { grid-auto-columns: 268px; }
+.home-card-row.cols-5 { grid-auto-columns: 211px; }
 .home-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
 /* Month separators in the category views — same skin as the workspace list label. */
 .notes-month-group + .notes-month-group { margin-top: 8px; }
@@ -1856,14 +1841,26 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 }
 .notes-month-group:first-of-type .notes-month-label { margin-top: 0; }
 .notes-month-label::after { content: ""; flex: 1; height: 0.5px; background: var(--line-soft); }
+/* The label-less rest grid sitting under the Pinned group needs its own breathing room. */
+.notes-month-group + .notes-month-group.notes-rest { margin-top: 32px; }
 .home-empty { font-family: var(--serif-body); font-style: normal; font-size: 18px; color: var(--ink-dim); padding: 6px 2px; }
 
+/* Staggered fade-up entrance (no inline transform → hover-lift + FLIP stay intact).
+   --enter-i is the card's index in its grid; capped so long lists don't drag on. */
+@keyframes cardEnter { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+/* Exit: fade out + shrink in place; the gap is then closed by the FLIP shift. */
+@keyframes cardLeave { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.9); } }
+.home-card.leaving { animation: cardLeave 0.24s ease forwards; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .home-card.leaving { animation: none; opacity: 0; } }
 .home-card {
   position: relative; display: block; padding: 0; border: 0; cursor: pointer;
   aspect-ratio: 5 / 4; border-radius: var(--radius-card); overflow: hidden;
   box-shadow: var(--shadow-card); text-align: left;
   transition: transform .2s ease, box-shadow .2s ease;
+  animation: cardEnter 0.4s cubic-bezier(0.25, 1, 0.5, 1) backwards;
+  animation-delay: calc(min(var(--enter-i, 0), 8) * 0.08s);
 }
+@media (prefers-reduced-motion: reduce) { .home-card { animation: none; } }
 .home-card.compact { aspect-ratio: 16 / 11; }
 .home-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-deep); }
 /* Drag-to-reorder: the dragged card tracks the cursor 1:1 (no transform-transition,
@@ -1873,6 +1870,9 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 html.card-dragging { cursor: grabbing; user-select: none; }
 html.card-dragging .home-card { transition: none; cursor: grabbing; transform: none; }
 .home-card.dragging { box-shadow: var(--shadow-deep); }
+/* In the scrolling row the deep shadow gets clipped vertically — use the tighter lift. */
+.home-card-row .home-card:hover,
+.home-card-row .home-card.dragging { box-shadow: var(--shadow-lift); }
 .home-card-cover { position: absolute; inset: 0; background-size: cover; background-position: center; }
 .home-card-scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.6), rgba(0,0,0,.08) 55%, transparent); }
 /* Cover-edit affordance — revealed on card hover */
@@ -1889,25 +1889,40 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
 .home-card-title { font-family: var(--serif-display); font-style: normal; font-weight: 300; font-size: 26px; line-height: 1.15; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .home-card.compact .home-card-title { font-size: 26px; padding-bottom: 8px; }
 .home-card-sub { font-family: var(--serif-body); font-size: 14px; color: rgba(255,255,255,.82); }
+.home-card-title-input {
+  width: 100%; padding: 0; margin: 0; border: 0; outline: none; background: transparent;
+  font-family: var(--serif-display); font-weight: 300; font-size: 26px; line-height: 1.15;
+  color: #fff; caret-color: #fff; border-bottom: 1px solid rgba(255,255,255,.5);
+}
 
 /* ─── Daily Reflection ───────────────────────────────────────────────────────── */
 
 /* Home teaser banner */
 .reflection-teaser {
+  --teaser-line: color-mix(in oklch, var(--ink) 14%, var(--surface));
   display: flex; align-items: center; justify-content: space-between; gap: 24px; width: 100%;
-  padding: 26px 30px; border: 0.5px solid var(--line); border-radius: 18px; cursor: pointer;
-  background: linear-gradient(135deg, color-mix(in oklch, var(--accent) 9%, var(--surface)), var(--surface));
+  padding: 44px 30px; border: 0.5px solid color-mix(in oklch, var(--accent) 70%, var(--teaser-line)); border-radius: 18px; cursor: pointer;
+  background-image:
+    linear-gradient(90deg, var(--surface), color-mix(in oklch, var(--surface) 72%, transparent) 42%, transparent 78%),
+    url('/img/presets/flower-1.webp');
+  background-size: cover; background-position: center right; background-repeat: no-repeat;
   text-align: left; transition: border-color .15s, box-shadow .15s, transform .15s;
 }
 .reflection-teaser:hover {
-  border-color: color-mix(in oklch, var(--accent) 45%, var(--line));
+  border-color: color-mix(in oklch, var(--accent) 45%, var(--teaser-line));
   box-shadow: 0 8px 24px -12px color-mix(in oklch, var(--accent) 40%, transparent);
 }
 .reflection-teaser-prompt { font-family: var(--serif-display); font-style: italic; font-size: 24px; color: var(--ink); line-height: 1.2; }
 .reflection-teaser-cue {
   flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+  /* Chip backdrop so the gold cue reads over the light flower image in both themes. */
+  padding: 7px 13px; border-radius: 999px;
+  background: color-mix(in oklch, var(--surface) 85%, transparent); backdrop-filter: blur(3px);
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
 }
+/* Arrow slides outward (right) on hover — mirrors the back button's cue. */
+.reflection-teaser-cue svg { transition: transform .18s ease; }
+.reflection-teaser:hover .reflection-teaser-cue svg { transform: translateX(3px); }
 
 /* Reflection view */
 .reflection-prompt { font-style: italic; }

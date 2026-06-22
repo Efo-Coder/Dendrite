@@ -1,26 +1,9 @@
 import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { REFLECTION_PROMPTS } from '../data/reflectionPrompts';
 
 // ─── Daily prompts ─────────────────────────────────────────────────────────
-// Curated, calm, literary voice — one shared impulse per day, not SaaS-speak.
-const REFLECTION_PROMPTS = [
-  'What idea deserves more attention?',
-  'What did you notice today that you almost missed?',
-  'What are you still turning over in your mind?',
-  'What would you like to understand more deeply?',
-  'What felt true today, even if you can’t explain why?',
-  'What is one thing worth remembering from today?',
-  'What question are you avoiding?',
-  'What changed its meaning for you recently?',
-  'What are you grateful to be working on?',
-  'What would you tell yourself a year ago?',
-  'What small thing brought you back to yourself today?',
-  'What are you ready to let go of?',
-  'What is taking shape, slowly, in the background?',
-  'What did someone say that stayed with you?',
-];
-
 // Deterministic prompt for a day, so the daily impulse is the same for everyone.
 function promptForDate(date: Date): string {
   const dayIndex = Math.floor(date.getTime() / 86_400_000);

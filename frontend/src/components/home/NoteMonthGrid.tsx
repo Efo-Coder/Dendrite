@@ -1,7 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Note } from '../../types';
 import { monthKeyOf } from '../noteList/noteListUtils';
 import { noteLabel } from '../../lib/noteText';
+import { useCardFlip } from '../../hooks/useCardFlip';
+import { useLeaving } from '../../hooks/useLeaving';
 import CoverCard from './CoverCard';
 
 interface NoteMonthGridProps {
@@ -9,11 +11,50 @@ interface NoteMonthGridProps {
   onOpen: (note: Note) => void;
   onMenu: (e: React.MouseEvent, note: Note) => void;
   onSetCover: (note: Note) => void;
+  // Set true once the view's first network load has landed (gates the mount FLIP).
+  armed?: boolean;
 }
+
+interface MonthGroupProps {
+  label: string;
+  items: Note[];
+  onOpen: (note: Note) => void;
+  onMenu: (e: React.MouseEvent, note: Note) => void;
+  onSetCover: (note: Note) => void;
+  armed?: boolean;
+}
+
+// One month's grid, with FLIP shift + enter/leave animations.
+const MonthGroup = ({ label, items, onOpen, onMenu, onSetCover, armed }: MonthGroupProps) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  useCardFlip(ref, armed);
+  const rendered = useLeaving(items, (n) => n.id);
+  return (
+    <section className="notes-month-group">
+      <div className="notes-month-label">{label}</div>
+      <div ref={ref} className="home-card-grid">
+        {rendered.map(({ item: note, leaving }, i) => (
+          <CoverCard
+            key={note.id}
+            index={i}
+            leaving={leaving}
+            flipId={note.id}
+            title={noteLabel(note)}
+            cover={note.coverImage}
+            seed={note.id}
+            onClick={() => onOpen(note)}
+            onSetCover={() => onSetCover(note)}
+            onContextMenu={(e) => onMenu(e, note)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+};
 
 // Notes laid out as cover cards, bucketed into month groups (newest first) with
 // a label per month — the workspace list's grouping, in the Home card grid.
-const NoteMonthGrid = ({ notes, onOpen, onMenu, onSetCover }: NoteMonthGridProps) => {
+const NoteMonthGrid = ({ notes, onOpen, onMenu, onSetCover, armed }: NoteMonthGridProps) => {
   const groups = useMemo(() => {
     const sorted = [...notes].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     const map = new Map<string, Note[]>();
@@ -28,22 +69,15 @@ const NoteMonthGrid = ({ notes, onOpen, onMenu, onSetCover }: NoteMonthGridProps
   return (
     <>
       {groups.map((group) => (
-        <section key={group.label} className="notes-month-group">
-          <div className="notes-month-label">{group.label}</div>
-          <div className="home-card-grid">
-            {group.items.map((note) => (
-              <CoverCard
-                key={note.id}
-                title={noteLabel(note)}
-                cover={note.coverImage}
-                seed={note.id}
-                onClick={() => onOpen(note)}
-                onSetCover={() => onSetCover(note)}
-                onContextMenu={(e) => onMenu(e, note)}
-              />
-            ))}
-          </div>
-        </section>
+        <MonthGroup
+          key={group.label}
+          label={group.label}
+          items={group.items}
+          onOpen={onOpen}
+          onMenu={onMenu}
+          onSetCover={onSetCover}
+          armed={armed}
+        />
       ))}
     </>
   );

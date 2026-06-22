@@ -2,6 +2,7 @@
 import Modal from './Modal';
 import { MagicInput } from '../ui/MagicInput';
 import { useFolderStore } from '../../store/useFolderStore';
+import { useSpaceStore } from '../../store/useSpaceStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { canAccess } from '../../lib/planFeatures';
 import ColorPickerInline from '../editor/ColorPickerInline';
@@ -12,6 +13,10 @@ interface CreateFolderModalProps {
   isOpen: boolean;
   onClose: () => void;
   onFolderCreated?: () => void;
+  // With a spaceId this creates a folder inside that space (optionally under parentId);
+  // without it, it creates a top-level space.
+  spaceId?: string;
+  parentId?: string;
 }
 
 const presets = [
@@ -20,9 +25,11 @@ const presets = [
   '#ffffff', '#000000',
 ];
 
-const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderModalProps) => {
+const CreateFolderModal = ({ isOpen, onClose, onFolderCreated, spaceId, parentId }: CreateFolderModalProps) => {
   const { createFolder } = useFolderStore();
+  const { createSpace } = useSpaceStore();
   const { user } = useAuthStore();
+  const isFolder = !!spaceId;
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#10b981');
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
@@ -40,14 +47,18 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
 
     setIsSubmitting(true);
     try {
-      await createFolder({ name: name.trim(), color: selectedColor, icon: selectedIcon ?? undefined });
+      if (spaceId) {
+        await createFolder({ name: name.trim(), spaceId, parentId, color: selectedColor, icon: selectedIcon ?? undefined });
+      } else {
+        await createSpace({ name: name.trim(), color: selectedColor, icon: selectedIcon ?? undefined });
+      }
       setName('');
       setSelectedColor('#10b981');
       setSelectedIcon(null);
       onFolderCreated?.();
       onClose();
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Error creating folder'));
+      setError(getApiErrorMessage(err, isFolder ? 'Error creating folder' : 'Error creating space'));
     } finally {
       setIsSubmitting(false);
     }
@@ -62,7 +73,7 @@ const CreateFolderModal = ({ isOpen, onClose, onFolderCreated }: CreateFolderMod
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="New Folder" className="folder-picker-modal">
+    <Modal isOpen={isOpen} onClose={handleClose} title={isFolder ? 'New Folder' : 'New Space'} className="folder-picker-modal">
       <form onSubmit={handleSubmit}>
         {error && <div className="modal-error">{error}</div>}
 

@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import { Note } from '../types';
 import { noteService } from '../services/note.service';
 import { getApiErrorMessage } from '../lib/apiError';
+import { getCachedList, setCachedList } from '../lib/listCache';
+import { randomCoverPreset } from '../config/coverPresets';
+
+// Cached so the Home dashboard renders its notes immediately on reload.
+const NOTES_CACHE = 'store:notes';
 
 interface NoteState {
   notes: Note[];
@@ -12,6 +17,7 @@ interface NoteState {
 
   // Actions
   fetchNotes: (filters?: {
+    spaceId?: string;
     folderId?: string;
     tagId?: string;
     pinned?: boolean;
@@ -24,7 +30,9 @@ interface NoteState {
   createNote: (data: {
     title?: string;
     content: string;
+    spaceId?: string;
     folderId?: string;
+    coverImage?: string | null;
     tags?: string[];
   }) => Promise<Note>;
   updateNote: (
@@ -32,6 +40,7 @@ interface NoteState {
     data: {
       title?: string;
       content?: string;
+      spaceId?: string | null;
       folderId?: string | null;
       coverImage?: string | null;
       tags?: string[];
@@ -51,7 +60,7 @@ interface NoteState {
 }
 
 export const useNoteStore = create<NoteState>((set) => ({
-  notes: [],
+  notes: getCachedList<Note>(NOTES_CACHE) ?? [],
   currentNote: null,
   isLoading: false,
   error: null,
@@ -61,6 +70,7 @@ export const useNoteStore = create<NoteState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const notes = await noteService.getAllNotes(filters);
+      setCachedList(NOTES_CACHE, notes);
       set({ notes, isLoading: false });
     } catch (error) {
       set({
@@ -89,7 +99,10 @@ export const useNoteStore = create<NoteState>((set) => ({
       const note = await noteService.createNote({
         title: data.title ?? '',
         content: data.content,
+        spaceId: data.spaceId,
         folderId: data.folderId,
+        // New notes get a random preset cover unless one is explicitly provided.
+        coverImage: data.coverImage === undefined ? randomCoverPreset() : data.coverImage,
         tags: data.tags,
       });
       // Deliberately NOT setting currentNote here — the DashboardPage opens the
