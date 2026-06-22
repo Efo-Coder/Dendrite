@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { useRename } from './RenameContext';
 
@@ -37,17 +38,26 @@ interface CoverCardProps {
 const CoverCard = ({ title, subtitle, cover, seed, compact, index, leaving, onClick, onSetCover, onContextMenu, flipId, dragging, onPointerDown }: CoverCardProps) => {
   const rename = useRename();
   const editing = flipId != null && rename.editingId === flipId;
+  // cardEnter is a mount-only entrance. Reordering detaches/reattaches the card's DOM node,
+  // which Chromium treats as a re-insert and restarts the CSS animation. Once a card is
+  // dragged its entrance is over, so latch it as `entered` to drop the animation — keeping
+  // cardEnter to open/create only. The latch survives the drag end (no replay on release).
+  const enteredRef = useRef(false);
+  if (dragging) enteredRef.current = true;
+  const entered = enteredRef.current;
   const style = cover
     ? { backgroundImage: `url(${resolveUrl(cover)})` }
     : { backgroundImage: fallbackCover(seed) };
   // Not a <button> so the cover-edit button can nest inside (no nested buttons).
   return (
     <div
-      className={`${compact ? 'home-card compact' : 'home-card'}${dragging ? ' dragging' : ''}${leaving ? ' leaving' : ''}`}
+      className={`${compact ? 'home-card compact' : 'home-card'}${dragging ? ' dragging' : ''}${leaving ? ' leaving' : ''}${entered ? ' entered' : ''}`}
       style={{ ['--enter-i']: index ?? 0 } as React.CSSProperties}
       role="button"
       tabIndex={0}
       data-flip-id={flipId}
+      // Once the entrance has finished, latch it off so a later reorder re-insert can't replay it.
+      onAnimationEnd={(e) => { if (e.animationName === 'cardEnter') enteredRef.current = true; }}
       // While renaming the title input owns all interaction — no open, no drag.
       onPointerDown={editing ? undefined : onPointerDown}
       onClick={editing ? undefined : onClick}

@@ -1860,6 +1860,9 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
   animation: cardEnter 0.4s cubic-bezier(0.25, 1, 0.5, 1) backwards;
   animation-delay: calc(min(var(--enter-i, 0), 8) * 0.08s);
 }
+/* Latched off once the entrance has played / the card is dragged (see CoverCard), so a
+   reorder re-insert — which Chromium treats as a restart — can't replay cardEnter. */
+.home-card.entered { animation: none; }
 @media (prefers-reduced-motion: reduce) { .home-card { animation: none; } }
 .home-card.compact { aspect-ratio: 16 / 11; }
 .home-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-deep); }
