@@ -22,11 +22,13 @@ interface SpaceGridProps {
   onOpen: (id: string, name: string) => void;
   onSetCover: (space: Space) => void;
   onMenu: (e: React.MouseEvent, space: Space) => void;
+  // Set true once the first network load has landed (gates the mount FLIP).
+  armed?: boolean;
 }
 
-const SpaceGrid = ({ spaces, onOpen, onSetCover, onMenu }: SpaceGridProps) => {
+const SpaceGrid = ({ spaces, onOpen, onSetCover, onMenu, armed }: SpaceGridProps) => {
   const ref = useRef<HTMLDivElement | null>(null);
-  useCardFlip(ref);
+  useCardFlip(ref, armed);
   const rendered = useLeaving(spaces, (s) => s.id);
   return (
     <div ref={ref} className="home-card-grid">
@@ -54,6 +56,9 @@ const SpacesView = ({ onOpenSpace, onBack }: SpacesViewProps) => {
   const fetchSpaces = useSpaceStore((s) => s.fetchSpaces);
   const [coverTarget, setCoverTarget] = useState<CoverTarget | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  // FLIP stays silent until the first network load lands, so the cache→network reconcile
+  // doesn't glide the cards when the view opens.
+  const [armed, setArmed] = useState(false);
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   useLenisScroll(scrollRef, contentRef, 'spaces');
@@ -62,7 +67,7 @@ const SpacesView = ({ onOpenSpace, onBack }: SpacesViewProps) => {
   const spaceMenu = useSpaceCardMenu({ onAfterChange: fetchSpaces, onSetCover: setCover });
 
   useEffect(() => {
-    fetchSpaces();
+    fetchSpaces().then(() => setArmed(true));
   }, [fetchSpaces]);
 
   const pinned = useMemo(() => spaces.filter((s) => s.isPinned), [spaces]);
@@ -88,16 +93,16 @@ const SpacesView = ({ onOpenSpace, onBack }: SpacesViewProps) => {
           <>
             <section className="notes-month-group">
               <div className="notes-month-label">Pinned</div>
-              <SpaceGrid spaces={pinned} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} />
+              <SpaceGrid spaces={pinned} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} armed={armed} />
             </section>
             {rest.length > 0 && (
               <section className="notes-month-group notes-rest">
-                <SpaceGrid spaces={rest} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} />
+                <SpaceGrid spaces={rest} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} armed={armed} />
               </section>
             )}
           </>
         ) : (
-          <SpaceGrid spaces={rest} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} />
+          <SpaceGrid spaces={rest} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} armed={armed} />
         )}
       </div>
 
