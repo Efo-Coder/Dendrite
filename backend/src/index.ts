@@ -183,6 +183,35 @@ async function deleteExpiredTrashedNotes() {
 
 setInterval(deleteExpiredTrashedNotes, 60 * 60 * 1000); // hourly
 
+// ─── Reconcile: denormalized like counts ─────────────────────────────────────
+
+// PublishedNote.likeCount is a denormalized cache of the like rows (so Featured can
+// sort without a join). The like/unlike toggle and account deletion keep it in sync,
+// so this is only a safety net against any future drift: recompute counts from the
+// rows — the single source of truth — and fix anything that diverged.
+async function reconcileLikeCounts() {
+  try {
+    const grouped = await prisma.publishedNoteLike.groupBy({
+      by: ['publishedNoteId'],
+      _count: { publishedNoteId: true },
+    });
+    const actual = new Map(grouped.map(g => [g.publishedNoteId, g._count.publishedNoteId]));
+    const notes = await prisma.publishedNote.findMany({ select: { id: true, likeCount: true } });
+    const drifted = notes.filter(n => (actual.get(n.id) ?? 0) !== n.likeCount);
+    if (drifted.length === 0) return;
+    await prisma.$transaction(
+      drifted.map(n =>
+        prisma.publishedNote.update({ where: { id: n.id }, data: { likeCount: actual.get(n.id) ?? 0 } }),
+      ),
+    );
+    console.log(`Reconcile: corrected likeCount on ${drifted.length} published note(s)`);
+  } catch (err) {
+    console.error('Like reconcile error:', err);
+  }
+}
+
+setInterval(reconcileLikeCounts, 24 * 60 * 60 * 1000); // daily — synchronous compensation is primary
+
 // ─── Startup ─────────────────────────────────────────────────────────────────
 
 process.on('SIGTERM', async () => {

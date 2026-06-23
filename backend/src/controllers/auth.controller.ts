@@ -209,7 +209,23 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
 
 export const deleteAccount = async (req: AuthRequest, res: Response) => {
   try {
-    await prisma.user.delete({ where: { id: req.userId } });
+    // The user's like rows vanish by cascade on delete, but PublishedNote.likeCount is
+    // denormalized — without compensating, foreign notes keep phantom likes. Decrement
+    // their counts in the same transaction as the delete so it stays all-or-nothing.
+    const likes = await prisma.publishedNoteLike.groupBy({
+      by: ['publishedNoteId'],
+      where: { userId: req.userId! },
+      _count: { publishedNoteId: true },
+    });
+    await prisma.$transaction([
+      ...likes.map((l) =>
+        prisma.publishedNote.update({
+          where: { id: l.publishedNoteId },
+          data: { likeCount: { decrement: l._count.publishedNoteId } },
+        }),
+      ),
+      prisma.user.delete({ where: { id: req.userId } }),
+    ]);
     return res.json({ message: 'Account deleted successfully' });
   } catch (error) {
     console.error('DeleteAccount error:', error);
