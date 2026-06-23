@@ -81,6 +81,12 @@ export function useGridReorder<T>({ items, getId, containerRef, onReorder, axis,
         );
       });
     }
+    // The reorder just moved the dragged card's DOM node, changing its offset. Re-apply its
+    // clamped cursor transform now (FLIP skips it) so it doesn't sit a slot off until the
+    // next pointermove — otherwise a slow drag shows it jumping after each swap.
+    if (st?.moved) {
+      st.el.style.transform = `translate(${st.startLeft + st.lastDx - st.el.offsetLeft}px, ${st.startTop + st.lastDy - st.el.offsetTop}px)`;
+    }
     const next = new Map<string, Pos>();
     els.forEach((el) => next.set(el.dataset.flipId!, { left: el.offsetLeft, top: el.offsetTop }));
     flipRef.current = next;
