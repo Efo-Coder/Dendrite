@@ -35,6 +35,10 @@ const FLIP_MS = 280;
 const SETTLE_MS = 320;
 const EASE = 'cubic-bezier(.3,1.25,.35,1)';
 const THRESHOLD = 5;
+// Swap-threshold bias as a fraction of card size: the dragged centre is compared against a
+// point shifted this far toward it, so a swap fires at ~(1 - SWAP_BIAS) overlap instead of
+// full coverage. 0.5 ≈ swap at 50% overlap; raise it to trigger earlier.
+const SWAP_BIAS = 0.35;
 
 // Pointer drag-to-reorder for a CSS grid: the dragged card sticks to the cursor
 // via transform, siblings glide to their new slots via FLIP (2D), and on release
@@ -152,18 +156,23 @@ export function useGridReorder<T>({ items, getId, containerRef, onReorder, axis,
       const cy = targetTop + h / 2;
       const rowTol = h / 2;
       const base = orderRef.current;
+      const aIdx = base.findIndex((it) => getId(it) === st.id);
       let insertAt = 0;
-      for (const it of base) {
-        const id = getId(it);
-        if (id === st.id) continue;
-        const r = flipRef.current.get(id);
-        if (!r) continue;
+      base.forEach((it, idx) => {
+        if (idx === aIdx) return;
+        const r = flipRef.current.get(getId(it));
+        if (!r) return;
         const ocx = r.left + w / 2;
         const ocy = r.top + h / 2;
         const sameRow = Math.abs(ocy - cy) < rowTol;
-        const before = sameRow ? ocx < cx : ocy < cy;
+        // Bias the compare point half a card toward the dragged centre, signed by the
+        // neighbour's side in the current order — swaps at ~50% overlap, symmetric for both
+        // directions with no drag-direction guess (so no flicker), and hysteretic (stable).
+        const mx = (idx > aIdx ? SWAP_BIAS : -SWAP_BIAS) * w;
+        const my = (idx > aIdx ? SWAP_BIAS : -SWAP_BIAS) * h;
+        const before = sameRow ? ocx < cx + mx : ocy < cy + my;
         if (before) insertAt++;
-      }
+      });
       const without = base.filter((it) => getId(it) !== st.id);
       const dragged = base.find((it) => getId(it) === st.id);
       if (!dragged) return;
