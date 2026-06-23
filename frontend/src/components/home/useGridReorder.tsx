@@ -124,16 +124,26 @@ export function useGridReorder<T>({ items, getId, containerRef, onReorder, axis,
         window.getSelection()?.removeAllRanges();
         st.el.style.zIndex = '3';
       }
-      st.lastDx = dx;
-      st.lastDy = dy;
-      // Card sticks to the cursor, relative to its current laid-out position.
-      st.el.style.transform = `translate(${st.startLeft + dx - st.el.offsetLeft}px, ${st.startTop + dy - st.el.offsetTop}px)`;
-
-      // Insert index from the dragged card's centre, row-major (row first, then column).
       const w = st.el.offsetWidth;
       const h = st.el.offsetHeight;
-      const cx = st.startLeft + dx + w / 2;
-      const cy = st.startTop + dy + h / 2;
+      // Clamp the dragged card to the visible container box so it can't be dragged off the
+      // edge (where the row's overflow-x would otherwise clip it).
+      const c = containerRef.current;
+      let targetLeft = st.startLeft + dx;
+      let targetTop = st.startTop + dy;
+      if (c) {
+        targetLeft = Math.max(c.scrollLeft, Math.min(targetLeft, c.scrollLeft + c.clientWidth - w));
+        targetTop = Math.max(c.scrollTop, Math.min(targetTop, c.scrollTop + c.clientHeight - h));
+      }
+      // Store the clamped delta so the release settle starts from the visible position.
+      st.lastDx = targetLeft - st.startLeft;
+      st.lastDy = targetTop - st.startTop;
+      // Card sticks to the cursor (clamped), relative to its current laid-out position.
+      st.el.style.transform = `translate(${targetLeft - st.el.offsetLeft}px, ${targetTop - st.el.offsetTop}px)`;
+
+      // Insert index from the dragged card's centre, row-major (row first, then column).
+      const cx = targetLeft + w / 2;
+      const cy = targetTop + h / 2;
       const rowTol = h / 2;
       const base = orderRef.current;
       let insertAt = 0;
@@ -188,7 +198,7 @@ export function useGridReorder<T>({ items, getId, containerRef, onReorder, axis,
     window.addEventListener('pointermove', onMove, { signal: abort.signal });
     window.addEventListener('pointerup', finish, { signal: abort.signal });
     window.addEventListener('pointercancel', finish, { signal: abort.signal });
-  }, [getId, onReorder, axis]);
+  }, [getId, onReorder, axis, containerRef]);
 
   return { order, draggingId, onCardPointerDown };
 }
