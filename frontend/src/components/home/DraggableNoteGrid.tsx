@@ -5,6 +5,7 @@ import { timeAgo } from '../../lib/timeAgo';
 import { useGridReorder } from './useGridReorder';
 import { useLeaving } from '../../hooks/useLeaving';
 import CoverCard from './CoverCard';
+import { gridClassFor, type CardViewMode } from '../../lib/viewMode';
 
 interface DraggableNoteGridProps {
   notes: Note[];
@@ -17,13 +18,15 @@ interface DraggableNoteGridProps {
   armed?: boolean;
   // Show the "Last explored …" subtitle — on the full-page category views, not the container view.
   showSubtitle?: boolean;
+  // Card layout: tile (default), small or list.
+  view?: CardViewMode;
 }
 
 const NOOP = () => {};
 
 // Flat cover-card grid for the category views. With onReorder set, cards reorder via
 // 2D pointer-drag + FLIP (useGridReorder) and the new order is persisted by the caller.
-const DraggableNoteGrid = ({ notes, onOpen, onMenu, onSetCover, onReorder, armed, showSubtitle }: DraggableNoteGridProps) => {
+const DraggableNoteGrid = ({ notes, onOpen, onMenu, onSetCover, onReorder, armed, showSubtitle, view = 'tile' }: DraggableNoteGridProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const draggable = !!onReorder;
   const { order, draggingId, onCardPointerDown } = useGridReorder({
@@ -37,7 +40,7 @@ const DraggableNoteGrid = ({ notes, onOpen, onMenu, onSetCover, onReorder, armed
   const rendered = useLeaving(list, (n) => n.id);
 
   return (
-    <div ref={containerRef} className="home-card-grid">
+    <div ref={containerRef} className={gridClassFor(view)}>
       {rendered.map(({ item: note, leaving }, i) => (
         <CoverCard
           key={note.id}
@@ -50,6 +53,7 @@ const DraggableNoteGrid = ({ notes, onOpen, onMenu, onSetCover, onReorder, armed
           subtitle={showSubtitle ? `Last explored ${timeAgo(note.updatedAt)}` : undefined}
           cover={note.coverImage}
           seed={note.id}
+          list={view === 'list'}
           onClick={() => onOpen(note)}
           onSetCover={() => onSetCover(note)}
           onContextMenu={(e) => onMenu(e, note)}

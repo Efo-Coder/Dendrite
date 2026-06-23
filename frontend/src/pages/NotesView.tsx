@@ -9,6 +9,8 @@ import { getApiErrorMessage } from '../lib/apiError';
 import CoverPickerModal, { type CoverTarget } from '../components/home/CoverPickerModal';
 import NoteMonthGrid from '../components/home/NoteMonthGrid';
 import DraggableNoteGrid from '../components/home/DraggableNoteGrid';
+import ViewModeToggle from '../components/home/ViewModeToggle';
+import { useViewMode } from '../hooks/useViewMode';
 import { useNoteCardMenu } from '../components/home/useNoteCardMenu';
 import BackButton from '../components/home/BackButton';
 import EmptyTrashModal from '../components/modals/EmptyTrashModal';
@@ -53,6 +55,8 @@ interface NotesViewProps {
 const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewProps) => {
   const meta = META[category];
   const contextType = ORDER_CONTEXT[category];
+  // Layout preference is remembered per category (e.g. Favorites as a list, All as tiles).
+  const [view, setView] = useViewMode(`notes:${category}`);
   const [notes, setNotes] = useState<Note[]>(() => getCachedList<Note>(`notes:${category}`) ?? []);
   const [coverTarget, setCoverTarget] = useState<CoverTarget | null>(null);
   const [showEmptyTrash, setShowEmptyTrash] = useState(false);
@@ -126,6 +130,7 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
     <main ref={scrollRef} className="home-main">
       <div ref={contentRef} className="home-content">
         <div className="home-view-topbar">
+          {notes.length > 0 && <ViewModeToggle value={view} onChange={setView} />}
           {category === 'all' && (
             <button type="button" className="home-view-action" onClick={(e) => handleNewNote(e.currentTarget.getBoundingClientRect())}>
               <Plus size={16} strokeWidth={1.75} /> New Note
@@ -147,7 +152,7 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
         {notes.length === 0 ? (
           <p className="home-empty">{meta.empty}</p>
         ) : category === 'trash' ? (
-          <NoteMonthGrid notes={notes} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={setCover} armed={armed} countdown />
+          <NoteMonthGrid notes={notes} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={setCover} armed={armed} view={view} countdown />
         ) : (
           <>
             {pinned.length > 0 && (
@@ -160,6 +165,7 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
                   onSetCover={setCover}
                   onReorder={contextType ? handleReorderPinned : undefined}
                   armed={armed}
+                  view={view}
                   showSubtitle
                 />
               </section>
@@ -174,11 +180,12 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
                     onSetCover={setCover}
                     onReorder={handleReorderRest}
                     armed={armed}
+                    view={view}
                     showSubtitle
                   />
                 </section>
               ) : (
-                <NoteMonthGrid notes={rest} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={setCover} armed={armed} />
+                <NoteMonthGrid notes={rest} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={setCover} armed={armed} view={view} />
               ))}
           </>
         )}

@@ -7,6 +7,7 @@ import { trashCountdown } from '../../lib/trash';
 import { useCardFlip } from '../../hooks/useCardFlip';
 import { useLeaving } from '../../hooks/useLeaving';
 import CoverCard from './CoverCard';
+import { gridClassFor, type CardViewMode } from '../../lib/viewMode';
 
 interface NoteMonthGridProps {
   notes: Note[];
@@ -17,6 +18,8 @@ interface NoteMonthGridProps {
   armed?: boolean;
   // Trash view: show the "N Days" auto-purge countdown instead of "Last explored …".
   countdown?: boolean;
+  // Card layout: tile (default), small or list.
+  view?: CardViewMode;
 }
 
 interface MonthGroupProps {
@@ -27,17 +30,18 @@ interface MonthGroupProps {
   onSetCover: (note: Note) => void;
   armed?: boolean;
   countdown?: boolean;
+  view: CardViewMode;
 }
 
 // One month's grid, with FLIP shift + enter/leave animations.
-const MonthGroup = ({ label, items, onOpen, onMenu, onSetCover, armed, countdown }: MonthGroupProps) => {
+const MonthGroup = ({ label, items, onOpen, onMenu, onSetCover, armed, countdown, view }: MonthGroupProps) => {
   const ref = useRef<HTMLDivElement | null>(null);
   useCardFlip(ref, armed);
   const rendered = useLeaving(items, (n) => n.id);
   return (
     <section className="notes-month-group">
       <div className="notes-month-label">{label}</div>
-      <div ref={ref} className="home-card-grid">
+      <div ref={ref} className={gridClassFor(view)}>
         {rendered.map(({ item: note, leaving }, i) => {
           const cd = countdown ? trashCountdown(note.deletedAt) : null;
           return (
@@ -51,6 +55,7 @@ const MonthGroup = ({ label, items, onOpen, onMenu, onSetCover, armed, countdown
               subtitleTone={cd && cd.tone !== 'normal' ? cd.tone : undefined}
               cover={note.coverImage}
               seed={note.id}
+              list={view === 'list'}
               onClick={() => onOpen(note)}
               onSetCover={() => onSetCover(note)}
               onContextMenu={(e) => onMenu(e, note)}
@@ -64,7 +69,7 @@ const MonthGroup = ({ label, items, onOpen, onMenu, onSetCover, armed, countdown
 
 // Notes laid out as cover cards, bucketed into month groups (newest first) with
 // a label per month — the workspace list's grouping, in the Home card grid.
-const NoteMonthGrid = ({ notes, onOpen, onMenu, onSetCover, armed, countdown }: NoteMonthGridProps) => {
+const NoteMonthGrid = ({ notes, onOpen, onMenu, onSetCover, armed, countdown, view = 'tile' }: NoteMonthGridProps) => {
   const groups = useMemo(() => {
     const sorted = [...notes].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     const map = new Map<string, Note[]>();
@@ -88,6 +93,7 @@ const NoteMonthGrid = ({ notes, onOpen, onMenu, onSetCover, armed, countdown }: 
           onSetCover={onSetCover}
           armed={armed}
           countdown={countdown}
+          view={view}
         />
       ))}
     </>

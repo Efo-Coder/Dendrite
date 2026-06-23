@@ -8,6 +8,9 @@ import { useLeaving } from '../hooks/useLeaving';
 import CoverCard from '../components/home/CoverCard';
 import CoverPickerModal, { type CoverTarget } from '../components/home/CoverPickerModal';
 import BackButton from '../components/home/BackButton';
+import ViewModeToggle from '../components/home/ViewModeToggle';
+import { gridClassFor, type CardViewMode } from '../lib/viewMode';
+import { useViewMode } from '../hooks/useViewMode';
 import CreateFolderModal from '../components/modals/CreateFolderModal';
 import { useSpaceCardMenu } from '../components/home/useSpaceCardMenu';
 
@@ -24,14 +27,16 @@ interface SpaceGridProps {
   onMenu: (e: React.MouseEvent, space: Space) => void;
   // Set true once the first network load has landed (gates the mount FLIP).
   armed?: boolean;
+  // Card layout: tile (default), small or list.
+  view: CardViewMode;
 }
 
-const SpaceGrid = ({ spaces, onOpen, onSetCover, onMenu, armed }: SpaceGridProps) => {
+const SpaceGrid = ({ spaces, onOpen, onSetCover, onMenu, armed, view }: SpaceGridProps) => {
   const ref = useRef<HTMLDivElement | null>(null);
   useCardFlip(ref, armed);
   const rendered = useLeaving(spaces, (s) => s.id);
   return (
-    <div ref={ref} className="home-card-grid">
+    <div ref={ref} className={gridClassFor(view)}>
       {rendered.map(({ item: space, leaving }, i) => (
         <CoverCard
           key={space.id}
@@ -42,6 +47,7 @@ const SpaceGrid = ({ spaces, onOpen, onSetCover, onMenu, armed }: SpaceGridProps
           subtitle={`${space.notes?.length ?? 0} ${(space.notes?.length ?? 0) === 1 ? 'note' : 'notes'}`}
           cover={space.coverImage}
           seed={space.id}
+          list={view === 'list'}
           onClick={() => onOpen(space.id, space.name)}
           onSetCover={() => onSetCover(space)}
           onContextMenu={(e) => onMenu(e, space)}
@@ -56,6 +62,7 @@ const SpacesView = ({ onOpenSpace, onBack }: SpacesViewProps) => {
   const fetchSpaces = useSpaceStore((s) => s.fetchSpaces);
   const [coverTarget, setCoverTarget] = useState<CoverTarget | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [view, setView] = useViewMode('spaces');
   // FLIP stays silent until the first network load lands, so the cache→network reconcile
   // doesn't glide the cards when the view opens.
   const [armed, setArmed] = useState(false);
@@ -77,6 +84,7 @@ const SpacesView = ({ onOpenSpace, onBack }: SpacesViewProps) => {
     <main ref={scrollRef} className="home-main">
       <div ref={contentRef} className="home-content">
         <div className="home-view-topbar">
+          {spaces.length > 0 && <ViewModeToggle value={view} onChange={setView} />}
           <button type="button" className="home-view-action" onClick={() => setShowCreate(true)}>
             <Plus size={16} strokeWidth={1.75} /> New Space
           </button>
@@ -93,16 +101,16 @@ const SpacesView = ({ onOpenSpace, onBack }: SpacesViewProps) => {
           <>
             <section className="notes-month-group">
               <div className="notes-month-label">Pinned</div>
-              <SpaceGrid spaces={pinned} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} armed={armed} />
+              <SpaceGrid spaces={pinned} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} armed={armed} view={view} />
             </section>
             {rest.length > 0 && (
               <section className="notes-month-group notes-rest">
-                <SpaceGrid spaces={rest} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} armed={armed} />
+                <SpaceGrid spaces={rest} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} armed={armed} view={view} />
               </section>
             )}
           </>
         ) : (
-          <SpaceGrid spaces={rest} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} armed={armed} />
+          <SpaceGrid spaces={rest} onOpen={onOpenSpace} onSetCover={setCover} onMenu={spaceMenu.openMenu} armed={armed} view={view} />
         )}
       </div>
 

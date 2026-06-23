@@ -1682,6 +1682,17 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 .home-view-topbar .home-view-action.danger { color: color-mix(in oklch, var(--ink-low) 80%, white 5%); }
 .home-view-topbar .home-view-action:hover,
 .home-view-topbar .home-view-action.danger:hover { color: var(--ink); }
+/* Layout switcher in the full views — muted icons, accent for the active mode. */
+.view-toggle { display: flex; align-items: center; gap: 2px; }
+.view-toggle-btn {
+  width: 30px; height: 30px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 8px; background: transparent; cursor: pointer;
+  color: color-mix(in oklch, var(--ink-low) 80%, white 5%);
+  transition: color .15s, background .15s;
+}
+.view-toggle-btn:hover { color: var(--ink); }
+.view-toggle-btn.active { color: var(--accent); background: color-mix(in oklch, var(--accent) 12%, transparent); }
 .home-icon-btn {
   width: 38px; height: 38px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
@@ -1910,6 +1921,36 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
 /* margin (not padding) keeps the text at the title's height while leaving the box
    edge — and thus the underline — right under the text. */
 .home-card.compact .home-card-title-input { margin-bottom: 8px; }
+
+/* ─── Full-view layout variants ──────────────────────────────────────────────── */
+/* Tile is the default grid above; small packs denser cells with scaled-down text. */
+.home-card-grid.small { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.home-card-grid.small .home-card-text { padding: 14px 16px; }
+.home-card-grid.small .home-card-title,
+.home-card-grid.small .home-card-title-input { font-size: 17px; }
+.home-card-grid.small .home-card-sub { font-size: 12px; }
+
+/* List: a stacked column of rows, each a small cover thumbnail + text beside it. */
+.home-card-grid.list { display: flex; flex-direction: column; gap: 0; }
+.home-card.list {
+  aspect-ratio: auto; display: flex; align-items: center; gap: 16px;
+  padding: 12px 8px; border-radius: 12px; box-shadow: none; background: transparent;
+  border-bottom: 0.5px solid var(--line-soft);
+}
+.home-card-grid.list .home-card:last-child { border-bottom: 0; }
+.home-card.list:hover { transform: none; box-shadow: none; background: color-mix(in oklch, var(--ink) 5%, transparent); }
+.home-card.list.dragging { box-shadow: var(--shadow-lift); }
+.home-card-thumb {
+  flex: none; width: 76px; height: 54px; border-radius: 10px;
+  background-size: cover; background-position: center;
+}
+.home-card.list .home-card-text { position: static; flex: 1; min-width: 0; padding: 0; gap: 3px; }
+.home-card.list .home-card-title,
+.home-card.list .home-card-title-input { color: var(--ink); font-size: 20px; }
+.home-card.list .home-card-title-input { caret-color: var(--ink); box-shadow: 0 1px 0 var(--ink-low); }
+.home-card.list .home-card-sub { color: var(--ink-dim); }
+/* Cover-edit affordance sits over the thumbnail instead of the card's top-right corner. */
+.home-card.list .home-card-cover-btn { top: 50%; left: 8px; right: auto; transform: translateY(-50%); }
 
 /* ─── Daily Reflection ───────────────────────────────────────────────────────── */
 
