@@ -1887,6 +1887,9 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
   opacity: 0; transition: opacity .15s, background .15s;
 }
 .home-card:hover .home-card-cover-btn { opacity: 1; }
+/* Keep the affordance visible while dragging — a reorder re-insert drops :hover for a
+   frame, which would otherwise blink the icon out. */
+.home-card.dragging .home-card-cover-btn { opacity: 1; }
 .home-card-cover-btn:hover { background: rgba(0, 0, 0, 0.62); }
 .home-card-text { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 30px; display: flex; flex-direction: column; gap: 6px; }
 .home-card-title { font-family: var(--serif-display); font-style: normal; font-weight: 300; font-size: 26px; line-height: 1.15; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
