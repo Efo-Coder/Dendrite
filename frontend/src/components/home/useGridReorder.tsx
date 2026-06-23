@@ -137,11 +137,13 @@ export function useGridReorder<T>({ items, getId, containerRef, onReorder, axis,
       const w = st.el.offsetWidth;
       const h = st.el.offsetHeight;
       // Clamp the dragged card to the visible container box so it can't be dragged off the
-      // edge (where the row's overflow-x would otherwise clip it).
+      // edge (where the row's overflow-x would otherwise clip it). Only in the axis-locked
+      // rows: the free 2D grids have no overflow clip and must stay draggable in both axes
+      // (a single-row grid has clientHeight ≈ card height, which would pin it horizontally).
       const c = containerRef.current;
       let targetLeft = st.startLeft + dx;
       let targetTop = st.startTop + dy;
-      if (c) {
+      if (c && axis) {
         targetLeft = Math.max(c.scrollLeft, Math.min(targetLeft, c.scrollLeft + c.clientWidth - w));
         targetTop = Math.max(c.scrollTop, Math.min(targetTop, c.scrollTop + c.clientHeight - h));
       }
