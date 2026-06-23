@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import { Note } from '../../types';
 import { monthKeyOf } from '../noteList/noteListUtils';
 import { noteLabel } from '../../lib/noteText';
+import { timeAgo } from '../../lib/timeAgo';
 import { useCardFlip } from '../../hooks/useCardFlip';
 import { useLeaving } from '../../hooks/useLeaving';
 import CoverCard from './CoverCard';
@@ -40,6 +41,7 @@ const MonthGroup = ({ label, items, onOpen, onMenu, onSetCover, armed }: MonthGr
             leaving={leaving}
             flipId={note.id}
             title={noteLabel(note)}
+            subtitle={`Last explored ${timeAgo(note.updatedAt)}`}
             cover={note.coverImage}
             seed={note.id}
             onClick={() => onOpen(note)}

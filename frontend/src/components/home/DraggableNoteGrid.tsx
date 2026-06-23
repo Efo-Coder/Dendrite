@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Note } from '../../types';
 import { noteLabel } from '../../lib/noteText';
+import { timeAgo } from '../../lib/timeAgo';
 import { useGridReorder } from './useGridReorder';
 import { useLeaving } from '../../hooks/useLeaving';
 import CoverCard from './CoverCard';
@@ -14,13 +15,15 @@ interface DraggableNoteGridProps {
   onReorder?: (notes: Note[]) => void;
   // Set true once the view's first network load has landed (gates the mount FLIP).
   armed?: boolean;
+  // Show the "Last explored …" subtitle — on the full-page category views, not the container view.
+  showSubtitle?: boolean;
 }
 
 const NOOP = () => {};
 
 // Flat cover-card grid for the category views. With onReorder set, cards reorder via
 // 2D pointer-drag + FLIP (useGridReorder) and the new order is persisted by the caller.
-const DraggableNoteGrid = ({ notes, onOpen, onMenu, onSetCover, onReorder, armed }: DraggableNoteGridProps) => {
+const DraggableNoteGrid = ({ notes, onOpen, onMenu, onSetCover, onReorder, armed, showSubtitle }: DraggableNoteGridProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const draggable = !!onReorder;
   const { order, draggingId, onCardPointerDown } = useGridReorder({
@@ -44,6 +47,7 @@ const DraggableNoteGrid = ({ notes, onOpen, onMenu, onSetCover, onReorder, armed
           dragging={draggingId === note.id}
           onPointerDown={draggable && !leaving ? (e) => onCardPointerDown(e, note) : undefined}
           title={noteLabel(note)}
+          subtitle={showSubtitle ? `Last explored ${timeAgo(note.updatedAt)}` : undefined}
           cover={note.coverImage}
           seed={note.id}
           onClick={() => onOpen(note)}

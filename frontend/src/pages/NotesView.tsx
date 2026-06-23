@@ -160,6 +160,7 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
                   onSetCover={setCover}
                   onReorder={contextType ? handleReorderPinned : undefined}
                   armed={armed}
+                  showSubtitle
                 />
               </section>
             )}
@@ -173,6 +174,7 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
                     onSetCover={setCover}
                     onReorder={handleReorderRest}
                     armed={armed}
+                    showSubtitle
                   />
                 </section>
               ) : (
