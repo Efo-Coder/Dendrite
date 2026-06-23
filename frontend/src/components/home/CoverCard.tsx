@@ -19,6 +19,8 @@ function fallbackCover(seed: string): string {
 interface CoverCardProps {
   title: string;
   subtitle?: string;
+  // Urgency tone for the subtitle (e.g. trash countdown): adds a colour class.
+  subtitleTone?: 'warn' | 'danger';
   cover?: string | null;
   seed: string;
   compact?: boolean;
@@ -35,7 +37,7 @@ interface CoverCardProps {
   onPointerDown?: (e: React.PointerEvent) => void;
 }
 
-const CoverCard = ({ title, subtitle, cover, seed, compact, index, leaving, onClick, onSetCover, onContextMenu, flipId, dragging, onPointerDown }: CoverCardProps) => {
+const CoverCard = ({ title, subtitle, subtitleTone, cover, seed, compact, index, leaving, onClick, onSetCover, onContextMenu, flipId, dragging, onPointerDown }: CoverCardProps) => {
   const rename = useRename();
   const editing = flipId != null && rename.editingId === flipId;
   // cardEnter is a mount-only entrance. Reordering detaches/reattaches the card's DOM node,
@@ -100,7 +102,7 @@ const CoverCard = ({ title, subtitle, cover, seed, compact, index, leaving, onCl
         ) : (
           <span className="home-card-title">{title}</span>
         )}
-        {subtitle && <span className="home-card-sub">{subtitle}</span>}
+        {subtitle && <span className={`home-card-sub${subtitleTone ? ` ${subtitleTone}` : ''}`}>{subtitle}</span>}
       </span>
     </div>
   );

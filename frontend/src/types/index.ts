@@ -41,6 +41,7 @@ export interface Note {
   userId: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null; // set while trashed; drives the 30-day countdown
   space?: Space;
   folder?: Folder;
   tags?: Tag[];

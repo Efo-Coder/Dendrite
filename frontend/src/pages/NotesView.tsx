@@ -147,7 +147,7 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
         {notes.length === 0 ? (
           <p className="home-empty">{meta.empty}</p>
         ) : category === 'trash' ? (
-          <NoteMonthGrid notes={notes} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={setCover} armed={armed} />
+          <NoteMonthGrid notes={notes} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={setCover} armed={armed} countdown />
         ) : (
           <>
             {pinned.length > 0 && (

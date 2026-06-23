@@ -436,7 +436,8 @@ export const toggleDelete = async (req: AuthRequest, res: Response) => {
 
     const raw = await prisma.note.update({
       where: { id },
-      data: { isDeleted: !note.isDeleted },
+      // Stamp deletedAt when trashing (drives the 30-day auto-purge), clear it on restore.
+      data: { isDeleted: !note.isDeleted, deletedAt: note.isDeleted ? null : new Date() },
       include: NOTE_INCLUDE,
     });
 

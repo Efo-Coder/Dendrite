@@ -163,6 +163,26 @@ async function deleteExpiredUnverifiedAccounts() {
 
 setInterval(deleteExpiredUnverifiedAccounts, 60 * 60 * 1000); // hourly
 
+// ─── Cleanup: trashed notes past their 30-day retention ──────────────────────
+
+const TRASH_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+async function deleteExpiredTrashedNotes() {
+  try {
+    const result = await prisma.note.deleteMany({
+      where: {
+        isDeleted: true,
+        deletedAt: { lt: new Date(Date.now() - TRASH_RETENTION_MS) },
+      },
+    });
+    if (result.count > 0) console.log(`Cleanup: ${result.count} expired trashed note(s) deleted`);
+  } catch (err) {
+    console.error('Trash cleanup error:', err);
+  }
+}
+
+setInterval(deleteExpiredTrashedNotes, 60 * 60 * 1000); // hourly
+
 // ─── Startup ─────────────────────────────────────────────────────────────────
 
 process.on('SIGTERM', async () => {

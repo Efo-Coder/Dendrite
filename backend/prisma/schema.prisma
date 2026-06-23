@@ -118,6 +118,7 @@ model Note {
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime? // when the note was trashed; drives the 30-day auto-purge
 
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   space           Space?             @relation(fields: [spaceId], references: [id], onDelete: SetNull)

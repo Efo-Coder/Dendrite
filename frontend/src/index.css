@@ -1895,6 +1895,10 @@ html.card-dragging .home-card { transition: none; cursor: grabbing; transform: n
 .home-card-title { font-family: var(--serif-display); font-style: normal; font-weight: 300; font-size: 26px; line-height: 1.15; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .home-card.compact .home-card-title { font-size: 26px; padding-bottom: 8px; }
 .home-card-sub { font-family: var(--serif-body); font-size: 14px; color: rgba(255,255,255,.82); }
+/* Trash countdown urgency: muted warn (accent) under a week, strong red in the last days.
+   Lightened toward white so they stay legible over the dark card scrim. */
+.home-card-sub.warn { color: color-mix(in oklch, var(--accent) 80%, white); }
+.home-card-sub.danger { color: color-mix(in oklch, var(--danger) 65%, white); font-weight: 500; }
 .home-card-title-input {
   width: 100%; padding: 0; margin: 0; border: 0; outline: none; background: transparent;
   font-family: var(--serif-display); font-weight: 300; font-size: 26px; line-height: 1.15;
