@@ -103,14 +103,25 @@ const LexicalEditorWrapper = ({
   useLayoutEffect(() => {
     const canvas = scrollRef.current;
     if (!canvas) return;
-    const measure = () => {
+    const available = () => {
       const cs = getComputedStyle(canvas);
-      const w = canvas.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      return canvas.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    };
+    const measure = () => {
+      const w = available();
       if (w > 0) canvas.style.setProperty('--editor-content-w', `${w}px`);
     };
     measure();
     let windowResizedAt = 0;
-    const onWindowResize = () => { windowResizedAt = performance.now(); };
+    // Window resize: only re-measure when the panel GREW. Growing lets the column
+    // widen back to the new available width (otherwise it stays stuck at whatever
+    // width it had on mount — e.g. after reloading with a small window). Shrinking
+    // stays frozen so the text never rewraps; the canvas scrolls horizontally.
+    const onWindowResize = () => {
+      windowResizedAt = performance.now();
+      const current = parseFloat(canvas.style.getPropertyValue('--editor-content-w')) || 0;
+      if (available() > current) measure();
+    };
     window.addEventListener('resize', onWindowResize);
     const ro = new ResizeObserver(() => {
       if (performance.now() - windowResizedAt > 200) measure();
