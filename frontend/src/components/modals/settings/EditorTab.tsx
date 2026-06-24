@@ -4,11 +4,10 @@ import RangeSlider from '../../ui/RangeSlider';
 import Counter from '../../ui/Counter';
 import SettingsFontDropdown from './SettingsFontDropdown';
 
-// "Editor" settings pane: typeface, type size, drop cap and active line
+// "Editor" settings pane: typeface, type size and active line
 const EditorTab = () => {
   const {
     fontSize, setFontSize,
-    dropCap, setDropCap,
     activeLine, setActiveLine,
   } = useSettingsStore();
 
@@ -42,11 +41,6 @@ const EditorTab = () => {
             px
           </span>
         </div>
-      </div>
-
-      <div className="settings-row">
-        <div className="lbl">Drop cap<small>The luxurious first letter.</small></div>
-        <ToggleSwitch checked={dropCap} onChange={setDropCap} />
       </div>
 
       <div className="settings-row">

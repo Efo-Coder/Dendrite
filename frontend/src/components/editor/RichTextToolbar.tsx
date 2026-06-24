@@ -26,6 +26,18 @@ import clsx from 'clsx';
 import { useAuthStore } from '../../store/useAuthStore';
 import { canAccess } from '../../lib/planFeatures';
 
+// Drop cap: an oversized serif initial beside lines of body text.
+const DropCapIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+    <text x="0.5" y="19" fontFamily="Georgia, 'Times New Roman', serif" fontSize="20" fontWeight="600" fill="currentColor">A</text>
+    <g stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <line x1="13" y1="9" x2="21.5" y2="9" />
+      <line x1="13" y1="14" x2="21.5" y2="14" />
+      <line x1="13" y1="19" x2="21.5" y2="19" />
+    </g>
+  </svg>
+);
+
 interface RichTextToolbarProps {
   disabled?: boolean;
   noteId?: string;
@@ -53,6 +65,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
     isInTable,
     isBold, isItalic, isUnderline, isStrikethrough, isSuperscript, isSubscript,
     blockType, canUndo, canRedo, canOutdent,
+    isDropCap, canDropCap,
     fontColor, highlightColor, fontSize, lineHeight,
     fontPickerPos,
     colorPickerPos, setColorPickerPos,
@@ -74,7 +87,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
     openChecklistDropdown, handleChecklistTimerSave, handleChecklistTimerRemove,
     openHeadingPicker, openCodeLangPicker, closeAllPopups,
     formatText, formatBulletList, formatNumberedList,
-    formatQuote, formatCode,
+    formatQuote, toggleDropCap, formatCode,
     indentContent, outdentContent, formatAlignment,
     applyFontColor, applyHighlight,
     undoAction, redoAction,
@@ -263,6 +276,17 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
                 title="Heading"
               >
                 <Heading className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={toggleDropCap}
+                onMouseEnter={onMoreEnter} onMouseLeave={onMoreLeave}
+                disabled={disabled || !canDropCap}
+                className={menuBtnCls(isDropCap)}
+                title="Drop cap"
+              >
+                <DropCapIcon className="w-4 h-4" />
               </button>
               <button type="button" onClick={openColorFromMenu} onMouseEnter={onMoreEnter} onMouseLeave={onMoreLeave} disabled={disabled || isInCode} className={menuBtnCls(colorBtnActive)} title="Font color">
                 <Palette className="w-4 h-4" />

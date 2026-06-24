@@ -14,7 +14,6 @@ interface SettingsState {
   themeMode: ThemeMode;
   font: string | null; // null = default serifs; otherwise a Google Fonts family name
   fontSize: number;
-  dropCap: boolean;
   activeLine: boolean;
   density: DensityId;
   autoSave: boolean;
@@ -25,7 +24,6 @@ interface SettingsState {
   setThemeMode: (mode: ThemeMode) => void;
   setFont: (font: string | null) => void;
   setFontSize: (size: number) => void;
-  setDropCap: (on: boolean) => void;
   setActiveLine: (on: boolean) => void;
   setDensity: (density: DensityId) => void;
   setAutoSave: (on: boolean) => void;
@@ -59,7 +57,6 @@ export const useSettingsStore = create<SettingsState>()(
       themeMode: 'light',
       font: null,
       fontSize: 19,
-      dropCap: true,
       activeLine: true,
       density: 'regular',
       autoSave: true,
@@ -70,7 +67,6 @@ export const useSettingsStore = create<SettingsState>()(
       setThemeMode: (mode) => applyThemeChange(() => set({ themeMode: mode })),
       setFont: (font) => set({ font }),
       setFontSize: (fontSize) => set({ fontSize }),
-      setDropCap: (dropCap) => set({ dropCap }),
       setActiveLine: (activeLine) => set({ activeLine }),
       setDensity: (density) => set({ density }),
       setAutoSave: (autoSave) => set({ autoSave }),
@@ -78,10 +74,10 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'dendrite-settings',
-      version: 6,
+      version: 7,
       migrate: (persisted: unknown, version: number) => {
         if (version < 2) {
-          return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: null, fontSize: 19, dropCap: true, activeLine: true, density: 'regular', autoSave: true, cursorStyle: 'classic' };
+          return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: null, fontSize: 19, activeLine: true, density: 'regular', autoSave: true, cursorStyle: 'classic' };
         }
         // Migrations apply cumulatively — no early returns, otherwise an old
         // stored version skips every later step.
@@ -93,6 +89,8 @@ export const useSettingsStore = create<SettingsState>()(
         if (version < 6) {
           s.font = (s.font as unknown) === 'eb-garamond' ? 'EB Garamond' : null;
         }
+        // v7: drop cap moved from a global toggle to a per-paragraph format — drop the dead key.
+        if (version < 7) delete (s as Record<string, unknown>).dropCap;
         return s;
       },
     }
@@ -101,7 +99,7 @@ export const useSettingsStore = create<SettingsState>()(
 
 // Cross-tab sync: zustand persist only reads localStorage on startup. Without this,
 // a second tab keeps its stale in-memory settings and writes them back wholesale on
-// its next set(), silently reverting changes made in the other tab (e.g. dropCap).
+// its next set(), silently reverting changes made in the other tab (e.g. palette).
 window.addEventListener('storage', (e) => {
   if (e.key === 'dendrite-settings') useSettingsStore.persist.rehydrate();
 });

@@ -1,6 +1,8 @@
 import { ReactNode, useRef, useEffect, useLayoutEffect, createContext } from 'react';
 import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
+import clsx from 'clsx';
+import type Lenis from 'lenis';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
@@ -24,6 +26,7 @@ import { $generateNodesFromDOM } from '@lexical/html';
 import { $getRoot, $insertNodes, LexicalEditor } from 'lexical';
 import { TimerCheckboxPlugin } from './CheckResetOverlay';
 import { TimerListItemNode } from './TimerListItemNode';
+import { DropCapParagraphNode } from './DropCapParagraphNode';
 import { ImageNode } from './ImageNode';
 import ImagesPlugin from './ImagePlugin';
 import { ActiveLinePlugin } from './ActiveLinePlugin';
@@ -39,6 +42,7 @@ import {
   TabIndentPlugin,
 } from './corePlugins';
 import { YjsSyncPlugin, type ActiveUser } from './YjsSyncPlugin';
+import TableOfContents from './TableOfContents';
 import { useLenisScroll } from '../../hooks/useLenisScroll';
 
 export type { ActiveUser };
@@ -64,6 +68,8 @@ interface LexicalEditorWrapperProps {
   key?: string;
   collaboration?: CollaborationConfig | null;
   onUsersChange?: (users: ActiveUser[]) => void;
+  // Hides the table-of-contents column while distraction-free writing is on.
+  focusMode?: boolean;
 }
 
 const LexicalEditorWrapper = ({
@@ -75,12 +81,14 @@ const LexicalEditorWrapper = ({
   headerSlot,
   collaboration = null,
   onUsersChange,
+  focusMode = false,
 }: LexicalEditorWrapperProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
   const checkIconRef = useRef<HTMLDivElement>(null);
   const cursorsContainerRef = useRef<HTMLDivElement>(null);
-  useLenisScroll(scrollRef, scrollContentRef);
+  const lenisRef = useRef<Lenis | null>(null);
+  useLenisScroll(scrollRef, scrollContentRef, undefined, lenisRef);
   const onUsersChangeRef = useRef(onUsersChange);
   useLayoutEffect(() => { onUsersChangeRef.current = onUsersChange; });
 
@@ -137,6 +145,7 @@ const LexicalEditorWrapper = ({
     editable: !disabled,
     html: { import: htmlImport },
     nodes: [
+      DropCapParagraphNode,
       HeadingNode,
       ListNode,
       ListItemNode,
@@ -177,7 +186,7 @@ const LexicalEditorWrapper = ({
           <CheckListIndentPlugin />
           <TabIndentPlugin />
 
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="@container relative flex min-h-0 flex-1 overflow-hidden">
             <div
               className="editor-info-column pointer-events-none absolute inset-y-0 left-0 w-20"
               style={{
@@ -187,7 +196,7 @@ const LexicalEditorWrapper = ({
             />
             <div
               ref={scrollRef}
-              className="editor-canvas"
+              className="editor-canvas min-w-0 grow"
             >
               <motion.div
                 ref={scrollContentRef}
@@ -240,6 +249,20 @@ const LexicalEditorWrapper = ({
                 <ActiveLinePlugin />
               </div>
               </motion.div>
+            </div>
+
+            {/* Table-of-contents column — its width collapses to 0 when the note
+                has <2 headings. Shown via a container query on the editor area (not
+                the viewport) so it tracks the real available width regardless of the
+                sidebar/note-list; hidden in focus mode. Threshold ≈ TOC column +
+                canvas padding + a comfortable text measure. */}
+            <div
+              className={clsx(
+                'hidden shrink-0 flex-col justify-center transition-opacity duration-500 ease-out @min-[940px]:flex',
+                focusMode ? 'pointer-events-none opacity-0' : 'opacity-100',
+              )}
+            >
+              <TableOfContents scrollRef={scrollRef} lenisRef={lenisRef} />
             </div>
           </div>
 

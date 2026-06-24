@@ -20,6 +20,7 @@ import {
   OUTDENT_CONTENT_COMMAND,
   COMMAND_PRIORITY_LOW,
   $createParagraphNode,
+  $isParagraphNode,
   ElementFormatType,
   $isElementNode,
   $isTextNode,
@@ -41,6 +42,7 @@ import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontal
 import { INSERT_TABLE_COMMAND, $isTableNode } from '@lexical/table';
 import { INSERT_IMAGE_COMMAND } from './ImagePlugin';
 import { $isTimerListItemNode } from './TimerListItemNode';
+import { $createDropCapParagraphNode, $isDropCapParagraphNode } from './DropCapParagraphNode';
 import { useChecklistTimer, type SavedSelection } from './useChecklistTimer';
 
 const parseStyle = (styleStr: string): Record<string, string> => {
@@ -103,6 +105,8 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [canOutdent, setCanOutdent] = useState(false);
+  const [isDropCap, setIsDropCap] = useState(false);
+  const [canDropCap, setCanDropCap] = useState(false);
 
   const [fontColor, setFontColor] = useState('');
   const [highlightColor, setHighlightColor] = useState('');
@@ -231,13 +235,22 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
           while (listItem && !$isListItemNode(listItem)) listItem = listItem.getParent();
           setBlockType($isTimerListItemNode(listItem) ? 'timer-checkbox' : element.getListType());
         } else {
-          const type = $isHeadingNode(element) ? element.getTag() : element.getType();
+          // A drop-cap paragraph is still a normal paragraph for every other tool.
+          const type = $isHeadingNode(element)
+            ? element.getTag()
+            : $isDropCapParagraphNode(element) ? 'paragraph' : element.getType();
           setBlockType(type);
           if (type === 'code' && $isCodeNode(element)) {
             setCodeLanguage(normalizeCodeLang(element.getLanguage() ?? 'js'));
           }
         }
       }
+
+      // Drop cap: active when this block is one; enabled when it's a plain paragraph,
+      // already a drop cap, or sits directly under one (clicking then clears the one above).
+      const isDC = $isDropCapParagraphNode(element);
+      setIsDropCap(isDC);
+      setCanDropCap(isDC || $isDropCapParagraphNode(element.getPreviousSibling()) || $isParagraphNode(element));
 
       const nodeStyles = $isTextNode(anchorNode) ? parseStyle(anchorNode.getStyle()) : {};
       const pendingStyles = selection.isCollapsed() && selection.style ? parseStyle(selection.style) : {};
@@ -341,6 +354,47 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
         $setBlocksType(selection, () =>
           blockType !== 'quote' ? $createQuoteNode() : $createParagraphNode()
         );
+      }
+    });
+  };
+
+  // Toggle the drop cap on the current line. A drop cap glyph is ~2 lines tall, so two
+  // adjacent paragraphs may never both be drop caps: clicking the line right below one
+  // clears the one above instead of stacking a second. Plain paragraphs only.
+  const toggleDropCap = () => {
+    editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
+      const anchorNode = selection.anchor.getNode();
+      if (anchorNode.getKey() === 'root') return;
+      const block = anchorNode.getTopLevelElementOrThrow();
+
+      // $setBlocksType applies to every block in the range — collapse to the anchor so
+      // only the current line flips (it also keeps the selection and moves the children).
+      const onAnchor = $createRangeSelection();
+      onAnchor.anchor.set(selection.anchor.key, selection.anchor.offset, selection.anchor.type);
+      onAnchor.focus.set(selection.anchor.key, selection.anchor.offset, selection.anchor.type);
+
+      // Demote a neighbour back to a plain paragraph, preserving alignment/indent/children.
+      const demote = (node: LexicalNode | null) => {
+        if (!$isDropCapParagraphNode(node)) return;
+        const p = $createParagraphNode();
+        p.setFormat(node.getFormatType());
+        p.setIndent(node.getIndent());
+        node.replace(p, true);
+      };
+
+      if ($isDropCapParagraphNode(block)) {
+        $setBlocksType(onAnchor, () => $createParagraphNode());
+        return;
+      }
+      if ($isDropCapParagraphNode(block.getPreviousSibling())) {
+        demote(block.getPreviousSibling());
+        return;
+      }
+      if ($isParagraphNode(block)) {
+        demote(block.getNextSibling());
+        $setBlocksType(onAnchor, () => $createDropCapParagraphNode());
       }
     });
   };
@@ -534,6 +588,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     isBold, isItalic, isUnderline, isStrikethrough, isSuperscript, isSubscript,
     blockType,
     canUndo, canRedo, canOutdent,
+    isDropCap, canDropCap,
     fontColor, highlightColor, fontFamily, fontSize, lineHeight,
     fontPickerPos, setFontPickerPos,
     colorPickerPos, setColorPickerPos,
@@ -564,6 +619,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     formatBulletList,
     formatNumberedList,
     formatQuote,
+    toggleDropCap,
     formatCode,
     setCodeNodeLanguage,
     formatCheckList,

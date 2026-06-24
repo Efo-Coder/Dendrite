@@ -9,7 +9,7 @@ interface ThemeProviderProps {
 }
 
 const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const { palette, themeMode, font, fontSize, dropCap, density, cursorStyle } = useSettingsStore();
+  const { palette, themeMode, font, fontSize, density, cursorStyle } = useSettingsStore();
 
   // useLayoutEffect (not useEffect) so flushSync inside the View Transition applies the
   // theme attributes synchronously — the transition's "after" snapshot must see them.
@@ -32,8 +32,7 @@ const ThemeProvider = ({ children }: ThemeProviderProps) => {
     }
     root.style.setProperty('--editor-fs', `${fontSize}px`);
     root.style.setProperty('--density', String(DENSITY[density] ?? 1));
-    root.classList.toggle('drop-cap', dropCap);
-  }, [palette, themeMode, font, fontSize, dropCap, density, cursorStyle]);
+  }, [palette, themeMode, font, fontSize, density, cursorStyle]);
 
   return <>{children}</>;
 };
