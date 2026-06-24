@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Layers, Compass, Contrast, ChevronDown, Orbit } from 'lucide-react';
+import { Home, Layers, Library, Compass, Contrast, ChevronDown, Orbit } from 'lucide-react';
 import clsx from 'clsx';
 import { LOGO_SRC } from '../../config/brand';
 import { User as UserType } from '../../types';
@@ -8,12 +8,13 @@ import UserProfileModal from '../modals/UserProfileModal';
 const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
 
-type HomeNav = 'home' | 'spaces' | 'reflection' | 'constellations' | 'explore';
+type HomeNav = 'home' | 'spaces' | 'library' | 'reflection' | 'constellations' | 'explore';
 
 interface AppSidebarProps {
   active: HomeNav;
   onHome: () => void;
   onSpaces: () => void;
+  onLibrary: () => void;
   onReflection: () => void;
   onConstellations: () => void;
   onExplore: () => void;
@@ -25,6 +26,7 @@ const AppSidebar = ({
   active,
   onHome,
   onSpaces,
+  onLibrary,
   onReflection,
   onConstellations,
   onExplore,
@@ -42,6 +44,13 @@ const AppSidebar = ({
       Icon: Layers,
       onClick: onSpaces,
       activeWhen: active === 'spaces',
+    },
+    {
+      key: 'library',
+      label: 'Library',
+      Icon: Library,
+      onClick: onLibrary,
+      activeWhen: active === 'library',
     },
     {
       key: 'reflect',

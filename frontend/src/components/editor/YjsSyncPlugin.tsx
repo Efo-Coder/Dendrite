@@ -22,15 +22,19 @@ import {
 
 export interface ActiveUser {
   clientID: number;
+  userId: string;
   name: string;
   color: string;
+  canEdit: boolean;
 }
 
 interface YjsSyncPluginProps {
   noteId: string;
   token: string;
+  userId: string;
   username: string;
   cursorColor: string;
+  canEdit: boolean;
   contentRef: React.MutableRefObject<string>;
   onUsersChangeRef: React.MutableRefObject<((users: ActiveUser[]) => void) | undefined>;
   cursorsContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -39,8 +43,10 @@ interface YjsSyncPluginProps {
 export function YjsSyncPlugin({
   noteId,
   token,
+  userId,
   username,
   cursorColor,
+  canEdit,
   contentRef,
   onUsersChangeRef,
   cursorsContainerRef,
@@ -49,10 +55,14 @@ export function YjsSyncPlugin({
   const usernameRef = useRef(username);
   const cursorColorRef = useRef(cursorColor);
   const tokenRef = useRef(token);
+  const canEditRef = useRef(canEdit);
+  const userIdRef = useRef(userId);
   useLayoutEffect(() => {
     usernameRef.current = username;
     cursorColorRef.current = cursorColor;
     tokenRef.current = token;
+    canEditRef.current = canEdit;
+    userIdRef.current = userId;
   });
 
   useEffect(() => {
@@ -81,7 +91,7 @@ export function YjsSyncPlugin({
       usernameRef.current,
       cursorColorRef.current,
       document.activeElement === editor.getRootElement(),
-      {},
+      { canEdit: canEditRef.current, userId: userIdRef.current },
     );
 
     const removeFocusCmd = editor.registerCommand(FOCUS_COMMAND, () => {
@@ -160,8 +170,11 @@ export function YjsSyncPlugin({
         .filter(([, state]) => state?.name != null)
         .map(([cid, state]) => ({
           clientID: cid,
+          userId: state.awarenessData?.userId ?? '',
           name: state.name,
           color: state.color ?? '#888',
+          // Older/owner states may omit awarenessData; treat as editor.
+          canEdit: state.awarenessData?.canEdit ?? true,
         }));
       onUsersChangeRef.current?.(others);
     };

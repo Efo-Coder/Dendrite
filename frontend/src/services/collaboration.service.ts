@@ -2,15 +2,26 @@ import api from './api';
 import { Collaborator } from '../types';
 
 export const collaborationService = {
-  /** Alle Kollaboratoren einer Notiz laden (nur Owner) */
-  async listCollaborators(noteId: string): Promise<Collaborator[]> {
-    const res = await api.get<{ collaborators: Collaborator[] }>(`/notes/${noteId}/collaborators`);
-    return res.data.collaborators;
+  /** Owner + Kollaboratoren einer Notiz laden */
+  async listCollaborators(
+    noteId: string,
+  ): Promise<{ owner: Collaborator['user']; collaborators: Collaborator[] }> {
+    const res = await api.get<{ owner: Collaborator['user']; collaborators: Collaborator[] }>(
+      `/notes/${noteId}/collaborators`,
+    );
+    return res.data;
   },
 
-  /** Benutzer per E-Mail oder Username einladen (role: 'editor' | 'viewer') */
-  async invite(noteId: string, emailOrUsername: string, role: 'editor' | 'viewer' = 'editor'): Promise<Collaborator> {
-    const res = await api.post<{ collaborator: Collaborator }>(`/notes/${noteId}/invite`, { emailOrUsername, role });
+  /**
+   * Invite a collaborator. Prefer `userId` from the people picker (unambiguous);
+   * `emailOrUsername` is the fallback for direct entry of an exact email/handle.
+   */
+  async invite(
+    noteId: string,
+    target: { userId?: string; emailOrUsername?: string },
+    role: 'editor' | 'viewer' = 'editor',
+  ): Promise<Collaborator> {
+    const res = await api.post<{ collaborator: Collaborator }>(`/notes/${noteId}/invite`, { ...target, role });
     return res.data.collaborator;
   },
 

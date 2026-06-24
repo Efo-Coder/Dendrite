@@ -1,23 +1,28 @@
 import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
-import { notifyCollabInvite } from '../services/notification.service';
+import { notifyCollabInvite, notifyCollabAccepted } from '../services/notification.service';
 
 export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
   try {
     const noteId = req.params.id as string;
-    const { emailOrUsername } = req.body;
+    const { userId, emailOrUsername } = req.body;
 
-    if (!emailOrUsername) {
-      return res.status(400).json({ error: 'Email or username is required' });
+    if (!userId && !emailOrUsername) {
+      return res.status(400).json({ error: 'A user is required' });
     }
 
     const note = await prisma.note.findFirst({ where: { id: noteId, userId: req.userId } });
     if (!note) return res.status(404).json({ error: 'Note not found' });
 
-    const invitee = await prisma.user.findFirst({
-      where: { OR: [{ email: emailOrUsername }, { name: emailOrUsername }] },
-    });
+    // Prefer the unambiguous id from the picker; fall back to an exact email or
+    // username match for direct entry (both are unique, so never ambiguous).
+    const handle = emailOrUsername ? String(emailOrUsername).trim() : '';
+    const invitee = userId
+      ? await prisma.user.findUnique({ where: { id: String(userId) } })
+      : await prisma.user.findFirst({
+          where: { OR: [{ email: handle }, { username: handle.toLowerCase() }] },
+        });
 
     if (!invitee) return res.status(404).json({ error: 'User not found' });
     if (invitee.id === req.userId) return res.status(400).json({ error: 'You cannot invite yourself' });
@@ -35,7 +40,7 @@ export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
       const updated = await prisma.noteCollaborator.update({
         where: { noteId_userId: { noteId, userId: invitee.id } },
         data: { status: 'pending', invitedAt: new Date(), acceptedAt: null },
-        include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+        include: { user: { select: { id: true, name: true, username: true, email: true, avatarUrl: true } } },
       });
       await notifyCollabInvite(invitee.id, {
         collaboratorId: updated.id,
@@ -50,7 +55,7 @@ export const inviteCollaborator = async (req: AuthRequest, res: Response) => {
 
     const collab = await prisma.noteCollaborator.create({
       data: { noteId, userId: invitee.id, role, status: 'pending' },
-      include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+      include: { user: { select: { id: true, name: true, username: true, email: true, avatarUrl: true } } },
     });
 
     await notifyCollabInvite(invitee.id, {
@@ -79,16 +84,18 @@ export const listCollaborators = async (req: AuthRequest, res: Response) => {
           { collaborators: { some: { userId: req.userId!, status: 'accepted' } } },
         ],
       },
+      // Owner is shown as the "Admin" participant — every viewer/editor needs it.
+      include: { user: { select: { id: true, name: true, username: true, email: true, avatarUrl: true } } },
     });
     if (!note) return res.status(404).json({ error: 'Note not found' });
 
     const collaborators = await prisma.noteCollaborator.findMany({
       where: { noteId },
-      include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+      include: { user: { select: { id: true, name: true, username: true, email: true, avatarUrl: true } } },
       orderBy: { invitedAt: 'asc' },
     });
 
-    return res.json({ collaborators });
+    return res.json({ owner: note.user, collaborators });
   } catch (error) {
     console.error('ListCollaborators error:', error);
     return res.status(500).json({ error: 'Failed to load collaborators' });
@@ -118,6 +125,7 @@ export const acceptInvitation = async (req: AuthRequest, res: Response) => {
 
     const collab = await prisma.noteCollaborator.findFirst({
       where: { id, userId: req.userId!, status: 'pending' },
+      include: { note: { select: { id: true, title: true, userId: true } } },
     });
 
     if (!collab) return res.status(404).json({ error: 'Invitation not found' });
@@ -125,6 +133,19 @@ export const acceptInvitation = async (req: AuthRequest, res: Response) => {
     const updated = await prisma.noteCollaborator.update({
       where: { id },
       data: { status: 'accepted', acceptedAt: new Date() },
+    });
+
+    // Let the note owner know the invite was accepted.
+    const accepter = await prisma.user.findUnique({
+      where: { id: req.userId! },
+      select: { id: true, name: true, avatarUrl: true },
+    });
+    await notifyCollabAccepted(collab.note.userId, {
+      noteId: collab.note.id,
+      noteTitle: collab.note.title,
+      fromUserId: req.userId!,
+      fromName: accepter?.name ?? null,
+      fromAvatarUrl: accepter?.avatarUrl ?? null,
     });
 
     return res.json({ collaborator: updated });

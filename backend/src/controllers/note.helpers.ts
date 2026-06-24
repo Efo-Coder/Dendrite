@@ -1,11 +1,11 @@
-import { Folder, Prisma, Tag } from '@prisma/client';
+import { Folder, Prisma, Bookmark } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
 export const NOTE_INCLUDE = {
   space: true,
   folder: true,
   attachments: true,
-  noteTags: { include: { tag: true }, orderBy: { createdAt: 'asc' as const } },
+  noteBookmarks: { include: { bookmark: true }, orderBy: { createdAt: 'asc' as const } },
   collaborators: {
     where: { status: 'accepted' },
     select: {
@@ -20,13 +20,13 @@ export const NOTE_INCLUDE = {
 
 export type NoteWithRelations = Prisma.NoteGetPayload<{ include: typeof NOTE_INCLUDE }>;
 
-// API shape: noteTags flattened to tags; for collaborators, isPinned /
+// API shape: noteBookmarks flattened to bookmarks; for collaborators, isPinned /
 // isFavorite / folder may be replaced by their personal preference.
-export type ApiNote = Omit<NoteWithRelations, 'noteTags'> & { tags: Tag[] };
+export type ApiNote = Omit<NoteWithRelations, 'noteBookmarks'> & { bookmarks: Bookmark[] };
 
 export function transformNote(note: NoteWithRelations): ApiNote {
-  const { noteTags, ...rest } = note;
-  return { ...rest, tags: noteTags.map(nt => nt.tag) };
+  const { noteBookmarks, ...rest } = note;
+  return { ...rest, bookmarks: noteBookmarks.map(nb => nb.bookmark) };
 }
 
 export function sortPinnedFirst(a: ApiNote, b: ApiNote): number {
@@ -59,25 +59,41 @@ export function sortByContextOrder(notes: ApiNote[], orderMap: Map<string, numbe
   return [...pinnedOrdered, ...pinnedNew, ...restNew, ...restOrdered];
 }
 
-// Shared notes carry per-user state: collaborators pin, favorite, tag and
+// Apply a user's saved drag order for one context to a note list (reuses the
+// pinned-first reconcile). Empty list short-circuits the DB hit.
+export async function orderForContext(
+  notes: ApiNote[],
+  userId: string,
+  contextType: string,
+  contextId = '_none',
+): Promise<ApiNote[]> {
+  if (notes.length === 0) return notes;
+  const noteOrders = await prisma.noteOrder.findMany({
+    where: { userId, contextType, contextId, noteId: { in: notes.map(n => n.id) } },
+  });
+  const orderMap = new Map(noteOrders.map(no => [no.noteId, no.order]));
+  return sortByContextOrder(notes, orderMap);
+}
+
+// Shared notes carry per-user state: collaborators pin, favorite, bookmark and
 // file notes for themselves without touching the owner's note.
 export async function applyPreferences(notes: ApiNote[], userId: string): Promise<ApiNote[]> {
   if (notes.length === 0) return notes;
   const noteIds = notes.map(n => n.id);
-  const [prefs, userTags] = await Promise.all([
+  const [prefs, userBookmarks] = await Promise.all([
     prisma.userNotePreference.findMany({ where: { userId, noteId: { in: noteIds } } }),
-    prisma.userNoteTag.findMany({
+    prisma.userNoteBookmark.findMany({
       where: { userId, noteId: { in: noteIds } },
-      include: { tag: true },
+      include: { bookmark: true },
       orderBy: { createdAt: 'asc' },
     }),
   ]);
 
   const prefMap = new Map(prefs.map(p => [p.noteId, p]));
-  const tagMap = new Map<string, Tag[]>();
-  for (const ut of userTags) {
-    if (!tagMap.has(ut.noteId)) tagMap.set(ut.noteId, []);
-    tagMap.get(ut.noteId)!.push(ut.tag);
+  const bookmarkMap = new Map<string, Bookmark[]>();
+  for (const ub of userBookmarks) {
+    if (!bookmarkMap.has(ub.noteId)) bookmarkMap.set(ub.noteId, []);
+    bookmarkMap.get(ub.noteId)!.push(ub.bookmark);
   }
 
   const overriddenFolderIds = new Set<string>();
@@ -94,7 +110,7 @@ export async function applyPreferences(notes: ApiNote[], userId: string): Promis
 
   return notes.map(note => {
     const pref = prefMap.get(note.id);
-    const tags = tagMap.get(note.id);
+    const bookmarks = bookmarkMap.get(note.id);
     let folderId: string | null = null;
     let folder: Folder | null = null;
     if (pref?.folderOverrideSet) {
@@ -107,7 +123,7 @@ export async function applyPreferences(notes: ApiNote[], userId: string): Promis
       isFavorite: pref?.isFavorite ?? false,
       folderId,
       folder,
-      tags: tags ?? [],
+      bookmarks: bookmarks ?? [],
     };
   });
 }

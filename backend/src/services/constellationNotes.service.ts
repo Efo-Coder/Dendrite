@@ -35,9 +35,9 @@ export async function getConstellationNotes(userId: string, themeId: string): Pr
   const baseSelect = { id: true, title: true, content: true, updatedAt: true, folderId: true } as const;
 
   if (themeId.startsWith('tag:')) {
-    const tagId = themeId.slice(4);
+    const bookmarkId = themeId.slice(4);
     const notes = await prisma.note.findMany({
-      where: { userId, isDeleted: false, isArchived: false, noteTags: { some: { tagId } } },
+      where: { userId, isDeleted: false, isArchived: false, noteBookmarks: { some: { bookmarkId } } },
       select: baseSelect,
       orderBy: { updatedAt: 'desc' },
       take: MAX_THEME_NOTES,

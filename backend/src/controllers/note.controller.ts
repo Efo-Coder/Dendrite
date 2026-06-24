@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { extractUploadUrls, deleteFiles } from '../utils/imageCleanup';
-import { NOTE_INCLUDE, applyPreferences, sortByContextOrder, transformNote } from './note.helpers';
+import { NOTE_INCLUDE, applyPreferences, orderForContext, sortByContextOrder, transformNote } from './note.helpers';
 import { maybeCreateVersion } from '../services/noteVersion.service';
 
 // A note's space is the folder's space when filed in a folder, otherwise the
@@ -28,35 +28,48 @@ async function resolveNoteSpace(
 
 export const getAllNotes = async (req: AuthRequest, res: Response) => {
   try {
-    const { spaceId, folderId, tagId, pinned, favorite, archived, deleted, shared } = req.query;
+    const { spaceId, folderId, bookmarkId, pinned, favorite, archived, deleted, shared } = req.query;
 
-    // Shared-with-me view
+    // Shared view: notes shared with me (accepted collabs) plus my own notes
+    // I've opened to others. Home shows them together; the full view splits them
+    // into two groups, so each keeps its own personal drag order.
     if (shared === 'true') {
-      const collabs = await prisma.noteCollaborator.findMany({
-        where: { userId: req.userId!, status: 'accepted' },
-        include: { note: { include: NOTE_INCLUDE } },
-        orderBy: { acceptedAt: 'desc' },
-      });
-      const notes = await applyPreferences(
-        collabs.map(c => transformNote(c.note)),
-        req.userId!
-      );
-
-      // Personal drag order for the shared view (mirrors the owned-notes branch).
-      if (notes.length > 0) {
-        const noteOrders = await prisma.noteOrder.findMany({
+      const [collabs, owned] = await Promise.all([
+        prisma.noteCollaborator.findMany({
+          where: { userId: req.userId!, status: 'accepted' },
+          include: { note: { include: NOTE_INCLUDE } },
+          orderBy: { acceptedAt: 'desc' },
+        }),
+        prisma.note.findMany({
           where: {
-            userId: req.userId,
-            contextType: 'shared',
-            contextId: '_none',
-            noteId: { in: notes.map(n => n.id) },
+            userId: req.userId!,
+            isDeleted: false,
+            collaborators: { some: { status: 'accepted' } },
           },
-        });
-        const orderMap = new Map(noteOrders.map(no => [no.noteId, no.order]));
-        return res.json({ notes: sortByContextOrder(notes, orderMap) });
-      }
+          include: NOTE_INCLUDE,
+          orderBy: { updatedAt: 'desc' },
+        }),
+      ]);
 
-      return res.json({ notes });
+      const withMe = await applyPreferences(collabs.map(c => transformNote(c.note)), req.userId!);
+
+      // The owner's pin for a shared note is a personal override (UserNotePreference),
+      // independent of the note's own isPinned used by the normal views.
+      const byMe = owned.map(transformNote);
+      const ownerPins = byMe.length
+        ? new Map((await prisma.userNotePreference.findMany({
+            where: { userId: req.userId!, noteId: { in: byMe.map(n => n.id) } },
+            select: { noteId: true, isPinned: true },
+          })).map(p => [p.noteId, p.isPinned]))
+        : new Map<string, boolean>();
+      const byMePinned = byMe.map(n => ({ ...n, isPinned: ownerPins.get(n.id) ?? false }));
+
+      const [orderedWithMe, orderedByMe] = await Promise.all([
+        orderForContext(withMe, req.userId!, 'shared'),
+        orderForContext(byMePinned, req.userId!, 'shared-owned'),
+      ]);
+
+      return res.json({ notes: [...orderedWithMe, ...orderedByMe] });
     }
 
     const where: Prisma.NoteWhereInput = { userId: req.userId };
@@ -64,7 +77,7 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
     // A folder shows its own notes; a space shows only its direct (folderless) notes.
     if (folderId) where.folderId = folderId as string;
     else if (spaceId) { where.spaceId = spaceId as string; where.folderId = null; }
-    if (tagId) where.noteTags = { some: { tagId: tagId as string } };
+    if (bookmarkId) where.noteBookmarks = { some: { bookmarkId: bookmarkId as string } };
     if (pinned !== undefined) where.isPinned = pinned === 'true';
     if (favorite !== undefined) where.isFavorite = favorite === 'true';
     if (archived !== undefined) where.isArchived = archived === 'true';
@@ -87,9 +100,10 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
     } else if (spaceId) {
       contextType = 'space';
       contextId = spaceId as string;
-    } else if (tagId) {
+    } else if (bookmarkId) {
+      // Internal context key stays 'tag' so saved drag orders keep their reference.
       contextType = 'tag';
-      contextId = tagId as string;
+      contextId = bookmarkId as string;
     } else if (favorite === 'true') {
       contextType = 'favorites';
     } else if (archived === 'true') {
@@ -177,7 +191,7 @@ export const searchNotes = async (req: AuthRequest, res: Response) => {
 
 export const createNote = async (req: AuthRequest, res: Response) => {
   try {
-    const { content, spaceId, folderId, coverImage, tags } = req.body;
+    const { content, spaceId, folderId, coverImage, bookmarks } = req.body;
 
     if (content === undefined || content === null) {
       return res.status(400).json({ error: 'Inhalt ist erforderlich' });
@@ -194,7 +208,7 @@ export const createNote = async (req: AuthRequest, res: Response) => {
         spaceId: resolvedSpaceId,
         folderId: folderId || null,
         coverImage: coverImage || null,
-        noteTags: tags ? { create: (tags as string[]).map((tagId: string) => ({ tagId })) } : undefined,
+        noteBookmarks: bookmarks ? { create: (bookmarks as string[]).map((bookmarkId: string) => ({ bookmarkId })) } : undefined,
       },
       include: NOTE_INCLUDE,
     });
@@ -209,7 +223,7 @@ export const createNote = async (req: AuthRequest, res: Response) => {
 export const updateNote = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { title, content, spaceId, folderId, coverImage, tags } = req.body;
+    const { title, content, spaceId, folderId, coverImage, bookmarks } = req.body;
 
     const existingNote = await prisma.note.findFirst({
       where: {
@@ -234,30 +248,30 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
       deleteFiles(removed);
     }
 
-    if (isOwner && tags !== undefined) {
-      const existing = await prisma.noteTag.findMany({ where: { noteId: id }, select: { tagId: true } });
-      const existingIds = existing.map(e => e.tagId);
-      const toAdd = (tags as string[]).filter(tid => !existingIds.includes(tid));
-      const toRemove = existingIds.filter(tid => !(tags as string[]).includes(tid));
+    if (isOwner && bookmarks !== undefined) {
+      const existing = await prisma.noteBookmark.findMany({ where: { noteId: id }, select: { bookmarkId: true } });
+      const existingIds = existing.map(e => e.bookmarkId);
+      const toAdd = (bookmarks as string[]).filter(bid => !existingIds.includes(bid));
+      const toRemove = existingIds.filter(bid => !(bookmarks as string[]).includes(bid));
 
       await prisma.$transaction([
-        prisma.noteTag.deleteMany({ where: { noteId: id, tagId: { in: toRemove } } }),
-        ...toAdd.map(tagId => prisma.noteTag.create({ data: { noteId: id, tagId } })),
+        prisma.noteBookmark.deleteMany({ where: { noteId: id, bookmarkId: { in: toRemove } } }),
+        ...toAdd.map(bookmarkId => prisma.noteBookmark.create({ data: { noteId: id, bookmarkId } })),
       ]);
     }
 
-    if (!isOwner && tags !== undefined) {
-      const existing = await prisma.userNoteTag.findMany({
+    if (!isOwner && bookmarks !== undefined) {
+      const existing = await prisma.userNoteBookmark.findMany({
         where: { noteId: id, userId: req.userId! },
-        select: { tagId: true },
+        select: { bookmarkId: true },
       });
-      const existingIds = existing.map(e => e.tagId);
-      const toAdd = (tags as string[]).filter(tid => !existingIds.includes(tid));
-      const toRemove = existingIds.filter(tid => !(tags as string[]).includes(tid));
+      const existingIds = existing.map(e => e.bookmarkId);
+      const toAdd = (bookmarks as string[]).filter(bid => !existingIds.includes(bid));
+      const toRemove = existingIds.filter(bid => !(bookmarks as string[]).includes(bid));
 
       await prisma.$transaction([
-        prisma.userNoteTag.deleteMany({ where: { noteId: id, userId: req.userId!, tagId: { in: toRemove } } }),
-        ...toAdd.map(tagId => prisma.userNoteTag.create({ data: { noteId: id, tagId, userId: req.userId! } })),
+        prisma.userNoteBookmark.deleteMany({ where: { noteId: id, userId: req.userId!, bookmarkId: { in: toRemove } } }),
+        ...toAdd.map(bookmarkId => prisma.userNoteBookmark.create({ data: { noteId: id, bookmarkId, userId: req.userId! } })),
       ]);
     }
 
@@ -338,6 +352,9 @@ export const deleteNote = async (req: AuthRequest, res: Response) => {
 // override stored in UserNotePreference instead.
 async function toggleNoteFlag(req: AuthRequest, res: Response, flag: 'isPinned' | 'isFavorite') {
   const id = req.params.id as string;
+  // The collaborations view pin is a personal override even for the owner, so it
+  // stays independent of the note's own isPinned (used by the normal views).
+  const collabPin = flag === 'isPinned' && req.body?.context === 'shared';
 
   const note = await prisma.note.findFirst({
     where: {
@@ -355,7 +372,7 @@ async function toggleNoteFlag(req: AuthRequest, res: Response, flag: 'isPinned' 
 
   const isOwner = note.userId === req.userId;
 
-  if (isOwner) {
+  if (isOwner && !collabPin) {
     const raw = await prisma.note.update({
       where: { id },
       data: flag === 'isPinned' ? { isPinned: !note.isPinned } : { isFavorite: !note.isFavorite },
@@ -367,7 +384,9 @@ async function toggleNoteFlag(req: AuthRequest, res: Response, flag: 'isPinned' 
   const existing = await prisma.userNotePreference.findUnique({
     where: { noteId_userId: { noteId: id, userId: req.userId! } },
   });
-  const current = existing?.[flag] ?? note[flag];
+  // The owner's collab pin defaults to off (independent of the note's own pin);
+  // a collaborator's override still falls back to the note's value.
+  const current = existing?.[flag] ?? (isOwner ? false : note[flag]);
   const change = flag === 'isPinned' ? { isPinned: !current } : { isFavorite: !current };
   await prisma.userNotePreference.upsert({
     where: { noteId_userId: { noteId: id, userId: req.userId! } },
@@ -378,6 +397,10 @@ async function toggleNoteFlag(req: AuthRequest, res: Response, flag: 'isPinned' 
   const raw = await prisma.note.findFirst({ where: { id }, include: NOTE_INCLUDE });
   if (!raw) {
     return res.status(404).json({ error: 'Notiz nicht gefunden' });
+  }
+  // Owner: keep the note's real favorite/folder/bookmarks, override only the collab pin.
+  if (isOwner) {
+    return res.json({ note: { ...transformNote(raw), isPinned: !current } });
   }
   const [withPref] = await applyPreferences([transformNote(raw)], req.userId!);
   return res.json({ note: withPref });

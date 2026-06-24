@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma';
+import { pickUsername } from '../services/username.service';
 
 type OAuthTokenResponse = { access_token?: string };
 
@@ -58,6 +59,7 @@ async function findOrCreateOAuthUser(data: {
     data: {
       email: data.email,
       name: data.name ?? null,
+      username: await pickUsername(data.name ?? data.email),
       avatarUrl: data.avatarUrl ?? null,
       provider: data.provider,
       providerId: data.providerId,

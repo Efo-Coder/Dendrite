@@ -119,9 +119,16 @@ const ProfileView = ({ userId, onOpenInline, onOpenProfile, onBack }: ProfileVie
                           {(profile.name || 'S').charAt(0).toUpperCase()}
                         </span>
                       )}
-                      <h1 className="text-3xl text-(--ink)" style={{ fontFamily: 'var(--serif-display)' }}>
-                        {profile.name || 'Someone'}
-                      </h1>
+                      <div>
+                        <h1 className="text-3xl text-(--ink)" style={{ fontFamily: 'var(--serif-display)' }}>
+                          {profile.name || 'Someone'}
+                        </h1>
+                        {profile.username && (
+                          <p className="text-sm text-(--ink-dim)" style={{ fontFamily: 'var(--mono)' }}>
+                            @{profile.username}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     {profile.bio && (

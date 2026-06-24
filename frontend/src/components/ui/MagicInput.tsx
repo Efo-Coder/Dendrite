@@ -9,6 +9,10 @@ interface MagicInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   rows?: number;
 }
 
+// Two stacked fills, the inner one painted in the content-box; `exclude` keeps only
+// the difference — i.e. the 1px padding ring around the field.
+const RING_MASK = "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)";
+
 export const MagicInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, MagicInputProps>(
   ({ className, wrapperClassName, wrapperStyle, type, style, onFocus, onBlur, multiline, rows, ...props }, ref) => {
     const [hovered, setHovered] = useState(false);
@@ -45,7 +49,16 @@ export const MagicInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElemen
         onMouseLeave={() => setHovered(false)}
         className={"w-full" + (wrapperClassName ? " " + wrapperClassName : "")}
       >
-        <motion.div style={{ position: "absolute", inset: 0, borderRadius: "inherit", background: gradientBackground, opacity, pointerEvents: "none" }} />
+        <motion.div
+          style={{
+            position: "absolute", inset: 0, borderRadius: "inherit", background: gradientBackground, opacity, pointerEvents: "none",
+            // Clip the glow to the 1px wrapper padding so it reads as a luminous border
+            // ring, not a filled circle bleeding through translucent (dark-mode) fields.
+            padding: "1px", boxSizing: "border-box",
+            WebkitMask: RING_MASK, WebkitMaskComposite: "xor",
+            mask: RING_MASK, maskComposite: "exclude",
+          }}
+        />
         {multiline ? (
           <textarea
             className={className}

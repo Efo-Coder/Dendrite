@@ -9,6 +9,8 @@ import qrcode from 'qrcode';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.service';
+import { validateUsername } from '../lib/username';
+import { pickUsername } from '../services/username.service';
 
 const uploadsDir = path.join(process.cwd(), 'uploads');
 
@@ -24,6 +26,7 @@ const USER_SELECT = {
   id: true,
   email: true,
   name: true,
+  username: true,
   avatarUrl: true,
   bio: true,
   plan: true,
@@ -51,6 +54,7 @@ export const register = async (req: Request, res: Response) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const username = await pickUsername(name);
     const isDev = process.env.NODE_ENV !== 'production';
 
     if (isDev) {
@@ -59,6 +63,7 @@ export const register = async (req: Request, res: Response) => {
           email,
           password: hashedPassword,
           name: name || null,
+          username,
           isVerified: true,
         },
       });
@@ -74,6 +79,7 @@ export const register = async (req: Request, res: Response) => {
         email,
         password: hashedPassword,
         name: name || null,
+        username,
         verificationToken,
         verificationTokenExpiresAt,
       },
@@ -152,7 +158,7 @@ export const login = async (req: Request, res: Response) => {
 
     return res.json({
       message: 'Login successful',
-      user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, createdAt: user.createdAt },
+      user: { id: user.id, email: user.email, name: user.name, username: user.username, avatarUrl: user.avatarUrl, createdAt: user.createdAt },
       token,
     });
   } catch (error) {
@@ -163,11 +169,25 @@ export const login = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, bio } = req.body;
+    const { name, bio, username } = req.body;
     // Partial update: only touch the fields the client actually sent.
-    const data: { name?: string | null; bio?: string | null } = {};
+    const data: { name?: string | null; bio?: string | null; username?: string } = {};
     if (name !== undefined) data.name = name ?? null;
     if (bio !== undefined) data.bio = typeof bio === 'string' && bio.trim() ? bio : null;
+
+    if (username !== undefined) {
+      const result = validateUsername(typeof username === 'string' ? username : '');
+      if (!result.ok) return res.status(400).json({ error: result.error });
+      const taken = await prisma.user.findUnique({
+        where: { username: result.value },
+        select: { id: true },
+      });
+      if (taken && taken.id !== req.userId) {
+        return res.status(409).json({ error: 'This username is already taken' });
+      }
+      data.username = result.value;
+    }
+
     const user = await prisma.user.update({
       where: { id: req.userId },
       data,
@@ -177,6 +197,25 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('UpdateProfile error:', error);
     return res.status(500).json({ error: 'Could not update profile' });
+  }
+};
+
+// Live check for the profile's username field. Authenticated, so a user keeping
+// their own current handle counts as available.
+export const checkUsernameAvailable = async (req: AuthRequest, res: Response) => {
+  try {
+    const raw = typeof req.query.u === 'string' ? req.query.u : '';
+    const result = validateUsername(raw);
+    if (!result.ok) return res.json({ available: false, error: result.error });
+
+    const existing = await prisma.user.findUnique({
+      where: { username: result.value },
+      select: { id: true },
+    });
+    return res.json({ available: !existing || existing.id === req.userId });
+  } catch (error) {
+    console.error('CheckUsernameAvailable error:', error);
+    return res.status(500).json({ error: 'Could not check username' });
   }
 };
 

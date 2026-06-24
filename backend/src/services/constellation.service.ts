@@ -259,21 +259,23 @@ function buildInsights(
 // ─── Public builder ──────────────────────────────────────────────────────────
 
 export async function buildConstellationGraph(userId: string): Promise<ConstellationGraphDTO> {
-  const [tags, rawNotes] = await Promise.all([
-    prisma.tag.findMany({ where: { userId }, select: { id: true, name: true, color: true } }),
+  const [bookmarks, rawNotes] = await Promise.all([
+    prisma.bookmark.findMany({ where: { userId }, select: { id: true, name: true, color: true } }),
     prisma.note.findMany({
       where: { userId, isDeleted: false, isArchived: false },
       select: {
         id: true, content: true, folderId: true, createdAt: true, updatedAt: true,
-        noteTags: { select: { tagId: true } },
+        noteBookmarks: { select: { bookmarkId: true } },
         _count: { select: { versions: true } },
       },
     }),
   ]);
 
   const nowMs = Date.now();
-  const tagMeta = new Map(tags.map((t) => [t.id, { name: t.name, color: t.color }]));
-  const tagNames = new Set(tags.map((t) => t.name.toLowerCase()));
+  // Bookmarks become themes of source 'tag' (vs. emergent 'keyword' themes); the
+  // 'tag' vocabulary here is the constellation protocol, not the data model.
+  const tagMeta = new Map(bookmarks.map((t) => [t.id, { name: t.name, color: t.color }]));
+  const tagNames = new Set(bookmarks.map((t) => t.name.toLowerCase()));
 
   const notes: NoteRow[] = rawNotes.map((n) => ({
     id: n.id,
@@ -281,7 +283,7 @@ export async function buildConstellationGraph(userId: string): Promise<Constella
     createdAt: n.createdAt,
     updatedAt: n.updatedAt,
     versions: n._count.versions,
-    tagIds: n.noteTags.map((nt) => nt.tagId),
+    tagIds: n.noteBookmarks.map((nb) => nb.bookmarkId),
     tokens: tokenize(n.content),
   }));
 

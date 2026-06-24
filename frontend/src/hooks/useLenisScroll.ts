@@ -1,4 +1,4 @@
-import { useLayoutEffect, type RefObject } from 'react';
+import { useLayoutEffect, type RefObject, type MutableRefObject } from 'react';
 import Lenis from 'lenis';
 import { getScroll, setScroll, isInitialLoad } from '../lib/viewState';
 
@@ -23,6 +23,10 @@ export function useLenisScroll(
   wrapper: RefObject<HTMLElement | null>,
   content: RefObject<HTMLElement | null>,
   memoryKey?: string,
+  // Exposes the live Lenis instance so callers can drive programmatic smooth
+  // scrolls (e.g. table-of-contents jumps) instead of fighting the RAF loop with
+  // a native scrollIntoView. Null while reduced-motion is on (no Lenis exists).
+  lenisRef?: MutableRefObject<Lenis | null>,
 ) {
   useLayoutEffect(() => {
     const w = wrapper.current;
@@ -47,6 +51,7 @@ export function useLenisScroll(
       };
       raf = requestAnimationFrame(loop);
     }
+    if (lenisRef) lenisRef.current = lenis;
 
     let onScroll: (() => void) | undefined;
     if (memoryKey) {
@@ -58,6 +63,7 @@ export function useLenisScroll(
       if (raf) cancelAnimationFrame(raf);
       if (onScroll) w.removeEventListener('scroll', onScroll);
       lenis?.destroy();
+      if (lenisRef) lenisRef.current = null;
     };
-  }, [wrapper, content, memoryKey]);
+  }, [wrapper, content, memoryKey, lenisRef]);
 }

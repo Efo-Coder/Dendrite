@@ -29,6 +29,22 @@ export async function notifyCollabInvite(
   pushToUser(recipientId, notification);
 }
 
+export async function notifyCollabAccepted(
+  recipientId: string,
+  payload: {
+    noteId: string;
+    noteTitle: string | null;
+    fromUserId: string;
+    fromName: string | null;
+    fromAvatarUrl: string | null;
+  },
+): Promise<void> {
+  const notification = await prisma.notification.create({
+    data: { userId: recipientId, type: 'collab_accepted', data: payload },
+  });
+  pushToUser(recipientId, notification);
+}
+
 export async function notifyNoteLike(
   recipientId: string,
   payload: {

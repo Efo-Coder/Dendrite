@@ -11,6 +11,7 @@ import AppSidebar from '../components/sidebar/AppSidebar';
 import EditorOverlay from './EditorOverlay';
 import HomeView from './HomeView';
 import SpacesView from './SpacesView';
+import LibraryView from './LibraryView';
 import ReflectionView from './ReflectionView';
 import ContainerView from './ContainerView';
 import NotesView, { type NoteCategory } from './NotesView';
@@ -24,7 +25,7 @@ const ConstellationsView = lazy(() => import('./ConstellationsView'));
 
 // The editor is not a view here — it renders as an overlay above the current view
 // (so closing it reveals exactly where you were, scroll and all).
-type AppView = 'home' | 'spaces' | 'reflection' | 'notes' | 'container' | 'constellations' | 'explore' | 'profile';
+type AppView = 'home' | 'spaces' | 'library' | 'reflection' | 'notes' | 'container' | 'constellations' | 'explore' | 'profile';
 
 interface ContainerRef {
   kind: 'space' | 'folder';
@@ -72,6 +73,7 @@ const DashboardPage = () => {
   // Sidebar navigation also dismisses an open editor overlay (it sits above the view).
   const goHome = useCallback(() => { setCurrentNote(null); setAppView('home'); }, [setCurrentNote]);
   const goSpaces = useCallback(() => { setCurrentNote(null); setAppView('spaces'); }, [setCurrentNote]);
+  const goLibrary = useCallback(() => { setCurrentNote(null); setAppView('library'); }, [setCurrentNote]);
   const goReflection = useCallback(() => { setCurrentNote(null); setAppView('reflection'); }, [setCurrentNote]);
   const goConstellations = useCallback(() => { setCurrentNote(null); setAppView('constellations'); }, [setCurrentNote]);
   const goExplore = useCallback(() => {
@@ -188,6 +190,7 @@ const DashboardPage = () => {
         <AppSidebar
           active={
             appView === 'spaces' || appView === 'container' ? 'spaces'
+            : appView === 'library' ? 'library'
             : appView === 'reflection' ? 'reflection'
             : appView === 'constellations' ? 'constellations'
             : appView === 'explore' || appView === 'profile' ? 'explore'
@@ -196,6 +199,7 @@ const DashboardPage = () => {
           collapsed={!!editorNote && editorSidebarCollapsed}
           onHome={goHome}
           onSpaces={goSpaces}
+          onLibrary={goLibrary}
           onReflection={goReflection}
           onConstellations={goConstellations}
           onExplore={goExplore}
@@ -211,6 +215,8 @@ const DashboardPage = () => {
             >
               {appView === 'spaces' ? (
                 <SpacesView onOpenSpace={openSpace} onBack={goHome} />
+              ) : appView === 'library' ? (
+                <LibraryView onOpenInline={openEditor} onBack={goHome} refreshSignal={refreshSignal} />
               ) : appView === 'notes' ? (
                 <NotesView category={notesCategory} onOpenInline={openEditor} onBack={goHome} refreshSignal={refreshSignal} />
               ) : appView === 'container' && containerStack.length > 0 ? (

@@ -15,6 +15,9 @@ import {
   Globe,
   PanelLeft,
   MoreHorizontal,
+  ImagePlus,
+  Bookmark,
+  BookmarkPlus,
 } from 'lucide-react';
 import { Note } from '../../types';
 import { useMagicHover } from '../../hooks/useMagicHover';
@@ -32,6 +35,8 @@ import NoteExportMenu from './NoteExportMenu';
 import { MenuPos, formatRelativeDate, userCursorColor } from './noteEditorUtils';
 import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
 import PublishModal from '../modals/PublishModal';
+import BookmarkSelectionModal from '../modals/BookmarkSelectionModal';
+import CoverPickerModal, { CoverTarget } from '../home/CoverPickerModal';
 import Modal from '../modals/Modal';
 import ContextMenu, { ContextMenuItem } from '../ui/ContextMenu';
 
@@ -40,6 +45,15 @@ interface NoteEditorProps {
   onNoteUpdate?: () => void;
   onToggleSidebar?: () => void;
   sidebarCollapsed?: boolean;
+}
+
+// Presence label for >1 active users: split by edit capability so viewers
+// aren't reported as "editing" — they can't.
+function presenceLabel(users: ActiveUser[]): string {
+  const editing = users.filter(u => u.canEdit).length;
+  const viewing = users.length - editing;
+  if (editing && viewing) return `${editing} editing · ${viewing} viewing`;
+  return viewing ? `${viewing} viewing` : `${editing} editing`;
 }
 
 const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: NoteEditorProps) => {
@@ -102,8 +116,10 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   }, [focusWritingMode]);
 
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [coverTarget, setCoverTarget] = useState<CoverTarget | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [restoreKey, setRestoreKey] = useState(0);
   // Local collaborator list — refreshed after invitations
@@ -262,11 +278,14 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     ...(isInTrash ? [
       { icon: <RotateCcw className="w-4 h-4" />, label: 'Restore', onClick: handleRestore },
     ] : []),
+    ...(!isInTrash ? [
+      { icon: <ImagePlus className="w-4 h-4" />, label: 'Add cover', onClick: () => setCoverTarget({ kind: 'note', id: note.id }) },
+    ] : []),
     ...(!isInTrash && note.userId === user?.id ? [
       { icon: <Globe className="w-4 h-4" />, label: 'Publish', onClick: () => setShowPublishModal(true) },
     ] : []),
     ...(!isInTrash ? [
-      { icon: <Share2 className="w-4 h-4" />, label: 'Share / Export', onClick: toggleExportFromMore, keepOpen: true },
+      { icon: <Share2 className="w-4 h-4" />, label: 'Share / Export', onClick: toggleExportFromMore, keepOpen: true, active: !!exportMenuPos },
     ] : []),
     { icon: <Trash2 className="w-4 h-4" />, label: isInTrash ? 'Delete permanently' : 'Delete', onClick: handleDelete, variant: 'danger' },
   ];
@@ -277,6 +296,26 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         <button className="editor-breadcrumb" onClick={openFolderMenu} disabled={isInTrash}>{currentFolder ? currentFolder.name : 'All Notes'}</button>
         <span className="editor-sep">·</span>
         <span>{formatRelativeDate(note.updatedAt)}</span>
+        {note.bookmarks && note.bookmarks.length > 0 ? (
+          <>
+            <span className="editor-sep">·</span>
+            <button className="editor-bookmarks" onClick={() => !isInTrash && setShowBookmarkModal(true)} disabled={isInTrash} title="Manage bookmarks">
+              {note.bookmarks.map((b) => (
+                <span key={b.id} className="editor-bookmark" style={{ color: b.color }}>
+                  <Bookmark size={12} strokeWidth={2} />
+                  {b.name}
+                </span>
+              ))}
+            </button>
+          </>
+        ) : !isInTrash ? (
+          <>
+            <span className="editor-sep">·</span>
+            <button className="editor-bookmark-add" onClick={() => setShowBookmarkModal(true)} title="Add bookmark">
+              <BookmarkPlus size={14} strokeWidth={1.75} />
+            </button>
+          </>
+        ) : null}
       </div>
       <textarea
         ref={titleAreaRef}
@@ -328,7 +367,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               <div />
 
               {activeUsers.length > 0 && collaborators.some(c => c.status === 'accepted') && (
-                <div className="flex items-center gap-2 pointer-events-none">
+                <button
+                  type="button"
+                  onClick={() => setShowInviteModal(true)}
+                  title="Show participants"
+                  className="flex cursor-pointer items-center gap-2 rounded-full px-1.5 py-1 transition-colors hover:bg-(--surface-hi)"
+                >
                   <div className="flex -space-x-2">
                     {activeUsers.slice(0, 5).map(u => (
                       <div
@@ -345,9 +389,9 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                     <span className="text-[11px] text-(--ink-dim) whitespace-nowrap">{activeUsers[0].name}</span>
                   )}
                   {activeUsers.length > 1 && (
-                    <span className="text-[11px] text-(--ink-dim) whitespace-nowrap">{activeUsers.length} editing</span>
+                    <span className="text-[11px] text-(--ink-dim) whitespace-nowrap">{presenceLabel(activeUsers)}</span>
                   )}
-                </div>
+                </button>
               )}
 
               <div ref={rightGroupRef} className="relative flex items-center gap-2 magic-hover">
@@ -438,11 +482,14 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             placeholder="Start writing..."
             disabled={isInTrash || isViewer}
             headerSlot={titleHeader}
+            focusMode={focusWritingMode}
             collaboration={{
               noteId: note.id,
               token: localStorage.getItem('token') ?? '',
+              userId: user?.id ?? '',
               username: user?.name || user?.email || 'Anonym',
               cursorColor: userCursorColor(user?.id ?? ''),
+              canEdit: !isViewer,
             }}
             onUsersChange={setActiveUsers}
             toolbar={
@@ -515,11 +562,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         onClose={() => setShowInviteModal(false)}
         noteId={note.id}
         isOwner={note.userId === user?.id}
+        onlineUserIds={new Set([user?.id, ...activeUsers.map(u => u.userId)].filter(Boolean) as string[])}
         onCollaboratorsChange={async () => {
           // Reload the collaborator list so the share indicator stays accurate
           const { collaborationService } = await import('../../services/collaboration.service');
           try {
-            const list = await collaborationService.listCollaborators(note.id);
+            const { collaborators: list } = await collaborationService.listCollaborators(note.id);
             setCollaborators(list);
           } catch { /* ignore */ }
         }}
@@ -529,6 +577,26 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         isOpen={showPublishModal}
         onClose={() => setShowPublishModal(false)}
         note={note}
+      />
+
+      <BookmarkSelectionModal
+        isOpen={showBookmarkModal}
+        onClose={() => setShowBookmarkModal(false)}
+        currentBookmarkIds={note.bookmarks?.map((b) => b.id) ?? []}
+        onUpdateBookmarks={async (bookmarkIds) => {
+          try {
+            await updateNote(note.id, { bookmarks: bookmarkIds });
+            onNoteUpdate?.();
+          } catch {
+            toast.error('Error updating bookmarks');
+          }
+        }}
+      />
+
+      <CoverPickerModal
+        target={coverTarget}
+        onClose={() => setCoverTarget(null)}
+        onCoverChange={() => onNoteUpdate?.()}
       />
 
       <Modal isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} title={note.title?.trim() || 'Note'}>

@@ -49,7 +49,7 @@ const PublishModal = ({ isOpen, onClose, note, onPublishedChange }: Props) => {
         setExisting(pub);
         setDescription(pub?.description ?? '');
         setTopics(pub?.topics ?? []);
-        setTags(pub ? pub.tags : (note.tags?.map((t) => t.name) ?? []));
+        setTags(pub ? pub.tags : (note.bookmarks?.map((b) => b.name) ?? []));
         setUseCover(pub ? !!pub.coverImage : !!note.coverImage);
       })
       .catch(() => toast.error('Could not load publication status'))

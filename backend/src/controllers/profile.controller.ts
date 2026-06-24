@@ -3,6 +3,33 @@ import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { notifyNewFollower } from '../services/notification.service';
 
+// Lightweight people search for invites/mentions. Matches name OR username and
+// returns only public identity fields — never email, which would enable enumeration.
+export const searchUsers = async (req: AuthRequest, res: Response) => {
+  try {
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    if (q.length < 2) return res.json({ users: [] });
+
+    const users = await prisma.user.findMany({
+      where: {
+        id: { not: req.userId },
+        OR: [
+          { username: { contains: q, mode: 'insensitive' } },
+          { name: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true, name: true, username: true, avatarUrl: true },
+      take: 8,
+      orderBy: { username: 'asc' },
+    });
+
+    return res.json({ users });
+  } catch (error) {
+    console.error('SearchUsers error:', error);
+    return res.status(500).json({ error: 'Search failed' });
+  }
+};
+
 // Public profile: identity + aggregate counts + whether the viewer follows them.
 export const getProfile = async (req: AuthRequest, res: Response) => {
   try {
@@ -10,7 +37,7 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, avatarUrl: true, bio: true, createdAt: true },
+      select: { id: true, name: true, username: true, avatarUrl: true, bio: true, createdAt: true },
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
 

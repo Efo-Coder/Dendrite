@@ -4,7 +4,7 @@ import { useNoteStore } from '../../store/useNoteStore';
 import { useToast } from '../ui/ToastContainer';
 import NoteContextMenu from '../noteList/NoteContextMenu';
 import MoveToFolderModal from '../modals/MoveToFolderModal';
-import TagSelectionModal from '../modals/TagSelectionModal';
+import BookmarkSelectionModal from '../modals/BookmarkSelectionModal';
 import { useRename } from './RenameContext';
 
 interface Options {
@@ -12,13 +12,15 @@ interface Options {
   onAfterChange?: () => void;
   // Opens the view's cover picker for this note (the view owns the modal).
   onSetCover?: (note: Note) => void;
+  // Collaborations view: pin is a per-user override, even for own shared notes.
+  shared?: boolean;
 }
 
 const EMPTY_FLAGS = { isPinned: false, isFavorite: false, isArchived: false, isDeleted: false };
 
 // Right-click actions for note cards — reuses the list's NoteContextMenu plus the
 // move/tag modals so the behaviour matches the workspace exactly.
-export function useNoteCardMenu({ onEdit, onAfterChange, onSetCover }: Options) {
+export function useNoteCardMenu({ onEdit, onAfterChange, onSetCover, shared }: Options) {
   const { updateNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, deleteNote, setNoteTitleOptimistic } = useNoteStore();
   const rename = useRename();
   const toast = useToast();
@@ -27,7 +29,7 @@ export function useNoteCardMenu({ onEdit, onAfterChange, onSetCover }: Options) 
     { isOpen: false, position: { x: 0, y: 0 }, note: null },
   );
   const [showMoveModal, setShowMoveModal] = useState(false);
-  const [showTagModal, setShowTagModal] = useState(false);
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
 
   const openMenu = useCallback((e: React.MouseEvent, note: Note) => {
     e.preventDefault();
@@ -41,7 +43,7 @@ export function useNoteCardMenu({ onEdit, onAfterChange, onSetCover }: Options) 
 
   const handlePin = async () => {
     if (!note) return;
-    try { await togglePin(note.id); toast.success(note.isPinned ? 'Unpinned' : 'Note pinned'); onAfterChange?.(); }
+    try { await togglePin(note.id, shared); toast.success(note.isPinned ? 'Unpinned' : 'Note pinned'); onAfterChange?.(); }
     catch { toast.error('Error pinning note'); }
   };
 
@@ -92,10 +94,10 @@ export function useNoteCardMenu({ onEdit, onAfterChange, onSetCover }: Options) 
     catch { toast.error('Error moving note'); }
   };
 
-  const handleUpdateTags = async (tagIds: string[]) => {
+  const handleUpdateBookmarks = async (bookmarkIds: string[]) => {
     if (!note) return;
-    try { await updateNote(note.id, { tags: tagIds }); toast.success('Tags updated'); onAfterChange?.(); }
-    catch { toast.error('Error updating tags'); }
+    try { await updateNote(note.id, { bookmarks: bookmarkIds }); toast.success('Bookmarks updated'); onAfterChange?.(); }
+    catch { toast.error('Error updating bookmarks'); }
   };
 
   const element = (
@@ -111,7 +113,7 @@ export function useNoteCardMenu({ onEdit, onAfterChange, onSetCover }: Options) 
         onPin={handlePin}
         onFavorite={handleFavorite}
         onArchive={handleArchive}
-        onTag={() => setShowTagModal(true)}
+        onBookmark={() => setShowBookmarkModal(true)}
         onDelete={handleDelete}
         onRestore={handleRestore}
         note={note ?? EMPTY_FLAGS}
@@ -122,11 +124,11 @@ export function useNoteCardMenu({ onEdit, onAfterChange, onSetCover }: Options) 
         onMove={handleMoveToFolder}
         currentFolderId={note?.folderId}
       />
-      <TagSelectionModal
-        isOpen={showTagModal}
-        onClose={() => setShowTagModal(false)}
-        onUpdateTags={handleUpdateTags}
-        currentTagIds={note?.tags?.map((t) => t.id) ?? []}
+      <BookmarkSelectionModal
+        isOpen={showBookmarkModal}
+        onClose={() => setShowBookmarkModal(false)}
+        onUpdateBookmarks={handleUpdateBookmarks}
+        currentBookmarkIds={note?.bookmarks?.map((b) => b.id) ?? []}
       />
     </>
   );

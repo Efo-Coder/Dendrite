@@ -18,7 +18,7 @@ interface AuthState {
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
   loadUser: () => Promise<void>;
-  updateProfile: (data: { name?: string; bio?: string }) => Promise<void>;
+  updateProfile: (data: { name?: string; bio?: string; username?: string }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
   uploadAvatar: (file: File) => Promise<void>;

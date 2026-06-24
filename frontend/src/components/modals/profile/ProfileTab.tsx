@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Camera, X, Loader2 } from 'lucide-react';
+import { Camera, X, Loader2, Check } from 'lucide-react';
 import { MagicInput } from '../../ui/MagicInput';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { authService } from '../../../services/auth.service';
 import { useToast } from '../../ui/ToastContainer';
 import { getApiErrorMessage } from '../../../lib/apiError';
 
@@ -43,6 +44,11 @@ const API_URL = import.meta.env.VITE_API_URL || '';
 const resolveAvatar = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`);
 
 const MAX_BIO_CHARS = 200;
+const USERNAME_MAX = 20;
+
+// Keep the field to the server's character set, so the live check only ever
+// disagrees on availability — never on format.
+const sanitizeHandle = (v: string) => v.toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, USERNAME_MAX);
 
 const ProfileTab = () => {
   const { user, updateProfile, uploadAvatar, deleteAvatar } = useAuthStore();
@@ -50,11 +56,15 @@ const ProfileTab = () => {
 
   const [name, setName] = useState(user?.name || '');
   const [bio, setBio] = useState(user?.bio || '');
+  const [username, setUsername] = useState(user?.username || '');
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'error'>('idle');
+  const [usernameError, setUsernameError] = useState('');
   const [avatarLoading, setAvatarLoading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const nameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bioTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const usernameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scheduleNameSave = (value: string) => {
     if (nameTimer.current) clearTimeout(nameTimer.current);
@@ -80,6 +90,37 @@ const ProfileTab = () => {
         toast.error(getApiErrorMessage(err, 'Could not update bio'));
       }
     }, 600);
+  };
+
+  // Debounced: check availability, then save on success. Format is already
+  // guaranteed by sanitizeHandle, so the server only weighs in on uniqueness.
+  const handleUsernameChange = (raw: string) => {
+    const value = sanitizeHandle(raw);
+    setUsername(value);
+    setUsernameError('');
+    if (usernameTimer.current) clearTimeout(usernameTimer.current);
+
+    if (value === (user?.username ?? '') || value.length < 3) {
+      setUsernameStatus('idle');
+      return;
+    }
+
+    setUsernameStatus('checking');
+    usernameTimer.current = setTimeout(async () => {
+      try {
+        const { available, error } = await authService.checkUsernameAvailable(value);
+        if (!available) {
+          setUsernameStatus('error');
+          setUsernameError(error || 'This username is already taken');
+          return;
+        }
+        await updateProfile({ username: value });
+        setUsernameStatus('available');
+      } catch (err) {
+        setUsernameStatus('error');
+        setUsernameError(getApiErrorMessage(err, 'Could not update username'));
+      }
+    }, 500);
   };
 
   const handleDeleteAvatar = async () => {
@@ -201,6 +242,27 @@ const ProfileTab = () => {
           className="modal-input"
           wrapperStyle={{ width: 200, borderRadius: '10px' }}
         />
+      </div>
+
+      <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+        <div className="lbl">Username<small>Your unique @handle — used for invites and your profile.</small></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <MagicInput
+              type="text"
+              value={username}
+              onChange={(e) => handleUsernameChange(e.target.value)}
+              placeholder="username"
+              className="modal-input"
+              wrapperStyle={{ width: 200, borderRadius: '10px' }}
+            />
+            {usernameStatus === 'checking' && <Loader2 className="w-3.5 h-3.5 animate-spin text-(--ink-dim)" />}
+            {usernameStatus === 'available' && <Check className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} />}
+          </div>
+          {usernameStatus === 'error' && (
+            <span style={{ fontSize: '11px', color: 'var(--danger)' }}>{usernameError}</span>
+          )}
+        </div>
       </div>
 
       <div className="settings-row" style={{ alignItems: 'flex-start' }}>

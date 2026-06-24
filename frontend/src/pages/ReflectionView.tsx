@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { MagicInput } from '../components/ui/MagicInput';
 import { useReflectionStore } from '../store/useReflectionStore';
 import { useLenisScroll } from '../hooks/useLenisScroll';
 import { useToast } from '../components/ui/ToastContainer';
@@ -21,8 +22,10 @@ const ReflectionView = () => {
 
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [inputHeight, setInputHeight] = useState<number | null>(null);
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   useLenisScroll(scrollRef, contentRef, 'reflection');
 
   useEffect(() => {
@@ -51,10 +54,32 @@ const ReflectionView = () => {
     }
   };
 
+  // The browser owns the native textarea resize grip and ignores our cursor there,
+  // so we drive resizing from our own handle (which can carry the gold cursor) and
+  // clamp the height to 150px–50vh.
+  const startResize = (e: ReactPointerEvent) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startH = inputRef.current?.offsetHeight ?? 150;
+    const max = Math.round(window.innerHeight * 0.5);
+    document.documentElement.classList.add('reflection-resizing');
+
+    const onMove = (ev: PointerEvent) => {
+      setInputHeight(Math.min(max, Math.max(150, startH + (ev.clientY - startY))));
+    };
+    const onUp = () => {
+      document.documentElement.classList.remove('reflection-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
   const past = history.filter((r) => !today || r.id !== today.id);
 
   return (
-    <main ref={scrollRef} className="home-main">
+    <main ref={scrollRef} className="home-main reflection-main">
       <div ref={contentRef} className="home-content">
         <header className="home-header">
           <p className="home-greeting">Daily Reflection</p>
@@ -62,13 +87,20 @@ const ReflectionView = () => {
         </header>
 
         <div className="reflection-compose">
-          <textarea
-            className="reflection-input"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Take a moment, and write what comes…"
-            rows={6}
-          />
+          <div className="reflection-field">
+            <MagicInput
+              multiline
+              ref={inputRef}
+              className="reflection-input"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Take a moment, and write what comes…"
+              rows={6}
+              style={{ height: inputHeight ?? undefined }}
+              wrapperStyle={{ borderRadius: '16px' }}
+            />
+            <span className="reflection-resizer resize-handle-ns" onPointerDown={startResize} />
+          </div>
           <div className="reflection-actions">
             <button type="button" className="btn primary reflection-save" onClick={handleSave} disabled={saving || !text.trim()}>
               {saving ? (

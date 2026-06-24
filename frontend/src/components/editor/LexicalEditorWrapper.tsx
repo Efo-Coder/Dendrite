@@ -54,8 +54,11 @@ export const LexicalOnChangeContext = createContext<((html: string) => void) | n
 export interface CollaborationConfig {
   noteId: string;
   token: string;
+  userId: string;
   username: string;
   cursorColor: string;
+  // Drives the presence label: viewers are shown as "viewing", not "editing".
+  canEdit: boolean;
 }
 
 interface LexicalEditorWrapperProps {
@@ -237,8 +240,10 @@ const LexicalEditorWrapper = ({
                   <YjsSyncPlugin
                     noteId={collaboration.noteId}
                     token={collaboration.token}
+                    userId={collaboration.userId}
                     username={collaboration.username}
                     cursorColor={collaboration.cursorColor}
+                    canEdit={collaboration.canEdit}
                     contentRef={contentRef}
                     onUsersChangeRef={onUsersChangeRef}
                     cursorsContainerRef={cursorsContainerRef}

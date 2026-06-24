@@ -176,6 +176,29 @@ const NotificationsBell = ({ onAccepted, onOpenProfile }: NotificationsBellProps
                           <X size={14} strokeWidth={2} />
                         </button>
                       </>
+                    ) : n.type === 'collab_accepted' ? (
+                      <>
+                        <div className="home-notif-text">
+                          <p className="home-notif-note">{n.data.fromName || 'Someone'} accepted your invitation.</p>
+                          <p className="home-notif-from">{n.data.noteTitle || 'Untitled note'}</p>
+                        </div>
+                        <button
+                          type="button"
+                          className="home-notif-accept"
+                          onClick={() => handleViewProfile(n.data.fromUserId)}
+                          title="View profile"
+                        >
+                          <User size={14} strokeWidth={2} />
+                        </button>
+                        <button
+                          type="button"
+                          className="home-notif-decline"
+                          onClick={() => handleDismiss(n.id)}
+                          title="Dismiss"
+                        >
+                          <X size={14} strokeWidth={2} />
+                        </button>
+                      </>
                     ) : (
                       <>
                         <div className="home-notif-text">

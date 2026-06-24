@@ -5,7 +5,7 @@ export const noteService = {
   async getAllNotes(filters?: {
     spaceId?: string;
     folderId?: string;
-    tagId?: string;
+    bookmarkId?: string;
     pinned?: boolean;
     favorite?: boolean;
     archived?: boolean;
@@ -15,7 +15,7 @@ export const noteService = {
     const params = new URLSearchParams();
     if (filters?.spaceId) params.append('spaceId', filters.spaceId);
     if (filters?.folderId) params.append('folderId', filters.folderId);
-    if (filters?.tagId) params.append('tagId', filters.tagId);
+    if (filters?.bookmarkId) params.append('bookmarkId', filters.bookmarkId);
     if (filters?.pinned !== undefined) params.append('pinned', String(filters.pinned));
     if (filters?.favorite !== undefined) params.append('favorite', String(filters.favorite));
     if (filters?.archived !== undefined) params.append('archived', String(filters.archived));
@@ -37,7 +37,7 @@ export const noteService = {
     spaceId?: string;
     folderId?: string;
     coverImage?: string | null;
-    tags?: string[];
+    bookmarks?: string[];
   }): Promise<Note> {
     const response = await api.post<{ note: Note }>('/notes', data);
     return response.data.note;
@@ -51,7 +51,7 @@ export const noteService = {
       spaceId?: string | null;
       folderId?: string | null;
       coverImage?: string | null;
-      tags?: string[];
+      bookmarks?: string[];
     }
   ): Promise<Note> {
     const response = await api.put<{ note: Note }>(`/notes/${id}`, data);
@@ -67,8 +67,9 @@ export const noteService = {
     return response.data.notes;
   },
 
-  async togglePin(id: string): Promise<Note> {
-    const response = await api.patch<{ note: Note }>(`/notes/${id}/pin`);
+  // shared=true: pin in the collaborations view (a per-user override, even for owned notes).
+  async togglePin(id: string, shared?: boolean): Promise<Note> {
+    const response = await api.patch<{ note: Note }>(`/notes/${id}/pin`, shared ? { context: 'shared' } : undefined);
     return response.data.note;
   },
 

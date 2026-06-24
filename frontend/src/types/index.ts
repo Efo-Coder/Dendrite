@@ -8,6 +8,7 @@ export interface Collaborator {
   user: {
     id: string;
     name: string | null;
+    username: string | null;
     email: string;
     avatarUrl: string | null;
   };
@@ -17,6 +18,7 @@ export interface User {
   id: string;
   email: string;
   name: string | null;
+  username?: string | null;
   avatarUrl?: string | null;
   bio?: string | null;
   plan: string;
@@ -44,7 +46,7 @@ export interface Note {
   deletedAt?: string | null; // set while trashed; drives the 30-day countdown
   space?: Space;
   folder?: Folder;
-  tags?: Tag[];
+  bookmarks?: Bookmark[];
   attachments?: Attachment[];
   collaborators?: Collaborator[];
 }
@@ -82,7 +84,7 @@ export interface Folder {
   parent?: Folder;
 }
 
-export interface Tag {
+export interface Bookmark {
   id: string;
   name: string;
   color: string;
@@ -212,6 +214,7 @@ export interface PublishedList {
 export interface Profile {
   id: string;
   name: string | null;
+  username: string | null;
   avatarUrl: string | null;
   bio: string | null;
   createdAt: string;
@@ -220,6 +223,14 @@ export interface Profile {
   publishedCount: number;
   isFollowing: boolean;
   isSelf: boolean;
+}
+
+// People-search hit for the invite picker — public identity only, never email.
+export interface UserSearchResult {
+  id: string;
+  name: string | null;
+  username: string | null;
+  avatarUrl: string | null;
 }
 
 // Discriminated by `type` so the bell renders the right payload. `data` is the
@@ -231,6 +242,19 @@ export type NotificationItem =
       read: boolean;
       createdAt: string;
       data: { collaboratorId: string; noteId: string; noteTitle: string | null; fromName: string | null };
+    }
+  | {
+      id: string;
+      type: 'collab_accepted';
+      read: boolean;
+      createdAt: string;
+      data: {
+        noteId: string;
+        noteTitle: string | null;
+        fromUserId: string;
+        fromName: string | null;
+        fromAvatarUrl: string | null;
+      };
     }
   | {
       id: string;

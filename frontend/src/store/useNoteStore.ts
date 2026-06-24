@@ -19,7 +19,7 @@ interface NoteState {
   fetchNotes: (filters?: {
     spaceId?: string;
     folderId?: string;
-    tagId?: string;
+    bookmarkId?: string;
     pinned?: boolean;
     favorite?: boolean;
     archived?: boolean;
@@ -33,7 +33,7 @@ interface NoteState {
     spaceId?: string;
     folderId?: string;
     coverImage?: string | null;
-    tags?: string[];
+    bookmarks?: string[];
   }) => Promise<Note>;
   updateNote: (
     id: string,
@@ -43,12 +43,12 @@ interface NoteState {
       spaceId?: string | null;
       folderId?: string | null;
       coverImage?: string | null;
-      tags?: string[];
+      bookmarks?: string[];
     }
   ) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   searchNotes: (query: string) => Promise<void>;
-  togglePin: (id: string) => Promise<void>;
+  togglePin: (id: string, shared?: boolean) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
   toggleArchive: (id: string) => Promise<void>;
   toggleTrash: (id: string) => Promise<void>;
@@ -103,7 +103,7 @@ export const useNoteStore = create<NoteState>((set) => ({
         folderId: data.folderId,
         // New notes get a random preset cover unless one is explicitly provided.
         coverImage: data.coverImage === undefined ? randomCoverPreset() : data.coverImage,
-        tags: data.tags,
+        bookmarks: data.bookmarks,
       });
       // Deliberately NOT setting currentNote here — the DashboardPage opens the
       // editor only after the list animation (editor mount blocks the main thread)
@@ -187,9 +187,12 @@ export const useNoteStore = create<NoteState>((set) => ({
     }
   },
 
-  togglePin: async (id: string) => {
+  togglePin: async (id: string, shared?: boolean) => {
     try {
-      const updatedNote = await noteService.togglePin(id);
+      const updatedNote = await noteService.togglePin(id, shared);
+      // The collab pin's isPinned is a per-user override, not the note's own — keep
+      // it out of the main list so other views (Continue Thinking, All) stay correct.
+      if (shared) return;
       set((state) => ({
         notes: state.notes.map((note) => (note.id === id ? updatedNote : note)),
         currentNote: state.currentNote?.id === id ? updatedNote : state.currentNote,

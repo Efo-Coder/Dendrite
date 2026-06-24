@@ -117,7 +117,6 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
   );
   const handleFavReorder = useMemo(() => makeReorder(setFavorites, 'favorites'), [makeReorder]);
   const handleArchReorder = useMemo(() => makeReorder(setArchived, 'archive'), [makeReorder]);
-  const handleSharedReorder = useMemo(() => makeReorder(setShared, 'shared'), [makeReorder]);
 
   // `recent`/spaces are store-backed and update on their own; these sections hold their
   // own copies, so patch the new cover in instead of waiting for the next refetch.
@@ -337,7 +336,7 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
           armed={armed}
         />
 
-        <DraggableNoteSection title="Shared with me" notes={shared} emptyText="Nothing shared with you yet." onViewAll={() => onOpenCategory('shared')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} onReorder={handleSharedReorder} armed={armed} />
+        <NoteSection title="Collaborations" notes={shared} emptyText="No collaborations yet." onViewAll={() => onOpenCategory('shared')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} armed={armed} />
 
         <DraggableNoteSection title="Favorites" notes={favorites} emptyText="No favorites yet." onViewAll={() => onOpenCategory('favorites')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} onReorder={handleFavReorder} armed={armed} />
         <DraggableNoteSection title="Archived" notes={archived} emptyText="Nothing archived." onViewAll={() => onOpenCategory('archived')} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={(n) => setCoverTarget({ kind: 'note', id: n.id })} onReorder={handleArchReorder} armed={armed} />

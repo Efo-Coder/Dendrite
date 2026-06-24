@@ -1,4 +1,4 @@
-import { Edit, ImagePlus, Pencil, Trash2, Pin, Archive, Tag, FolderOpen, RotateCcw } from 'lucide-react';
+import { Edit, ImagePlus, Pencil, Trash2, Pin, Archive, Bookmark, FolderOpen, RotateCcw } from 'lucide-react';
 import ContextMenu, { ContextMenuItem } from '../ui/ContextMenu';
 import { Icons } from '../ui/Icons';
 
@@ -13,7 +13,7 @@ interface NoteContextMenuProps {
   onPin: () => void;
   onFavorite: () => void;
   onArchive: () => void;
-  onTag: () => void;
+  onBookmark: () => void;
   onDelete: () => void;
   onRestore: () => void;
   note: {
@@ -24,7 +24,7 @@ interface NoteContextMenuProps {
   };
 }
 
-const NoteContextMenu = ({ isOpen, position, onClose, onEdit, onRename, onSetCover, onMove, onPin, onFavorite, onArchive, onTag, onDelete, onRestore, note }: NoteContextMenuProps) => {
+const NoteContextMenu = ({ isOpen, position, onClose, onEdit, onRename, onSetCover, onMove, onPin, onFavorite, onArchive, onBookmark, onDelete, onRestore, note }: NoteContextMenuProps) => {
   const isInTrash = note.isDeleted;
 
   const items: ContextMenuItem[] = [
@@ -36,7 +36,7 @@ const NoteContextMenu = ({ isOpen, position, onClose, onEdit, onRename, onSetCov
       { icon: note.isFavorite ? <Icons.starFill size={16} /> : <Icons.star size={16} />, label: note.isFavorite ? 'Remove from favorites' : 'Add to favorites', onClick: onFavorite },
       { icon: <Archive className="w-4 h-4" />, label: note.isArchived ? 'Unarchive' : 'Archive', onClick: onArchive },
       { icon: <FolderOpen className="w-4 h-4" />, label: 'Move', onClick: onMove },
-      { icon: <Tag className="w-4 h-4" />, label: 'Tag', onClick: onTag },
+      { icon: <Bookmark className="w-4 h-4" />, label: 'Bookmark', onClick: onBookmark },
     ] : []),
     ...(isInTrash ? [
       { icon: <RotateCcw className="w-4 h-4" />, label: 'Restore', onClick: onRestore },

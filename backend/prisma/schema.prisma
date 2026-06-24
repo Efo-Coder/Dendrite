@@ -17,6 +17,7 @@ model User {
   provider                    String?
   providerId                  String?
   name                        String?
+  username                    String?   @unique
   avatarUrl                   String?
   bio                         String?   @db.Text
   plan                        String    @default("free")
@@ -34,22 +35,22 @@ model User {
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
 
-  notes              Note[]
-  spaces             Space[]
-  folders            Folder[]
-  tags               Tag[]
-  noteOrders         NoteOrder[]
-  collaborations     NoteCollaborator[]
-  notePreferences    UserNotePreference[]
-  userNoteTags       UserNoteTag[]
-  feedback           Feedback?
-  bugReports         BugReport[]
-  reflections        Reflection[]
-  publishedNotes     PublishedNote[]
-  following          Follow[]             @relation("UserFollowing")
-  followers          Follow[]             @relation("UserFollowers")
-  notifications      Notification[]
-  publishedLikes     PublishedNoteLike[]
+  notes             Note[]
+  spaces            Space[]
+  folders           Folder[]
+  bookmarks         Bookmark[]
+  noteOrders        NoteOrder[]
+  collaborations    NoteCollaborator[]
+  notePreferences   UserNotePreference[]
+  userNoteBookmarks UserNoteBookmark[]
+  feedback          Feedback?
+  bugReports        BugReport[]
+  reflections       Reflection[]
+  publishedNotes    PublishedNote[]
+  following         Follow[]             @relation("UserFollowing")
+  followers         Follow[]             @relation("UserFollowers")
+  notifications     Notification[]
+  publishedLikes    PublishedNoteLike[]
 
   @@unique([provider, providerId])
 }
@@ -67,9 +68,9 @@ model Space {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  folders    Folder[]
-  notes      Note[]
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folders Folder[]
+  notes   Note[]
 
   @@index([userId])
   @@index([isPinned])
@@ -77,24 +78,24 @@ model Space {
 
 // Lives inside a space; can nest into other folders (recursive).
 model Folder {
-  id        String   @id @default(uuid())
+  id         String   @id @default(uuid())
   name       String
   color      String?  @default("#10b981") // Grüner Akzent
   icon       String?
-  coverImage String?  // Folder cover for the Home dashboard
+  coverImage String? // Folder cover for the Home dashboard
   isPinned   Boolean  @default(false) // Pinned folders surface first
   order      Int      @default(0) // Manual sort order
   spaceId    String
   parentId   String?
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  parent    Folder?  @relation("SubFolders", fields: [parentId], references: [id], onDelete: Cascade)
-  children  Folder[] @relation("SubFolders")
-  notes     Note[]
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  space    Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  parent   Folder?  @relation("SubFolders", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[] @relation("SubFolders")
+  notes    Note[]
 
   @@index([userId])
   @@index([spaceId])
@@ -103,33 +104,33 @@ model Folder {
 }
 
 model Note {
-  id          String   @id @default(uuid())
-  title       String?  @db.Text
-  content     String   @db.Text
-  coverImage  String?  // Note cover for the Home dashboard ("Continue Thinking")
-  isPinned    Boolean  @default(false)
-  isLocked    Boolean  @default(false)
-  isFavorite  Boolean  @default(false)
-  isArchived  Boolean  @default(false)
-  isDeleted   Boolean  @default(false)
-  order       Int      @default(0)
-  spaceId     String?
-  folderId    String?
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime? // when the note was trashed; drives the 30-day auto-purge
+  id         String    @id @default(uuid())
+  title      String?   @db.Text
+  content    String    @db.Text
+  coverImage String? // Note cover for the Home dashboard ("Continue Thinking")
+  isPinned   Boolean   @default(false)
+  isLocked   Boolean   @default(false)
+  isFavorite Boolean   @default(false)
+  isArchived Boolean   @default(false)
+  isDeleted  Boolean   @default(false)
+  order      Int       @default(0)
+  spaceId    String?
+  folderId   String?
+  userId     String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime? // when the note was trashed; drives the 30-day auto-purge
 
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  space           Space?             @relation(fields: [spaceId], references: [id], onDelete: SetNull)
-  folder          Folder?            @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  noteTags        NoteTag[]
-  attachments     Attachment[]
-  collaborators   NoteCollaborator[]
-  notePreferences UserNotePreference[]
-  userNoteTags    UserNoteTag[]
-  versions        NoteVersion[]
-  publishedNote   PublishedNote?
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  space             Space?               @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  folder            Folder?              @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  noteBookmarks     NoteBookmark[]
+  attachments       Attachment[]
+  collaborators     NoteCollaborator[]
+  notePreferences   UserNotePreference[]
+  userNoteBookmarks UserNoteBookmark[]
+  versions          NoteVersion[]
+  publishedNote     PublishedNote?
 
   @@index([userId])
   @@index([spaceId])
@@ -141,7 +142,7 @@ model Note {
   @@index([order])
 }
 
-model Tag {
+model Bookmark {
   id        String   @id @default(uuid())
   name      String
   color     String   @default("#10b981")
@@ -149,25 +150,25 @@ model Tag {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  noteTags     NoteTag[]
-  userNoteTags UserNoteTag[]
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  noteBookmarks     NoteBookmark[]
+  userNoteBookmarks UserNoteBookmark[]
 
   @@unique([name, userId])
   @@index([userId])
 }
 
-model NoteTag {
-  noteId    String
-  tagId     String
-  createdAt DateTime @default(now())
+model NoteBookmark {
+  noteId     String
+  bookmarkId String
+  createdAt  DateTime @default(now())
 
-  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  note     Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
 
-  @@id([noteId, tagId])
+  @@id([noteId, bookmarkId])
   @@index([noteId])
-  @@index([tagId])
+  @@index([bookmarkId])
 }
 
 model Attachment {
@@ -179,22 +180,22 @@ model Attachment {
   noteId    String
   createdAt DateTime @default(now())
 
-  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@index([noteId])
 }
 
 model NoteCollaborator {
-  id          String    @id @default(uuid())
-  noteId      String
-  userId      String
-  role        String    @default("editor")
-  status      String    @default("pending")
-  invitedAt   DateTime  @default(now())
-  acceptedAt  DateTime?
+  id         String    @id @default(uuid())
+  noteId     String
+  userId     String
+  role       String    @default("editor")
+  status     String    @default("pending")
+  invitedAt  DateTime  @default(now())
+  acceptedAt DateTime?
 
-  note        Note      @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([noteId, userId])
   @@index([userId])
@@ -213,27 +214,27 @@ model UserNotePreference {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([noteId, userId])
   @@index([userId])
   @@map("user_note_preferences")
 }
 
-model UserNoteTag {
-  noteId    String
-  tagId     String
-  userId    String
-  createdAt DateTime @default(now())
+model UserNoteBookmark {
+  noteId     String
+  bookmarkId String
+  userId     String
+  createdAt  DateTime @default(now())
 
-  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note     Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([noteId, tagId, userId])
+  @@id([noteId, bookmarkId, userId])
   @@index([noteId, userId])
-  @@map("user_note_tags")
+  @@map("user_note_bookmarks")
 }
 
 model NoteVersion {
@@ -243,7 +244,7 @@ model NoteVersion {
   title     String?  @db.Text
   createdAt DateTime @default(now())
 
-  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@index([noteId, createdAt])
   @@map("note_versions")
@@ -253,13 +254,13 @@ model NoteOrder {
   id          String   @id @default(uuid())
   noteId      String
   userId      String
-  contextType String   // 'all', 'folder', 'tag', 'favorites', 'archive'
+  contextType String // 'all', 'folder', 'tag', 'favorites', 'archive'
   contextId   String   @default("_none") // folder-id oder tag-id, "_none" für all/favorites/archive
   order       Int
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([noteId, userId, contextType, contextId])
   @@index([userId, contextType, contextId])
@@ -273,7 +274,7 @@ model Feedback {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -285,7 +286,7 @@ model BugReport {
   description String   @db.Text
   createdAt   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -299,7 +300,7 @@ model Reflection {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
   @@index([userId])
@@ -325,9 +326,9 @@ model PublishedNote {
   publishedAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner       User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  note        Note                @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  likes       PublishedNoteLike[]
+  owner User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  note  Note                @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  likes PublishedNoteLike[]
 
   @@index([ownerId])
   @@index([publishedAt])
@@ -361,8 +362,8 @@ model Follow {
   followingId String
   createdAt   DateTime @default(now())
 
-  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
   @@index([followerId])
@@ -376,12 +377,12 @@ model Follow {
 model Notification {
   id        String   @id @default(uuid())
   userId    String // recipient
-  type      String // 'collab_invite' | 'new_follower'
+  type      String // 'collab_invite' | 'collab_accepted' | 'new_follower' | 'note_like'
   data      Json
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
   @@index([userId, createdAt])

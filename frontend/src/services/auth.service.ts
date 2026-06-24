@@ -24,9 +24,16 @@ export const authService = {
     return response.data.user;
   },
 
-  async updateProfile(data: { name?: string; bio?: string }): Promise<User> {
+  async updateProfile(data: { name?: string; bio?: string; username?: string }): Promise<User> {
     const response = await api.put<{ user: User }>('/auth/profile', data);
     return response.data.user;
+  },
+
+  async checkUsernameAvailable(username: string): Promise<{ available: boolean; error?: string }> {
+    const response = await api.get<{ available: boolean; error?: string }>('/auth/username-available', {
+      params: { u: username },
+    });
+    return response.data;
   },
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {

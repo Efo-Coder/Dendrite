@@ -3,6 +3,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Note } from '../types';
 import { noteService } from '../services/note.service';
 import { useNoteStore } from '../store/useNoteStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { useLenisScroll } from '../hooks/useLenisScroll';
 import { useToast } from '../components/ui/ToastContainer';
 import { getApiErrorMessage } from '../lib/apiError';
@@ -31,7 +32,7 @@ const META: Record<NoteCategory, CategoryMeta> = {
   favorites: { greeting: 'Favorites',       headline: 'The thoughts you love.',      empty: 'No favorites yet.',          filter: { favorite: true, archived: false, deleted: false } },
   archived:  { greeting: 'Archived',        headline: 'Set aside, not forgotten.',   empty: 'Nothing archived.',          filter: { archived: true, deleted: false } },
   trash:     { greeting: 'Deleted',         headline: 'On its way out.',             empty: 'Trash is empty.',            filter: { deleted: true } },
-  shared:    { greeting: 'Shared with me',  headline: 'Notes opened to you.',        empty: 'Nothing shared with you yet.', filter: { shared: true } },
+  shared:    { greeting: 'Collaborations',   headline: 'Notes, shared both ways.',     empty: 'No collaborations yet.',     filter: { shared: true } },
 };
 
 // Categories whose order is draggable + persisted; value is the backend contextType
@@ -39,7 +40,6 @@ const META: Record<NoteCategory, CategoryMeta> = {
 const ORDER_CONTEXT: Partial<Record<NoteCategory, string>> = {
   favorites: 'favorites',
   archived: 'archive',
-  shared: 'shared',
 };
 
 interface NotesViewProps {
@@ -55,6 +55,7 @@ interface NotesViewProps {
 const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewProps) => {
   const meta = META[category];
   const contextType = ORDER_CONTEXT[category];
+  const userId = useAuthStore((s) => s.user?.id);
   // Layout preference is remembered per category (e.g. Favorites as a list, All as tiles).
   const [view, setView] = useViewMode(`notes:${category}`);
   const [notes, setNotes] = useState<Note[]>(() => getCachedList<Note>(`notes:${category}`) ?? []);
@@ -77,10 +78,30 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
   useEffect(() => { load(); }, [load, refreshSignal]);
 
   const setCover = (n: Note) => setCoverTarget({ kind: 'note', id: n.id });
-  const noteMenu = useNoteCardMenu({ onEdit: onOpenInline, onAfterChange: load, onSetCover: setCover });
+  const noteMenu = useNoteCardMenu({ onEdit: onOpenInline, onAfterChange: load, onSetCover: setCover, shared: category === 'shared' });
 
   const pinned = useMemo(() => notes.filter((n) => n.isPinned), [notes]);
   const rest = useMemo(() => notes.filter((n) => !n.isPinned), [notes]);
+
+  // Collaborations view splits every note into two drag-ordered groups: notes shared
+  // with me (context 'shared') and my own notes shared out ('shared-owned'). Pinned
+  // notes stay inside their own group (floated to the top by the backend), so the
+  // categories never collapse into a shared Pinned block.
+  const sharedWithMe = useMemo(() => notes.filter((n) => n.userId !== userId), [notes, userId]);
+  const sharedByMe = useMemo(() => notes.filter((n) => n.userId === userId), [notes, userId]);
+  const persistOrder = useCallback(
+    (group: Note[], context: string) =>
+      noteService.reorderNotes(group.map((n, i) => ({ id: n.id, order: i })), context, null).catch(() => {}),
+    [],
+  );
+  const handleReorderWithMe = useCallback(
+    (reordered: Note[]) => { setNotes([...reordered, ...sharedByMe]); persistOrder(reordered, 'shared'); },
+    [sharedByMe, persistOrder],
+  );
+  const handleReorderByMe = useCallback(
+    (reordered: Note[]) => { setNotes([...sharedWithMe, ...reordered]); persistOrder(reordered, 'shared-owned'); },
+    [sharedWithMe, persistOrder],
+  );
 
   // Persist the merged order (pinned first) to the category's context, mirroring how
   // the Home sections persist — so dragging here and on Home stay in sync.
@@ -153,6 +174,21 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
           <p className="home-empty">{meta.empty}</p>
         ) : category === 'trash' ? (
           <NoteMonthGrid notes={notes} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={setCover} armed={armed} view={view} countdown />
+        ) : category === 'shared' ? (
+          <>
+            {sharedWithMe.length > 0 && (
+              <section className="notes-month-group">
+                <div className="notes-month-label">Shared with me</div>
+                <DraggableNoteGrid notes={sharedWithMe} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={setCover} onReorder={handleReorderWithMe} armed={armed} view={view} showSubtitle />
+              </section>
+            )}
+            {sharedByMe.length > 0 && (
+              <section className="notes-month-group">
+                <div className="notes-month-label">Shared</div>
+                <DraggableNoteGrid notes={sharedByMe} onOpen={onOpenInline} onMenu={noteMenu.openMenu} onSetCover={setCover} onReorder={handleReorderByMe} armed={armed} view={view} showSubtitle />
+              </section>
+            )}
+          </>
         ) : (
           <>
             {pinned.length > 0 && (

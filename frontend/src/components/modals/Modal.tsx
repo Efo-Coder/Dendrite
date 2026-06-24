@@ -10,6 +10,7 @@ interface ModalProps {
   children: React.ReactNode;
   className?: string;
   showFooter?: boolean;
+  cancelLabel?: string;
   confirmLabel?: string;
   onConfirm?: () => void;
   confirmVariant?: 'default' | 'danger';
@@ -25,6 +26,7 @@ const Modal = ({
   children,
   className,
   showFooter = false,
+  cancelLabel = 'Cancel',
   confirmLabel,
   onConfirm,
   confirmVariant = 'default',
@@ -72,7 +74,7 @@ const Modal = ({
         {showFooter && (
           <div className="modal-ft">
             <button type="button" onClick={onClose} className="btn-ghost">
-              Cancel
+              {cancelLabel}
             </button>
             {confirmLabel && onConfirm && (
               <button
