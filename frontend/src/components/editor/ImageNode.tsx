@@ -21,25 +21,25 @@ interface ImageComponentProps {
   altText: string;
   width: number;
   height: number;
+  aspectRatio: number | null;
   alignment: 'left' | 'center' | 'right';
   maintainAspectRatio: boolean;
   positionLocked: boolean;
-  collapsed: boolean;
   nodeKey: string;
 }
 
-function ImageComponent({ src, altText, width, height, alignment, maintainAspectRatio, positionLocked, collapsed, nodeKey }: ImageComponentProps) {
+function ImageComponent({ src, altText, width, height, aspectRatio, alignment, maintainAspectRatio, positionLocked, nodeKey }: ImageComponentProps) {
   const [editor] = useLexicalComposerContext();
   const onEditorChange = useContext(LexicalOnChangeContext);
 
   const onSizeChange = useCallback(
-    (newWidth: number, newHeight: number) => {
+    (newWidth: number, newAspectRatio: number) => {
       editor.update(
         () => {
           const node = $getNodeByKey(nodeKey);
           if ($isImageNode(node)) {
             node.setWidth(newWidth);
-            node.setHeight(newHeight);
+            node.setAspectRatio(newAspectRatio);
           }
         },
         {
@@ -108,33 +108,20 @@ function ImageComponent({ src, altText, width, height, alignment, maintainAspect
     [editor, nodeKey]
   );
 
-  const onCollapseChange = useCallback(
-    (next: boolean) => {
-      editor.update(() => {
-        const node = $getNodeByKey(nodeKey);
-        if ($isImageNode(node)) {
-          node.setCollapsed(next);
-        }
-      });
-    },
-    [editor, nodeKey]
-  );
-
   return (
     <ResizableImage
       src={src}
       altText={altText}
       initialWidth={width}
       initialHeight={height}
+      initialAspectRatio={aspectRatio}
       initialAlignment={alignment}
       initialMaintainAspectRatio={maintainAspectRatio}
       initialPositionLocked={positionLocked}
-      initialCollapsed={collapsed}
       onSizeChange={onSizeChange}
       onAlignmentChange={onAlignmentChange}
       onAspectRatioChange={onAspectRatioChange}
       onPositionLockChange={onPositionLockChange}
-      onCollapseChange={onCollapseChange}
       onDelete={onDelete}
     />
   );
@@ -144,11 +131,13 @@ export interface ImagePayload {
   altText: string;
   src: string;
   width?: number;
+  // Fallback box height (px) used only until the image is calibrated to an aspectRatio.
   height?: number;
+  // Box aspect ratio (width/height). null = not yet calibrated → derived on first render.
+  aspectRatio?: number | null;
   alignment?: 'left' | 'center' | 'right';
   maintainAspectRatio?: boolean;
   positionLocked?: boolean;
-  collapsed?: boolean;
   key?: NodeKey;
 }
 
@@ -158,10 +147,10 @@ export type SerializedImageNode = Spread<
     src: string;
     width: number;
     height: number;
+    aspectRatio: number | null;
     alignment: 'left' | 'center' | 'right';
     maintainAspectRatio: boolean;
     positionLocked: boolean;
-    collapsed: boolean;
   },
   SerializedLexicalNode
 >;
@@ -209,8 +198,11 @@ function convertImageElement(domNode: Node): null | DOMConversionOutput {
 
     const maintainAspectRatio = domNode.getAttribute('data-maintain-aspect-ratio') === 'true';
     const positionLocked = domNode.getAttribute('data-position-locked') === 'true';
-    const collapsed = domNode.getAttribute('data-collapsed') === 'true';
-    const node = $createImageNode({ altText, src, width, height, alignment, maintainAspectRatio, positionLocked, collapsed });
+    // Legacy images lack data-aspect-ratio → null triggers calibration from the
+    // current box on first render (data-height is the fallback height until then).
+    const dataAspect = domNode.getAttribute('data-aspect-ratio');
+    const aspectRatio = dataAspect ? parseFloat(dataAspect) : null;
+    const node = $createImageNode({ altText, src, width, height, aspectRatio, alignment, maintainAspectRatio, positionLocked });
     return { node };
   }
   return null;
@@ -220,11 +212,13 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   __src: string;
   __altText: string;
   __width: number;
+  // Fallback box height (px), used only until __aspectRatio is calibrated.
   __height: number;
+  // Box aspect ratio (width/height). null until calibrated from the first render.
+  __aspectRatio: number | null;
   __alignment: 'left' | 'center' | 'right';
   __maintainAspectRatio: boolean;
   __positionLocked: boolean;
-  __collapsed: boolean;
 
   static getType(): string {
     return 'image';
@@ -236,25 +230,25 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
       node.__altText,
       node.__width,
       node.__height,
+      node.__aspectRatio,
       node.__alignment,
       node.__maintainAspectRatio,
       node.__positionLocked,
-      node.__collapsed,
       node.__key
     );
   }
 
   static importJSON(serializedNode: SerializedImageNode): ImageNode {
-    const { altText, src, width, height, alignment, maintainAspectRatio, positionLocked, collapsed } = serializedNode;
+    const { altText, src, width, height, aspectRatio, alignment, maintainAspectRatio, positionLocked } = serializedNode;
     const node = $createImageNode({
       altText,
       src,
       width,
       height,
+      aspectRatio: aspectRatio ?? null,
       alignment,
       maintainAspectRatio: maintainAspectRatio ?? false,
       positionLocked: positionLocked ?? false,
-      collapsed: collapsed ?? false,
     });
     return node;
   }
@@ -270,10 +264,17 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     element.setAttribute('data-alignment', this.__alignment);
     element.setAttribute('data-maintain-aspect-ratio', String(this.__maintainAspectRatio));
     element.setAttribute('data-position-locked', String(this.__positionLocked));
-    element.setAttribute('data-collapsed', String(this.__collapsed));
 
     element.style.width = `${this.__width}%`;
-    element.style.height = `${this.__height}px`;
+    // Calibrated images carry an aspect ratio so the box scales with the column
+    // (height derived) and never re-letterboxes; uncalibrated ones keep the px height.
+    if (this.__aspectRatio != null) {
+      element.setAttribute('data-aspect-ratio', String(this.__aspectRatio));
+      element.style.aspectRatio = String(this.__aspectRatio);
+      element.style.height = 'auto';
+    } else {
+      element.style.height = `${this.__height}px`;
+    }
     element.style.borderRadius = '4px';
     element.style.display = 'block';
 
@@ -305,10 +306,10 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     altText: string,
     width: number = 100,
     height: number = 300,
+    aspectRatio: number | null = null,
     alignment: 'left' | 'center' | 'right' = 'left',
     maintainAspectRatio: boolean = false,
     positionLocked: boolean = false,
-    collapsed: boolean = false,
     key?: NodeKey
   ) {
     super(key);
@@ -316,10 +317,10 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     this.__altText = altText;
     this.__width = width;
     this.__height = height;
+    this.__aspectRatio = aspectRatio;
     this.__alignment = alignment;
     this.__maintainAspectRatio = maintainAspectRatio;
     this.__positionLocked = positionLocked;
-    this.__collapsed = collapsed;
   }
 
   exportJSON(): SerializedImageNode {
@@ -328,10 +329,10 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
       src: this.getSrc(),
       width: this.__width,
       height: this.__height,
+      aspectRatio: this.__aspectRatio,
       alignment: this.__alignment,
       maintainAspectRatio: this.__maintainAspectRatio,
       positionLocked: this.__positionLocked,
-      collapsed: this.__collapsed,
       type: 'image',
       version: 1,
     };
@@ -347,9 +348,9 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     writable.__width = width;
   }
 
-  setHeight(height: number): void {
+  setAspectRatio(aspectRatio: number): void {
     const writable = this.getWritable();
-    writable.__height = height;
+    writable.__aspectRatio = aspectRatio;
   }
 
   setAlignment(alignment: 'left' | 'center' | 'right'): void {
@@ -365,11 +366,6 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   setPositionLocked(positionLocked: boolean): void {
     const writable = this.getWritable();
     writable.__positionLocked = positionLocked;
-  }
-
-  setCollapsed(collapsed: boolean): void {
-    const writable = this.getWritable();
-    writable.__collapsed = collapsed;
   }
 
   createDOM(config: EditorConfig): HTMLElement {
@@ -400,10 +396,6 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return this.__width;
   }
 
-  getHeight(): number {
-    return this.__height;
-  }
-
   getAlignment(): 'left' | 'center' | 'right' {
     return this.__alignment;
   }
@@ -415,10 +407,10 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
         altText={this.__altText}
         width={this.__width}
         height={this.__height}
+        aspectRatio={this.__aspectRatio}
         alignment={this.__alignment}
         maintainAspectRatio={this.__maintainAspectRatio}
         positionLocked={this.__positionLocked}
-        collapsed={this.__collapsed}
         nodeKey={this.getKey()}
       />
     );
@@ -430,13 +422,13 @@ export function $createImageNode({
   src,
   width = 100,
   height = 300,
+  aspectRatio = null,
   alignment = 'left',
   maintainAspectRatio = false,
   positionLocked = false,
-  collapsed = false,
   key,
 }: ImagePayload): ImageNode {
-  return $applyNodeReplacement(new ImageNode(src, altText, width, height, alignment, maintainAspectRatio, positionLocked, collapsed, key));
+  return $applyNodeReplacement(new ImageNode(src, altText, width, height, aspectRatio, alignment, maintainAspectRatio, positionLocked, key));
 }
 
 export function $isImageNode(

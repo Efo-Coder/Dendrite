@@ -1,22 +1,23 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { AlignLeft, AlignCenter, AlignRight, Trash2, Lock, Unlock, Square, Scan, ChevronDown, ImageIcon } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, Trash2, Lock, Unlock, Square, Scan } from 'lucide-react';
 import { useSmartPopupStyle, type PopupAnchor } from '../../hooks/useSmartPopupStyle';
 
 interface ResizableImageProps {
   src: string;
   altText: string;
   initialWidth?: number;
+  // Fallback box height (px), used only until aspectRatio is calibrated.
   initialHeight?: number;
+  // Box aspect ratio (width/height); null = not yet calibrated.
+  initialAspectRatio?: number | null;
   initialAlignment?: 'left' | 'center' | 'right';
   initialMaintainAspectRatio?: boolean;
   initialPositionLocked?: boolean;
-  initialCollapsed?: boolean;
-  onSizeChange?: (width: number, height: number) => void;
+  onSizeChange?: (width: number, aspectRatio: number) => void;
   onAlignmentChange?: (alignment: 'left' | 'center' | 'right') => void;
   onAspectRatioChange?: (locked: boolean) => void;
   onPositionLockChange?: (locked: boolean) => void;
-  onCollapseChange?: (collapsed: boolean) => void;
   onDelete?: () => void;
 }
 
@@ -28,19 +29,21 @@ const ResizableImage = ({
   altText,
   initialWidth = 100,
   initialHeight = 300,
+  initialAspectRatio = null,
   initialAlignment = 'left',
   initialMaintainAspectRatio = false,
   initialPositionLocked = false,
-  initialCollapsed = false,
   onSizeChange,
   onAlignmentChange,
   onAspectRatioChange,
   onPositionLockChange,
-  onCollapseChange,
   onDelete,
 }: ResizableImageProps) => {
   const [width, setWidth] = useState(initialWidth);
+  // Live px height — used during resize, for the size indicator, and as the box
+  // height until aspectRatio is calibrated. The resting box is sized by aspectRatio.
   const [height, setHeight] = useState(initialHeight);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(initialAspectRatio);
   const [alignment, setAlignment] = useState(initialAlignment);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeDirection, setResizeDirection] = useState<ResizeDirection>('right');
@@ -48,8 +51,6 @@ const ResizableImage = ({
   const [isVisible, setIsVisible] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(initialMaintainAspectRatio);
   const [positionLocked, setPositionLocked] = useState(initialPositionLocked);
-  const [collapsed, setCollapsed] = useState(initialCollapsed);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [anchor, setAnchor] = useState<PopupAnchor | null>(null);
 
   const imageRef = useRef<HTMLDivElement>(null);
@@ -63,39 +64,34 @@ const ResizableImage = ({
   const aspectRatioRef = useRef(1);
   const editorWidthRef = useRef(800);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const chipRef = useRef<HTMLDivElement>(null);
-  const imgWrapRef = useRef<HTMLDivElement>(null);
-  // Box geometry captured right before a user collapse/expand toggle; null means no animation
-  const collapseAnimFromRef = useRef<{ w: number; h: number } | null>(null);
-  const collapseAnimatingRef = useRef(false);
 
   const { style: popupStyle } = useSmartPopupStyle(anchor, controlsRef);
 
   // Sync local state from props when Lexical updates externally (e.g. undo/redo)
   useEffect(() => { if (!isResizing) setWidth(initialWidth ?? 100); }, [initialWidth]);
   useEffect(() => { if (!isResizing) setHeight(initialHeight ?? 300); }, [initialHeight]);
+  useEffect(() => { if (!isResizing) setAspectRatio(initialAspectRatio ?? null); }, [initialAspectRatio]);
   useEffect(() => { setPositionLocked(initialPositionLocked ?? false); }, [initialPositionLocked]);
-  useEffect(() => { setCollapsed(initialCollapsed ?? false); }, [initialCollapsed]);
+
+  // Calibrate legacy/new images that carry no aspectRatio yet: freeze the current
+  // box ratio once, then persist it. From then on the box scales with the column
+  // (aspect-ratio render) instead of a fixed px height, so the contain padding no
+  // longer drifts across reloads / column-width changes.
+  useLayoutEffect(() => {
+    if (aspectRatio != null || isResizing) return;
+    const rect = imageRef.current?.getBoundingClientRect();
+    if (!rect || rect.width < 1 || rect.height < 1) return;
+    const ratio = rect.width / rect.height;
+    setAspectRatio(ratio);
+    onSizeChange?.(width, ratio);
+  }, [aspectRatio, isResizing, width, onSizeChange]);
 
   // Sync float/size/margin to the Lexical createDOM wrapper div (parent of this component).
   // This is needed because the float must be on a sibling of text paragraphs for text-wrap to work.
   useLayoutEffect(() => {
     const parent = imageRef.current?.parentElement as HTMLElement | null;
     if (!parent) return;
-    // Collapsed: plain block (no float), so the surrounding text never wraps beside the
-    // chip — it flows below it. The inner container handles horizontal alignment.
-    if (collapsed) {
-      parent.style.float = 'none';
-      parent.style.width = '';
-      parent.style.height = '';
-      parent.style.marginTop = '4px';
-      parent.style.marginBottom = '4px';
-      parent.style.marginLeft = '';
-      parent.style.marginRight = '';
-      parent.style.position = 'relative';
-      parent.style.zIndex = '1';
-      parent.style.display = 'block';
-    } else if (alignment === 'left' || alignment === 'right') {
+    if (alignment === 'left' || alignment === 'right') {
       parent.style.float = alignment;
       parent.style.width = `${width}%`;
       parent.style.height = '';
@@ -118,7 +114,7 @@ const ResizableImage = ({
       parent.style.zIndex = '';
       parent.style.display = 'block';
     }
-  }, [alignment, width, height, collapsed]);
+  }, [alignment, width, height]);
 
   // Compute anchor for smart popup positioning, clamped to editor canvas bounds
   useLayoutEffect(() => {
@@ -160,13 +156,20 @@ const ResizableImage = ({
     setResizeDirection(direction);
     startXRef.current = e.clientX;
     startYRef.current = e.clientY;
+    // Measure the real rendered height: the resting box is sized by aspect-ratio,
+    // so the `height` state may only hold the uncalibrated fallback.
+    const rect = imageRef.current?.getBoundingClientRect();
+    const measuredH = rect && rect.height > 0 ? rect.height : height;
     startWidthRef.current = width;
-    startHeightRef.current = height;
+    startHeightRef.current = measuredH;
+    liveWidthRef.current = width;
+    liveHeightRef.current = measuredH;
+    setHeight(measuredH);
     editorWidthRef.current = getEditorWidth();
 
     if (maintainAspectRatio) {
       const actualWidth = (width / 100) * editorWidthRef.current;
-      aspectRatioRef.current = actualWidth / height;
+      aspectRatioRef.current = actualWidth / measuredH;
     }
   };
 
@@ -217,7 +220,12 @@ const ResizableImage = ({
         const wChanged = liveWidthRef.current !== startWidthRef.current;
         const hChanged = liveHeightRef.current !== startHeightRef.current;
         if (onSizeChange && (wChanged || hChanged)) {
-          onSizeChange(liveWidthRef.current, liveHeightRef.current);
+          // Persist the box ratio (width px / height px), not the absolute height,
+          // so the box stays scale-invariant across reloads / column changes.
+          const widthPx = (liveWidthRef.current / 100) * editorWidthRef.current;
+          const ratio = widthPx / liveHeightRef.current;
+          setAspectRatio(ratio);
+          onSizeChange(liveWidthRef.current, ratio);
         }
       }
     };
@@ -239,8 +247,6 @@ const ResizableImage = ({
   };
 
   const handleMouseEnter = () => {
-    // No popup while the expand animation runs — its anchor would be measured mid-animation
-    if (collapsed || collapseAnimatingRef.current) return;
     if (!showControls) setShowControls(true);
   };
 
@@ -306,21 +312,19 @@ const ResizableImage = ({
   }, [showControls, isResizing]);
 
   const getContainerStyle = (): React.CSSProperties => {
-    // Collapsed: compact chip, horizontally placed by alignment (vertical margin lives on
-    // the parent block to avoid doubling it).
-    if (collapsed) {
-      const align: React.CSSProperties =
-        alignment === 'center' ? { marginLeft: 'auto', marginRight: 'auto' }
-        : alignment === 'right' ? { marginLeft: 'auto', marginRight: 0 }
-        : { marginLeft: 0, marginRight: 'auto' };
-      return { width: 'fit-content', position: 'relative', ...align };
-    }
+    // At rest a calibrated box is sized by aspect-ratio (height derived from the
+    // % width) so it scales with the column; while resizing — or before the ratio
+    // is calibrated — it uses the live px height the resize math works in.
+    const sizing: React.CSSProperties =
+      !isResizing && aspectRatio != null
+        ? { aspectRatio: String(aspectRatio), height: 'auto' }
+        : { height: `${height}px` };
     if (alignment === 'left' || alignment === 'right') {
-      return { width: '100%', height: `${height}px`, position: 'relative' };
+      return { width: '100%', ...sizing, position: 'relative' };
     }
     return {
       width: `${width}%`,
-      height: `${height}px`,
+      ...sizing,
       marginTop: '4px',
       marginBottom: '4px',
       position: 'relative',
@@ -329,90 +333,10 @@ const ResizableImage = ({
     };
   };
 
-  // Capture current box geometry, flip state, then animate old → new in the layout effect.
-  const startCollapseToggle = (next: boolean) => {
-    const rect = imageRef.current?.getBoundingClientRect();
-    collapseAnimFromRef.current = rect ? { w: rect.width, h: rect.height } : null;
-    if (next) {
-      setShowControls(false);
-      setAnchor(null);
-    }
-    setIsAnimating(true);
-    setCollapsed(next);
-    onCollapseChange?.(next);
-  };
-
-  const handleCollapse = () => startCollapseToggle(true);
-  const handleExpand = () => startCollapseToggle(false);
-
-  // Minimize/maximize animation: the box shrinks/grows in both dimensions while the image
-  // stays visible and cross-fades with the chip — so collapsing mirrors expanding. Real
-  // width/height (not a transform) so the floated column narrows and surrounding text reflows.
-  // Runs only after a user toggle (ref set in startCollapseToggle); undo/redo and the initial
-  // mount sync collapsed via props and stay instant.
-  useLayoutEffect(() => {
-    const from = collapseAnimFromRef.current;
-    collapseAnimFromRef.current = null;
-    const el = imageRef.current;
-    if (!from || !el) { setIsAnimating(false); return; }
-
-    const to = el.getBoundingClientRect();
-    if (Math.abs(from.w - to.width) < 1 && Math.abs(from.h - to.height) < 1) {
-      setIsAnimating(false);
-      return;
-    }
-
-    const duration = 260;
-    const easing = 'cubic-bezier(0.33, 1, 0.68, 1)';
-    const collapsing = collapsed;
-
-    // Clip only while animating — expanded state needs visible overflow for resize handles
-    collapseAnimatingRef.current = true;
-    el.style.overflow = 'hidden';
-    const boxAnim = el.animate(
-      [
-        { width: `${from.w}px`, height: `${from.h}px` },
-        { width: `${to.width}px`, height: `${to.height}px` },
-      ],
-      { duration, easing }
-    );
-    const imgAnim = imgWrapRef.current?.animate(
-      [{ opacity: collapsing ? 1 : 0 }, { opacity: collapsing ? 0 : 1 }],
-      { duration, easing, fill: 'both' }
-    );
-    const chipAnim = chipRef.current?.animate(
-      [{ opacity: collapsing ? 0 : 1 }, { opacity: collapsing ? 1 : 0 }],
-      { duration, easing, fill: 'both' }
-    );
-
-    const reset = () => {
-      el.style.overflow = '';
-      collapseAnimatingRef.current = false;
-    };
-    // Don't cancel the fades on finish: fill:'both' holds their end opacity until the
-    // hidden element unmounts. Cancelling would snap it back to opacity 1 for one frame.
-    boxAnim.addEventListener('finish', () => { reset(); setIsAnimating(false); });
-    return () => { boxAnim.cancel(); imgAnim?.cancel(); chipAnim?.cancel(); reset(); };
-  }, [collapsed]);
-
   return (
-    <div ref={imageRef} style={getContainerStyle()} className={collapsed ? '' : 'group'} onMouseEnter={handleMouseEnter} onMouseMove={handleMouseEnter}>
+    <div ref={imageRef} style={getContainerStyle()} className="group" onMouseEnter={handleMouseEnter} onMouseMove={handleMouseEnter}>
 
-      {(collapsed || isAnimating) && (
-        <div
-          ref={chipRef}
-          role="button"
-          onClick={handleExpand}
-          className="group flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:bg-(--surface-hi)"
-          style={{ width: 'fit-content', boxShadow: '0 0 0 1px var(--line-soft)' }}
-          title="Bild aufklappen"
-        >
-          <ImageIcon className="w-3.5 h-3.5 shrink-0 text-(--ink-mid) group-hover:text-(--accent) transition-colors" />
-          <span className="text-sm font-mono text-(--ink-mid) group-hover:text-(--accent) transition-colors">{altText}</span>
-        </div>
-      )}
-
-      {!collapsed && showControls && createPortal(
+      {showControls && createPortal(
         <div
           ref={controlsRef}
           className="glass-popup rounded-lg shadow-xl flex items-center gap-0.5 px-1.5 py-1"
@@ -425,14 +349,6 @@ const ResizableImage = ({
               : 'opacity 180ms ease-in, transform 200ms ease-in',
           }}
         >
-          <button
-            onClick={handleCollapse}
-            className="p-1.5 rounded-md transition-all hover:bg-(--surface-hi)"
-            title="Bild zuklappen"
-          >
-            <ChevronDown className="w-3.5 h-3.5" />
-          </button>
-          <div className="h-6 w-px border-l border-(--line-soft) mx-1 shrink-0" />
           <button
             onClick={() => !positionLocked && handleAlignmentChange('left')}
             className={`p-1.5 rounded-md transition-all hover:bg-(--surface-hi) ${positionLocked ? 'opacity-30 pointer-events-none' : alignment === 'left' ? 'text-(--accent)' : ''}`}
@@ -484,7 +400,7 @@ const ResizableImage = ({
         document.body
       )}
 
-      {(!collapsed || isAnimating) && <div ref={imgWrapRef} className={isAnimating ? 'absolute inset-0' : 'relative h-full'}>
+      <div className="relative h-full">
         <img
           src={src}
           alt={altText}
@@ -492,7 +408,7 @@ const ResizableImage = ({
           draggable={false}
         />
 
-        {!isAnimating && showControls && !positionLocked && (
+        {showControls && !positionLocked && (
           <>
             <div onMouseDown={(e) => handleMouseDown(e, 'right')} className="resize-handle-ew absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 z-1" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
             <div onMouseDown={(e) => handleMouseDown(e, 'bottom')} className="resize-handle-ns absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rounded-full border-2 z-1" style={{ touchAction: 'none', background: 'var(--bg)', borderColor: 'var(--accent)' }} />
@@ -506,9 +422,9 @@ const ResizableImage = ({
         {isResizing && (
           <div className="absolute inset-0 pointer-events-none border-2" style={{ borderColor: 'var(--accent)', backgroundColor: 'color-mix(in srgb, var(--accent) 5%, transparent)' }} />
         )}
-      </div>}
+      </div>
 
-      {!collapsed && isResizing && (
+      {isResizing && (
         <div className="image-size-indicator absolute -bottom-9 left-1/2 -translate-x-1/2 glass-popup rounded-lg px-3 py-1.5 text-xs text-(--ink) shadow-xl font-mono whitespace-nowrap flex items-center" style={{ zIndex: 50 }}>
           {(() => {
             const actualWidthPx = Math.round((width / 100) * editorWidthRef.current);
