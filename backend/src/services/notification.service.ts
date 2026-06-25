@@ -60,3 +60,13 @@ export async function notifyNoteLike(
   });
   pushToUser(recipientId, notification);
 }
+
+export async function notifyReminder(
+  recipientId: string,
+  payload: { reminderId: string; noteId: string; noteTitle: string | null; description: string },
+): Promise<void> {
+  const notification = await prisma.notification.create({
+    data: { userId: recipientId, type: 'reminder', data: payload },
+  });
+  pushToUser(recipientId, notification);
+}

@@ -24,9 +24,11 @@ import constellationRoutes from './routes/constellation.routes';
 import publishedRoutes from './routes/published.routes';
 import profileRoutes from './routes/profile.routes';
 import notificationRoutes from './routes/notification.routes';
+import reminderRoutes from './routes/reminder.routes';
 import { handleWebhook } from './controllers/checkout.controller';
 
 import { setupYjsConnection } from './wsHandler';
+import { processDueReminders } from './services/reminder.service';
 import { prisma } from './lib/prisma';
 
 dotenv.config();
@@ -77,6 +79,7 @@ app.use('/api/constellations', constellationRoutes);
 app.use('/api/published', publishedRoutes);
 app.use('/api/users', profileRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/reminders', reminderRoutes);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
@@ -211,6 +214,14 @@ async function reconcileLikeCounts() {
 }
 
 setInterval(reconcileLikeCounts, 24 * 60 * 60 * 1000); // daily — synchronous compensation is primary
+
+// ─── Reminders: fire due rows ────────────────────────────────────────────────
+
+// Minute-level granularity: reminders are user-set wall-clock times, so polling
+// faster buys nothing while polling slower would drift the delivery noticeably.
+setInterval(() => {
+  processDueReminders().catch(err => console.error('Reminder poll error:', err));
+}, 60 * 1000);
 
 // ─── Startup ─────────────────────────────────────────────────────────────────
 

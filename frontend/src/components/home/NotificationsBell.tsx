@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Bell, Check, X, User } from 'lucide-react';
+import { Bell, Check, X, User, AlarmClock } from 'lucide-react';
 import { NotificationItem } from '../../types';
 import { notificationService } from '../../services/notification.service';
 import { collaborationService } from '../../services/collaboration.service';
@@ -12,9 +12,10 @@ interface NotificationsBellProps {
   // Called after an invitation is accepted so Home can refresh its shared list.
   onAccepted?: () => void;
   onOpenProfile?: (userId: string) => void;
+  onOpenNote?: (noteId: string) => void;
 }
 
-const NotificationsBell = ({ onAccepted, onOpenProfile }: NotificationsBellProps) => {
+const NotificationsBell = ({ onAccepted, onOpenProfile, onOpenNote }: NotificationsBellProps) => {
   const toast = useToast();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unread, setUnread] = useState(0);
@@ -103,6 +104,11 @@ const NotificationsBell = ({ onAccepted, onOpenProfile }: NotificationsBellProps
     onOpenProfile?.(followerId);
   };
 
+  const handleOpenNote = (noteId: string) => {
+    setOpen(false);
+    onOpenNote?.(noteId);
+  };
+
   // Optimistic dismiss: drop from the list right away, then delete server-side.
   const handleDismiss = async (id: string) => {
     removeItem(id);
@@ -189,6 +195,29 @@ const NotificationsBell = ({ onAccepted, onOpenProfile }: NotificationsBellProps
                           title="View profile"
                         >
                           <User size={14} strokeWidth={2} />
+                        </button>
+                        <button
+                          type="button"
+                          className="home-notif-decline"
+                          onClick={() => handleDismiss(n.id)}
+                          title="Dismiss"
+                        >
+                          <X size={14} strokeWidth={2} />
+                        </button>
+                      </>
+                    ) : n.type === 'reminder' ? (
+                      <>
+                        <div className="home-notif-text">
+                          <p className="home-notif-note">{n.data.description}</p>
+                          <p className="home-notif-from">{n.data.noteTitle || 'Untitled note'}</p>
+                        </div>
+                        <button
+                          type="button"
+                          className="home-notif-accept"
+                          onClick={() => handleOpenNote(n.data.noteId)}
+                          title="Open note"
+                        >
+                          <AlarmClock size={14} strokeWidth={2} />
                         </button>
                         <button
                           type="button"

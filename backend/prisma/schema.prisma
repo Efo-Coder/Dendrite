@@ -51,6 +51,7 @@ model User {
   followers         Follow[]             @relation("UserFollowers")
   notifications     Notification[]
   publishedLikes    PublishedNoteLike[]
+  reminders         Reminder[]
 
   @@unique([provider, providerId])
 }
@@ -131,6 +132,7 @@ model Note {
   userNoteBookmarks UserNoteBookmark[]
   versions          NoteVersion[]
   publishedNote     PublishedNote?
+  reminders         Reminder[]
 
   @@index([userId])
   @@index([spaceId])
@@ -377,7 +379,7 @@ model Follow {
 model Notification {
   id        String   @id @default(uuid())
   userId    String // recipient
-  type      String // 'collab_invite' | 'collab_accepted' | 'new_follower' | 'note_like'
+  type      String // 'collab_invite' | 'collab_accepted' | 'new_follower' | 'note_like' | 'reminder'
   data      Json
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -387,4 +389,24 @@ model Notification {
   @@index([userId, read])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+// User-set reminder tied to a note. A background poller (index.ts) fires due rows:
+// it creates a 'reminder' notification + sends an email, then either deletes a
+// one-off or rolls `remindAt` forward to the next occurrence for a recurring one.
+model Reminder {
+  id          String   @id @default(uuid())
+  userId      String // recipient
+  noteId      String
+  description String   @db.Text
+  remindAt    DateTime
+  recurrence  String   @default("none") // 'none' | 'daily' | 'weekly' | 'monthly'
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([remindAt]) // poller scans for due rows
+  @@index([userId, noteId])
+  @@map("reminders")
 }

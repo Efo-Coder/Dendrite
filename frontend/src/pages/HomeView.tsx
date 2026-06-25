@@ -239,7 +239,7 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
           <button type="button" className="home-icon-btn" onClick={() => setShowSettings(true)} title="Settings">
             <Icons.settings size={18} />
           </button>
-          <NotificationsBell onAccepted={refresh} onOpenProfile={onOpenProfile} />
+          <NotificationsBell onAccepted={refresh} onOpenProfile={onOpenProfile} onOpenNote={onOpenNote} />
           <button type="button" className="home-icon-btn" onClick={(e) => handleNewNote(e.currentTarget.getBoundingClientRect())} title="New note">
             <SquarePen size={18} strokeWidth={1.75} />
           </button>

@@ -18,6 +18,7 @@ import {
   ImagePlus,
   Bookmark,
   BookmarkPlus,
+  AlarmClock,
 } from 'lucide-react';
 import { Note } from '../../types';
 import { useMagicHover } from '../../hooks/useMagicHover';
@@ -36,6 +37,7 @@ import { MenuPos, formatRelativeDate, userCursorColor } from './noteEditorUtils'
 import InviteCollaboratorModal from '../modals/InviteCollaboratorModal';
 import PublishModal from '../modals/PublishModal';
 import BookmarkSelectionModal from '../modals/BookmarkSelectionModal';
+import ReminderModal from '../modals/ReminderModal';
 import CoverPickerModal, { CoverTarget } from '../home/CoverPickerModal';
 import Modal from '../modals/Modal';
 import ContextMenu, { ContextMenuItem } from '../ui/ContextMenu';
@@ -120,6 +122,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [restoreKey, setRestoreKey] = useState(0);
   // Local collaborator list — refreshed after invitations
@@ -404,6 +407,17 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                     }
                   </span>
                 )}
+                {!isInTrash && (
+                  <button
+                    type="button"
+                    onClick={() => setShowReminderModal(true)}
+                    onMouseEnter={onRightEnter} onMouseLeave={onRightLeave}
+                    className="icon-btn-md rounded-lg transition-colors"
+                    title="Set a reminder"
+                  >
+                    <AlarmClock className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   ref={moreBtnRef}
                   type="button"
@@ -591,6 +605,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             toast.error('Error updating bookmarks');
           }
         }}
+      />
+
+      <ReminderModal
+        isOpen={showReminderModal}
+        onClose={() => setShowReminderModal(false)}
+        noteId={note.id}
       />
 
       <CoverPickerModal

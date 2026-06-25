@@ -37,6 +37,32 @@ export async function sendVerificationEmail(email: string, token: string) {
   });
 }
 
+export async function sendReminderEmail(
+  email: string,
+  reminder: { description: string; noteTitle: string | null },
+) {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const from = process.env.SMTP_FROM || 'Dendrite <noreply@dendrite-notes.com>';
+  const noteLabel = reminder.noteTitle?.trim() || 'Untitled note';
+
+  await createTransporter().sendMail({
+    from,
+    to: email,
+    subject: `Dendrite – Reminder: ${reminder.description}`,
+    text: `Reminder\n\n${reminder.description}\n\nNote: ${noteLabel}\n\nOpen Dendrite:\n${frontendUrl}\n\n© ${new Date().getFullYear()} Dendrite`,
+    html: buildEmail({
+      frontendUrl,
+      heading: 'A Reminder',
+      body: `<p style="font-size:20px;line-height:170%;margin:0 0 12px;font-style:italic;">${reminder.description}</p>
+             <p style="font-size:15px;line-height:178%;margin:0;color:#bbb7b0;">From your note <strong>${noteLabel}</strong>.</p>`,
+      buttonText: 'Open Dendrite',
+      buttonUrl: frontendUrl,
+      disclaimer: 'You set this reminder yourself in Dendrite.',
+    }),
+    headers: { 'X-Mailin-Track-Open': '0', 'X-Mailin-Track-Click': '0' },
+  });
+}
+
 export async function sendPasswordResetEmail(email: string, token: string) {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const resetUrl = `${frontendUrl}/reset-password?token=${token}`;

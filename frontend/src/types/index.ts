@@ -275,4 +275,22 @@ export type NotificationItem =
         fromName: string | null;
         fromAvatarUrl: string | null;
       };
+    }
+  | {
+      id: string;
+      type: 'reminder';
+      read: boolean;
+      createdAt: string;
+      data: { reminderId: string; noteId: string; noteTitle: string | null; description: string };
     };
+
+export type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly';
+
+export interface Reminder {
+  id: string;
+  noteId: string;
+  description: string;
+  remindAt: string;
+  recurrence: Recurrence;
+  createdAt: string;
+}
