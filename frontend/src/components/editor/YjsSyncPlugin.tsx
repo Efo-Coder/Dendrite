@@ -5,6 +5,7 @@ import {
   createBinding,
   syncLexicalUpdateToYjs,
   syncYjsChangesToLexical,
+  syncCursorPositions,
   initLocalState,
   setLocalStateFocus,
 } from '@lexical/yjs';
@@ -103,11 +104,33 @@ export function YjsSyncPlugin({
       return false;
     }, COMMAND_PRIORITY_EDITOR);
 
+    // An awareness entry whose userId equals the local user is one of the user's OWN
+    // other tabs/devices (tabs share a userId but differ in clientID). In collab we
+    // suppress these for yourself — no duplicate avatar, no duplicate caret.
+    const isSelf = (state: { awarenessData?: { userId?: string } } | null | undefined) =>
+      state?.awarenessData?.userId === userIdRef.current;
+
+    // Cursor layer mirrors the presence filter. syncCursorPositions already skips
+    // our localClientID; this additionally drops remote clients sharing our userId.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const syncCursorsExcludingSelf = (b: any, p: any) =>
+      syncCursorPositions(b, p, {
+        getAwarenessStates: () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const visible = new Map<number, any>();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (p.awareness.getStates() as Map<number, any>).forEach((state, cid) => {
+            if (!isSelf(state)) visible.set(cid, state);
+          });
+          return visible;
+        },
+      });
+
     const onYjsTreeChanges = (events: Y.YEvent<Y.AbstractType<unknown>>[], transaction: Y.Transaction) => {
       if (transaction.origin !== binding) {
         const isFromUndoManager = transaction.origin instanceof Y.UndoManager;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        syncYjsChangesToLexical(binding, provider, events as any, isFromUndoManager);
+        syncYjsChangesToLexical(binding, provider, events as any, isFromUndoManager, syncCursorsExcludingSelf);
       }
     };
     binding.root.getSharedType().observeDeep(onYjsTreeChanges);
@@ -168,6 +191,7 @@ export function YjsSyncPlugin({
       const others = states
         .filter(([cid]) => cid !== provider.awareness.clientID)
         .filter(([, state]) => state?.name != null)
+        .filter(([, state]) => !isSelf(state))
         .map(([cid, state]) => ({
           clientID: cid,
           userId: state.awarenessData?.userId ?? '',
