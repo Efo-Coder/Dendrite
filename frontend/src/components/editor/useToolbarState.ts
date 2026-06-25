@@ -37,10 +37,11 @@ import {
 import { $isHeadingNode, $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
 import { $setBlocksType, $patchStyleText } from '@lexical/selection';
 import { $createCodeNode, $isCodeNode, normalizeCodeLang } from '@lexical/code';
-import { TOGGLE_LINK_COMMAND } from '@lexical/link';
 import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRuleNode';
 import { INSERT_TABLE_COMMAND, $isTableNode } from '@lexical/table';
 import { INSERT_IMAGE_COMMAND } from './ImagePlugin';
+import { INSERT_ATTACHMENT_COMMAND } from './AttachmentPlugin';
+import { AttachmentPayload } from './AttachmentNode';
 import { $isTimerListItemNode } from './TimerListItemNode';
 import { $createDropCapParagraphNode, $isDropCapParagraphNode } from './DropCapParagraphNode';
 import { useChecklistTimer, type SavedSelection } from './useChecklistTimer';
@@ -123,10 +124,9 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
   const [codeLanguage, setCodeLanguage] = useState('js');
   const [codeLangPickerPos, setCodeLangPickerPos] = useState<PopupAnchor | null>(null);
 
-  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showAttachModal, setShowAttachModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showTableModal, setShowTableModal] = useState(false);
-  const [linkUrl, setLinkUrl] = useState('');
 
   const savedSelectionRef = useRef<SavedSelection>(null);
 
@@ -563,15 +563,11 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     editor.dispatchCommand(INSERT_TABLE_COMMAND, { rows, columns });
   };
 
-  const insertLink = () => setShowLinkModal(true);
+  const insertAttachment = () => setShowAttachModal(true);
   const insertImage = () => setShowImageModal(true);
 
-  const handleLinkSubmit = () => {
-    if (linkUrl.trim()) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl);
-      setLinkUrl('');
-      setShowLinkModal(false);
-    }
+  const insertAttachmentNode = (payload: AttachmentPayload) => {
+    editor.dispatchCommand(INSERT_ATTACHMENT_COMMAND, payload);
   };
 
   const insertImageFromUrl = (url: string, altText?: string) => {
@@ -598,10 +594,9 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     headingPickerPos, setHeadingPickerPos,
     codeLanguage,
     codeLangPickerPos, setCodeLangPickerPos,
-    showLinkModal, setShowLinkModal,
+    showAttachModal, setShowAttachModal,
     showImageModal, setShowImageModal,
     showTableModal, setShowTableModal,
-    linkUrl, setLinkUrl,
     checklistDropdownPos, setChecklistDropdownPos,
     ...checklistTimer,
     closeAllPopups,
@@ -636,9 +631,9 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     insertHorizontalRule,
     insertTable,
     removeTable,
-    insertLink,
+    insertAttachment,
     insertImage,
-    handleLinkSubmit,
+    insertAttachmentNode,
     insertImageFromUrl,
   };
 }

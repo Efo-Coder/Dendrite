@@ -7,7 +7,7 @@ import ElevatedToolbar from './ElevatedToolbar';
 import ImageInsertModal from '../modals/ImageInsertModal';
 import ChecklistTimerModal from '../modals/ChecklistTimerModal';
 import TableInsertModal from '../modals/TableInsertModal';
-import LinkInsertModal from '../modals/LinkInsertModal';
+import AttachmentInsertModal from '../modals/AttachmentInsertModal';
 import ColorPickerPortal from './ColorPickerPortal';
 import { useToolbarState } from './useToolbarState';
 import { ToolbarStateContext } from './ToolbarStateContext';
@@ -16,7 +16,7 @@ import FontPicker from './FontPicker';
 import { LANG_ICONS, TEXT_COLORS, HIGHLIGHT_COLORS, isToolbarActive, menuBtnCls } from './toolbarPopupUtils';
 import { getLanguageFriendlyName } from '@lexical/code';
 import {
-  Bold, Italic, Underline, Strikethrough, Superscript, Subscript, List, ListOrdered, ListChecks, Quote, CodeXml, Link, Image, Minus, Table,
+  Bold, Italic, Underline, Strikethrough, Superscript, Subscript, List, ListOrdered, ListChecks, Quote, CodeXml, Paperclip, Image, Minus, Table,
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Undo, Redo,
   Heading,
   IndentIncrease, IndentDecrease, Info, MoreVertical,
@@ -55,7 +55,7 @@ type ToolbarBtn = {
   isDisabled?: boolean;
 };
 
-const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalChrome = false }: RichTextToolbarProps) => {
+const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, minimalChrome = false }: RichTextToolbarProps) => {
   const { user } = useAuthStore();
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const toolbarState = useToolbarState(minimalChrome, moreMenuRef);
@@ -74,10 +74,9 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
     lineHeightPickerPos,
     headingPickerPos,
     codeLanguage,
-    showLinkModal, setShowLinkModal,
+    showAttachModal, setShowAttachModal,
     showImageModal, setShowImageModal,
     showTableModal, setShowTableModal,
-    linkUrl, setLinkUrl,
     showTimerModal, setShowTimerModal,
     checklistDropdownPos,
     checklistCountdownHours, setChecklistCountdownHours,
@@ -92,7 +91,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
     applyFontColor, applyHighlight,
     undoAction, redoAction,
     insertHorizontalRule, insertTable, removeTable,
-    insertLink, insertImage, handleLinkSubmit, insertImageFromUrl,
+    insertAttachment, insertImage, insertAttachmentNode, insertImageFromUrl,
   } = toolbarState;
 
   const miniToolbarRef = useRef<HTMLDivElement>(null);
@@ -134,7 +133,7 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
     {
       id: 'insert',
       buttons: [
-        { icon: Link, action: insertLink, title: 'Insert link' },
+        { icon: Paperclip, action: insertAttachment, title: 'Attach file', isDisabled: isInCode || !noteId },
         { icon: Image, action: insertImage, title: 'Insert image', isDisabled: isInCode },
         { icon: Minus, action: insertHorizontalRule, title: 'Horizontal rule', isDisabled: isInCode },
         { icon: Table, action: () => isInTable ? removeTable() : setShowTableModal(true), title: 'Table', isActive: isInTable, isDisabled: isInCode },
@@ -388,13 +387,14 @@ const RichTextToolbar = ({ disabled = false, onInfo, onVersionHistory, minimalCh
         canCustomColor={canAccess(user?.plan, 'customColor')}
       />
 
-      <LinkInsertModal
-        isOpen={showLinkModal}
-        onClose={() => setShowLinkModal(false)}
-        linkUrl={linkUrl}
-        setLinkUrl={setLinkUrl}
-        onSubmit={handleLinkSubmit}
-      />
+      {noteId && (
+        <AttachmentInsertModal
+          isOpen={showAttachModal}
+          onClose={() => setShowAttachModal(false)}
+          noteId={noteId}
+          onInsert={insertAttachmentNode}
+        />
+      )}
 
       <TableInsertModal isOpen={showTableModal} onClose={() => setShowTableModal(false)} onInsert={(r, c) => { insertTable(r, c); setShowTableModal(false); }} />
 

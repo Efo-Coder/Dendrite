@@ -1412,6 +1412,19 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
 
 .editor-image { max-width: 100%; height: auto; border-radius: 4px; margin: 8px 0; }
 
+/* Attachment chip — inline file card rendered by AttachmentNode's decorator. */
+.editor-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-hi);
+}
+
 /* ══════════════════════════════════════════════════════════════════════════════
    THIRD-PARTY OVERRIDES
 ══════════════════════════════════════════════════════════════════════════════ */

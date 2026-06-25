@@ -18,6 +18,7 @@ import {
   ImagePlus,
   Bookmark,
   BookmarkPlus,
+  Paperclip,
   AlarmClock,
 } from 'lucide-react';
 import { Note } from '../../types';
@@ -31,6 +32,7 @@ import { Icons } from '../ui/Icons';
 import RichTextToolbar from './RichTextToolbar';
 import LexicalEditorWrapper, { ActiveUser } from './LexicalEditorWrapper';
 import VersionHistoryPanel from './VersionHistoryPanel';
+import AttachmentsPanel from './AttachmentsPanel';
 import FolderMenu from './FolderMenu';
 import NoteExportMenu from './NoteExportMenu';
 import { MenuPos, formatRelativeDate, userCursorColor } from './noteEditorUtils';
@@ -124,6 +126,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
   const [restoreKey, setRestoreKey] = useState(0);
   // Local collaborator list — refreshed after invitations
   const [collaborators, setCollaborators] = useState(note.collaborators ?? []);
@@ -283,6 +286,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     ] : []),
     ...(!isInTrash ? [
       { icon: <ImagePlus className="w-4 h-4" />, label: 'Add cover', onClick: () => setCoverTarget({ kind: 'note', id: note.id }) },
+      { icon: <Paperclip className="w-4 h-4" />, label: 'Attachments', onClick: () => setShowAttachments(v => !v) },
     ] : []),
     ...(!isInTrash && note.userId === user?.id ? [
       { icon: <Globe className="w-4 h-4" />, label: 'Publish', onClick: () => setShowPublishModal(true) },
@@ -538,6 +542,12 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
           setRestoreKey((k) => k + 1);
           toast.success('Version restored');
         }}
+      />
+
+      <AttachmentsPanel
+        isOpen={showAttachments}
+        onClose={() => setShowAttachments(false)}
+        noteId={note.id}
       />
 
       <FolderMenu

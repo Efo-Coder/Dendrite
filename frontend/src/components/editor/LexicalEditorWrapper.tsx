@@ -29,6 +29,8 @@ import { TimerListItemNode } from './TimerListItemNode';
 import { DropCapParagraphNode } from './DropCapParagraphNode';
 import { ImageNode } from './ImageNode';
 import ImagesPlugin from './ImagePlugin';
+import { AttachmentNode } from './AttachmentNode';
+import AttachmentPlugin from './AttachmentPlugin';
 import { ActiveLinePlugin } from './ActiveLinePlugin';
 import { editorTheme, htmlImport, URL_MATCHERS, onError } from './editorConfig';
 import {
@@ -174,6 +176,7 @@ const LexicalEditorWrapper = ({
       AutoLinkNode,
       LinkNode,
       ImageNode,
+      AttachmentNode,
     ],
     editorState: (editor: LexicalEditor) => {
       const parser = new DOMParser();
@@ -257,6 +260,7 @@ const LexicalEditorWrapper = ({
                 <LinkClickPlugin />
                 <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                 <ImagesPlugin />
+                <AttachmentPlugin />
                 <HorizontalRulePlugin />
                 <TablePlugin hasCellMerge={false} hasCellBackgroundColor={false} />
                 <CodeHighlightPlugin />
