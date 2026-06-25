@@ -247,17 +247,21 @@ const ProfileTab = () => {
       <div className="settings-row" style={{ alignItems: 'flex-start' }}>
         <div className="lbl">Username<small>Your unique @handle — used for invites and your profile.</small></div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ position: 'relative', width: 200 }}>
             <MagicInput
               type="text"
               value={username}
               onChange={(e) => handleUsernameChange(e.target.value)}
               placeholder="username"
               className="modal-input"
+              style={{ paddingRight: 34 }}
               wrapperStyle={{ width: 200, borderRadius: '10px' }}
             />
-            {usernameStatus === 'checking' && <Loader2 className="w-3.5 h-3.5 animate-spin text-(--ink-dim)" />}
-            {usernameStatus === 'available' && <Check className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} />}
+            {/* Status sits inside the field, centred on its right edge. */}
+            <div style={{ position: 'absolute', right: 12, top: 0, bottom: 0, display: 'flex', alignItems: 'center', zIndex: 2, pointerEvents: 'none' }}>
+              {usernameStatus === 'checking' && <Loader2 className="w-3.5 h-3.5 animate-spin text-(--ink-dim)" />}
+              {usernameStatus === 'available' && <Check className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} />}
+            </div>
           </div>
           {usernameStatus === 'error' && (
             <span style={{ fontSize: '11px', color: 'var(--danger)' }}>{usernameError}</span>
