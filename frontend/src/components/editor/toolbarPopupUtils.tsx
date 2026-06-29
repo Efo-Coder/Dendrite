@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import type { PopupPlacement } from '../../hooks/useSmartPopupStyle';
 import {
   SiJavascript, SiTypescript, SiPython, SiRust, SiSwift,
   SiHtml5, SiCss, SiCplusplus, SiC,
@@ -51,24 +52,25 @@ export const isPickerActive = (value: string, current: string, defaultValue: str
 export const isToolbarActive = (pickerOpen: boolean, current = '', defaultValue = '') =>
   pickerOpen || (!!current && current !== defaultValue);
 
-export const popupCls =(placement: 'above' | 'below' | 'left', extra = '') =>
+export const popupCls = (placement: PopupPlacement, extra = '') =>
   clsx(
     'fixed',
     // Side popups reuse the More panel's surface (.glass-popup) so they match it exactly, and
     // sit behind the panel (z-3) but above the editor. Bar popups keep the bordered glass look.
-    placement === 'left' ? 'z-3 overflow-y-auto glass-popup' : 'z-3 overflow-hidden border border-(--line)',
+    placement === 'left' || placement === 'right' ? 'z-3 overflow-y-auto glass-popup' : 'z-3 overflow-hidden border border-(--line)',
     placement === 'above' ? 'border-b-0' : placement === 'below' ? 'border-t-0' : '',
     extra,
   );
 
-export const getPopupStyle = (placement: 'above' | 'below' | 'left'): React.CSSProperties => {
+export const getPopupStyle = (placement: PopupPlacement): React.CSSProperties => {
+  // Surface (bg/blur/border/shadow) comes from .glass-popup — identical to the panel.
+  // Here only the seam: round the outer corners, square + borderless on the side that
+  // meets the panel/anchor.
   if (placement === 'left') {
-    return {
-      // Surface (bg/blur/border/shadow) comes from .glass-popup — identical to the panel.
-      // Here only the seam: round the outer (left) corners, square + borderless on the right.
-      borderRadius: '1rem 0 0 1rem',
-      borderRightWidth: 0,
-    };
+    return { borderRadius: '1rem 0 0 1rem', borderRightWidth: 0 };
+  }
+  if (placement === 'right') {
+    return { borderRadius: '0 1rem 1rem 0', borderLeftWidth: 0 };
   }
   return {
     background: 'transparent',
@@ -79,18 +81,19 @@ export const getPopupStyle = (placement: 'above' | 'below' | 'left'): React.CSSP
   };
 };
 
-export const popupPad = (placement: 'above' | 'below' | 'left', near = '2', far = '6') =>
-  placement === 'left' ? 'py-1.5'
+export const popupPad = (placement: PopupPlacement, near = '2', far = '6') =>
+  placement === 'left' || placement === 'right' ? 'py-1.5'
     : placement === 'above' ? `pt-${near} pb-${far}` : `pb-${near} pt-${far}`;
 
-export const popupMotion = (placement: 'above' | 'below' | 'left') => {
-  if (placement === 'left') {
-    // Fade + slide out of the panel's left edge. The popup sits behind the panel, so the
+export const popupMotion = (placement: PopupPlacement) => {
+  if (placement === 'left' || placement === 'right') {
+    // Fade + slide out of the panel's edge. The popup sits behind the panel, so the
     // slide reads as it emerging from underneath. Matches the More panel's timing.
+    const from = placement === 'left' ? '100%' : '-100%';
     return {
-      initial: { opacity: 0, x: '100%', y: '-50%' },
+      initial: { opacity: 0, x: from, y: '-50%' },
       animate: { opacity: 1, x: 0, y: '-50%' },
-      exit: { opacity: 0, x: '100%', y: '-50%', transition: { duration: 0.18 } },
+      exit: { opacity: 0, x: from, y: '-50%', transition: { duration: 0.18 } },
       transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
     };
   }
