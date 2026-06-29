@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useMagicHover } from '../../hooks/useMagicHover';
-import { motion, AnimatePresence } from 'motion/react';
-import { useSmartPopupStyle, type PopupAnchor, type PopupPlacement } from '../../hooks/useSmartPopupStyle';
+import { type PopupAnchor } from '../../hooks/useSmartPopupStyle';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { CODE_LANGUAGE_FRIENDLY_NAME_MAP, getLanguageFriendlyName } from '@lexical/code';
@@ -16,12 +15,13 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import ColorPickerPortal from './ColorPickerPortal';
+import SubPopup from '../ui/SubPopup';
 import { Icons } from '../ui/Icons';
 import { useToolbarStateContext } from './ToolbarStateContext';
 import { useFloatingToolbarPosition } from './useFloatingToolbarPosition';
 import {
   FONT_SIZES, LINE_HEIGHTS, TEXT_COLORS, HIGHLIGHT_COLORS, LANG_ICONS,
-  isPickerActive, getPopupStyle, popupPad, popupMotion,
+  isPickerActive,
 } from './toolbarPopupUtils';
 import { useAuthStore } from '../../store/useAuthStore';
 import { canAccess } from '../../lib/planFeatures';
@@ -75,11 +75,6 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
   const [lineHeightPickerPos, setLineHeightPickerPos] = useState<PopupAnchor | null>(null);
   const [codeLangPickerPos, setCodeLangPickerPos] = useState<PopupAnchor | null>(null);
 
-  const { style: headingStyle, placement: headingPlacement } = useSmartPopupStyle(headingPos, headingPickerRef, 0);
-  const { style: fontSizeStyle, placement: fontSizePlacement } = useSmartPopupStyle(fontSizePos, fontSizeRef, 0);
-  const { style: lineHeightStyle, placement: lineHeightPlacement } = useSmartPopupStyle(lineHeightPickerPos, lineHeightRef, 0);
-  const { style: codeLangStyle, placement: codeLangPlacement } = useSmartPopupStyle(codeLangPickerPos, codeLangRef, 0);
-
   useEffect(() => {
     keepVisibleRef.current = !!fontPickerPos || showTimerModal || !!colorPickerPos || !!highlightPickerPos;
   }, [fontPickerPos, showTimerModal, colorPickerPos, highlightPickerPos]);
@@ -109,15 +104,6 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
   };
 
   const isInCode = blockType === 'code';
-
-  // Slightly softer border than the shared popupCls — matches the floating bar.
-  // The bar never docks to the side, so 'left' never reaches here.
-  const popupCls = (placement: PopupPlacement, extra = '') => clsx(
-    'fixed overflow-hidden z-3',
-    'border border-[color-mix(in_srgb,var(--line)_50%,transparent)]',
-    placement === 'above' ? 'border-b-0' : 'border-t-0',
-    extra,
-  );
 
   const btn = (
     onClick: (e: React.MouseEvent<HTMLButtonElement>) => void,
@@ -326,154 +312,94 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         </button>
       </div>
 
-      {createPortal(
-        <AnimatePresence>
-          {headingPos && (
-          <>
-          <div className="fixed inset-0" onClick={() => setHeadingPos(null)} />
-          <motion.div
-            ref={headingPickerRef}
-            className={clsx(popupCls(headingPlacement, popupPad(headingPlacement)), 'magic-hover')}
-            style={{ ...headingStyle, ...getPopupStyle(headingPlacement) }}
-            onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion(headingPlacement)}
-          >
-            {HIndicator}
-            <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
-              {blockType.startsWith('h') && (
-                <button
-                  type="button"
-                  onClick={() => { removeHeading(); setHeadingPos(null); }}
-                  onMouseEnter={onHEnter} onMouseLeave={onHLeave}
-                  className="flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors text-red-500 shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-              {([{ tag: 'h1', Icon: Heading1 }, { tag: 'h2', Icon: Heading2 }, { tag: 'h3', Icon: Heading3 }, { tag: 'h4', Icon: Heading4 }, { tag: 'h5', Icon: Heading5 }, { tag: 'h6', Icon: Heading6 }] as const).map(({ tag, Icon }) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => { formatHeading(tag); setHeadingPos(null); }}
-                  onMouseEnter={onHEnter} onMouseLeave={onHLeave}
-                  className={clsx('flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors shrink-0', blockType === tag ? 'text-(--accent)' : 'text-(--ink)')}
-                >
-                  <Icon className="w-4 h-4" />
-                </button>
-              ))}
-            </div>
-          </motion.div>
-          </>)}
-        </AnimatePresence>,
-        getModalPortalRoot(),
-      )}
+      <SubPopup anchor={headingPos} onClose={() => setHeadingPos(null)} direction="top" padding={0} variant="glass" softBorder backdrop closeOnOutside={false} className="magic-hover" popupRef={headingPickerRef}>
+        {HIndicator}
+        <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
+          {blockType.startsWith('h') && (
+            <button
+              type="button"
+              onClick={() => { removeHeading(); setHeadingPos(null); }}
+              onMouseEnter={onHEnter} onMouseLeave={onHLeave}
+              className="flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors text-red-500 shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+          {([{ tag: 'h1', Icon: Heading1 }, { tag: 'h2', Icon: Heading2 }, { tag: 'h3', Icon: Heading3 }, { tag: 'h4', Icon: Heading4 }, { tag: 'h5', Icon: Heading5 }, { tag: 'h6', Icon: Heading6 }] as const).map(({ tag, Icon }) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => { formatHeading(tag); setHeadingPos(null); }}
+              onMouseEnter={onHEnter} onMouseLeave={onHLeave}
+              className={clsx('flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors shrink-0', blockType === tag ? 'text-(--accent)' : 'text-(--ink)')}
+            >
+              <Icon className="w-4 h-4" />
+            </button>
+          ))}
+        </div>
+      </SubPopup>
 
-      {createPortal(
-        <AnimatePresence>
-          {fontSizePos && (
-          <>
-          <div className="fixed inset-0" onClick={() => setFontSizePos(null)} />
-          <motion.div
-            ref={fontSizeRef}
-            className={clsx(popupCls(fontSizePlacement, popupPad(fontSizePlacement)), 'magic-hover')}
-            style={{ ...fontSizeStyle, ...getPopupStyle(fontSizePlacement) }}
-            onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion(fontSizePlacement)}
-          >
-            {FSIndicator}
-            <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
-              {FONT_SIZES.map((size) => (
-                <button key={size} type="button"
-                  onClick={() => { applyFontSize(size); setFontSizePos(null); }}
-                  onMouseEnter={onFSEnter} onMouseLeave={onFSLeave}
-                  className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap', fontSize === size ? 'text-(--accent)' : 'text-(--ink)')}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-          </>)}
-        </AnimatePresence>,
-        getModalPortalRoot(),
-      )}
+      <SubPopup anchor={fontSizePos} onClose={() => setFontSizePos(null)} direction="top" padding={0} variant="glass" softBorder backdrop closeOnOutside={false} className="magic-hover" popupRef={fontSizeRef}>
+        {FSIndicator}
+        <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
+          {FONT_SIZES.map((size) => (
+            <button key={size} type="button"
+              onClick={() => { applyFontSize(size); setFontSizePos(null); }}
+              onMouseEnter={onFSEnter} onMouseLeave={onFSLeave}
+              className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap', fontSize === size ? 'text-(--accent)' : 'text-(--ink)')}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
+      </SubPopup>
 
-      {createPortal(
-        <AnimatePresence>
-          {lineHeightPickerPos && (
-          <>
-          <div className="fixed inset-0" onClick={() => setLineHeightPickerPos(null)} />
-          <motion.div
-            ref={lineHeightRef}
-            className={clsx(popupCls(lineHeightPlacement, popupPad(lineHeightPlacement)), 'magic-hover')}
-            style={{ ...(lineHeightPickerPos?.width !== undefined ? { width: lineHeightPickerPos.width } : {}), ...lineHeightStyle, ...getPopupStyle(lineHeightPlacement) }}
-            onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion(lineHeightPlacement)}
-          >
-            {LHIndicator}
-            <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
-              {LINE_HEIGHTS.map((value) => (
-                <button key={value} type="button"
-                  onClick={() => { applyLineHeight(value); setLineHeightPickerPos(null); }}
-                  onMouseEnter={onLHEnter} onMouseLeave={onLHLeave}
-                  className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap', (lineHeight === value || (value === '1.5' && !lineHeight)) ? 'text-(--accent)' : 'text-(--ink)')}
-                >
-                  {value}×
-                </button>
-              ))}
-            </div>
-          </motion.div>
-          </>)}
-        </AnimatePresence>,
-        getModalPortalRoot(),
-      )}
+      <SubPopup anchor={lineHeightPickerPos} onClose={() => setLineHeightPickerPos(null)} direction="top" padding={0} variant="glass" softBorder backdrop closeOnOutside={false} className="magic-hover" popupRef={lineHeightRef}>
+        {LHIndicator}
+        <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
+          {LINE_HEIGHTS.map((value) => (
+            <button key={value} type="button"
+              onClick={() => { applyLineHeight(value); setLineHeightPickerPos(null); }}
+              onMouseEnter={onLHEnter} onMouseLeave={onLHLeave}
+              className={clsx('px-2.5 py-1 text-sm rounded-lg transition-colors whitespace-nowrap', (lineHeight === value || (value === '1.5' && !lineHeight)) ? 'text-(--accent)' : 'text-(--ink)')}
+            >
+              {value}×
+            </button>
+          ))}
+        </div>
+      </SubPopup>
 
-      {createPortal(
-        <AnimatePresence>
-          {codeLangPickerPos && (
-          <>
-          <div className="fixed inset-0" onClick={() => setCodeLangPickerPos(null)} />
-          <motion.div
-            ref={codeLangRef}
-            className={clsx(popupCls(codeLangPlacement, popupPad(codeLangPlacement)), 'magic-hover')}
-            style={{ ...codeLangStyle, ...getPopupStyle(codeLangPlacement) }}
-            onMouseDown={(e) => e.preventDefault()}
-            {...popupMotion(codeLangPlacement)}
+      <SubPopup anchor={codeLangPickerPos} onClose={() => setCodeLangPickerPos(null)} direction="top" padding={0} variant="glass" softBorder backdrop closeOnOutside={false} className="magic-hover" popupRef={codeLangRef}>
+        {CLIndicator}
+        <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
+          <button
+            type="button"
+            onClick={() => { handleFormatCode(); setCodeLangPickerPos(null); }}
+            onMouseEnter={onCLEnter} onMouseLeave={onCLLeave}
+            className="flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors text-red-500 shrink-0"
           >
-            {CLIndicator}
-            <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
+            <X className="w-4 h-4" />
+          </button>
+          {Object.entries(CODE_LANGUAGE_FRIENDLY_NAME_MAP).map(([lang, label]) => {
+            const LangIcon = LANG_ICONS[lang];
+            return (
               <button
+                key={lang}
                 type="button"
-                onClick={() => { handleFormatCode(); setCodeLangPickerPos(null); }}
+                onClick={() => { setCodeNodeLanguage(lang); setCodeLangPickerPos(null); }}
                 onMouseEnter={onCLEnter} onMouseLeave={onCLLeave}
-                className="flex items-center justify-center px-2.5 py-1 rounded-lg transition-colors text-red-500 shrink-0"
+                className={clsx('flex items-center gap-1.5 px-2.5 py-1 text-sm rounded-lg transition-colors shrink-0', isPickerActive(lang, codeLanguage, 'js') ? 'text-(--accent)' : 'text-(--ink)')}
               >
-                <X className="w-4 h-4" />
+                {LangIcon
+                  ? <LangIcon className="w-3.5 h-3.5 shrink-0" />
+                  : <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center font-mono text-[9px] leading-none ring-1 ring-current rounded-sm">{label.slice(0, 3).toUpperCase()}</span>
+                }
+                {label}
               </button>
-              {Object.entries(CODE_LANGUAGE_FRIENDLY_NAME_MAP).map(([lang, label]) => {
-                const LangIcon = LANG_ICONS[lang];
-                return (
-                  <button
-                    key={lang}
-                    type="button"
-                    onClick={() => { setCodeNodeLanguage(lang); setCodeLangPickerPos(null); }}
-                    onMouseEnter={onCLEnter} onMouseLeave={onCLLeave}
-                    className={clsx('flex items-center gap-1.5 px-2.5 py-1 text-sm rounded-lg transition-colors shrink-0', isPickerActive(lang, codeLanguage, 'js') ? 'text-(--accent)' : 'text-(--ink)')}
-                  >
-                    {LangIcon
-                      ? <LangIcon className="w-3.5 h-3.5 shrink-0" />
-                      : <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center font-mono text-[9px] leading-none ring-1 ring-current rounded-sm">{label.slice(0, 3).toUpperCase()}</span>
-                    }
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-          </>)}
-        </AnimatePresence>,
-        getModalPortalRoot(),
-      )}
+            );
+          })}
+        </div>
+      </SubPopup>
 
       <ColorPickerPortal
         position={colorPickerPos}

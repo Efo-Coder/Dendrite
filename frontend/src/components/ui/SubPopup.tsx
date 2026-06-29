@@ -30,7 +30,14 @@ interface SubPopupProps {
   variant?: SubPopupVariant;
   width?: number;
   padding?: number;
+  // glass-only look overrides: half-transparent border (matches the floating bar) and
+  // the inner [near, far] padding scale handed to popupPad.
+  softBorder?: boolean;
+  glassPad?: [string, string];
   closeOnOutside?: boolean;
+  // Renders a click-catching overlay behind the popup that closes it (and swallows the
+  // click). Use instead of closeOnOutside when the click must not also hit the editor.
+  backdrop?: boolean;
   // Cascading menus: clicks inside this element must not trigger the outside-close.
   excludeRef?: RefObject<HTMLElement | null>;
   className?: string;
@@ -58,7 +65,10 @@ const SubPopup = ({
   variant = 'bordered',
   width,
   padding = 8,
+  softBorder = false,
+  glassPad,
   closeOnOutside = true,
+  backdrop = false,
   excludeRef,
   className,
   children,
@@ -137,7 +147,7 @@ const SubPopup = ({
 
   const cls =
     variant === 'glass'
-      ? clsx(popupCls(placement, popupPad(placement)), className)
+      ? clsx(popupCls(placement, popupPad(placement, glassPad?.[0], glassPad?.[1]), softBorder), className)
       : variant === 'bordered'
         ? clsx('fixed glass-popup rounded-xl shadow-lg overflow-hidden z-4', className)
         : clsx('fixed', className);
@@ -150,20 +160,23 @@ const SubPopup = ({
   };
 
   return createPortal(
-    <AnimatePresence>
-      {isOpen && resolvedAnchor && (
-        <motion.div
-          ref={assignRef}
-          className={cls}
-          style={mergedStyle}
-          // Glass popups live over the editor and must not steal the text selection.
-          onMouseDown={variant === 'glass' ? (e) => e.preventDefault() : undefined}
-          {...motionProps}
-        >
-          {children}
-        </motion.div>
-      )}
-    </AnimatePresence>,
+    <>
+      {backdrop && isOpen && resolvedAnchor && <div className="fixed inset-0" onClick={onClose} />}
+      <AnimatePresence>
+        {isOpen && resolvedAnchor && (
+          <motion.div
+            ref={assignRef}
+            className={cls}
+            style={mergedStyle}
+            // Glass popups live over the editor and must not steal the text selection.
+            onMouseDown={variant === 'glass' ? (e) => e.preventDefault() : undefined}
+            {...motionProps}
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>,
     getModalPortalRoot(),
   );
 };

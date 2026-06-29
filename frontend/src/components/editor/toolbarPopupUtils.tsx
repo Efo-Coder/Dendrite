@@ -52,12 +52,18 @@ export const isPickerActive = (value: string, current: string, defaultValue: str
 export const isToolbarActive = (pickerOpen: boolean, current = '', defaultValue = '') =>
   pickerOpen || (!!current && current !== defaultValue);
 
-export const popupCls = (placement: PopupPlacement, extra = '') =>
+// `soft` uses a half-transparent border (matches the floating bar) instead of the
+// solid one; only affects bar (above/below) popups.
+export const popupCls = (placement: PopupPlacement, extra = '', soft = false) =>
   clsx(
     'fixed',
     // Side popups reuse the More panel's surface (.glass-popup) so they match it exactly, and
     // sit behind the panel (z-3) but above the editor. Bar popups keep the bordered glass look.
-    placement === 'left' || placement === 'right' ? 'z-3 overflow-y-auto glass-popup' : 'z-3 overflow-hidden border border-(--line)',
+    placement === 'left' || placement === 'right'
+      ? 'z-3 overflow-y-auto glass-popup'
+      : soft
+        ? 'z-3 overflow-hidden border border-[color-mix(in_srgb,var(--line)_50%,transparent)]'
+        : 'z-3 overflow-hidden border border-(--line)',
     placement === 'above' ? 'border-b-0' : placement === 'below' ? 'border-t-0' : '',
     extra,
   );
