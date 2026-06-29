@@ -145,7 +145,10 @@ export function useToolbarState(toolbarRef?: RefObject<HTMLElement | null>) {
   const [checklistDropdownPos, setChecklistDropdownPos] = useState<PopupAnchor | null>(null);
   const checklistTimer = useChecklistTimer(saveSelection, savedSelectionRef);
 
-  const closeAllPopups = () => {
+  // Memoised so RichTextToolbar's "close pickers when the More panel closes" effect only
+  // fires on the moreOpen transition. An unstable identity made it run every render and
+  // wipe context pickers (e.g. the floating bar's fontPickerPos) right after they opened.
+  const closeAllPopups = useCallback(() => {
     setColorPickerPos(null);
     setHighlightPickerPos(null);
     setFontPickerPos(null);
@@ -154,7 +157,7 @@ export function useToolbarState(toolbarRef?: RefObject<HTMLElement | null>) {
     setHeadingPickerPos(null);
     setChecklistDropdownPos(null);
     setCodeLangPickerPos(null);
-  };
+  }, []);
 
   const openColorFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
