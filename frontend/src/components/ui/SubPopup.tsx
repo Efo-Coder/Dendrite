@@ -19,9 +19,7 @@ interface SubPopupProps {
   direction?: PopupDirection;
   smart?: boolean;
   padding?: number;
-  // Half-transparent border (matches the floating bar) and the inner [near, far] padding
-  // scale passed to popupPad.
-  softBorder?: boolean;
+  // Inner [near, far] padding scale passed to popupPad (above/below only).
   glassPad?: [string, string];
   // mousedown-outside + Escape close the popup. Off when closing is driven externally
   // (e.g. the More panel owns its pickers).
@@ -40,7 +38,6 @@ const SubPopup = ({
   direction = 'bottom',
   smart = true,
   padding = 8,
-  softBorder = false,
   glassPad,
   closeOnOutside = true,
   backdrop = false,
@@ -86,7 +83,7 @@ const SubPopup = ({
         {isOpen && (
           <motion.div
             ref={assignRef}
-            className={clsx(popupCls(placement, popupPad(placement, glassPad?.[0], glassPad?.[1]), softBorder), className)}
+            className={clsx(popupCls(placement, popupPad(placement, glassPad?.[0], glassPad?.[1])), className)}
             style={mergedStyle}
             // Lives over the editor and must not steal the text selection.
             onMouseDown={(e) => e.preventDefault()}

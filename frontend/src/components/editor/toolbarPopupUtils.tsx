@@ -52,24 +52,20 @@ export const isPickerActive = (value: string, current: string, defaultValue: str
 export const isToolbarActive = (pickerOpen: boolean, current = '', defaultValue = '') =>
   pickerOpen || (!!current && current !== defaultValue);
 
-// `soft` uses a half-transparent border (matches the floating bar) instead of the
-// solid one; only affects bar (above/below) popups.
-export const popupCls = (placement: PopupPlacement, extra = '', soft = false) =>
+export const popupCls = (placement: PopupPlacement, extra = '') =>
   clsx(
     'fixed',
-    // Side popups reuse the More panel's surface (.glass-popup) so they match it exactly, and
-    // sit behind the panel (z-3) but above the editor. Bar popups keep the bordered glass look.
+    // Each sub-popup reuses its main popup's surface class so they match exactly: side
+    // popups the More panel (.glass-popup), bar popups the floating bar (.bar-glass).
     placement === 'left' || placement === 'right'
       ? 'z-3 overflow-y-auto glass-popup'
-      : soft
-        ? 'z-3 overflow-hidden border border-[color-mix(in_srgb,var(--line)_50%,transparent)]'
-        : 'z-3 overflow-hidden border border-(--line)',
+      : 'z-3 overflow-hidden border bar-glass',
     placement === 'above' ? 'border-b-0' : placement === 'below' ? 'border-t-0' : '',
     extra,
   );
 
 export const getPopupStyle = (placement: PopupPlacement): React.CSSProperties => {
-  // Surface (bg/blur/border/shadow) comes from .glass-popup — identical to the panel.
+  // Surface (bg/blur/border-color) comes from the shared class (.glass-popup / .bar-glass).
   // Here only the seam: round the outer corners, square + borderless on the side that
   // meets the panel/anchor.
   if (placement === 'left') {
@@ -79,9 +75,6 @@ export const getPopupStyle = (placement: PopupPlacement): React.CSSProperties =>
     return { borderRadius: '0 1rem 1rem 0', borderLeftWidth: 0 };
   }
   return {
-    background: 'transparent',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
     borderRadius: placement === 'above' ? '1rem 1rem 0 0' : '0 0 1rem 1rem',
     clipPath: placement === 'above' ? 'inset(-1px round 1rem 1rem 0 0)' : 'inset(-1px round 0 0 1rem 1rem)',
   };
@@ -103,8 +96,10 @@ export const popupMotion = (placement: PopupPlacement) => {
       transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
     };
   }
-  const dock  = placement === 'above' ?  16 : -16;
-  const enter = dock + 8;
+  const dock = placement === 'above' ? 16 : -16;
+  // Start offset on the bar side and slide toward the opening direction: above → up,
+  // below → down. (dock keeps the popup tucked behind the z-4 bar so it reads as emerging.)
+  const enter = placement === 'above' ? dock + 8 : dock - 8;
   return {
     initial: { opacity: 0, y: enter },
     animate: { opacity: 1, y: dock },

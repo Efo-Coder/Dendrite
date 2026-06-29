@@ -264,7 +264,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         ref={floatingBarRef}
         className={clsx(
           'fixed flex items-center gap-0.5 px-1.5 py-1 z-4 magic-hover',
-          'border border-[color-mix(in_srgb,var(--line)_55%,transparent)]',
+          'border bar-glass',
           'shadow-[0_12px_40px_color-mix(in_srgb,#000_35%,transparent),0_0_0_1px_color-mix(in_srgb,var(--accent)_8%,transparent)]',
           'rounded-2xl',
         )}
@@ -275,9 +275,6 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
           opacity: scrolledOut ? 0 : 1,
           pointerEvents: scrolledOut ? 'none' : 'auto',
           transition: 'opacity 0.15s ease',
-          background: 'transparent',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
         }}
         onMouseDown={(e) => e.preventDefault()}
       >
@@ -312,7 +309,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         </button>
       </div>
 
-      <SubPopup anchor={headingPos} onClose={() => setHeadingPos(null)} direction="top" padding={0} softBorder backdrop closeOnOutside={false} className="magic-hover" popupRef={headingPickerRef}>
+      <SubPopup anchor={headingPos} onClose={() => setHeadingPos(null)} direction="top" padding={0} backdrop closeOnOutside={false} className="magic-hover" popupRef={headingPickerRef}>
         {HIndicator}
         <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
           {blockType.startsWith('h') && (
@@ -339,7 +336,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         </div>
       </SubPopup>
 
-      <SubPopup anchor={fontSizePos} onClose={() => setFontSizePos(null)} direction="top" padding={0} softBorder backdrop closeOnOutside={false} className="magic-hover" popupRef={fontSizeRef}>
+      <SubPopup anchor={fontSizePos} onClose={() => setFontSizePos(null)} direction="top" padding={0} backdrop closeOnOutside={false} className="magic-hover" popupRef={fontSizeRef}>
         {FSIndicator}
         <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
           {FONT_SIZES.map((size) => (
@@ -354,7 +351,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         </div>
       </SubPopup>
 
-      <SubPopup anchor={lineHeightPickerPos} onClose={() => setLineHeightPickerPos(null)} direction="top" padding={0} softBorder backdrop closeOnOutside={false} className="magic-hover" popupRef={lineHeightRef}>
+      <SubPopup anchor={lineHeightPickerPos} onClose={() => setLineHeightPickerPos(null)} direction="top" padding={0} backdrop closeOnOutside={false} className="magic-hover" popupRef={lineHeightRef}>
         {LHIndicator}
         <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
           {LINE_HEIGHTS.map((value) => (
@@ -369,7 +366,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
         </div>
       </SubPopup>
 
-      <SubPopup anchor={codeLangPickerPos} onClose={() => setCodeLangPickerPos(null)} direction="top" padding={0} softBorder backdrop closeOnOutside={false} className="magic-hover" popupRef={codeLangRef}>
+      <SubPopup anchor={codeLangPickerPos} onClose={() => setCodeLangPickerPos(null)} direction="top" padding={0} backdrop closeOnOutside={false} className="magic-hover" popupRef={codeLangRef}>
         {CLIndicator}
         <div className="flex gap-1 px-2 overflow-x-auto overflow-y-hidden" onWheel={(e) => { e.currentTarget.scrollBy({ left: e.deltaY, behavior: 'smooth' }); }}>
           <button

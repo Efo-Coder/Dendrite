@@ -999,6 +999,14 @@ html[data-theme="dark"] .glass-popup {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 }
 
+/* Floating-toolbar surface, shared by the bar and its above/below sub-popups so they
+   match exactly. Border width + seam come from utilities; this only sets colour + glass. */
+.bar-glass {
+  background: transparent;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-color: color-mix(in srgb, var(--line) 55%, transparent);
+}
+
 .image-size-indicator { background: rgba(245, 245, 245, 0.97) !important; }
 html[data-theme="dark"] .image-size-indicator { background: rgba(28, 28, 28, 0.97) !important; }
 
