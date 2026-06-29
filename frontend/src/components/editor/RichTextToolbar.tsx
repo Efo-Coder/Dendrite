@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useMagicHover } from '../../hooks/useMagicHover';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
@@ -44,6 +44,8 @@ interface RichTextToolbarProps {
   onInfo?: () => void;
   onVersionHistory?: () => void;
   minimalChrome?: boolean;
+  moreOpen: boolean;
+  onMoreToggle: () => void;
 }
 
 type ToolbarBtn = {
@@ -55,13 +57,12 @@ type ToolbarBtn = {
   isDisabled?: boolean;
 };
 
-const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, minimalChrome = false }: RichTextToolbarProps) => {
+const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, minimalChrome = false, moreOpen, onMoreToggle }: RichTextToolbarProps) => {
   const { user } = useAuthStore();
   const moreMenuRef = useRef<HTMLDivElement>(null);
-  const toolbarState = useToolbarState(minimalChrome, moreMenuRef);
+  const toolbarState = useToolbarState(moreMenuRef);
   const {
     roundedCount, wordCount,
-    showMoreMenu, setShowMoreMenu,
     isInTable,
     isBold, isItalic, isUnderline, isStrikethrough, isSuperscript, isSubscript,
     blockType, canUndo, canRedo, canOutdent,
@@ -74,6 +75,7 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
     lineHeightPickerPos,
     headingPickerPos,
     codeLanguage,
+    codeLangPickerPos,
     showAttachModal, setShowAttachModal,
     showImageModal, setShowImageModal,
     showTableModal, setShowTableModal,
@@ -97,6 +99,11 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
   const miniToolbarRef = useRef<HTMLDivElement>(null);
   const { onItemEnter: onMiniEnter, onItemLeave: onMiniLeave, Indicator: MiniIndicator } = useMagicHover({ mode: 'free', borderRadius: 9999, ref: miniToolbarRef });
   const { onItemEnter: onMoreEnter, onItemLeave: onMoreLeave, Indicator: MoreIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: moreMenuRef });
+
+  // Sub-pickers belong to the More panel: closing the panel dismisses them too.
+  useEffect(() => {
+    if (!moreOpen) closeAllPopups();
+  }, [moreOpen, closeAllPopups]);
 
   const isInCode = blockType === 'code';
 
@@ -163,9 +170,15 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
   const fontSizeBtnActive = isToolbarActive(!!fontSizePos, fontSize, '12');
   const lineHeightBtnActive = isToolbarActive(!!lineHeightPickerPos, lineHeight, '1.5');
   const codeBtnActive = blockType === 'code';
-  const hasPopupActive = showMoreMenu || anyGroupActive ||
+  const hasPopupActive = moreOpen || anyGroupActive ||
     headingBtnActive || colorBtnActive || highlightBtnActive ||
     fontPickerBtnActive || fontSizeBtnActive || lineHeightBtnActive || codeBtnActive;
+
+  // An open sub-picker docks flush to the panel's left edge; the panel drops its
+  // own left rounding/border there so the two read as one connected surface.
+  const anyPickerOpen = !!colorPickerPos || !!highlightPickerPos || !!fontPickerPos ||
+    !!fontSizePos || !!lineHeightPickerPos || !!headingPickerPos ||
+    !!codeLangPickerPos || !!checklistDropdownPos;
 
   const renderBtn = (btn: ToolbarBtn, key: number) => (
     <button
@@ -241,7 +254,7 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
               {miniIconBtn(insertImage, 'Image', Image, false, undefined, isInCode)}
               {onInfo && miniIconBtn(() => onInfo(), 'Info', Info, false, undefined)}
               {onVersionHistory && miniIconBtn(() => onVersionHistory(), 'Version History', History, false, undefined)}
-              {miniIconBtn(() => setShowMoreMenu((v) => !v), 'More tools', MoreVertical, hasPopupActive, undefined)}
+              {miniIconBtn(() => onMoreToggle(), 'More tools', MoreVertical, hasPopupActive, undefined)}
             </div>
           </div>
         </div>
@@ -249,18 +262,21 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
 
       {createPortal(
         <AnimatePresence>
-          {showMoreMenu && !minimalChrome && (
-          <>
-          <div className="fixed inset-0" onClick={() => setShowMoreMenu(false)} />
+          {moreOpen && !minimalChrome && (
           <motion.div
             ref={moreMenuRef}
-            className="fixed bottom-16 right-6 sm:right-12 w-[min(92vw,280px)] max-h-[70vh] overflow-y-auto rounded-2xl border border-[color-mix(in_srgb,var(--line)_50%,transparent)] p-2 glass-popup shadow-2xl z-4 magic-hover"
+            className={clsx(
+              'fixed top-1/2 right-0 w-[min(92vw,280px)] max-h-[70vh] overflow-y-auto rounded-r-none border border-r-0 border-[color-mix(in_srgb,var(--line)_50%,transparent)] p-2 glass-popup shadow-2xl z-4 magic-hover',
+              anyPickerOpen ? 'rounded-l-none border-l-0' : 'rounded-l-2xl',
+            )}
             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            // Clicking another tool in the panel closes the picker; the picker's own
+            // icons stopPropagation, so re-/cross-selecting them is handled by their toggles.
             onClick={() => closeAllPopups()}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8, transition: { duration: 0.12 } }}
-            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            initial={{ x: '110%', y: '-50%' }}
+            animate={{ x: 0, y: '-50%' }}
+            exit={{ x: '110%', y: '-50%', transition: { duration: 0.18 } }}
+            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
           >
             {MoreIndicator}
             <p className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wider text-(--ink-mid)">Edit</p>
@@ -350,7 +366,7 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
               {buttonGroups[5].buttons.map((btn, bi) => renderBtn(btn, bi + 500))}
             </div>
           </motion.div>
-          </>)}
+          )}
         </AnimatePresence>,
         getModalPortalRoot()
       )}

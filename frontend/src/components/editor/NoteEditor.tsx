@@ -111,6 +111,8 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
 
   useEffect(() => {
     if (focusWritingMode) {
+      // The toolbar (and its more-tools panel) is hidden in focus mode.
+      setOpenPanel(p => p === 'more' ? null : p);
       setShowExitBtn(true);
       exitBtnTimerRef.current = setTimeout(() => setShowExitBtn(false), 2000);
     } else {
@@ -125,8 +127,8 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
-  const [showVersionHistory, setShowVersionHistory] = useState(false);
-  const [showAttachments, setShowAttachments] = useState(false);
+  // Only one right-side panel may be open at a time (version, attachments, more-tools).
+  const [openPanel, setOpenPanel] = useState<'version' | 'attachments' | 'more' | null>(null);
   const [restoreKey, setRestoreKey] = useState(0);
   // Local collaborator list — refreshed after invitations
   const [collaborators, setCollaborators] = useState(note.collaborators ?? []);
@@ -286,7 +288,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     ] : []),
     ...(!isInTrash ? [
       { icon: <ImagePlus className="w-4 h-4" />, label: 'Add cover', onClick: () => setCoverTarget({ kind: 'note', id: note.id }) },
-      { icon: <Paperclip className="w-4 h-4" />, label: 'Attachments', onClick: () => setShowAttachments(v => !v) },
+      { icon: <Paperclip className="w-4 h-4" />, label: 'Attachments', onClick: () => setOpenPanel(p => p === 'attachments' ? null : 'attachments') },
       { icon: <AlarmClock className="w-4 h-4" />, label: 'Set a reminder', onClick: () => setShowReminderModal(true) },
     ] : []),
     ...(!isInTrash && note.userId === user?.id ? [
@@ -506,7 +508,9 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                 noteId={note.id}
                 minimalChrome={focusWritingMode}
                 onInfo={isInTrash ? undefined : () => setShowInfoModal(true)}
-                onVersionHistory={isInTrash ? undefined : () => setShowVersionHistory(v => !v)}
+                onVersionHistory={isInTrash ? undefined : () => setOpenPanel(p => p === 'version' ? null : 'version')}
+                moreOpen={openPanel === 'more'}
+                onMoreToggle={() => setOpenPanel(p => p === 'more' ? null : 'more')}
               />
             }
           />
@@ -517,8 +521,8 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
       {/* Version history spans the full editor height (over topbar + footer),
           so it lives at the editor root, not inside the writing canvas. */}
       <VersionHistoryPanel
-        isOpen={showVersionHistory}
-        onClose={() => setShowVersionHistory(false)}
+        isOpen={openPanel === 'version'}
+        onClose={() => setOpenPanel(null)}
         noteId={note.id}
         userPlan={user?.plan ?? 'free'}
         onRestore={async (noteId, versionId) => {
@@ -535,8 +539,8 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
       />
 
       <AttachmentsPanel
-        isOpen={showAttachments}
-        onClose={() => setShowAttachments(false)}
+        isOpen={openPanel === 'attachments'}
+        onClose={() => setOpenPanel(null)}
         noteId={note.id}
       />
 

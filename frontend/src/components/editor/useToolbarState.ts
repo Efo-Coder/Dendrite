@@ -25,6 +25,7 @@ import {
   $isElementNode,
   $isTextNode,
   LexicalNode,
+  ElementNode,
 } from 'lexical';
 import {
   INSERT_ORDERED_LIST_COMMAND,
@@ -68,15 +69,17 @@ const mergeStyle = (existingStyle: string, patch: Record<string, string>): strin
   return Object.entries(styles).map(([k, v]) => `${k}: ${v}`).join('; ');
 };
 
-export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<HTMLElement | null>) {
-  const tbAnchor = (btn: DOMRect): PopupAnchor => {
-    const tb = toolbarRef?.current?.getBoundingClientRect();
+export function useToolbarState(toolbarRef?: RefObject<HTMLElement | null>) {
+  // Popups mirror the More-panel exactly — same width, height and vertical position —
+  // docked flush to its left edge.
+  const tbAnchor = (): PopupAnchor => {
+    const panel = toolbarRef?.current?.getBoundingClientRect();
     return {
-      x: btn.left + btn.width / 2,
-      top: tb?.top ?? btn.top,
-      bottom: tb?.bottom ?? btn.bottom,
-      left: tb?.left,
-      width: tb?.width,
+      x: 0,
+      top: panel?.top ?? 0,
+      bottom: panel?.bottom ?? 0,
+      dockSide: panel?.left,
+      width: panel?.width,
     };
   };
 
@@ -89,11 +92,6 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     const controls = animate(motionCount, wordCount, { duration: 0.8, ease: 'easeOut' });
     return () => controls.stop();
   }, [wordCount]);
-
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
-  useEffect(() => {
-    if (minimalChrome) setShowMoreMenu(false);
-  }, [minimalChrome]);
 
   const [isInTable, setIsInTable] = useState(false);
   const [isBold, setIsBold] = useState(false);
@@ -163,7 +161,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     if (colorPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setColorPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
+    setColorPickerPos(tbAnchor());
   };
 
   const openHighlightFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
@@ -171,7 +169,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     if (highlightPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setHighlightPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
+    setHighlightPickerPos(tbAnchor());
   };
 
   const openFontPickerFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
@@ -179,7 +177,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     if (fontPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setFontPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
+    setFontPickerPos(tbAnchor());
   };
 
   const openFontSizeFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
@@ -187,7 +185,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     if (fontSizePos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setFontSizePos(tbAnchor(e.currentTarget.getBoundingClientRect()));
+    setFontSizePos(tbAnchor());
   };
 
   const openLineHeightFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
@@ -195,21 +193,21 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     if (lineHeightPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setLineHeightPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
+    setLineHeightPickerPos(tbAnchor());
   };
 
   const openChecklistDropdown = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     if (checklistDropdownPos) { closeAllPopups(); return; }
     closeAllPopups();
-    setChecklistDropdownPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
+    setChecklistDropdownPos(tbAnchor());
   };
 
   const openHeadingPicker = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     if (headingPickerPos) { closeAllPopups(); return; }
     closeAllPopups();
-    setHeadingPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
+    setHeadingPickerPos(tbAnchor());
   };
 
   const updateToolbar = useCallback(() => {
@@ -260,7 +258,12 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
       setFontFamily(styles['font-family'] || '');
       const rawSize = styles['font-size'] || '';
       setFontSize(rawSize ? String(Math.round(parseFloat(rawSize) * 3 / 4)) : '');
-      setLineHeight(styles['line-height'] || '');
+      // Read line-height from the block's first text node (the storage anchor for
+      // LineHeightSyncPlugin), not just the caret's node, so the indicator matches
+      // what is actually rendered. Pending style covers the still-empty block.
+      const blockFirstText = $isElementNode(element) ? element.getAllTextNodes()[0] : undefined;
+      const blockLh = blockFirstText ? parseStyle(blockFirstText.getStyle())['line-height'] || '' : '';
+      setLineHeight(blockLh || pendingStyles['line-height'] || '');
 
       let node: LexicalNode | null = anchorNode;
       let listItemCount = 0;
@@ -435,7 +438,7 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     e.stopPropagation();
     if (codeLangPickerPos) { closeAllPopups(); return; }
     closeAllPopups();
-    setCodeLangPickerPos(tbAnchor(e.currentTarget.getBoundingClientRect()));
+    setCodeLangPickerPos(tbAnchor());
   };
 
   const formatCheckList = () => {
@@ -513,11 +516,24 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
   const applyLineHeight = (value: string) => {
     editor.update(() => {
       const selection = restoreSelection();
-      if ($isRangeSelection(selection)) {
-        $patchStyleText(selection, { 'line-height': value });
-        if (selection.isCollapsed()) {
-          selection.style = mergeStyle(selection.style, { 'line-height': value });
+      if (!$isRangeSelection(selection)) return;
+      // Line-height is a block concern: write it to every text node of each
+      // touched block so the first-text-node read in LineHeightSyncPlugin and
+      // the toolbar read-back always see a uniform value, regardless of how
+      // much of the block the selection covered.
+      const blocks = new Set<ElementNode>();
+      for (const node of selection.getNodes()) {
+        if (node.getKey() === 'root') continue;
+        const top = node.getTopLevelElementOrThrow();
+        if ($isElementNode(top)) blocks.add(top);
+      }
+      for (const block of blocks) {
+        for (const textNode of block.getAllTextNodes()) {
+          textNode.setStyle(mergeStyle(textNode.getStyle(), { 'line-height': value }));
         }
+      }
+      if (selection.isCollapsed()) {
+        selection.style = mergeStyle(selection.style, { 'line-height': value });
       }
     });
     setLineHeight(value);
@@ -579,7 +595,6 @@ export function useToolbarState(minimalChrome: boolean, toolbarRef?: RefObject<H
     roundedCount,
     wordCount,
     saveSelection,
-    showMoreMenu, setShowMoreMenu,
     isInTable,
     isBold, isItalic, isUnderline, isStrikethrough, isSuperscript, isSubscript,
     blockType,

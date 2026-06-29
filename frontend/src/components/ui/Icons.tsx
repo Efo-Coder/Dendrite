@@ -39,4 +39,16 @@ export const Icons = {
     </svg>
   ),
   settings:  (p: IconProps) => <Icon {...p} d={['M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z', 'M13 8c0 .4-.04.8-.12 1.18l1.42 1.06-1.4 2.42-1.7-.5a4.8 4.8 0 0 1-2.04 1.18L8.7 15h-1.4l-.46-1.66a4.8 4.8 0 0 1-2.04-1.18l-1.7.5-1.4-2.42L3.12 9.18A6 6 0 0 1 3 8c0-.4.04-.8.12-1.18L1.7 5.76l1.4-2.42 1.7.5a4.8 4.8 0 0 1 2.04-1.18L7.3 1h1.4l.46 1.66a4.8 4.8 0 0 1 2.04 1.18l1.7-.5 1.4 2.42-1.42 1.06c.08.38.12.78.12 1.18z']} />,
+  // Mirrors lucide ListChecks (upper check + three lines) but swaps the lower
+  // check for a clock, so the timer checkbox reads as "checkbox, but timed".
+  timerCheckbox: (p: IconProps) => (
+    <svg width={p?.size ?? 16} height={p?.size ?? 16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={p?.className}>
+      <path d="M13 5h8" />
+      <path d="M13 12h8" />
+      <path d="M13 19h8" />
+      <path d="m3 7 2 2 4-4" />
+      <circle cx="6" cy="17" r="3" />
+      <path d="M6 15v2h2" />
+    </svg>
+  ),
 }

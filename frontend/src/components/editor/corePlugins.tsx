@@ -229,6 +229,10 @@ export function LineHeightSyncPlugin(): null {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
+    // Remember the last value written per block so we only touch the DOM (and
+    // trigger a reflow) when line-height actually changes, not on every keystroke.
+    const applied = new Map<string, string>();
+
     return editor.registerUpdateListener(({ editorState }) => {
       const map = new Map<string, string>();
 
@@ -253,9 +257,16 @@ export function LineHeightSyncPlugin(): null {
       });
 
       map.forEach((lh, key) => {
+        if (applied.get(key) === lh) return;
         const dom = editor.getElementByKey(key) as HTMLElement | null;
-        if (dom) dom.style.lineHeight = lh;
+        if (dom) {
+          dom.style.lineHeight = lh;
+          applied.set(key, lh);
+        }
       });
+      for (const key of [...applied.keys()]) {
+        if (!map.has(key)) applied.delete(key);
+      }
     });
   }, [editor]);
 

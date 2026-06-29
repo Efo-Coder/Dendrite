@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
@@ -17,7 +17,6 @@ interface ColorPickerPortalProps {
   storageKey: string;
   fallbackColor?: string;
   padding?: number;
-  onPlacementChange?: (p: 'above' | 'below') => void;
   canFavorite?: boolean;
   canCustomColor?: boolean;
 }
@@ -31,17 +30,14 @@ const ColorPickerPortal = ({
   storageKey,
   fallbackColor = '#000000',
   padding = 8,
-  onPlacementChange,
   canFavorite = true,
   canCustomColor = true,
 }: ColorPickerPortalProps) => {
   const [inputMode, setInputMode] = useState<'hex' | 'rgb' | 'hsl'>('hex');
   const popupRef = useRef<HTMLDivElement>(null);
   const { style: popupStyle, placement } = useSmartPopupStyle(position, popupRef, padding);
-
-  useEffect(() => {
-    if (position) onPlacementChange?.(placement);
-  }, [placement, position, onPlacementChange]);
+  const isLeft = placement === 'left';
+  const isAbove = placement === 'above';
 
   const [favorites, setFavorites] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); }
@@ -78,27 +74,48 @@ const ColorPickerPortal = ({
     <AnimatePresence>
       {position && (
       <>
-      <div className="fixed inset-0" onClick={onClose} />
+      {!isLeft && <div className="fixed inset-0" onClick={onClose} />}
       <motion.div
         ref={popupRef}
-        className={`fixed overflow-hidden border border-(--line) ${placement === 'above' ? 'border-b-0' : 'border-t-0'}`}
+        className={clsx(
+          'fixed',
+          isLeft
+            ? 'z-3 overflow-y-auto glass-popup'
+            : clsx('border border-(--line) overflow-hidden', isAbove ? 'border-b-0' : 'border-t-0'),
+        )}
         style={{
           ...popupStyle,
-          background: 'transparent',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderRadius: placement === 'above' ? '1rem 1rem 0 0' : '0 0 1rem 1rem',
-          clipPath: placement === 'above' ? 'inset(0 round 1rem 1rem 0 0)' : 'inset(0 round 0 0 1rem 1rem)',
-          transformOrigin: placement === 'above' ? 'center bottom' : 'center top',
+          ...(isLeft
+            // Surface comes from .glass-popup (identical to the panel); only the seam here.
+            ? { borderRadius: '1rem 0 0 1rem', borderRightWidth: 0 }
+            : {
+                background: 'transparent',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                borderRadius: isAbove ? '1rem 1rem 0 0' : '0 0 1rem 1rem',
+                clipPath: isAbove ? 'inset(0 round 1rem 1rem 0 0)' : 'inset(0 round 0 0 1rem 1rem)',
+                transformOrigin: isAbove ? 'center bottom' : 'center top',
+              }),
         }}
-        initial={{ opacity: 0, scale: 0.97, y: placement === 'above' ? 12 : -12 }}
-        animate={{ opacity: 1, scale: 1, y: placement === 'above' ? 20 : -20 }}
-        exit={{ opacity: 0, scale: 0.97, y: placement === 'above' ? 12 : -12, transition: { duration: 0.1 } }}
-        transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+        {...(isLeft
+          ? {
+              // Fade + slide out of the panel's left edge — matches the More panel's motion.
+              // y:-50% pairs with top:50% (from useSmartPopupStyle) to centre exactly like the panel.
+              initial: { opacity: 0, x: '100%', y: '-50%' },
+              animate: { opacity: 1, x: 0, y: '-50%' },
+              exit: { opacity: 0, x: '100%', y: '-50%', transition: { duration: 0.18 } },
+              transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
+            }
+          : {
+              initial: { opacity: 0, scale: 0.97, y: isAbove ? 12 : -12 },
+              animate: { opacity: 1, scale: 1, y: isAbove ? 20 : -20 },
+              exit: { opacity: 0, scale: 0.97, y: isAbove ? 12 : -12, transition: { duration: 0.1 } },
+              transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
+            })}
         onMouseDown={(e) => { if (!(e.target instanceof HTMLInputElement)) e.preventDefault(); }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={`p-2 flex flex-col gap-1 ${placement === 'above' ? 'pb-7' : 'pt-7'}`}>
+        <div className={`p-2 flex flex-col gap-1 ${isLeft ? '' : isAbove ? 'pb-7' : 'pt-7'}`}>
           <div className="flex flex-wrap gap-1">
             {presets.map(({ label, value }) => (
               <button

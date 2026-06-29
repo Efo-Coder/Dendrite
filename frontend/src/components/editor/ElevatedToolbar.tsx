@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useMagicHover } from '../../hooks/useMagicHover';
 import { motion, AnimatePresence } from 'motion/react';
-import { useSmartPopupStyle, type PopupAnchor } from '../../hooks/useSmartPopupStyle';
+import { useSmartPopupStyle, type PopupAnchor, type PopupPlacement } from '../../hooks/useSmartPopupStyle';
 import { createPortal } from 'react-dom';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { CODE_LANGUAGE_FRIENDLY_NAME_MAP, getLanguageFriendlyName } from '@lexical/code';
@@ -11,11 +11,12 @@ import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   IndentIncrease, IndentDecrease, ChevronRight,
   Type, Palette, ListChevronsUpDown,
-  List, ListOrdered, ListChecks, ClockCheck, Quote, CodeXml, X,
+  List, ListOrdered, ListChecks, Quote, CodeXml, X,
   Superscript, Subscript,
 } from 'lucide-react';
 import clsx from 'clsx';
 import ColorPickerPortal from './ColorPickerPortal';
+import { Icons } from '../ui/Icons';
 import { useToolbarStateContext } from './ToolbarStateContext';
 import { useFloatingToolbarPosition } from './useFloatingToolbarPosition';
 import {
@@ -109,8 +110,9 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
 
   const isInCode = blockType === 'code';
 
-  // Slightly softer border than the shared popupCls — matches the floating bar
-  const popupCls = (placement: 'above' | 'below', extra = '') => clsx(
+  // Slightly softer border than the shared popupCls — matches the floating bar.
+  // The bar never docks to the side, so 'left' never reaches here.
+  const popupCls = (placement: PopupPlacement, extra = '') => clsx(
     'fixed overflow-hidden z-3',
     'border border-[color-mix(in_srgb,var(--line)_50%,transparent)]',
     placement === 'above' ? 'border-b-0' : 'border-t-0',
@@ -228,7 +230,7 @@ export default function ElevatedToolbar({ disabled = false }: ElevatedToolbarPro
       {btn(
         (_e) => openTimerModal(),
         canAccess(user?.plan, 'timerChecklist') ? 'Timer checklist' : 'Timer checklist — Writer plan required',
-        <ClockCheck className="w-4 h-4" />,
+        <Icons.timerCheckbox className="w-4 h-4" />,
         blockType === 'timer-checkbox' || showTimerModal,
         !canAccess(user?.plan, 'timerChecklist'),
       )}

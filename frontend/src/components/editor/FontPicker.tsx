@@ -29,8 +29,6 @@ const FontPicker = () => {
   return createPortal(
     <AnimatePresence>
       {fontPickerPos && (
-      <>
-      <div className="fixed inset-0" onClick={() => setFontPickerPos(null)} />
       <motion.div
         ref={ref}
         className={clsx(popupCls(placement, popupPad(placement, '1', '4')), 'magic-hover')}
@@ -107,7 +105,7 @@ const FontPicker = () => {
           )}
         </div>
       </motion.div>
-      </>)}
+      )}
     </AnimatePresence>,
     getModalPortalRoot()
   );

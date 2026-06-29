@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import clsx from 'clsx';
 import {
   SiJavascript, SiTypescript, SiPython, SiRust, SiSwift,
@@ -51,42 +51,49 @@ export const isPickerActive = (value: string, current: string, defaultValue: str
 export const isToolbarActive = (pickerOpen: boolean, current = '', defaultValue = '') =>
   pickerOpen || (!!current && current !== defaultValue);
 
-// Horizontal strip that converts vertical wheel input into horizontal scrolling
-export const HScrollRow: React.FC<{ className?: string; children: React.ReactNode }> = ({ className, children }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const handler = (e: WheelEvent) => {
-      e.preventDefault();
-      el.scrollLeft += e.deltaY;
-    };
-    el.addEventListener('wheel', handler, { passive: false });
-    return () => el.removeEventListener('wheel', handler);
-  }, []);
-  return <div ref={ref} className={className}>{children}</div>;
-};
-
-export const popupCls = (placement: 'above' | 'below', extra = '') =>
+export const popupCls =(placement: 'above' | 'below' | 'left', extra = '') =>
   clsx(
-    'fixed overflow-hidden z-3',
-    'border border-(--line)',
-    placement === 'above' ? 'border-b-0' : 'border-t-0',
+    'fixed',
+    // Side popups reuse the More panel's surface (.glass-popup) so they match it exactly, and
+    // sit behind the panel (z-3) but above the editor. Bar popups keep the bordered glass look.
+    placement === 'left' ? 'z-3 overflow-y-auto glass-popup' : 'z-3 overflow-hidden border border-(--line)',
+    placement === 'above' ? 'border-b-0' : placement === 'below' ? 'border-t-0' : '',
     extra,
   );
 
-export const getPopupStyle = (placement: 'above' | 'below'): React.CSSProperties => ({
-  background: 'transparent',
-  backdropFilter: 'blur(16px)',
-  WebkitBackdropFilter: 'blur(16px)',
-  borderRadius: placement === 'above' ? '1rem 1rem 0 0' : '0 0 1rem 1rem',
-  clipPath: placement === 'above' ? 'inset(-1px round 1rem 1rem 0 0)' : 'inset(-1px round 0 0 1rem 1rem)',
-});
+export const getPopupStyle = (placement: 'above' | 'below' | 'left'): React.CSSProperties => {
+  if (placement === 'left') {
+    return {
+      // Surface (bg/blur/border/shadow) comes from .glass-popup — identical to the panel.
+      // Here only the seam: round the outer (left) corners, square + borderless on the right.
+      borderRadius: '1rem 0 0 1rem',
+      borderRightWidth: 0,
+    };
+  }
+  return {
+    background: 'transparent',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    borderRadius: placement === 'above' ? '1rem 1rem 0 0' : '0 0 1rem 1rem',
+    clipPath: placement === 'above' ? 'inset(-1px round 1rem 1rem 0 0)' : 'inset(-1px round 0 0 1rem 1rem)',
+  };
+};
 
-export const popupPad = (placement: 'above' | 'below', near = '2', far = '6') =>
-  placement === 'above' ? `pt-${near} pb-${far}` : `pb-${near} pt-${far}`;
+export const popupPad = (placement: 'above' | 'below' | 'left', near = '2', far = '6') =>
+  placement === 'left' ? 'py-1.5'
+    : placement === 'above' ? `pt-${near} pb-${far}` : `pb-${near} pt-${far}`;
 
-export const popupMotion = (placement: 'above' | 'below') => {
+export const popupMotion = (placement: 'above' | 'below' | 'left') => {
+  if (placement === 'left') {
+    // Fade + slide out of the panel's left edge. The popup sits behind the panel, so the
+    // slide reads as it emerging from underneath. Matches the More panel's timing.
+    return {
+      initial: { opacity: 0, x: '100%', y: '-50%' },
+      animate: { opacity: 1, x: 0, y: '-50%' },
+      exit: { opacity: 0, x: '100%', y: '-50%', transition: { duration: 0.18 } },
+      transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
+    };
+  }
   const dock  = placement === 'above' ?  16 : -16;
   const enter = dock + 8;
   return {
