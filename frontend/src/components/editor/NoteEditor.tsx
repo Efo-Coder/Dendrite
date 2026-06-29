@@ -287,6 +287,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
     ...(!isInTrash ? [
       { icon: <ImagePlus className="w-4 h-4" />, label: 'Add cover', onClick: () => setCoverTarget({ kind: 'note', id: note.id }) },
       { icon: <Paperclip className="w-4 h-4" />, label: 'Attachments', onClick: () => setShowAttachments(v => !v) },
+      { icon: <AlarmClock className="w-4 h-4" />, label: 'Set a reminder', onClick: () => setShowReminderModal(true) },
     ] : []),
     ...(!isInTrash && note.userId === user?.id ? [
       { icon: <Globe className="w-4 h-4" />, label: 'Publish', onClick: () => setShowPublishModal(true) },
@@ -410,17 +411,6 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
                       : <><span className="editor-save-dot" /> Saved</>
                     }
                   </span>
-                )}
-                {!isInTrash && (
-                  <button
-                    type="button"
-                    onClick={() => setShowReminderModal(true)}
-                    onMouseEnter={onRightEnter} onMouseLeave={onRightLeave}
-                    className="icon-btn-md rounded-lg transition-colors"
-                    title="Set a reminder"
-                  >
-                    <AlarmClock className="w-3.5 h-3.5" />
-                  </button>
                 )}
                 <button
                   ref={moreBtnRef}

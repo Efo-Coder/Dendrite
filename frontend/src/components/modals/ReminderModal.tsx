@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
-import { AlarmClock, Trash2, Repeat } from 'lucide-react';
+import { AlarmClock, Trash2, Repeat, Calendar, Clock, Check } from 'lucide-react';
 import Modal from './Modal';
 import { MagicInput } from '../ui/MagicInput';
+import AnchoredDropdown from '../ui/AnchoredDropdown';
+import ReminderCalendar from './ReminderCalendar';
+import ReminderTimePicker from './ReminderTimePicker';
+import { formatTimeLabel } from '../../lib/reminderTime';
 import { Reminder, Recurrence } from '../../types';
 import { reminderService } from '../../services/reminder.service';
 import { useToast } from '../ui/ToastContainer';
@@ -30,6 +34,49 @@ function inOneHour(): Date {
   return new Date(Date.now() + 60 * 60 * 1000);
 }
 
+interface Option {
+  value: string;
+  label: string;
+}
+
+const todayDay = (): string => toLocalInputValue(new Date()).slice(0, 10);
+
+function formatDayLabel(day: string): string {
+  const d = new Date(`${day}T00:00`);
+  if (Number.isNaN(d.getTime())) return day;
+  return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+// Selected option scrolls itself into the visible range when the menu mounts.
+const scrollSelectedIntoView = (el: HTMLButtonElement | null) => el?.scrollIntoView({ block: 'nearest' });
+
+interface DropdownListProps {
+  options: Option[];
+  value: string;
+  onPick: (value: string) => void;
+}
+
+const DropdownList = ({ options, value, onPick }: DropdownListProps) => (
+  <div className="flex flex-col gap-0.5 p-1.5 max-h-56 overflow-y-auto">
+    {options.map((o) => {
+      const active = o.value === value;
+      return (
+        <button
+          key={o.value}
+          type="button"
+          ref={active ? scrollSelectedIntoView : undefined}
+          onClick={() => onPick(o.value)}
+          className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-left transition-colors hover:bg-(--surface-hi)"
+          style={{ color: active ? 'var(--accent)' : 'var(--ink-mid)' }}
+        >
+          <span className="truncate">{o.label}</span>
+          {active && <Check className="w-3.5 h-3.5 shrink-0" />}
+        </button>
+      );
+    })}
+  </div>
+);
+
 const ReminderModal = ({ isOpen, onClose, noteId }: ReminderModalProps) => {
   const toast = useToast();
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -48,7 +95,12 @@ const ReminderModal = ({ isOpen, onClose, noteId }: ReminderModalProps) => {
     reminderService.list(noteId).then(setReminders).catch(() => {});
   }, [isOpen, noteId]);
 
-  // Quick presets just seed the datetime-local field; the field stays the source of truth.
+  // remindAt stays the single 'YYYY-MM-DDTHH:mm' source of truth; the dropdowns and
+  // presets each edit one slice of it.
+  const datePart = remindAt.slice(0, 10);
+  const timePart = remindAt.slice(11, 16);
+  const setDay = (day: string) => setRemindAt(`${day}T${timePart}`);
+  const setTime = (time: string) => setRemindAt(`${datePart}T${time}`);
   const applyPreset = (date: Date) => setRemindAt(toLocalInputValue(date));
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -131,27 +183,67 @@ const ReminderModal = ({ isOpen, onClose, noteId }: ReminderModalProps) => {
             <button type="button" className="px-2.5 py-1 rounded-full border border-(--line) text-xs text-(--ink-mid) transition-colors hover:bg-(--surface-hi) hover:text-(--ink)" onClick={() => applyPreset(new Date(Date.now() + 3 * 60 * 60 * 1000))}>In 3 hours</button>
             <button type="button" className="px-2.5 py-1 rounded-full border border-(--line) text-xs text-(--ink-mid) transition-colors hover:bg-(--surface-hi) hover:text-(--ink)" onClick={() => applyPreset(tomorrowMorning)}>Tomorrow 9:00</button>
           </div>
-          <input
-            type="datetime-local"
-            value={remindAt}
-            onChange={(e) => setRemindAt(e.target.value)}
-            className="modal-input"
-            min={toLocalInputValue(new Date())}
-          />
+          <div className="flex gap-2">
+            <AnchoredDropdown
+              aria-label="Pick a date"
+              buttonClassName="grow text-sm"
+              popupWidth={248}
+              label={() => (
+                <span className="flex items-center gap-2 truncate">
+                  <Calendar className="w-3.5 h-3.5 shrink-0 text-(--ink-dim)" />
+                  <span className="truncate">{formatDayLabel(datePart)}</span>
+                </span>
+              )}
+            >
+              {(close) => (
+                <ReminderCalendar
+                  value={datePart}
+                  min={todayDay()}
+                  onSelect={(day) => { setDay(day); close(); }}
+                />
+              )}
+            </AnchoredDropdown>
+
+            <AnchoredDropdown
+              aria-label="Pick a time"
+              buttonClassName="shrink-0 w-32 text-sm"
+              label={() => (
+                <span className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 shrink-0 text-(--ink-dim)" />
+                  {formatTimeLabel(timePart)}
+                </span>
+              )}
+            >
+              {(close) => (
+                <ReminderTimePicker
+                  value={timePart}
+                  onPick={(time) => { setTime(time); close(); }}
+                />
+              )}
+            </AnchoredDropdown>
+          </div>
         </div>
 
         <div className="modal-field" style={{ marginTop: '12px' }}>
-          <label htmlFor="reminder-recurrence" className="modal-label">Repeat</label>
-          <select
-            id="reminder-recurrence"
-            value={recurrence}
-            onChange={(e) => setRecurrence(e.target.value as Recurrence)}
-            className="modal-input"
+          <label className="modal-label">Repeat</label>
+          <AnchoredDropdown
+            aria-label="Repeat interval"
+            buttonClassName="w-full text-sm"
+            label={() => (
+              <span className="flex items-center gap-2">
+                <Repeat className="w-3.5 h-3.5 shrink-0 text-(--ink-dim)" />
+                {RECURRENCE_LABELS[recurrence]}
+              </span>
+            )}
           >
-            {(Object.keys(RECURRENCE_LABELS) as Recurrence[]).map(r => (
-              <option key={r} value={r}>{RECURRENCE_LABELS[r]}</option>
-            ))}
-          </select>
+            {(close) => (
+              <DropdownList
+                options={(Object.keys(RECURRENCE_LABELS) as Recurrence[]).map((r) => ({ value: r, label: RECURRENCE_LABELS[r] }))}
+                value={recurrence}
+                onPick={(r) => { setRecurrence(r as Recurrence); close(); }}
+              />
+            )}
+          </AnchoredDropdown>
         </div>
 
         <div className="modal-form-ft">
