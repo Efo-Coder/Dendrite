@@ -18,6 +18,12 @@ const PLAN_NAMES: Record<string, string> = {
   author: 'author',
 };
 
+// Writer is a recurring subscription; Author is a one-time "pay once, own it" purchase.
+const PLAN_MODES: Record<string, Stripe.Checkout.SessionCreateParams.Mode> = {
+  writer: 'subscription',
+  author: 'payment',
+};
+
 export async function createCheckoutSession(req: AuthRequest, res: Response) {
   const userId = req.userId!;
   const { plan } = req.body as { plan: string };
@@ -36,7 +42,7 @@ export async function createCheckoutSession(req: AuthRequest, res: Response) {
   const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173';
 
   const session = await getStripe().checkout.sessions.create({
-    mode: 'subscription',
+    mode: PLAN_MODES[plan],
     payment_method_types: ['card'],
     line_items: [{ price: PRICE_IDS[plan], quantity: 1 }],
     customer_email: user.stripeCustomerId ? undefined : user.email,
@@ -45,6 +51,31 @@ export async function createCheckoutSession(req: AuthRequest, res: Response) {
     metadata: { plan },
     success_url: `${frontendUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${frontendUrl}/?canceled=1`,
+  });
+
+  res.json({ url: session.url });
+}
+
+// Stripe-hosted billing portal so subscribers can manage or cancel their plan.
+export async function createPortalSession(req: AuthRequest, res: Response) {
+  const userId = req.userId!;
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+
+  if (!user.stripeCustomerId) {
+    res.status(400).json({ error: 'No active subscription' });
+    return;
+  }
+
+  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173';
+
+  const session = await getStripe().billingPortal.sessions.create({
+    customer: user.stripeCustomerId,
+    return_url: `${frontendUrl}/dashboard`,
   });
 
   res.json({ url: session.url });
