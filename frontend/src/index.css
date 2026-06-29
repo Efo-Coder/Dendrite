@@ -935,6 +935,7 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
 .win .editor-meta .editor-bookmarks:hover:not(:disabled) .editor-bookmark { opacity: 0.7; }
 .win .editor-meta .editor-bookmark-add { display: inline-flex; align-items: center; background: none; border: none; padding: 0; color: var(--ink-dim); cursor: pointer; transition: color .12s; }
 .win .editor-meta .editor-bookmark-add:hover { color: var(--accent); }
+.win .editor-meta .editor-bookmark-group { display: inline-flex; align-items: center; gap: 12px; }
 /* Save status moved to the editor topbar; keep the editor-meta typo it used to inherit. */
 .win .editor-save-status { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--ink-dim); letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; }
 .win .editor-save-dot         { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: save-glow 2.4s ease-in-out infinite; }

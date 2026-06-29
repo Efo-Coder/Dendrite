@@ -309,14 +309,21 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         {note.bookmarks && note.bookmarks.length > 0 ? (
           <>
             <span className="editor-sep">·</span>
-            <button className="editor-bookmarks" onClick={() => !isInTrash && setShowBookmarkModal(true)} disabled={isInTrash} title="Manage bookmarks">
-              {note.bookmarks.map((b) => (
-                <span key={b.id} className="editor-bookmark" style={{ color: b.color }}>
-                  <Bookmark size={12} strokeWidth={2} />
-                  {b.name}
-                </span>
-              ))}
-            </button>
+            <span className="editor-bookmark-group">
+              <button className="editor-bookmarks" onClick={() => !isInTrash && setShowBookmarkModal(true)} disabled={isInTrash} title="Manage bookmarks">
+                {note.bookmarks.map((b) => (
+                  <span key={b.id} className="editor-bookmark" style={{ color: b.color }}>
+                    <Bookmark size={12} strokeWidth={2} />
+                    {b.name}
+                  </span>
+                ))}
+              </button>
+              {!isInTrash && note.bookmarks.length < 4 && (
+                <button className="editor-bookmark-add" onClick={() => setShowBookmarkModal(true)} title="Add bookmark">
+                  <BookmarkPlus size={14} strokeWidth={1.75} />
+                </button>
+              )}
+            </span>
           </>
         ) : !isInTrash ? (
           <>
