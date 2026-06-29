@@ -1,8 +1,6 @@
 import { useLayoutEffect } from 'react';
-import { useSettingsStore } from '../../store/useSettingsStore';
+import { useSettingsStore, DENSITY } from '../../store/useSettingsStore';
 import { injectFontLink } from '../../hooks/useGoogleFonts';
-
-const DENSITY = { compact: 0.85, regular: 1, comfy: 1.15 };
 
 interface ThemeProviderProps {
   children: React.ReactNode;

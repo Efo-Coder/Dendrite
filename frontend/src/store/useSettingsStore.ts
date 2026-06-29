@@ -8,6 +8,10 @@ export type ThemeMode = 'light' | 'dark';
 export type DensityId = 'compact' | 'regular' | 'comfy';
 export type CursorStyle = 'classic' | 'modern';
 
+// Density → spacing multiplier applied as the --density CSS var. Shared so the PDF
+// print route can reproduce the same factor as the live app.
+export const DENSITY: Record<DensityId, number> = { compact: 0.85, regular: 1, comfy: 1.15 };
+
 interface SettingsState {
   dateDisplayMode: DateDisplayMode;
   palette: PaletteId;

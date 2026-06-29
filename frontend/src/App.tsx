@@ -16,6 +16,7 @@ import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+import PrintNotePage from './pages/PrintNotePage';
 // Components
 import PrivateRoute from './components/ui/PrivateRoute';
 import { CookieConsent } from './components/ui/CookieConsent';
@@ -45,6 +46,8 @@ function RouterContent() {
         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
+        {/* Headless render target for the PDF exporter — auth via injected token, not PrivateRoute. */}
+        <Route path="/print/:noteId" element={<PrintNotePage />} />
 <Route
           path="/*"
           element={

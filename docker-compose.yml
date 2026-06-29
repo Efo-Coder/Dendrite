@@ -32,6 +32,9 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://dendrite:dendrite_secure_password@database:5432/dendrite_notes
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      # Puppeteer (in this container) loads the SPA's /print route from here to render PDFs.
+      # Service name in dendrite-network — localhost would point at the backend itself.
+      FRONTEND_URL: http://frontend:5173
     ports:
       - "3000:3000"
     volumes:

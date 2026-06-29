@@ -1437,6 +1437,64 @@ ol.editor-list-ol > li.editor-listitem:not(.editor-listitem-checked):not(.editor
   background: var(--surface-hi);
 }
 
+/* ─── PDF print route ──────────────────────────────────────────────────────────
+   /print/:id renders the note read-only for the headless PDF exporter. The editor
+   shell is built for an on-screen, fixed-width, internally-scrolling canvas; for
+   print we unwrap that so the note flows naturally across as many A4 pages as it
+   needs. Scoped to html[data-print] so the live app is untouched. */
+html[data-print],
+html[data-print] body,
+html[data-print] #root {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  background: var(--bg);
+}
+
+/* Flatten LexicalEditorWrapper's full-height flex chain (outer wrapper → @container).
+   The plugin children between them render null, so the container is the only element
+   child of the wrapper. */
+html[data-print] .print-root,
+html[data-print] .print-root > div,
+html[data-print] .print-root > div > div {
+  display: block;
+  height: auto;
+  min-height: 0;
+  flex: none;
+  overflow: visible;
+}
+
+/* Writing canvas: drop scrolling and the edge-fade masks; the page margin comes
+   from this padding (not page.pdf's @page margin, which lets the page background
+   bleed past it on the right/bottom) so the colored background fills the sheet
+   evenly with a symmetric text inset. */
+html[data-print] .editor-canvas {
+  overflow: visible;
+  height: auto;
+  flex: none;
+  padding: 18mm 16mm;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+html[data-print] .editor-canvas > div {
+  width: auto;
+  transform: none; /* cancel the mount slide-in so nothing is offset in the capture */
+}
+
+/* Chrome that isn't part of the note: the left line-fade gutter and the TOC column. */
+html[data-print] .editor-info-column,
+html[data-print] .editor-canvas ~ div {
+  display: none;
+}
+
+/* Don't slice media or blocks across a page break. */
+html[data-print] .editor-image,
+html[data-print] .editor-code,
+html[data-print] .editor-table,
+html[data-print] .editor-quote {
+  break-inside: avoid;
+}
+
 /* ══════════════════════════════════════════════════════════════════════════════
    THIRD-PARTY OVERRIDES
 ══════════════════════════════════════════════════════════════════════════════ */

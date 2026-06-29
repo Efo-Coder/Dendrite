@@ -21,7 +21,10 @@ function storeConsent() {
 }
 
 export function CookieConsent() {
-  const [visible, setVisible] = useState(() => !hasConsent());
+  // The /print route is a bare render target for the PDF exporter — no app chrome.
+  const [visible, setVisible] = useState(
+    () => !hasConsent() && !window.location.pathname.startsWith('/print'),
+  );
   const [shown, setShown] = useState(false);
   const [closing, setClosing] = useState(false);
 
