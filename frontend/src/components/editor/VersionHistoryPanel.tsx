@@ -3,7 +3,8 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useMagicHover } from '../../hooks/useMagicHover';
 import { NoteVersion } from '../../types';
 import { noteService } from '../../services/note.service';
-import { History, X, RotateCcw, Lock } from 'lucide-react';
+import { useUpgradeModal } from '../../store/useUpgradeModal';
+import { History, X, RotateCcw } from 'lucide-react';
 import clsx from 'clsx';
 
 interface VersionHistoryPanelProps {
@@ -52,6 +53,7 @@ export default function VersionHistoryPanel({ isOpen, onClose, noteId, userPlan,
     borderRadius: 9,
   });
 
+  const openUpgrade = useUpgradeModal((s) => s.open);
   const plan = (userPlan || 'free').toLowerCase();
   const limit = PLAN_LIMITS[plan] ?? 5;
 
@@ -145,10 +147,7 @@ export default function VersionHistoryPanel({ isOpen, onClose, noteId, userPlan,
                   </div>
 
                   {isLocked ? (
-                    <div className="shrink-0 flex items-center gap-1 text-[10px] text-(--accent) opacity-80 font-medium" style={{ fontFamily: 'var(--mono)', letterSpacing: '0.05em', background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '1px 4px', borderRadius: '3px', boxShadow: '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)' }}>
-                      <Lock className="w-3 h-3" />
-                      Writer
-                    </div>
+                    <button type="button" onClick={openUpgrade} className="badge-plan shrink-0 cursor-pointer">Writer</button>
                   ) : isConfirming ? (
                     <div className="shrink-0 flex items-center gap-1">
                       <button

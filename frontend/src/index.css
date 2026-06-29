@@ -1196,12 +1196,14 @@ html .auth-panel .input {
 }
 .modal-overlay .modal-input:focus { border-color: var(--accent); }
 .modal-overlay .modal-input::placeholder { color: var(--ink-dim); font-style: italic; }
+/* Compact primary-button look (gold ramp + dark ink) — same visual family as
+   .btn.primary, but a static pill: it labels a plan gate, it is not clickable. */
 .badge-plan {
-  font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--accent); opacity: 0.85;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  padding: 1px 4px; border-radius: 3px;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: var(--serif-display); font-size: 10px; font-weight: 600; letter-spacing: 0.03em;
+  line-height: 1; color: oklch(0.15 0.020 60);
+  background: linear-gradient(180deg, var(--ramp-accent));
+  padding: 3px 6px; border-radius: 4px;
 }
 
 .modal-overlay .modal-error {

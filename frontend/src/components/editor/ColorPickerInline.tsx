@@ -3,6 +3,7 @@ import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { Pipette, X, Plus } from 'lucide-react';
 import clsx from 'clsx';
 import { hexToRgb, rgbToHex, hexToHsl, hslToHex } from './colorUtils';
+import { useUpgradeModal } from '../../store/useUpgradeModal';
 
 interface ColorPickerInlineProps {
   color: string;
@@ -14,6 +15,7 @@ interface ColorPickerInlineProps {
 }
 
 const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favorites', presets = [], canFavorite = true, canCustomColor = true }: ColorPickerInlineProps) => {
+  const openUpgrade = useUpgradeModal((s) => s.open);
   const [inputMode, setInputMode] = useState<'hex' | 'rgb' | 'hsl'>('hex');
   const [favorites, setFavorites] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); }
@@ -72,7 +74,9 @@ const ColorPickerInline = ({ color, onChange, storageKey = 'dendrite-picker-favo
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
           <span className="modal-label">Favorites</span>
-          {!canFavorite && <span className="badge-plan">Writer</span>}
+          {!canFavorite && (
+            <button type="button" onClick={openUpgrade} className="badge-plan cursor-pointer">Writer</button>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-wrap min-h-6">
         {favorites.map((fav) => (

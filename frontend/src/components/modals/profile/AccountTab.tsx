@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import ConfirmAccountDeletionModal from '../ConfirmAccountDeletionModal';
-import UpgradePlansModal from '../UpgradePlansModal';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { useUpgradeModal } from '../../../store/useUpgradeModal';
 import { useToast } from '../../ui/ToastContainer';
 import { getApiErrorMessage } from '../../../lib/apiError';
 import api from '../../../services/api';
@@ -21,12 +21,12 @@ const PLAN_BLURBS: Record<string, string> = {
 
 const AccountTab = () => {
   const { user, deleteAccount } = useAuthStore();
+  const openUpgrade = useUpgradeModal((s) => s.open);
   const toast = useToast();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [showPlans, setShowPlans] = useState(false);
 
   const plan = (user?.plan || 'free').toLowerCase();
 
@@ -57,7 +57,7 @@ const AccountTab = () => {
       <div className="settings-row">
         <div className="lbl">Current plan<small>{PLAN_BLURBS[plan]}</small></div>
         <button
-          onClick={() => setShowPlans(true)}
+          onClick={openUpgrade}
           type="button"
           className="transition-opacity hover:opacity-80 cursor-pointer"
           style={{
@@ -107,12 +107,6 @@ const AccountTab = () => {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteAccount}
         isLoading={deleteLoading}
-      />
-
-      <UpgradePlansModal
-        isOpen={showPlans}
-        currentPlan={plan}
-        onClose={() => setShowPlans(false)}
       />
     </>
   );

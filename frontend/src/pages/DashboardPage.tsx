@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNoteStore } from '../store/useNoteStore';
+import { useUpgradeModal } from '../store/useUpgradeModal';
 import { noteService } from '../services/note.service';
 import { Note } from '../types';
 import { PAGE_FADE } from '../lib/pageMotion';
@@ -18,6 +19,7 @@ import NotesView, { type NoteCategory } from './NotesView';
 import { Folder } from '../types';
 import ExploreView from './ExploreView';
 import ProfileView from './ProfileView';
+import UpgradePlansModal from '../components/modals/UpgradePlansModal';
 
 // The constellations view pulls in three/R3F; load it only when opened so the
 // heavy WebGL bundle never weighs down the rest of the app.
@@ -37,6 +39,8 @@ interface ContainerRef {
 // folder and inline-editor views, switched via AppSidebar and card clicks.
 const DashboardPage = () => {
   const user = useAuthStore((s) => s.user);
+  const upgradeOpen = useUpgradeModal((s) => s.isOpen);
+  const closeUpgrade = useUpgradeModal((s) => s.close);
   const currentNote = useNoteStore((s) => s.currentNote);
   const setCurrentNote = useNoteStore((s) => s.setCurrentNote);
   // Restore the last view/drill-path/open-note from the previous page load.
@@ -275,6 +279,12 @@ const DashboardPage = () => {
           )}
         </div>
       </div>
+
+      <UpgradePlansModal
+        isOpen={upgradeOpen}
+        currentPlan={(user?.plan || 'free').toLowerCase()}
+        onClose={closeUpgrade}
+      />
       </RenameProvider>
     </motion.div>
   );

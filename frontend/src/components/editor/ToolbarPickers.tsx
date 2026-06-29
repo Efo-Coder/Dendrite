@@ -8,6 +8,7 @@ import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { useMagicHover } from '../../hooks/useMagicHover';
 import { useSmartPopupStyle } from '../../hooks/useSmartPopupStyle';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useUpgradeModal } from '../../store/useUpgradeModal';
 import { canAccess } from '../../lib/planFeatures';
 import { Icons } from '../ui/Icons';
 import { useToolbarStateContext } from './ToolbarStateContext';
@@ -193,6 +194,7 @@ export const ChecklistDropdown = () => {
     blockType, formatCheckList, openTimerModal,
   } = useToolbarStateContext();
   const { user } = useAuthStore();
+  const openUpgrade = useUpgradeModal((s) => s.open);
   const ref = useRef<HTMLDivElement>(null);
   const { style, placement } = useSmartPopupStyle(checklistDropdownPos, ref, 0);
 
@@ -217,16 +219,12 @@ export const ChecklistDropdown = () => {
           const canTimer = canAccess(user?.plan, 'timerChecklist');
           return (
             <button
-              onClick={canTimer ? () => { setChecklistDropdownPos(null); openTimerModal(); } : undefined}
-              className={pickerItemCls(blockType === 'timer-checkbox', clsx('flex items-center gap-2 px-3 w-full', !canTimer && 'cursor-not-allowed'))}
+              onClick={() => { setChecklistDropdownPos(null); (canTimer ? openTimerModal : openUpgrade)(); }}
+              className={pickerItemCls(blockType === 'timer-checkbox', 'flex items-center gap-2 px-3 w-full')}
             >
               <Icons.timerCheckbox className={clsx('w-4 h-4 shrink-0', !canTimer && 'opacity-40')} />
               <span className={clsx('flex-1', !canTimer && 'opacity-40')}>Timer-Checkbox</span>
-              {!canTimer && (
-                <span style={{ fontSize: '9px', fontFamily: 'var(--mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', opacity: 0.85, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', padding: '1px 4px', borderRadius: '3px', boxShadow: '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)' }}>
-                  Writer
-                </span>
-              )}
+              {!canTimer && <span className="badge-plan">Writer</span>}
             </button>
           );
         })()}

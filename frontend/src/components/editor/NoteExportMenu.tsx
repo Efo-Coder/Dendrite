@@ -5,6 +5,7 @@ import { Share2, Download, Copy, Users, ArrowLeft } from 'lucide-react';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { canAccess, requiredPlan } from '../../lib/planFeatures';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useUpgradeModal } from '../../store/useUpgradeModal';
 import { useSettingsStore, PaletteId } from '../../store/useSettingsStore';
 import { PALETTES } from '../../config/palettes';
 import { useToast } from '../ui/ToastContainer';
@@ -35,6 +36,9 @@ const NoteExportMenu = ({
   panelRef,
 }: NoteExportMenuProps) => {
   const { user } = useAuthStore();
+  const openUpgrade = useUpgradeModal((s) => s.open);
+  // Plan-gated rows open the upgrade modal instead of acting; close this menu first.
+  const onLockedClick = () => { onClose(); openUpgrade(); };
   // Editor appearance is sent along so the PDF matches what the user sees; theme is
   // chosen per-export (defaults to light), the rest mirror the live settings.
   const { palette: userPalette, font, fontSize, density } = useSettingsStore();
@@ -198,31 +202,14 @@ const NoteExportMenu = ({
         const canPdf = canAccess(user?.plan, 'pdfExport');
         const canCopy = canAccess(user?.plan, 'copyMarkdown');
         const badge = (feature: Parameters<typeof requiredPlan>[0]) => (
-          <span
-            style={{
-              fontSize: '9px',
-              fontFamily: 'var(--mono)',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase' as const,
-              color: 'var(--accent)',
-              opacity: 0.85,
-              background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
-              padding: '0px 4px',
-              borderRadius: '3px',
-              marginLeft: 'auto',
-              boxShadow: '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)',
-            }}
-          >
-            {requiredPlan(feature)}
-          </span>
+          <span className="badge-plan ml-auto">{requiredPlan(feature)}</span>
         );
 
         return (
           <>
             <button
-              onClick={canMd ? handleExportMarkdown : undefined}
-              disabled={!canMd}
-              className={`w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors${canMd ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}
+              onClick={canMd ? handleExportMarkdown : onLockedClick}
+              className="w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors hover:bg-(--surface-hi)"
             >
               <Download className={`w-4 h-4 shrink-0${!canMd ? ' opacity-40' : ''}`} />
               <span className={`flex-1 text-left${!canMd ? ' opacity-40' : ''}`}>
@@ -231,9 +218,8 @@ const NoteExportMenu = ({
               {!canMd && badge('markdownExport')}
             </button>
             <button
-              onClick={canHtml ? handleExportHtml : undefined}
-              disabled={!canHtml}
-              className={`w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors${canHtml ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}
+              onClick={canHtml ? handleExportHtml : onLockedClick}
+              className="w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors hover:bg-(--surface-hi)"
             >
               <Download className={`w-4 h-4 shrink-0${!canHtml ? ' opacity-40' : ''}`} />
               <span className={`flex-1 text-left${!canHtml ? ' opacity-40' : ''}`}>
@@ -242,9 +228,8 @@ const NoteExportMenu = ({
               {!canHtml && badge('htmlExport')}
             </button>
             <button
-              onClick={canPdf ? () => setShowPdfOptions(true) : undefined}
-              disabled={!canPdf}
-              className={`w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors${canPdf ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}
+              onClick={canPdf ? () => setShowPdfOptions(true) : onLockedClick}
+              className="w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors hover:bg-(--surface-hi)"
             >
               <Download className={`w-4 h-4 shrink-0${!canPdf ? ' opacity-40' : ''}`} />
               <span className={`flex-1 text-left${!canPdf ? ' opacity-40' : ''}`}>
@@ -253,9 +238,8 @@ const NoteExportMenu = ({
               {!canPdf && badge('pdfExport')}
             </button>
             <button
-              onClick={canCopy ? handleCopyMarkdown : undefined}
-              disabled={!canCopy}
-              className={`w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors${canCopy ? ' hover:bg-(--surface-hi)' : ' cursor-not-allowed'}`}
+              onClick={canCopy ? handleCopyMarkdown : onLockedClick}
+              className="w-full flex items-center gap-2.5 pl-3 pr-8 py-2 text-sm transition-colors hover:bg-(--surface-hi)"
             >
               <Copy className={`w-4 h-4 shrink-0${!canCopy ? ' opacity-40' : ''}`} />
               <span className={`flex-1 text-left${!canCopy ? ' opacity-40' : ''}`}>
