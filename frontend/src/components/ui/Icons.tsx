@@ -47,8 +47,8 @@ export const Icons = {
       <path d="M13 12h8" />
       <path d="M13 19h8" />
       <path d="m3 7 2 2 4-4" />
-      <circle cx="6" cy="17" r="3" />
-      <path d="M6 15v2h2" />
+      <circle cx="6" cy="17" r="3" strokeWidth={1.2} />
+      <path d="M6 15v2h2" strokeWidth={1.2} />
     </svg>
   ),
 }
