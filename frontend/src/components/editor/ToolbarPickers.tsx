@@ -23,7 +23,7 @@ export const HeadingPicker = () => {
   const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref });
 
   return (
-    <SubPopup anchor={headingPickerPos} onClose={() => setHeadingPickerPos(null)} variant="glass" closeOnOutside={false} className="magic-hover" popupRef={ref}>
+    <SubPopup anchor={headingPickerPos} onClose={() => setHeadingPickerPos(null)} closeOnOutside={false} className="magic-hover" popupRef={ref}>
       {Indicator}
       <div className="flex flex-col px-1">
         {blockType.startsWith('h') && (
@@ -56,7 +56,7 @@ export const CodeLangPicker = () => {
   const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref });
 
   return (
-    <SubPopup anchor={codeLangPickerPos} onClose={() => setCodeLangPickerPos(null)} variant="glass" closeOnOutside={false} className="magic-hover" popupRef={ref}>
+    <SubPopup anchor={codeLangPickerPos} onClose={() => setCodeLangPickerPos(null)} closeOnOutside={false} className="magic-hover" popupRef={ref}>
       {Indicator}
       <div className="flex flex-col px-1">
         <button
@@ -94,7 +94,7 @@ export const FontSizePicker = () => {
   const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref });
 
   return (
-    <SubPopup anchor={fontSizePos} onClose={() => setFontSizePos(null)} variant="glass" closeOnOutside={false} className="magic-hover" popupRef={ref}>
+    <SubPopup anchor={fontSizePos} onClose={() => setFontSizePos(null)} closeOnOutside={false} className="magic-hover" popupRef={ref}>
       {Indicator}
       <div className="flex flex-col px-1">
         {FONT_SIZES.map((size) => (
@@ -118,7 +118,7 @@ export const LineHeightPicker = () => {
   const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref });
 
   return (
-    <SubPopup anchor={lineHeightPickerPos} onClose={() => setLineHeightPickerPos(null)} variant="glass" closeOnOutside={false} className="magic-hover" popupRef={ref}>
+    <SubPopup anchor={lineHeightPickerPos} onClose={() => setLineHeightPickerPos(null)} closeOnOutside={false} className="magic-hover" popupRef={ref}>
       {Indicator}
       <div className="flex flex-col px-1">
         {LINE_HEIGHTS.map((value) => (
@@ -145,7 +145,7 @@ export const ChecklistDropdown = () => {
   const openUpgrade = useUpgradeModal((s) => s.open);
 
   return (
-    <SubPopup anchor={checklistDropdownPos} onClose={() => setChecklistDropdownPos(null)} variant="glass" closeOnOutside={false}>
+    <SubPopup anchor={checklistDropdownPos} onClose={() => setChecklistDropdownPos(null)} closeOnOutside={false}>
       <button
         onClick={() => { formatCheckList(); setChecklistDropdownPos(null); }}
         className={pickerItemCls(blockType === 'check', 'flex items-center gap-2 px-3 w-full')}

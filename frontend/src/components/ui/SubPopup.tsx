@@ -1,75 +1,49 @@
 import {
-  useCallback, useEffect, useLayoutEffect, useRef, useState,
+  useCallback, useEffect, useRef,
   type CSSProperties, type MutableRefObject, type ReactNode, type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import clsx from 'clsx';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
-import {
-  useSmartPopupStyle, type PopupAnchor, type PopupDirection, type PopupPlacement,
-} from '../../hooks/useSmartPopupStyle';
+import { useSmartPopupStyle, type PopupAnchor, type PopupDirection } from '../../hooks/useSmartPopupStyle';
 import { popupCls, popupPad, popupMotion, getPopupStyle } from '../editor/toolbarPopupUtils';
 
-// One sticky sub-popup for the whole app: portalled, glued to its anchor, with a
-// configurable opening direction and optional smart flipping. Callers pass either a
-// pre-measured `anchor` (e.g. computed on click) or an `anchorEl` ref the popup
-// measures itself — the latter enables `track` (re-measure on scroll/resize).
-export type SubPopupVariant = 'glass' | 'bordered' | 'plain';
-
+// One sticky sub-popup for the editor toolbars: portalled, glued to its anchor box, with a
+// configurable opening direction and optional smart flipping. The anchor is pre-measured by
+// the caller (e.g. on click); when it carries `dockSide` the popup mirrors a side panel
+// (see useSmartPopupStyle). Surface is the shared glass look from toolbarPopupUtils.
 interface SubPopupProps {
-  // Visibility. Optional in anchor-mode (derived from `anchor != null`); required when
-  // using `anchorEl`, since a ref is always present.
-  open?: boolean;
+  anchor: PopupAnchor | null;
   onClose: () => void;
-  anchor?: PopupAnchor | null;
-  anchorEl?: RefObject<HTMLElement | null>;
   direction?: PopupDirection;
   smart?: boolean;
-  track?: boolean;
-  variant?: SubPopupVariant;
-  width?: number;
   padding?: number;
-  // glass-only look overrides: half-transparent border (matches the floating bar) and
-  // the inner [near, far] padding scale handed to popupPad.
+  // Half-transparent border (matches the floating bar) and the inner [near, far] padding
+  // scale passed to popupPad.
   softBorder?: boolean;
   glassPad?: [string, string];
+  // mousedown-outside + Escape close the popup. Off when closing is driven externally
+  // (e.g. the More panel owns its pickers).
   closeOnOutside?: boolean;
-  // Renders a click-catching overlay behind the popup that closes it (and swallows the
-  // click). Use instead of closeOnOutside when the click must not also hit the editor.
+  // Click-catching overlay behind the popup that closes it (and swallows the click).
   backdrop?: boolean;
-  // Cascading menus: clicks inside this element must not trigger the outside-close.
-  excludeRef?: RefObject<HTMLElement | null>;
   className?: string;
   children: ReactNode;
-  // Exposes the popup root so a parent menu can exclude it from its own outside-click.
+  // Exposes the popup root (e.g. so useMagicHover can attach to it).
   popupRef?: RefObject<HTMLDivElement | null>;
 }
 
-// Non-glass variants fade + slide a few px out of the anchor's direction.
-const ENTER_OFFSET: Record<PopupPlacement, { x?: number; y?: number }> = {
-  above: { y: 6 },
-  below: { y: -6 },
-  left: { x: 6 },
-  right: { x: -6 },
-};
-
 const SubPopup = ({
-  open,
-  onClose,
   anchor,
-  anchorEl,
+  onClose,
   direction = 'bottom',
   smart = true,
-  track = false,
-  variant = 'bordered',
-  width,
   padding = 8,
   softBorder = false,
   glassPad,
   closeOnOutside = true,
   backdrop = false,
-  excludeRef,
   className,
   children,
   popupRef,
@@ -83,45 +57,13 @@ const SubPopup = ({
     [popupRef],
   );
 
-  const isOpen = open ?? anchor != null;
-
-  // Element-anchored mode measures the trigger itself; `track` keeps it glued on scroll/resize.
-  const [measured, setMeasured] = useState<PopupAnchor | null>(null);
-  const measure = useCallback(() => {
-    const el = anchorEl?.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    setMeasured({ x: r.left + r.width / 2, top: r.top, bottom: r.bottom, left: r.left, width: r.width });
-  }, [anchorEl]);
-
-  useLayoutEffect(() => {
-    if (!anchorEl) return;
-    if (isOpen) measure();
-    else setMeasured(null);
-  }, [anchorEl, isOpen, measure]);
-
-  useEffect(() => {
-    if (!anchorEl || !isOpen || !track) return;
-    const onMove = () => measure();
-    window.addEventListener('resize', onMove);
-    // Capture phase so a scrolling modal body (not just window) keeps us pinned.
-    window.addEventListener('scroll', onMove, true);
-    return () => {
-      window.removeEventListener('resize', onMove);
-      window.removeEventListener('scroll', onMove, true);
-    };
-  }, [anchorEl, isOpen, track, measure]);
-
-  const resolvedAnchor = anchorEl ? measured : isOpen ? anchor ?? null : null;
-  const { style, placement } = useSmartPopupStyle(resolvedAnchor, innerRef, { padding, prefer: direction, smart });
+  const isOpen = anchor != null;
+  const { style, placement } = useSmartPopupStyle(anchor, innerRef, { padding, prefer: direction, smart });
 
   useEffect(() => {
     if (!isOpen || !closeOnOutside) return;
     const onDown = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (innerRef.current?.contains(t)) return;
-      if (anchorEl?.current?.contains(t)) return;
-      if (excludeRef?.current?.contains(t)) return;
+      if (innerRef.current?.contains(e.target as Node)) return;
       onClose();
     };
     const onKey = (e: KeyboardEvent) => {
@@ -133,44 +75,22 @@ const SubPopup = ({
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [isOpen, closeOnOutside, onClose, anchorEl, excludeRef]);
+  }, [isOpen, closeOnOutside, onClose]);
 
-  const motionProps =
-    variant === 'glass'
-      ? popupMotion(placement)
-      : {
-          initial: { opacity: 0, ...ENTER_OFFSET[placement] },
-          animate: { opacity: 1, x: 0, y: 0 },
-          exit: { opacity: 0, ...ENTER_OFFSET[placement], transition: { duration: 0.1 } },
-          transition: { duration: 0.16, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
-        };
-
-  const cls =
-    variant === 'glass'
-      ? clsx(popupCls(placement, popupPad(placement, glassPad?.[0], glassPad?.[1]), softBorder), className)
-      : variant === 'bordered'
-        ? clsx('fixed glass-popup rounded-xl shadow-lg overflow-hidden z-4', className)
-        : clsx('fixed', className);
-
-  const mergedStyle: CSSProperties = {
-    ...style,
-    ...(variant === 'glass' ? getPopupStyle(placement) : {}),
-    // bordered uses minWidth so content can grow; others take the width verbatim.
-    ...(width !== undefined ? (variant === 'bordered' ? { minWidth: width } : { width }) : {}),
-  };
+  const mergedStyle: CSSProperties = { ...style, ...getPopupStyle(placement) };
 
   return createPortal(
     <>
-      {backdrop && isOpen && resolvedAnchor && <div className="fixed inset-0" onClick={onClose} />}
+      {backdrop && isOpen && <div className="fixed inset-0" onClick={onClose} />}
       <AnimatePresence>
-        {isOpen && resolvedAnchor && (
+        {isOpen && (
           <motion.div
             ref={assignRef}
-            className={cls}
+            className={clsx(popupCls(placement, popupPad(placement, glassPad?.[0], glassPad?.[1]), softBorder), className)}
             style={mergedStyle}
-            // Glass popups live over the editor and must not steal the text selection.
-            onMouseDown={variant === 'glass' ? (e) => e.preventDefault() : undefined}
-            {...motionProps}
+            // Lives over the editor and must not steal the text selection.
+            onMouseDown={(e) => e.preventDefault()}
+            {...popupMotion(placement)}
           >
             {children}
           </motion.div>
