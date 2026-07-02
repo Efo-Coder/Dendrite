@@ -82,6 +82,9 @@ const SubPopup = ({
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            // Re-mount when placement flips (the measured value replaces the transient
+            // default) so framer's `initial` uses the final direction, not the default.
+            key={placement}
             ref={assignRef}
             className={clsx(popupCls(placement, popupPad(placement, glassPad?.[0], glassPad?.[1])), className)}
             style={mergedStyle}

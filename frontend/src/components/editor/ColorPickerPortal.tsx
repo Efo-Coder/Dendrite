@@ -71,11 +71,13 @@ const ColorPickerPortal = ({
   const canAdd = color && !favorites.includes(color) && !presets.some(p => p.value === color) && favorites.length < 13;
 
   return createPortal(
-    <AnimatePresence>
+    <>
+      {position && !isLeft && <div className="fixed inset-0" onClick={onClose} />}
+      <AnimatePresence>
       {position && (
-      <>
-      {!isLeft && <div className="fixed inset-0" onClick={onClose} />}
       <motion.div
+        // Re-mount when placement flips so framer's `initial` uses the final direction.
+        key={placement}
         ref={popupRef}
         className={clsx(
           'fixed',
@@ -107,11 +109,11 @@ const ColorPickerPortal = ({
               transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
             }
           : {
-              // Slide toward the opening direction: above → up, below → down. The docked y
-              // (±20) tucks it behind the z-4 bar; enter starts further in so it emerges.
-              initial: { opacity: 0, scale: 0.97, y: isAbove ? 28 : -28 },
-              animate: { opacity: 1, scale: 1, y: isAbove ? 20 : -20 },
-              exit: { opacity: 0, scale: 0.97, y: isAbove ? 28 : -28, transition: { duration: 0.1 } },
+              // Rest at the computed position and slide in from the opening direction:
+              // above → upward (starts below), below → downward (starts above).
+              initial: { opacity: 0, scale: 0.97, y: isAbove ? 14 : -14 },
+              animate: { opacity: 1, scale: 1, y: 0 },
+              exit: { opacity: 0, scale: 0.97, y: isAbove ? 14 : -14, transition: { duration: 0.1 } },
               transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
             })}
         onMouseDown={(e) => { if (!(e.target instanceof HTMLInputElement)) e.preventDefault(); }}
@@ -268,8 +270,9 @@ const ColorPickerPortal = ({
           </div>
         </div>
       </motion.div>
-      </>)}
-    </AnimatePresence>,
+      )}
+      </AnimatePresence>
+    </>,
     getModalPortalRoot()
   );
 };

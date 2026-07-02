@@ -96,14 +96,13 @@ export const popupMotion = (placement: PopupPlacement) => {
       transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
     };
   }
-  const dock = placement === 'above' ? 16 : -16;
-  // Start offset on the bar side and slide toward the opening direction: above → up,
-  // below → down. (dock keeps the popup tucked behind the z-4 bar so it reads as emerging.)
-  const enter = placement === 'above' ? dock + 8 : dock - 8;
+  // Bar popups rest at their computed position and slide in from the opening direction:
+  // above → upward (starts below its rest spot), below → downward (starts above it).
+  const from = placement === 'above' ? 14 : -14;
   return {
-    initial: { opacity: 0, y: enter },
-    animate: { opacity: 1, y: dock },
-    exit: { opacity: 0, y: enter, transition: { duration: 0.12 } },
+    initial: { opacity: 0, y: from },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: from, transition: { duration: 0.12 } },
     transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] },
   };
 };
