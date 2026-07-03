@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Note } from '../types';
 import { noteService } from '../services/note.service';
@@ -42,6 +42,19 @@ const ORDER_CONTEXT: Partial<Record<NoteCategory, string>> = {
   archived: 'archive',
 };
 
+// Non-draggable categories load in pages (a sentinel appends the next page on
+// scroll). Draggable ones need the full set: persisting an order must cover
+// every card, and 'shared' merges two server-ordered groups.
+const PAGED_CATEGORIES: NoteCategory[] = ['all', 'trash'];
+const PAGE_SIZE = 60;
+
+// A note created/edited between two page loads shifts the offsets — appending
+// can then deliver a card the list already shows.
+function appendUnique(prev: Note[], more: Note[]): Note[] {
+  const seen = new Set(prev.map((n) => n.id));
+  return [...prev, ...more.filter((n) => !seen.has(n.id))];
+}
+
 interface NotesViewProps {
   category: NoteCategory;
   onOpenInline: (note: Note, originRect?: DOMRect) => void;
@@ -55,27 +68,71 @@ interface NotesViewProps {
 const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewProps) => {
   const meta = META[category];
   const contextType = ORDER_CONTEXT[category];
+  const paged = PAGED_CATEGORIES.includes(category);
   const userId = useAuthStore((s) => s.user?.id);
   // Layout preference is remembered per category (e.g. Favorites as a list, All as tiles).
   const [view, setView] = useViewMode(`notes:${category}`);
   const [notes, setNotes] = useState<Note[]>(() => getCachedList<Note>(`notes:${category}`) ?? []);
+  // Server-side count of the category; drives the count label and the sentinel.
+  const [total, setTotal] = useState<number | null>(null);
   const [coverTarget, setCoverTarget] = useState<CoverTarget | null>(null);
   const [showEmptyTrash, setShowEmptyTrash] = useState(false);
   // FLIP stays silent until the first network load lands, so the cache→network reconcile
   // doesn't glide the cards when the view opens.
   const [armed, setArmed] = useState(false);
   const createNote = useNoteStore((s) => s.createNote);
-  const deleteNote = useNoteStore((s) => s.deleteNote);
   const toast = useToast();
   const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   useLenisScroll(scrollRef, contentRef, `notes:${category}`);
 
   const load = useCallback(() => {
-    noteService.getAllNotes(META[category].filter).then((d) => { setNotes(d); setCachedList(`notes:${category}`, d); setArmed(true); }).catch(() => {});
+    if (PAGED_CATEGORIES.includes(category)) {
+      noteService
+        .getNotesPage({ ...META[category].filter, limit: PAGE_SIZE })
+        .then(({ notes: d, total: t }) => { setNotes(d); setTotal(t); setCachedList(`notes:${category}`, d); setArmed(true); })
+        .catch(() => {});
+      return;
+    }
+    noteService.getAllNotes(META[category].filter).then((d) => { setNotes(d); setTotal(d.length); setCachedList(`notes:${category}`, d); setArmed(true); }).catch(() => {});
   }, [category]);
 
   useEffect(() => { load(); }, [load, refreshSignal]);
+
+  // Appends the next page when the sentinel scrolls near; guarded against
+  // concurrent fetches, and reads list state via ref so the observer callback
+  // never holds a stale page.
+  const loadingMoreRef = useRef(false);
+  const listStateRef = useRef({ count: 0, total: null as number | null });
+  useLayoutEffect(() => { listStateRef.current = { count: notes.length, total }; });
+  const loadMore = useCallback(() => {
+    const { count, total: t } = listStateRef.current;
+    if (loadingMoreRef.current || t === null || count >= t) return;
+    loadingMoreRef.current = true;
+    noteService
+      .getNotesPage({ ...META[category].filter, limit: PAGE_SIZE, offset: count })
+      .then(({ notes: more, total: nextTotal }) => {
+        setNotes((prev) => appendUnique(prev, more));
+        setTotal(nextTotal);
+      })
+      .catch(() => {})
+      .finally(() => { loadingMoreRef.current = false; });
+  }, [category]);
+
+  const hasMore = paged && total !== null && notes.length < total;
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMore(); },
+      // The view scrolls inside home-main, not the window; generous margin so
+      // the next page is usually there before the user reaches the edge.
+      { root: scrollRef.current, rootMargin: '900px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, loadMore]);
 
   const setCover = (n: Note) => setCoverTarget({ kind: 'note', id: n.id });
   const noteMenu = useNoteCardMenu({ onEdit: onOpenInline, onAfterChange: load, onSetCover: setCover, shared: category === 'shared' });
@@ -137,7 +194,8 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
 
   const handleEmptyTrash = async () => {
     try {
-      await Promise.all(notes.map((n) => deleteNote(n.id)));
+      // Server-side bulk delete — the loaded page may be only part of the trash.
+      await noteService.emptyTrash();
       toast.success('Trash emptied');
     } catch {
       toast.error('Could not empty trash');
@@ -167,7 +225,7 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
         <header className="home-header">
           <p className="home-greeting">{meta.greeting}</p>
           <h1 className="home-headline">{meta.headline}</h1>
-          {notes.length > 0 && <p className="home-count">{noteCountLabel(notes.length)}</p>}
+          {notes.length > 0 && <p className="home-count">{noteCountLabel(total ?? notes.length)}</p>}
         </header>
 
         {notes.length === 0 ? (
@@ -225,6 +283,9 @@ const NotesView = ({ category, onOpenInline, onBack, refreshSignal }: NotesViewP
               ))}
           </>
         )}
+
+        {/* Invisible load-more trigger; pages append quietly as it nears the viewport. */}
+        {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px" />}
       </div>
 
       <CoverPickerModal target={coverTarget} onClose={() => setCoverTarget(null)} onCoverChange={handleCoverChange} />

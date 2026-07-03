@@ -66,7 +66,6 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
   const fetchSpaces = useSpaceStore((s) => s.fetchSpaces);
   const reorderSpaces = useSpaceStore((s) => s.reorderSpaces);
   const createNote = useNoteStore((s) => s.createNote);
-  const deleteNote = useNoteStore((s) => s.deleteNote);
   const reflectionPrompt = useReflectionStore((s) => s.prompt);
   const fetchToday = useReflectionStore((s) => s.fetchToday);
   const toast = useToast();
@@ -89,13 +88,16 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
   // section's reconcile, so arming can never race ahead of one.
   const [armed, setArmed] = useState(false);
 
+  // Recent + Deleted show a strip and never drag-persist a full order, so they
+  // load a page instead of the whole library. Favorites/Archived stay complete:
+  // their reorder writes an order row for every note in the context.
   const refresh = useCallback(
     () =>
       Promise.allSettled([
-        fetchNotes({ archived: false, deleted: false }),
+        fetchNotes({ archived: false, deleted: false, limit: 24 }),
         noteService.getAllNotes({ favorite: true, archived: false, deleted: false }).then((d) => { setFavorites(d); setCachedList('home:favorites', d); }),
         noteService.getAllNotes({ archived: true, deleted: false }).then((d) => { setArchived(d); setCachedList('home:archived', d); }),
-        noteService.getAllNotes({ deleted: true }).then((d) => { setDeleted(d); setCachedList('home:deleted', d); }),
+        noteService.getAllNotes({ deleted: true, limit: 24 }).then((d) => { setDeleted(d); setCachedList('home:deleted', d); }),
         noteService.getAllNotes({ shared: true }).then((d) => { setShared(d); setCachedList('home:shared', d); }),
       ]),
     [fetchNotes],
@@ -152,7 +154,8 @@ const HomeView = ({ onOpenNote, onOpenInline, onOpenSpace, onOpenCategory, onAll
 
   const handleEmptyTrash = async () => {
     try {
-      await Promise.all(deleted.map((n) => deleteNote(n.id)));
+      // Server-side bulk delete — the loaded section is only a page of the trash.
+      await noteService.emptyTrash();
       toast.success('Trash emptied');
     } catch {
       toast.error('Could not empty trash');

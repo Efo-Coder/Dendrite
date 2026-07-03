@@ -25,6 +25,7 @@ interface NoteState {
     archived?: boolean;
     deleted?: boolean;
     shared?: boolean;
+    limit?: number;
   }) => Promise<void>;
   fetchNoteById: (id: string) => Promise<void>;
   createNote: (data: {

@@ -5,6 +5,7 @@ import {
   createNote,
   updateNote,
   deleteNote,
+  emptyTrash,
   searchNotes,
   togglePin,
   toggleFavorite,
@@ -26,6 +27,8 @@ router.get('/:id', getNoteById);
 router.post('/', createNote);
 router.post('/reorder', reorderNotes);
 router.put('/:id', updateNote);
+// Static path must precede '/:id', or "trash" is captured as a note id.
+router.delete('/trash', emptyTrash);
 router.delete('/:id', deleteNote);
 router.patch('/:id/pin', togglePin);
 router.patch('/:id/favorite', toggleFavorite);

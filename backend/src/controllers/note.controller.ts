@@ -363,6 +363,30 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Bulk-empty the trash server-side. The clients used to delete note-by-note
+// over the loaded list — with paged lists that would only empty the loaded
+// page, and n roundtrips were never necessary to begin with.
+export const emptyTrash = async (req: AuthRequest, res: Response) => {
+  try {
+    const trashed = await prisma.note.findMany({
+      where: { userId: req.userId, isDeleted: true },
+      select: { id: true, content: true, attachments: { select: { url: true } } },
+    });
+    if (trashed.length === 0) return res.json({ deleted: 0 });
+
+    for (const note of trashed) {
+      deleteFiles(extractUploadUrls(note.content));
+      deleteFiles(note.attachments.map(a => a.url));
+    }
+    const result = await prisma.note.deleteMany({ where: { id: { in: trashed.map(n => n.id) } } });
+
+    return res.json({ deleted: result.count });
+  } catch (error) {
+    console.error('EmptyTrash error:', error);
+    return res.status(500).json({ error: 'Fehler beim Leeren des Papierkorbs' });
+  }
+};
+
 export const deleteNote = async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;

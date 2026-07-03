@@ -15,21 +15,23 @@ export interface PdfExportOptions {
   density: DensityId;
 }
 
+export interface NoteListFilters {
+  spaceId?: string;
+  folderId?: string;
+  bookmarkId?: string;
+  pinned?: boolean;
+  favorite?: boolean;
+  archived?: boolean;
+  deleted?: boolean;
+  shared?: boolean;
+  // With `limit`, the backend orders slim rows first and hydrates only the
+  // page — use for sections that never drag-reorder the full set.
+  limit?: number;
+  offset?: number;
+}
+
 export const noteService = {
-  async getAllNotes(filters?: {
-    spaceId?: string;
-    folderId?: string;
-    bookmarkId?: string;
-    pinned?: boolean;
-    favorite?: boolean;
-    archived?: boolean;
-    deleted?: boolean;
-    shared?: boolean;
-    // With `limit`, the backend orders slim rows first and hydrates only the
-    // page — use for sections that never drag-reorder the full set.
-    limit?: number;
-    offset?: number;
-  }): Promise<Note[]> {
+  async getAllNotes(filters?: NoteListFilters): Promise<Note[]> {
     const params = new URLSearchParams();
     if (filters?.spaceId) params.append('spaceId', filters.spaceId);
     if (filters?.folderId) params.append('folderId', filters.folderId);
@@ -44,6 +46,26 @@ export const noteService = {
 
     const response = await api.get<{ notes: Note[] }>(`/notes?${params.toString()}`);
     return response.data.notes;
+  },
+
+  // Paged variant for views that append pages: same filters, but the server
+  // total comes along so the caller knows when the list is complete.
+  async getNotesPage(
+    filters: NoteListFilters & { limit: number },
+  ): Promise<{ notes: Note[]; total: number }> {
+    const params = new URLSearchParams();
+    if (filters.favorite !== undefined) params.append('favorite', String(filters.favorite));
+    if (filters.archived !== undefined) params.append('archived', String(filters.archived));
+    if (filters.deleted !== undefined) params.append('deleted', String(filters.deleted));
+    params.append('limit', String(filters.limit));
+    if (filters.offset) params.append('offset', String(filters.offset));
+    const response = await api.get<{ notes: Note[]; total: number }>(`/notes?${params.toString()}`);
+    return response.data;
+  },
+
+  async emptyTrash(): Promise<number> {
+    const response = await api.delete<{ deleted: number }>('/notes/trash');
+    return response.data.deleted;
   },
 
   async getNoteById(id: string): Promise<Note> {
