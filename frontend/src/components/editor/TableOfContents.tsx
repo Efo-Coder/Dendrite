@@ -87,7 +87,7 @@ const TocList = ({ entries, editor, scrollRef, lenisRef }: TocListProps) => {
       <p className="mb-3 pl-4 font-(--mono) text-[12px] uppercase tracking-[0.16em] text-(--ink-dim)">
         On this page
       </p>
-      <ul className="relative max-h-[70vh] space-y-0.5 overflow-y-auto before:absolute before:top-0 before:bottom-0 before:left-0 before:rounded-full before:w-0.5 before:bg-(--line-soft) before:content-['']">
+      <ul className="relative max-h-[70vh] space-y-0.5 overflow-y-auto before:absolute before:top-1 before:bottom-1 before:left-0 before:rounded-full before:w-0.5 before:bg-(--line-soft) before:content-['']">
         {entries.map(([key, text, tag]) => {
           const isActive = key === activeKey;
           return (
