@@ -69,3 +69,7 @@ backend/uploads/
 
 # Test artifacts
 frontend/test-output.css
+
+# Load testing (fixture contains valid JWTs; results are local measurements)
+backend/loadtest-seed.json
+loadtest/results/
