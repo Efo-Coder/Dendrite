@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
+// Native bcrypt (not bcryptjs): hashing runs on libuv's thread pool instead of
+// blocking the event loop ~100 ms per hash — under login load that stalled
+// every other request in the process.
+import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
 import fs from 'fs';
@@ -85,7 +88,11 @@ export const register = async (req: Request, res: Response) => {
       },
     });
 
-    await sendVerificationEmail(email, verificationToken);
+    // Decoupled from the response: a slow SMTP relay must not stall the signup
+    // form. If the send fails, the resend-verification flow is the recovery.
+    sendVerificationEmail(email, verificationToken).catch((err) =>
+      console.error(`Verification email failed (${email}):`, err),
+    );
 
     return res.status(201).json({ message: 'Registration successful. Please verify your email address.' });
   } catch (error) {
@@ -393,7 +400,11 @@ export const forgotPassword = async (req: Request, res: Response) => {
         data: { passwordResetToken: resetToken, passwordResetTokenExpiresAt: resetTokenExpiresAt },
       });
 
-      await sendPasswordResetEmail(email, resetToken);
+      // Fire-and-forget also equalizes response timing between existing and
+      // unknown accounts, closing the SMTP-latency enumeration side channel.
+      sendPasswordResetEmail(email, resetToken).catch((err) =>
+        console.error(`Password reset email failed (${email}):`, err),
+      );
     }
 
     // Always return 200 to prevent email enumeration

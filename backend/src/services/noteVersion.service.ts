@@ -5,15 +5,17 @@ const VERSION_MIN_INTERVAL_MS = 5 * 60 * 1000;
 const VERSION_STORAGE_CAP = 200;
 
 export async function capVersions(noteId: string) {
-  const all = await prisma.noteVersion.findMany({
+  // Count first — the common case (under the cap) then costs one cheap query
+  // instead of loading every version id on each snapshot.
+  const count = await prisma.noteVersion.count({ where: { noteId } });
+  if (count <= VERSION_STORAGE_CAP) return;
+  const excess = await prisma.noteVersion.findMany({
     where: { noteId },
     orderBy: { createdAt: 'desc' },
     select: { id: true },
+    skip: VERSION_STORAGE_CAP,
   });
-  if (all.length > VERSION_STORAGE_CAP) {
-    const toDelete = all.slice(VERSION_STORAGE_CAP).map(v => v.id);
-    await prisma.noteVersion.deleteMany({ where: { id: { in: toDelete } } });
-  }
+  await prisma.noteVersion.deleteMany({ where: { id: { in: excess.map(v => v.id) } } });
 }
 
 // Snapshot at most every 5 minutes so rapid auto-saves don't flood the history
