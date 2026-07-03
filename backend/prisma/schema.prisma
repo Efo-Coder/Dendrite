@@ -2,12 +2,15 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  // pg_trgm backs the GIN indexes that make ILIKE '%q%' searches index-assisted.
+  extensions = [pg_trgm]
 }
 
 model User {
@@ -54,6 +57,9 @@ model User {
   reminders         Reminder[]
 
   @@unique([provider, providerId])
+  // People search matches name/username with contains — trgm makes that indexed.
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([username(ops: raw("gin_trgm_ops"))], type: Gin)
 }
 
 // Top-level container on the Home dashboard. Holds folders and notes directly.
@@ -74,7 +80,6 @@ model Space {
   notes   Note[]
 
   @@index([userId])
-  @@index([isPinned])
 }
 
 // Lives inside a space; can nest into other folders (recursive).
@@ -101,7 +106,6 @@ model Folder {
   @@index([userId])
   @@index([spaceId])
   @@index([parentId])
-  @@index([isPinned])
 }
 
 model Note {
@@ -134,14 +138,17 @@ model Note {
   publishedNote     PublishedNote?
   reminders         Reminder[]
 
-  @@index([userId])
+  // Matches the list query exactly (userId filter + pinned-first/recency sort);
+  // its prefix also serves every plain userId lookup. Single-column boolean
+  // indexes were dropped: too unselective for the planner, but every autosave
+  // had to maintain them.
+  @@index([userId, isPinned(sort: Desc), updatedAt(sort: Desc)])
   @@index([spaceId])
   @@index([folderId])
-  @@index([isPinned])
-  @@index([isFavorite])
-  @@index([isArchived])
-  @@index([isDeleted])
-  @@index([order])
+  // Hourly trash purge scans for expired rows.
+  @@index([isDeleted, deletedAt])
+  // In-note search is ILIKE '%q%' — trgm keeps it indexed as content grows.
+  @@index([content(ops: raw("gin_trgm_ops"))], type: Gin)
 }
 
 model Bookmark {
@@ -336,6 +343,11 @@ model PublishedNote {
   @@index([publishedAt])
   @@index([visibility])
   @@index([likeCount])
+  // Explore search: contains on title/content (trgm) and has-filters on the arrays.
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([content(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([tags], type: Gin)
+  @@index([topics], type: Gin)
   @@map("published_notes")
 }
 
@@ -353,6 +365,8 @@ model PublishedNoteLike {
   @@unique([userId, publishedNoteId])
   @@index([userId])
   @@index([publishedNoteId])
+  // Trending groups the recent like window by note.
+  @@index([createdAt])
   @@map("published_note_likes")
 }
 
