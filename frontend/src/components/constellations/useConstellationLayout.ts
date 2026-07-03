@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Constellation, ConstellationLink } from '../../types';
+import { mulberry32, hashStrings } from '../../lib/seededRandom';
 
 // Deterministic, frozen placement for the constellation field. We run a short
 // attraction/repulsion relaxation from seeded start positions and then freeze it,
@@ -17,33 +18,13 @@ const LINK_MIN = 2.2; // rest length for the strongest links
 const LINK_MAX = 6.5; // rest length for the faintest links
 const CENTER_PULL = 0.012;
 
-// Small, fast seeded PRNG so positions are reproducible per theme set.
-function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function hashIds(ids: string[]): number {
-  let h = 2166136261;
-  for (const id of ids) {
-    for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
-  }
-  return h >>> 0;
-}
-
 export function useConstellationLayout(
   constellations: Constellation[],
   links: ConstellationLink[],
 ): LayoutMap {
   return useMemo(() => {
     const ids = constellations.map((c) => c.id);
-    const rng = mulberry32(hashIds(ids));
+    const rng = mulberry32(hashStrings(ids));
     const n = constellations.length;
 
     const xs = new Float32Array(n);

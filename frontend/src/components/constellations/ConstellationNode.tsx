@@ -1,9 +1,9 @@
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { Constellation } from '../../types';
-import { brightnessFor, constellationColor, radiusFor } from '../../lib/constellations';
+import { brightnessFor, radiusFor } from '../../lib/constellations';
 import { getGlowTexture } from './glowTexture';
 // Brand display serif (upright), vendored for troika (it can't read the CSS @import font).
 import cormorant from '../../fonts/CormorantGaramond.ttf?url';
@@ -11,6 +11,7 @@ import cormorant from '../../fonts/CormorantGaramond.ttf?url';
 interface ConstellationNodeProps {
   constellation: Constellation;
   position: [number, number, number];
+  appearAt: number; // seconds on the canvas clock — blooms when its limb arrives
   focused: boolean; // hovered or selected — lifts the glow
   dimmed: boolean;
   // True while the pointer is panning — guards against selecting on drag-release.
@@ -19,35 +20,53 @@ interface ConstellationNodeProps {
   onSelect: (id: string) => void;
 }
 
-const GLOW_MIN = 1.2;
-const GLOW_MAX = 3.4;
-const LABEL_COLOR = '#f3ebdc'; // warm white, on-brand against the night
+// fillOpacity is a troika material property, driven imperatively so the label
+// breathes with the node instead of re-rendering.
+type LabelMesh = THREE.Mesh & { fillOpacity: number };
 
-const ConstellationNode = ({ constellation, position, focused, dimmed, dragRef, onHover, onSelect }: ConstellationNodeProps) => {
+// Narrower than the old star range — the limbs already carry importance.
+const GLOW_MIN = 0.85;
+const GLOW_MAX = 2.0;
+const GLOW_COLOR = new THREE.Color('#d8b878'); // every tip glows the same warm gold
+const CORE_COLOR = '#f3ebdc';
+const LABEL_COLOR = '#f3ebdc'; // warm white, on-brand against the dark
+
+const ConstellationNode = ({
+  constellation,
+  position,
+  appearAt,
+  focused,
+  dimmed,
+  dragRef,
+  onHover,
+  onSelect,
+}: ConstellationNodeProps) => {
   const glowRef = useRef<THREE.Sprite>(null);
   const glowMat = useRef<THREE.SpriteMaterial>(null);
   const coreMat = useRef<THREE.SpriteMaterial>(null);
-  const opacity = useRef(1);
+  const label = useRef<LabelMesh>(null);
+  const opacity = useRef(0); // grows in only once its limb has reached the tip
 
   const texture = getGlowTexture();
-  const color = useMemo(() => new THREE.Color(constellationColor(constellation)), [constellation]);
   const glowBase = radiusFor(constellation.importance, GLOW_MIN, GLOW_MAX);
   const coreBase = glowBase * 0.3;
   const glowOpacity = 0.45 + 0.55 * brightnessFor(constellation.importance);
   const labelOpacity = Math.max(0.5, brightnessFor(constellation.importance));
 
-  useFrame((_, delta) => {
-    // Damp toward targets so hover and focus changes ease rather than snap.
+  useFrame((state, delta) => {
+    // Damp toward targets so hover, focus and the bloom-in ease rather than snap.
     const k = 1 - Math.pow(0.0001, delta);
     const targetScale = glowBase * (focused ? 1.28 : 1);
     if (glowRef.current) {
       const s = THREE.MathUtils.lerp(glowRef.current.scale.x, targetScale, k);
       glowRef.current.scale.set(s, s, 1);
     }
-    const targetOpacity = dimmed ? 0.3 : 1;
+    const bloomed = state.clock.elapsedTime >= appearAt;
+    const targetOpacity = !bloomed ? 0 : dimmed ? 0.3 : 1;
     opacity.current = THREE.MathUtils.lerp(opacity.current, targetOpacity, k);
     if (glowMat.current) glowMat.current.opacity = glowOpacity * opacity.current;
     if (coreMat.current) coreMat.current.opacity = opacity.current;
+    if (label.current) label.current.fillOpacity = labelOpacity * opacity.current;
   });
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
@@ -77,9 +96,9 @@ const ConstellationNode = ({ constellation, position, focused, dimmed, dragRef, 
         <spriteMaterial
           ref={glowMat}
           map={texture}
-          color={color}
+          color={GLOW_COLOR}
           transparent
-          opacity={glowOpacity}
+          opacity={0}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
@@ -88,20 +107,20 @@ const ConstellationNode = ({ constellation, position, focused, dimmed, dragRef, 
         <spriteMaterial
           ref={coreMat}
           map={texture}
-          color={'#ffffff'}
+          color={CORE_COLOR}
           transparent
-          opacity={1}
+          opacity={0}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
       </sprite>
       <Text
+        ref={label}
         font={cormorant}
         position={[0, -(glowBase * 0.4 + 0.2), 0]}
         fontSize={0.58}
         letterSpacing={0.02}
         color={LABEL_COLOR}
-        fillOpacity={labelOpacity}
         anchorX="center"
         anchorY="top"
         outlineWidth={0.008}

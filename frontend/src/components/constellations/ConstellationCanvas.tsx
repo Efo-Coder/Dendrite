@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef, type MutableRefObject, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Constellation, ConstellationLink as LinkType, ThemeNote } from '../../types';
 import { constellationColor } from '../../lib/constellations';
 import { useConstellationLayout, type LayoutMap } from './useConstellationLayout';
+import { buildArbor } from './arborPaths';
+import ArborBranches from './ArborBranches';
 import DustBackdrop from './DustBackdrop';
 import ConstellationNode from './ConstellationNode';
 import ConstellationLink from './ConstellationLink';
@@ -117,6 +119,15 @@ const ConstellationScene = ({
   hasSelectionRef.current = !!selectedId;
   const activeId = selectedId ?? hoveredId;
   const related = useMemo(() => relatedTo(activeId, links), [activeId, links]);
+  const arbor = useMemo(() => buildArbor(constellations, layout), [constellations, layout]);
+
+  // The gossamer cross-links only appear once the arbor has finished drawing.
+  const [grown, setGrown] = useState(false);
+  useEffect(() => {
+    setGrown(false);
+    const id = window.setTimeout(() => setGrown(true), (arbor.totalSec + 0.2) * 1000);
+    return () => window.clearTimeout(id);
+  }, [arbor]);
 
   // Wheel zoom at the universe level — the field starts far, so let the eye in.
   useEffect(() => {
@@ -191,7 +202,9 @@ const ConstellationScene = ({
     <>
       <CameraRig target={camTarget} zoom={(level3 ? ZOOM_Z_L3 : ZOOM_Z_L2) * fit} zoomRef={zoomRef} panRef={panRef} />
       <ParallaxGroup calm={!!selectedId} scale={fit}>
-        {!level3 &&
+        <ArborBranches arbor={arbor} activeId={activeId} related={related} level3={level3} calm={!!selectedId} />
+        {grown &&
+          !level3 &&
           links.map((l) => {
             const from = layout.get(l.source);
             const to = layout.get(l.target);
@@ -211,6 +224,7 @@ const ConstellationScene = ({
               key={c.id}
               constellation={c}
               position={position}
+              appearAt={arbor.appearAt.get(c.id) ?? 0}
               focused={activeId === c.id}
               dimmed={dimmed}
               dragRef={dragRef}
