@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { Constellation, ConstellationLink as LinkType, ThemeNote } from '../../types';
 import { constellationColor } from '../../lib/constellations';
 import { useConstellationLayout, type LayoutMap } from './useConstellationLayout';
-import StarfieldBackdrop from './StarfieldBackdrop';
+import DustBackdrop from './DustBackdrop';
 import ConstellationNode from './ConstellationNode';
 import ConstellationLink from './ConstellationLink';
 import ThoughtCluster from './ThoughtCluster';
@@ -21,7 +21,7 @@ interface ConstellationCanvasProps {
   onOpenNote: (id: string) => void;
 }
 
-const NIGHT = '#05060c';
+const STAGE = '#0b0604'; // warm near-black, same fixed value as .constellations-stage
 const FOV = 50;
 const DEFAULT_Z = 18; // universe distance
 const ZOOM_Z_L2 = 7; // distance once a theme is selected
@@ -240,9 +240,9 @@ const ConstellationCanvas = (props: ConstellationCanvasProps) => {
         props.onSelect(null);
       }}
     >
-      <color attach="background" args={[NIGHT]} />
-      <fog attach="fog" args={[NIGHT, 20, 48]} />
-      <StarfieldBackdrop />
+      <color attach="background" args={[STAGE]} />
+      <fog attach="fog" args={[STAGE, 20, 48]} />
+      <DustBackdrop />
       <ConstellationScene {...props} layout={layout} />
     </Canvas>
   );

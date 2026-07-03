@@ -102,7 +102,7 @@ const ThoughtCluster = ({ notes, center, color, onOpenNote }: ThoughtClusterProp
           anchorY="bottom"
           maxWidth={6}
           outlineWidth={0.006}
-          outlineColor="#05060c"
+          outlineColor="#0b0604"
           outlineOpacity={0.7}
         >
           {notes[hover].title?.trim() || notes[hover].preview || 'Untitled'}

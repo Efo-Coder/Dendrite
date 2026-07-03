@@ -9,7 +9,7 @@ interface ConstellationLinkProps {
   highlighted?: boolean; // lit when one end is the focused theme
 }
 
-const LINK_COLOR = '#6f78a6'; // faint blue-violet, a soft neural pathway
+const LINK_COLOR = '#93846b'; // faint warm ink, a soft neural pathway
 const LINK_COLOR_LIT = '#d8b878'; // warm gold when a pathway is in focus
 
 // A barely-there arc between two themes. Curved (not straight) so the field reads

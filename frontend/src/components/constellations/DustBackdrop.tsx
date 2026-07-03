@@ -2,11 +2,11 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-// The depth layer: a quiet field of distant stars that drift and breathe. Pure
-// WebGL points with a per-star twinkle so the sky feels alive without animating
-// anything the eye can pin down.
+// The depth layer: sparse motes of dust adrift in lamplight, far behind the
+// arbor. They breathe far slower than a star twinkle would, so the stage feels
+// inhabited without anything asking for the eye.
 
-const STAR_COUNT = 1400;
+const MOTE_COUNT = 160;
 const FIELD_RADIUS = 60;
 
 const vertexShader = /* glsl */ `
@@ -14,36 +14,37 @@ const vertexShader = /* glsl */ `
   uniform float uSize;
   attribute float aSeed;
   attribute float aScale;
-  varying float vTwinkle;
+  varying float vBreathe;
   void main() {
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mv;
-    vTwinkle = 0.5 + 0.5 * sin(uTime * 0.6 + aSeed * 6.2831853);
+    vBreathe = 0.5 + 0.5 * sin(uTime * 0.18 + aSeed * 6.2831853);
     gl_PointSize = uSize * aScale * (260.0 / -mv.z);
   }
 `;
 
 const fragmentShader = /* glsl */ `
   uniform vec3 uColor;
-  varying float vTwinkle;
+  varying float vBreathe;
   void main() {
     float d = length(gl_PointCoord - 0.5);
     float a = smoothstep(0.5, 0.0, d);
-    a *= 0.2 + 0.8 * vTwinkle;
+    // Narrow amplitude and a global damp: dust glints, it never blinks.
+    a *= (0.45 + 0.4 * vBreathe) * 0.55;
     gl_FragColor = vec4(uColor, a);
   }
 `;
 
-const StarfieldBackdrop = () => {
+const DustBackdrop = () => {
   const points = useRef<THREE.Points>(null);
   const material = useRef<THREE.ShaderMaterial>(null);
 
   const { positions, seeds, scales } = useMemo(() => {
-    const positions = new Float32Array(STAR_COUNT * 3);
-    const seeds = new Float32Array(STAR_COUNT);
-    const scales = new Float32Array(STAR_COUNT);
-    for (let i = 0; i < STAR_COUNT; i++) {
-      // Spherical shell, pushed outward so stars sit behind the constellations.
+    const positions = new Float32Array(MOTE_COUNT * 3);
+    const seeds = new Float32Array(MOTE_COUNT);
+    const scales = new Float32Array(MOTE_COUNT);
+    for (let i = 0; i < MOTE_COUNT; i++) {
+      // Spherical shell, pushed outward so the dust sits behind the arbor.
       const r = FIELD_RADIUS * (0.55 + Math.random() * 0.45);
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
@@ -59,15 +60,15 @@ const StarfieldBackdrop = () => {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uSize: { value: 2.6 },
-      uColor: { value: new THREE.Color('#cdd6ff') },
+      uSize: { value: 2.2 },
+      uColor: { value: new THREE.Color('#d3bb8a') },
     }),
     [],
   );
 
   useFrame((_, delta) => {
     if (material.current) material.current.uniforms.uTime.value += delta;
-    if (points.current) points.current.rotation.z += delta * 0.005; // slow drift
+    if (points.current) points.current.rotation.z += delta * 0.004; // slow drift
   });
 
   return (
@@ -90,4 +91,4 @@ const StarfieldBackdrop = () => {
   );
 };
 
-export default StarfieldBackdrop;
+export default DustBackdrop;

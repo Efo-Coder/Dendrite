@@ -105,7 +105,7 @@ const ConstellationNode = ({ constellation, position, focused, dimmed, dragRef, 
         anchorX="center"
         anchorY="top"
         outlineWidth={0.008}
-        outlineColor="#05060c"
+        outlineColor="#0b0604"
         outlineOpacity={0.6}
       >
         {constellation.title}
