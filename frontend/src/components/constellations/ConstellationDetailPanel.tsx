@@ -88,7 +88,7 @@ const ConstellationDetailPanel = ({
       <button type="button" className="constellation-detail-close" onClick={onClose} aria-label="Close">
         <X size={18} strokeWidth={1.75} />
       </button>
-      <p className="constellations-eyebrow">{constellation.source === 'tag' ? 'Constellation' : 'Emerging theme'}</p>
+      <p className="constellations-eyebrow">{constellation.source === 'tag' ? 'Branch' : 'Emerging theme'}</p>
       <h2 className="constellation-detail-title">{constellation.title}</h2>
       <p className="constellation-detail-status">{activityPhrase(constellation.lastActivity)}</p>
 

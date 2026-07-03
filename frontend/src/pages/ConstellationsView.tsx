@@ -158,9 +158,9 @@ const ConstellationsView = ({ onBack, onOpenNote }: ConstellationsViewProps) => 
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35, ease: 'easeInOut' }}
               >
-                <p className="constellations-eyebrow">Your constellations</p>
+                <p className="constellations-eyebrow">Your arbor</p>
                 <h2 className="constellations-title">An atlas of your thinking.</h2>
-                <p className="constellations-descriptor">Hover a light to follow a theme — click to enter it.</p>
+                <p className="constellations-descriptor">Follow a branch to its theme — click to enter it.</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -188,13 +188,13 @@ const ConstellationsView = ({ onBack, onOpenNote }: ConstellationsViewProps) => 
 
       {!hasSky && (
         <div className="constellations-empty">
-          <p className="constellations-eyebrow">Your constellations</p>
+          <p className="constellations-eyebrow">Your arbor</p>
           <h2 className="constellations-title">
-            {isLoading ? 'Reading your sky…' : 'Your sky is still forming.'}
+            {isLoading ? 'Tracing your branches…' : 'Your arbor is still taking root.'}
           </h2>
           {!isLoading && (
             <p className="constellations-descriptor">
-              Write and tag a few notes — themes will rise as constellations.
+              Write and tag a few notes — themes will branch as they grow.
             </p>
           )}
         </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Layers, Library, Compass, Contrast, ChevronDown, Orbit } from 'lucide-react';
+import { Home, Layers, Library, Compass, Contrast, ChevronDown, Sprout } from 'lucide-react';
 import clsx from 'clsx';
 import { LOGO_SRC } from '../../config/brand';
 import { User as UserType } from '../../types';
@@ -61,8 +61,8 @@ const AppSidebar = ({
     },
     {
       key: 'constellations',
-      label: 'Constellations',
-      Icon: Orbit,
+      label: 'Arbor',
+      Icon: Sprout,
       onClick: onConstellations,
       activeWhen: active === 'constellations',
     },
