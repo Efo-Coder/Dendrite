@@ -22,7 +22,9 @@ const ReflectionWhisper = ({ sentences }: ReflectionWhisperProps) => {
 
   return (
     <div className="constellation-whisper">
-      <AnimatePresence mode="wait">
+      {/* initial={false}: mount animations never fire inside this lazy view
+          (motion + Suspense) — the first line stands, rotations animate. */}
+      <AnimatePresence mode="wait" initial={false}>
         <motion.p
           key={index}
           className="constellation-whisper-line"

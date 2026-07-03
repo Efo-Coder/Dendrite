@@ -134,7 +134,9 @@ const ConstellationsView = ({ onBack, onOpenNote }: ConstellationsViewProps) => 
           a theme is selected — the detail panel carries the focus then. */}
       {hasSky && !selectedId && (
         <div className="constellations-info">
-          <AnimatePresence mode="wait">
+          {/* initial={false}: mount animations never fire inside this lazy view
+              (motion + Suspense) — the first state stands, only swaps animate. */}
+          <AnimatePresence mode="wait" initial={false}>
             {hovered ? (
               <motion.div
                 key={hovered.id}
