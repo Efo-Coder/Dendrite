@@ -1,5 +1,6 @@
 import { Folder, Prisma, Bookmark } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+import { stripHtml } from '../services/constellationText';
 
 export const NOTE_INCLUDE = {
   space: true,
@@ -27,6 +28,20 @@ export type ApiNote = Omit<NoteWithRelations, 'noteBookmarks'> & { bookmarks: Bo
 export function transformNote(note: NoteWithRelations): ApiNote {
   const { noteBookmarks, ...rest } = note;
   return { ...rest, bookmarks: noteBookmarks.map(nb => nb.bookmark) };
+}
+
+const PREVIEW_CHARS = 300;
+
+// List payloads ship a short plain-text teaser instead of the full body: no
+// list consumer renders note HTML, and full bodies made the notes list grow
+// megabytes-large. The editor refetches the complete note on open.
+export type ApiNoteListItem = Omit<ApiNote, 'content'> & { preview: string };
+
+export function toListItem(note: ApiNote): ApiNoteListItem {
+  const { content, ...rest } = note;
+  // Slice the raw HTML first so huge documents never pay a full-body regex.
+  const preview = stripHtml(content.slice(0, 2000)).replace(/\s+/g, ' ').trim().slice(0, PREVIEW_CHARS);
+  return { ...rest, preview };
 }
 
 export function sortPinnedFirst(a: ApiNote, b: ApiNote): number {

@@ -18,7 +18,9 @@ const HomeSearch = ({ onOpenNote, onOpenSpace }: HomeSearchProps) => {
   const q = query.trim().toLowerCase();
 
   const noteHits = useMemo(
-    () => (q ? notes.filter((n) => noteLabel(n).toLowerCase().includes(q) || n.content?.toLowerCase().includes(q)).slice(0, 6) : []),
+    // List notes carry a plain-text preview instead of the full body; matching
+    // against it keeps the quick filter useful without shipping note HTML.
+    () => (q ? notes.filter((n) => noteLabel(n).toLowerCase().includes(q) || (n.preview ?? n.content)?.toLowerCase().includes(q)).slice(0, 6) : []),
     [q, notes],
   );
   const spaceHits = useMemo(

@@ -134,8 +134,14 @@ const DashboardPage = () => {
     const origin = originRect ?? document.querySelector(`[data-flip-id="${note.id}"]`)?.getBoundingClientRect() ?? null;
     setEditorOrigin(origin);
     setEditorClosing(false);
-    setEditorNote(note);
-    setCurrentNote(note);
+    // List payloads carry only a preview — load the full body before the editor
+    // mounts, otherwise autosave would write the stub back over the real note.
+    if (note.content === undefined) {
+      noteService.getNoteById(note.id).then((full) => { setEditorNote(full); setCurrentNote(full); }).catch(() => {});
+    } else {
+      setEditorNote(note);
+      setCurrentNote(note);
+    }
     setEditorSidebarCollapsed(false);
   }, [setCurrentNote]);
 

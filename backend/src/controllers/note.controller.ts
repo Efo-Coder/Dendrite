@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { extractUploadUrls, deleteFiles } from '../utils/imageCleanup';
-import { NOTE_INCLUDE, applyPreferences, orderForContext, sortByContextOrder, transformNote } from './note.helpers';
+import { NOTE_INCLUDE, applyPreferences, orderForContext, sortByContextOrder, toListItem, transformNote } from './note.helpers';
 import { maybeCreateVersion } from '../services/noteVersion.service';
 
 // A note's space is the folder's space when filed in a folder, otherwise the
@@ -69,7 +69,7 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
         orderForContext(byMePinned, req.userId!, 'shared-owned'),
       ]);
 
-      return res.json({ notes: [...orderedWithMe, ...orderedByMe] });
+      return res.json({ notes: [...orderedWithMe, ...orderedByMe].map(toListItem) });
     }
 
     const where: Prisma.NoteWhereInput = { userId: req.userId };
@@ -121,10 +121,10 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
       });
 
       const orderMap = new Map(noteOrders.map(no => [no.noteId, no.order]));
-      return res.json({ notes: sortByContextOrder(notes, orderMap) });
+      return res.json({ notes: sortByContextOrder(notes, orderMap).map(toListItem) });
     }
 
-    return res.json({ notes });
+    return res.json({ notes: notes.map(toListItem) });
   } catch (error) {
     console.error('GetAllNotes error:', error);
     return res.status(500).json({ error: 'Fehler beim Abrufen der Notizen' });
@@ -163,12 +163,21 @@ export const getNoteById = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Unbounded search results saturate the DB pool under load (a broad term can
+// match a whole corpus, each row carrying five includes) — cap what one query
+// may assemble. 50 rows is more than the search UI ever shows.
+const MAX_SEARCH_RESULTS = 50;
+
 export const searchNotes = async (req: AuthRequest, res: Response) => {
   try {
-    const q = req.query.q as string;
+    const q = (req.query.q as string | undefined)?.trim() ?? '';
 
     if (!q) {
       return res.status(400).json({ error: 'Suchbegriff erforderlich' });
+    }
+    // Single characters match nearly everything; not worth a corpus scan.
+    if (q.length < 2) {
+      return res.json({ notes: [] });
     }
 
     const rawNotes = await prisma.note.findMany({
@@ -178,9 +187,10 @@ export const searchNotes = async (req: AuthRequest, res: Response) => {
       },
       include: NOTE_INCLUDE,
       orderBy: { updatedAt: 'desc' },
+      take: MAX_SEARCH_RESULTS,
     });
 
-    return res.json({ notes: rawNotes.map(transformNote) });
+    return res.json({ notes: rawNotes.map(n => toListItem(transformNote(n))) });
   } catch (error) {
     console.error('SearchNotes error:', error);
     return res.status(500).json({ error: 'Fehler bei der Suche' });
@@ -301,9 +311,12 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
       include: NOTE_INCLUDE,
     });
 
-    // Snapshot only when the owner actually changed the content
+    // Snapshot only when the owner actually changed the content. Decoupled from
+    // the response: autosave latency must not pay for history bookkeeping.
     if (isOwner && content !== undefined && content !== existingNote.content) {
-      await maybeCreateVersion(id, existingNote.content, existingNote.title);
+      maybeCreateVersion(id, existingNote.content, existingNote.title).catch((err) =>
+        console.error('Version snapshot failed:', err),
+      );
     }
 
     const transformed = transformNote(raw);

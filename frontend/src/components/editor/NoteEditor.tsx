@@ -494,7 +494,9 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
             return (
           <LexicalEditorWrapper
             key={`${note.id}-${restoreKey}`}
-            content={note.content}
+            // The dashboard only mounts the editor with a fully loaded note; the
+            // fallback exists because list notes type content as optional.
+            content={note.content ?? ''}
             onChange={handleContentChange}
             placeholder="Start writing..."
             disabled={isInTrash || isViewer}
@@ -565,7 +567,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
         hasActiveCollaborators={collaborators.some(c => c.status === 'accepted')}
         noteId={note.id}
         title={title}
-        content={content}
+        content={content ?? ''}
         panelRef={exportMenuRef}
       />
 

@@ -31,7 +31,10 @@ export interface User {
 export interface Note {
   id: string;
   title?: string;
-  content: string;
+  // Full body — present on single-note responses (editor). List responses omit
+  // it and carry `preview` instead; the editor refetches before opening.
+  content?: string;
+  preview?: string;
   coverImage?: string | null;
   isPinned: boolean;
   isLocked: boolean;
