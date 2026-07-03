@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type MutableRefObject, type React
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Constellation, ConstellationLink as LinkType, ThemeNote } from '../../types';
-import { constellationColor } from '../../lib/constellations';
 import { useConstellationLayout, type LayoutMap } from './useConstellationLayout';
 import { buildArbor } from './arborPaths';
 import ArborBranches from './ArborBranches';
@@ -234,7 +233,7 @@ const ConstellationScene = ({
           );
         })}
         {level3 && rawPos && selected && notes.length > 0 && (
-          <ThoughtCluster notes={notes} center={rawPos} color={constellationColor(selected)} onOpenNote={onOpenNote} />
+          <ThoughtCluster notes={notes} center={rawPos} onOpenNote={onOpenNote} />
         )}
       </ParallaxGroup>
     </>

@@ -10,13 +10,16 @@ import cormorant from '../../fonts/CormorantGaramond.ttf?url';
 interface ThoughtClusterProps {
   notes: ThemeNote[];
   center: [number, number, number];
-  color: string;
   onOpenNote: (id: string) => void;
 }
 
-const STAR_SIZE = 0.42;
+const BUD_SIZE = 0.3;
+const BUD_COLOR = '#dcc08e'; // warm gold-ivory, like young growth
+const BUD_COLOR_HOT = '#f3ddb0';
+const STEM_COLOR = '#d8cdb4';
+const STEM_LEN = 0.35;
 const SPACING = 0.55;
-const INNER_GAP = 3; // push the whole field out so a ring clears the theme star
+const INNER_GAP = 3; // push the whole field out so a ring clears the theme node
 
 // Deterministic z-jitter per note so the field has depth but never reshuffles.
 function jitterZ(id: string): number {
@@ -25,14 +28,14 @@ function jitterZ(id: string): number {
   return (h / 1000 - 0.5) * 0.8;
 }
 
-// Level 3: the theme's actual notes as a phyllotaxis field of small stars that
-// bloom out of the constellation. Hover reveals the title, click opens the note.
-const ThoughtCluster = ({ notes, center, color, onOpenNote }: ThoughtClusterProps) => {
+// Level 3: the theme's actual notes as a phyllotaxis field of gold buds that
+// bloom out of the branch tip, each on a short stem toward the centre. Hover
+// reveals the title, click opens the note.
+const ThoughtCluster = ({ notes, center, onOpenNote }: ThoughtClusterProps) => {
   const group = useRef<THREE.Group>(null);
   const started = useRef(false);
   const [hover, setHover] = useState<number | null>(null);
   const texture = getGlowTexture();
-  const tint = useMemo(() => new THREE.Color(color), [color]);
 
   const positions = useMemo<[number, number, number][]>(
     () =>
@@ -43,6 +46,16 @@ const ThoughtCluster = ({ notes, center, color, onOpenNote }: ThoughtClusterProp
       }),
     [notes],
   );
+
+  // All stems share one geometry — hair-thin native lines are enough here.
+  const stems = useMemo(() => {
+    const arr = new Float32Array(positions.length * 6);
+    positions.forEach(([x, y, z], i) => {
+      const d = Math.hypot(x, y) || 1;
+      arr.set([x - (x / d) * STEM_LEN, y - (y / d) * STEM_LEN, z, x, y, z], i * 6);
+    });
+    return arr;
+  }, [positions]);
 
   useFrame((_, delta) => {
     if (!group.current) return;
@@ -59,9 +72,15 @@ const ThoughtCluster = ({ notes, center, color, onOpenNote }: ThoughtClusterProp
 
   return (
     <group ref={group} position={center}>
+      <lineSegments>
+        <bufferGeometry key={positions.length}>
+          <bufferAttribute attach="attributes-position" args={[stems, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color={STEM_COLOR} transparent opacity={0.3} depthWrite={false} />
+      </lineSegments>
       {notes.map((n, i) => {
         const hovered = hover === i;
-        const size = STAR_SIZE * (hovered ? 1.7 : 1);
+        const size = BUD_SIZE * (hovered ? 1.6 : 1);
         return (
           <sprite
             key={n.id}
@@ -83,9 +102,9 @@ const ThoughtCluster = ({ notes, center, color, onOpenNote }: ThoughtClusterProp
           >
             <spriteMaterial
               map={texture}
-              color={hovered ? '#ffffff' : tint}
+              color={hovered ? BUD_COLOR_HOT : BUD_COLOR}
               transparent
-              opacity={hovered ? 1 : 0.9}
+              opacity={hovered ? 1 : 0.85}
               depthWrite={false}
               blending={THREE.AdditiveBlending}
             />

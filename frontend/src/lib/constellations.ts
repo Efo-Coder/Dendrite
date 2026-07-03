@@ -1,4 +1,4 @@
-import { Constellation, InsightFact } from '../types';
+import { InsightFact } from '../types';
 
 // Pure mapping from a theme's normalized importance to the light it casts, plus
 // the calm prose for reflective insights. No rendering, no React — kept apart so
@@ -17,19 +17,6 @@ export function radiusFor(importance: number, min: number, max: number): number 
 
 export function brightnessFor(importance: number): number {
   return BRIGHTNESS_FLOOR + (1 - BRIGHTNESS_FLOOR) * Math.max(0, Math.min(1, importance));
-}
-
-// Deterministic hue for emergent (untagged) themes, so a theme keeps its colour
-// across reloads. Tagged themes use their own tag colour.
-function hueFromString(str: string): number {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 360;
-  return h;
-}
-
-export function constellationColor(c: Constellation): string {
-  if (c.color) return c.color;
-  return `hsl(${hueFromString(c.title)} 60% 72%)`;
 }
 
 // Qualitative recency, never numeric — the spec forbids exposing raw metrics.
