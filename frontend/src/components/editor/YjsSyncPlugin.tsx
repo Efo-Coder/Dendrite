@@ -36,6 +36,9 @@ interface YjsSyncPluginProps {
   username: string;
   cursorColor: string;
   canEdit: boolean;
+  // Only the note's owner may seed an empty Yjs doc. When both participants of
+  // a fresh session bootstrapped, each pushed its own copy → split-brain/doubling.
+  bootstrap: boolean;
   contentRef: React.MutableRefObject<string>;
   onUsersChangeRef: React.MutableRefObject<((users: ActiveUser[]) => void) | undefined>;
   cursorsContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -48,6 +51,7 @@ export function YjsSyncPlugin({
   username,
   cursorColor,
   canEdit,
+  bootstrap,
   contentRef,
   onUsersChangeRef,
   cursorsContainerRef,
@@ -58,12 +62,14 @@ export function YjsSyncPlugin({
   const tokenRef = useRef(token);
   const canEditRef = useRef(canEdit);
   const userIdRef = useRef(userId);
+  const bootstrapRef = useRef(bootstrap);
   useLayoutEffect(() => {
     usernameRef.current = username;
     cursorColorRef.current = cursorColor;
     tokenRef.current = token;
     canEditRef.current = canEdit;
     userIdRef.current = userId;
+    bootstrapRef.current = bootstrap;
   });
 
   useEffect(() => {
@@ -154,6 +160,11 @@ export function YjsSyncPlugin({
       // FocusAtEndPlugin or Framer-Motion callbacks) create duplicate Yjs nodes
       // in an already-populated doc and cause content doubling.
       if (!synced) return;
+      // A dirty-less update (CLEAR_HISTORY, selection moves) must not consume
+      // the one-shot emptyPrev full push: it would sync nothing while flipping
+      // firstSync, leaving every seeded node unmapped — local edits then never
+      // reach Yjs again and collaborators silently stop receiving anything.
+      if (firstSync && dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
       const prev = firstSync ? emptyPrev : prevEditorState;
       firstSync = false;
       syncLexicalUpdateToYjs(
@@ -171,14 +182,20 @@ export function YjsSyncPlugin({
       didInitialSync = true;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sharedType = binding.root.getSharedType() as any;
-      if (sharedType._length === 0) {
+      // Seed an empty doc — owner only, so two participants of a brand-new
+      // session can't both push their own copy (split-brain). Deliberately NOT
+      // tagged SKIP_COLLAB: the insert runs after `synced`, carries the full
+      // dirty set and is the deterministic emptyPrev push into Yjs. Waiting for
+      // a later local edit instead broke silently when a dirty-less update
+      // (CLEAR_HISTORY) consumed the one-shot push first.
+      if (bootstrapRef.current && sharedType._length === 0) {
         editor.update(() => {
           const parser = new DOMParser();
           const dom = parser.parseFromString(contentRef.current || '<p></p>', 'text/html');
           const nodes = $generateNodesFromDOM(editor, dom);
           $getRoot().clear();
           $insertNodes(nodes);
-        }, { tag: SKIP_COLLAB_TAG });
+        });
       }
       // Clear history so the initial load isn't an undo-able entry
       setTimeout(() => editor.dispatchCommand(CLEAR_HISTORY_COMMAND, undefined), 0);

@@ -61,6 +61,8 @@ export interface CollaborationConfig {
   cursorColor: string;
   // Drives the presence label: viewers are shown as "viewing", not "editing".
   canEdit: boolean;
+  // True for the note's owner: only they may seed an empty collab doc.
+  bootstrap: boolean;
 }
 
 interface LexicalEditorWrapperProps {
@@ -247,6 +249,7 @@ const LexicalEditorWrapper = ({
                     username={collaboration.username}
                     cursorColor={collaboration.cursorColor}
                     canEdit={collaboration.canEdit}
+                    bootstrap={collaboration.bootstrap}
                     contentRef={contentRef}
                     onUsersChangeRef={onUsersChangeRef}
                     cursorsContainerRef={cursorsContainerRef}

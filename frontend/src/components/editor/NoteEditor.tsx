@@ -509,6 +509,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               username: user?.name || user?.email || 'Anonym',
               cursorColor: userCursorColor(user?.id ?? ''),
               canEdit: !isViewer,
+              bootstrap: !isCollaborator,
             }}
             onUsersChange={setActiveUsers}
             toolbar={

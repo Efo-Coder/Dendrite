@@ -27,7 +27,7 @@ import notificationRoutes from './routes/notification.routes';
 import reminderRoutes from './routes/reminder.routes';
 import { handleWebhook } from './controllers/checkout.controller';
 
-import { setupYjsConnection } from './wsHandler';
+import { setupYjsConnection, persistAllDocs } from './wsHandler';
 import { processDueReminders } from './services/reminder.service';
 import { prisma } from './lib/prisma';
 
@@ -231,6 +231,9 @@ setInterval(() => {
 // ─── Startup ─────────────────────────────────────────────────────────────────
 
 process.on('SIGTERM', async () => {
+  // Flush open collab docs so a deploy/restart never loses the last seconds
+  // of a session (the persist debounce is 3s).
+  await persistAllDocs();
   await prisma.$disconnect();
   process.exit(0);
 });

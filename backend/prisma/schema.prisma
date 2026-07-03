@@ -125,6 +125,10 @@ model Note {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime? // when the note was trashed; drives the 30-day auto-purge
+  // Persisted Yjs document state. Loaded when the first client joins a collab
+  // session, so joiners never see an empty doc (client-side seeding raced when
+  // two clients joined an empty doc simultaneously → split-brain).
+  yjsState   Bytes?
 
   user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   space             Space?               @relation(fields: [spaceId], references: [id], onDelete: SetNull)

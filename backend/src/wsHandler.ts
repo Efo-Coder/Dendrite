@@ -4,18 +4,54 @@ import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
+import { prisma } from './lib/prisma';
 
 const MSG_SYNC = 0;
 const MSG_AWARENESS = 1;
+
+// Trailing debounce for persisting doc state — frequent enough that a crash
+// loses at most a few seconds, rare enough not to write on every keystroke.
+const PERSIST_DEBOUNCE_MS = 3_000;
 
 interface DocEntry {
   doc: Y.Doc;
   awareness: awarenessProtocol.Awareness;
   conns: Set<WebSocket>;
   connToClients: Map<WebSocket, Set<number>>;
+  // Resolves once the persisted state (if any) has been applied. Connections
+  // buffer incoming messages until then, so a client's early sync step never
+  // races the DB load and sees an empty document.
+  ready: Promise<void>;
+  loadComplete: boolean;
+  dirty: boolean;
+  persistTimer: NodeJS.Timeout | null;
 }
 
 const docs = new Map<string, DocEntry>();
+
+function persistDoc(docName: string, entry: DocEntry): Promise<void> {
+  if (!entry.dirty) return Promise.resolve();
+  entry.dirty = false;
+  const state = Buffer.from(Y.encodeStateAsUpdate(entry.doc));
+  return prisma.note
+    .update({ where: { id: docName }, data: { yjsState: state } })
+    .then(() => undefined)
+    .catch(err => {
+      // A deleted note has no row to update — nothing left worth persisting.
+      if ((err as { code?: string }).code !== 'P2025') {
+        console.error(`[Yjs] persist failed (${docName}):`, err);
+      }
+    });
+}
+
+function schedulePersist(docName: string, entry: DocEntry): void {
+  entry.dirty = true;
+  if (entry.persistTimer) return;
+  entry.persistTimer = setTimeout(() => {
+    entry.persistTimer = null;
+    persistDoc(docName, entry);
+  }, PERSIST_DEBOUNCE_MS);
+}
 
 function getDoc(docName: string): DocEntry {
   let entry = docs.get(docName);
@@ -25,6 +61,17 @@ function getDoc(docName: string): DocEntry {
     const conns: Set<WebSocket> = new Set();
     const connToClients = new Map<WebSocket, Set<number>>();
 
+    const ready = prisma.note
+      .findUnique({ where: { id: docName }, select: { yjsState: true } })
+      .then(note => {
+        if (note?.yjsState?.length) Y.applyUpdate(doc, new Uint8Array(note.yjsState));
+      })
+      .catch(err => console.error(`[Yjs] state load failed (${docName}):`, err));
+
+    entry = { doc, awareness, conns, connToClients, ready, loadComplete: false, dirty: false, persistTimer: null };
+    const self = entry;
+    ready.then(() => { self.loadComplete = true; });
+
     doc.on('update', (update: Uint8Array) => {
       const enc = encoding.createEncoder();
       encoding.writeVarUint(enc, MSG_SYNC);
@@ -33,9 +80,10 @@ function getDoc(docName: string): DocEntry {
       conns.forEach(ws => {
         if (ws.readyState === WebSocket.OPEN) ws.send(msg);
       });
+      // Applying the persisted state during load must not re-persist itself.
+      if (self.loadComplete) schedulePersist(docName, self);
     });
 
-    entry = { doc, awareness, conns, connToClients };
     docs.set(docName, entry);
   }
   return entry;
@@ -47,10 +95,39 @@ function toUint8Array(raw: Buffer | ArrayBuffer | Buffer[]): Uint8Array {
   return new Uint8Array(raw);
 }
 
+// Flush every dirty doc on shutdown; the caller awaits this before closing
+// the database connection.
+export function persistAllDocs(): Promise<void> {
+  const writes: Promise<void>[] = [];
+  for (const [docName, entry] of docs) {
+    if (entry.persistTimer) clearTimeout(entry.persistTimer);
+    entry.persistTimer = null;
+    writes.push(persistDoc(docName, entry));
+  }
+  return Promise.all(writes).then(() => undefined);
+}
+
 export function setupYjsConnection(ws: WebSocket, docName: string): void {
   ws.binaryType = 'arraybuffer';
 
   const entry = getDoc(docName);
+
+  // Hold the client's early frames (y-websocket sends its sync step 1 right on
+  // open) until the persisted state is applied, then replay them in order.
+  const pending: Uint8Array[] = [];
+  const bufferMessages = (raw: Buffer | ArrayBuffer | Buffer[]) => {
+    pending.push(toUint8Array(raw));
+  };
+  ws.on('message', bufferMessages);
+
+  entry.ready.then(() => {
+    ws.off('message', bufferMessages);
+    if (ws.readyState !== WebSocket.OPEN) return;
+    wireConnection(ws, docName, entry, pending);
+  });
+}
+
+function wireConnection(ws: WebSocket, docName: string, entry: DocEntry, pending: Uint8Array[]): void {
   const { doc, awareness, conns, connToClients } = entry;
   conns.add(ws);
   connToClients.set(ws, new Set());
@@ -111,8 +188,7 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
   };
   awareness.on('change', onAwarenessChange);
 
-  ws.on('message', (raw: Buffer | ArrayBuffer | Buffer[]) => {
-    const data = toUint8Array(raw);
+  const handleMessage = (data: Uint8Array) => {
     try {
       const decoder = decoding.createDecoder(data);
       const type = decoding.readVarUint(decoder);
@@ -131,7 +207,10 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
     } catch (e) {
       console.error('[Yjs WS]', e);
     }
-  });
+  };
+
+  ws.on('message', (raw: Buffer | ArrayBuffer | Buffer[]) => handleMessage(toUint8Array(raw)));
+  for (const data of pending) handleMessage(data);
 
   // Heartbeat: the y-websocket client drops the connection after 30s without an
   // onmessage event (raw ping frames don't count — the browser answers them
@@ -164,6 +243,11 @@ export function setupYjsConnection(ws: WebSocket, docName: string): void {
     }
     connToClients.delete(ws);
     if (conns.size === 0) {
+      // Last participant left: flush now — no connections means no further
+      // changes, and the eviction below would otherwise race the debounce.
+      if (entry.persistTimer) clearTimeout(entry.persistTimer);
+      entry.persistTimer = null;
+      persistDoc(docName, entry);
       setTimeout(() => {
         if (docs.get(docName)?.conns.size === 0) docs.delete(docName);
       }, 30_000);
