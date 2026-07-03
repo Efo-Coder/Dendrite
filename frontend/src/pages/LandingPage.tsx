@@ -50,10 +50,21 @@ export default function LandingPage() {
     };
   }, [dark]);
 
+  // Keep the full-page ScrollTrigger refresh out of the hero intro: the default
+  // 'load' auto-refresh fires mid-choreography and blocks the main thread with a
+  // full layout pass. Refresh once after the fonts settled and the intro ended;
+  // until then triggers use their mount-time positions.
   useEffect(() => {
-    const id = requestAnimationFrame(() => ScrollTrigger.refresh());
+    ScrollTrigger.config({ autoRefreshEvents: 'visibilitychange,DOMContentLoaded,resize' });
+    let cancelled = false;
+    let timer = 0;
+    const fontTimeout = new Promise<void>(resolve => setTimeout(resolve, 1500));
+    Promise.race([document.fonts.ready, fontTimeout]).then(() => {
+      if (!cancelled) timer = window.setTimeout(() => ScrollTrigger.refresh(), 2100);
+    });
     return () => {
-      cancelAnimationFrame(id);
+      cancelled = true;
+      window.clearTimeout(timer);
       ScrollTrigger.getAll().forEach(t => t.kill());
     };
   }, []);

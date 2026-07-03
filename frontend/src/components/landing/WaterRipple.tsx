@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useMemo, useSyncExternalStore, useState } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
@@ -278,35 +278,44 @@ function WaterRippleScene({
   );
 }
 
-const emptySubscribe = () => () => {};
-
 export function WaterRipple({
   src,
   maskRadiusRef,
   parallaxRef,
   zoom,
   offset,
+  warmupMs,
 }: {
   src: string;
   maskRadiusRef: React.MutableRefObject<number>;
   parallaxRef?: React.MutableRefObject<{ x: number; y: number }>;
   zoom?: number;
   offset?: [number, number];
+  warmupMs: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isIntersecting, setIsIntersecting] = useState(false);
+  // Latched mount gate: creating the WebGL context, compiling shaders and loading
+  // the texture blocks the main thread — deferred so the hero intro animates
+  // jank-free. Mounts when the section approaches the viewport or the warm-up
+  // timer fires (whichever comes first); once mounted, stays mounted.
+  const [hasEntered, setHasEntered] = useState(false);
 
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  );
+  // Warm-up after the hero intro: without it the image/WebGL init only starts
+  // 200px before the section scrolls in, which reads as delayed image loading.
+  useEffect(() => {
+    const t = window.setTimeout(() => setHasEntered(true), warmupMs);
+    return () => window.clearTimeout(t);
+  }, [warmupMs]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setIsIntersecting(entry.isIntersecting),
+      ([entry]) => {
+        setIsIntersecting(entry.isIntersecting);
+        if (entry.isIntersecting) setHasEntered(true);
+      },
       { rootMargin: "200px" }
     );
     observer.observe(el);
@@ -319,7 +328,7 @@ export function WaterRipple({
       className="absolute inset-0 w-full h-full"
       style={{ willChange: "transform", transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
     >
-      {isMounted && (
+      {hasEntered && (
         <Canvas
           dpr={[1, 2]}
           gl={{ antialias: false, alpha: true, powerPreference: "high-performance", stencil: false, depth: false }}

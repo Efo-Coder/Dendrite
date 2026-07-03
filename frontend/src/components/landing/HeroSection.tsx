@@ -9,18 +9,20 @@ import { HeroEditorMock } from './HeroEditorMock';
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function HeroSection() {
-  // Animationen erst starten, wenn der erste Frame wirklich gemalt ist (Doppel-rAF)
-  // und die Fonts bereit sind — sonst läuft die Choreografie unsichtbar an oder
-  // der H1-Reveal passiert mit der Fallback-Schrift. Timeout als CDN-Fallback.
+  // Start the choreography only after the fonts are in (H1 reveal must not run
+  // with the fallback font; timeout as CDN fallback) — and then wait one painted
+  // frame (double rAF): the font swap relayouts the entire page (~200ms), and
+  // starting inside that frame makes the intro stutter visibly.
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    let raf1 = 0;
     let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        const timeout = new Promise<void>(resolve => setTimeout(resolve, 1500));
-        Promise.race([document.fonts.ready, timeout]).then(() => {
+    const timeout = new Promise<void>(resolve => setTimeout(resolve, 1500));
+    Promise.race([document.fonts.ready, timeout]).then(() => {
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
           if (!cancelled) setReady(true);
         });
       });

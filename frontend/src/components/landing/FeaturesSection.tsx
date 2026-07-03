@@ -318,7 +318,9 @@ function FeatureItem({ feature, index, onHover, onClick }: { feature: Feature; i
             onMouseLeave={handleMouseLeave}
             onClick={() => { if (inEllipseRef.current) onClick(); }}
           >
-            <WaterRipple src={feature.image} maskRadiusRef={maskRadiusRef} parallaxRef={parallaxRef} zoom={feature.zoom ?? 1.05} offset={feature.offset} />
+            {/* Staggered warm-up right after the hero intro (~2.1s + buffer) so the
+                three WebGL inits land one by one on an idle main thread. */}
+            <WaterRipple src={feature.image} maskRadiusRef={maskRadiusRef} parallaxRef={parallaxRef} zoom={feature.zoom ?? 1.05} offset={feature.offset} warmupMs={2800 + index * 500} />
           </div>
 
           <div className={`flex flex-col md:grow md:basis-80 ${isEven ? "" : "md:text-right"}`}>
