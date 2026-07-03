@@ -53,15 +53,23 @@ export function sortPinnedFirst(a: ApiNote, b: ApiNote): number {
 // Context order for a note list: pinned first, then — within pinned and within the
 // rest — the cards without a saved order (i.e. newly added) lead by recency, ahead of
 // the manually ordered ones. So a freshly created/added card always lands up front.
-export function sortByContextOrder(notes: ApiNote[], orderMap: Map<string, number>): ApiNote[] {
-  const byRecency = (a: ApiNote, b: ApiNote) =>
-    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-  const byOrder = (a: ApiNote, b: ApiNote) => orderMap.get(a.id)! - orderMap.get(b.id)!;
+// Generic over the row shape so the paged path can order slim id-only rows before
+// hydrating relations.
+export interface OrderableNote {
+  id: string;
+  isPinned: boolean;
+  updatedAt: Date | string;
+}
 
-  const pinnedOrdered: ApiNote[] = [];
-  const pinnedNew: ApiNote[] = [];
-  const restNew: ApiNote[] = [];
-  const restOrdered: ApiNote[] = [];
+export function sortByContextOrder<T extends OrderableNote>(notes: T[], orderMap: Map<string, number>): T[] {
+  const byRecency = (a: T, b: T) =>
+    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  const byOrder = (a: T, b: T) => orderMap.get(a.id)! - orderMap.get(b.id)!;
+
+  const pinnedOrdered: T[] = [];
+  const pinnedNew: T[] = [];
+  const restNew: T[] = [];
+  const restOrdered: T[] = [];
   for (const n of notes) {
     const has = orderMap.has(n.id);
     if (n.isPinned) (has ? pinnedOrdered : pinnedNew).push(n);

@@ -25,6 +25,10 @@ export const noteService = {
     archived?: boolean;
     deleted?: boolean;
     shared?: boolean;
+    // With `limit`, the backend orders slim rows first and hydrates only the
+    // page — use for sections that never drag-reorder the full set.
+    limit?: number;
+    offset?: number;
   }): Promise<Note[]> {
     const params = new URLSearchParams();
     if (filters?.spaceId) params.append('spaceId', filters.spaceId);
@@ -35,6 +39,8 @@ export const noteService = {
     if (filters?.archived !== undefined) params.append('archived', String(filters.archived));
     if (filters?.deleted !== undefined) params.append('deleted', String(filters.deleted));
     if (filters?.shared) params.append('shared', 'true');
+    if (filters?.limit) params.append('limit', String(filters.limit));
+    if (filters?.offset) params.append('offset', String(filters.offset));
 
     const response = await api.get<{ notes: Note[] }>(`/notes?${params.toString()}`);
     return response.data.notes;

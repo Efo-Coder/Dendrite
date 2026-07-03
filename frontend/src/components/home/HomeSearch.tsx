@@ -1,7 +1,8 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Search, FileText, Layers } from 'lucide-react';
-import { useNoteStore } from '../../store/useNoteStore';
 import { useSpaceStore } from '../../store/useSpaceStore';
+import { noteService } from '../../services/note.service';
+import { Note } from '../../types';
 import { noteLabel } from '../../lib/noteText';
 
 interface HomeSearchProps {
@@ -9,20 +10,35 @@ interface HomeSearchProps {
   onOpenSpace: (id: string, name: string) => void;
 }
 
+const SEARCH_DEBOUNCE_MS = 220;
+
 // The dashboard search bar is itself the input — results drop down inline
 // beneath it (no modal).
 const HomeSearch = ({ onOpenNote, onOpenSpace }: HomeSearchProps) => {
-  const notes = useNoteStore((s) => s.notes);
   const spaces = useSpaceStore((s) => s.spaces);
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
 
-  const noteHits = useMemo(
-    // List notes carry a plain-text preview instead of the full body; matching
-    // against it keeps the quick filter useful without shipping note HTML.
-    () => (q ? notes.filter((n) => noteLabel(n).toLowerCase().includes(q) || (n.preview ?? n.content)?.toLowerCase().includes(q)).slice(0, 6) : []),
-    [q, notes],
-  );
+  // Notes are searched server-side (title + full body): the loaded list only
+  // carries short previews, so a local filter would miss deep matches.
+  const [noteHits, setNoteHits] = useState<Note[]>([]);
+  useEffect(() => {
+    if (q.length < 2) {
+      setNoteHits([]);
+      return;
+    }
+    let stale = false;
+    const timer = setTimeout(() => {
+      noteService
+        .searchNotes(query.trim())
+        .then((r) => { if (!stale) setNoteHits(r.slice(0, 6)); })
+        .catch(() => { if (!stale) setNoteHits([]); });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
+  }, [q, query]);
   const spaceHits = useMemo(
     () => (q ? spaces.filter((s) => s.name.toLowerCase().includes(q)).slice(0, 6) : []),
     [q, spaces],

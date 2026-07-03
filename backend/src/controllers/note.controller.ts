@@ -83,14 +83,6 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
     if (archived !== undefined) where.isArchived = archived === 'true';
     if (deleted !== undefined) where.isDeleted = deleted === 'true';
 
-    const rawNotes = await prisma.note.findMany({
-      where,
-      include: NOTE_INCLUDE,
-      orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
-    });
-
-    const notes = rawNotes.map(transformNote);
-
     let contextType = 'all';
     let contextId: string = '_none';
 
@@ -110,21 +102,56 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
       contextType = 'archive';
     }
 
-    if (deleted !== 'true' && notes.length > 0) {
+    const loadOrderMap = async (noteIds?: string[]) => {
+      if (deleted === 'true') return new Map<string, number>();
       const noteOrders = await prisma.noteOrder.findMany({
         where: {
           userId: req.userId,
           contextType,
           contextId,
-          noteId: { in: notes.map(n => n.id) },
+          ...(noteIds ? { noteId: { in: noteIds } } : {}),
         },
+        select: { noteId: true, order: true },
       });
+      return new Map(noteOrders.map(no => [no.noteId, no.order]));
+    };
 
-      const orderMap = new Map(noteOrders.map(no => [no.noteId, no.order]));
-      return res.json({ notes: sortByContextOrder(notes, orderMap).map(toListItem) });
+    // Paged path: order slim rows first, hydrate relations only for the page —
+    // a large library then costs one cheap scan plus a page-sized include query.
+    const limit = parseInt(String(req.query.limit ?? ''), 10);
+    if (Number.isFinite(limit) && limit > 0) {
+      const offset = Math.max(0, parseInt(String(req.query.offset ?? '0'), 10) || 0);
+      const slim = await prisma.note.findMany({
+        where,
+        select: { id: true, isPinned: true, updatedAt: true },
+        orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
+      });
+      const orderMap = await loadOrderMap();
+      const pageIds = sortByContextOrder(slim, orderMap)
+        .slice(offset, offset + limit)
+        .map(n => n.id);
+      const raw = pageIds.length
+        ? await prisma.note.findMany({ where: { id: { in: pageIds } }, include: NOTE_INCLUDE })
+        : [];
+      const byId = new Map(raw.map(n => [n.id, transformNote(n)]));
+      const page = pageIds.flatMap(id => byId.get(id) ?? []);
+      return res.json({ notes: page.map(toListItem), total: slim.length });
     }
 
-    return res.json({ notes: notes.map(toListItem) });
+    const rawNotes = await prisma.note.findMany({
+      where,
+      include: NOTE_INCLUDE,
+      orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
+    });
+
+    const notes = rawNotes.map(transformNote);
+
+    if (deleted !== 'true' && notes.length > 0) {
+      const orderMap = await loadOrderMap(notes.map(n => n.id));
+      return res.json({ notes: sortByContextOrder(notes, orderMap).map(toListItem), total: notes.length });
+    }
+
+    return res.json({ notes: notes.map(toListItem), total: notes.length });
   } catch (error) {
     console.error('GetAllNotes error:', error);
     return res.status(500).json({ error: 'Fehler beim Abrufen der Notizen' });
@@ -183,7 +210,12 @@ export const searchNotes = async (req: AuthRequest, res: Response) => {
     const rawNotes = await prisma.note.findMany({
       where: {
         userId: req.userId,
-        content: { contains: q, mode: 'insensitive' },
+        // Titles too: the home search now goes through this endpoint, and a
+        // note is most often found by what its heading says.
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { content: { contains: q, mode: 'insensitive' } },
+        ],
       },
       include: NOTE_INCLUDE,
       orderBy: { updatedAt: 'desc' },
