@@ -58,7 +58,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', (_req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
-}, express.static(path.join(process.cwd(), 'uploads')));
+}, express.static(path.join(process.cwd(), 'uploads'), {
+  // Upload filenames carry a unique suffix and are never rewritten, so the
+  // browser can cache them forever instead of re-downloading covers per visit.
+  immutable: true,
+  maxAge: '365d',
+}));
 
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

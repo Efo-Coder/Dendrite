@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+import { TtlCache } from '../lib/ttlCache';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { stripHtml } from '../services/constellationText';
 import { notifyNoteLike } from '../services/notification.service';
@@ -10,6 +11,11 @@ import { notifyNoteLike } from '../services/notification.service';
 const WORDS_PER_MINUTE = 200;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
+
+// Feed pages are identical for every viewer (isLiked is attached per request),
+// so the expensive queries behind them are shared for a short window. 60 s of
+// staleness on card ordering/counts is invisible in the Explore UX.
+const FEED_TTL_MS = 60_000;
 
 // Slim author shape shared by explore list + detail (never leak email here).
 const authorSelect = { id: true, name: true, avatarUrl: true } as const;
@@ -31,6 +37,11 @@ const cardSelect = {
 } as const;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+type Card = Prisma.PublishedNoteGetPayload<{ select: typeof cardSelect }>;
+
+const trendingCache = new TtlCache<Card[]>(FEED_TTL_MS);
+const listCache = new TtlCache<{ rows: Card[]; total: number }>(FEED_TTL_MS);
 
 function computeReadingTime(html: string): number {
   const words = stripHtml(html).trim().split(/\s+/).filter(Boolean).length;
@@ -159,22 +170,24 @@ export const listPublished = async (req: AuthRequest, res: Response) => {
 
     // Trending = velocity: most likes within the recent window (not all-time totals).
     if (feed === 'trending') {
-      const since = new Date(Date.now() - TRENDING_WINDOW_DAYS * 86_400_000);
-      const grouped = await prisma.publishedNoteLike.groupBy({
-        by: ['publishedNoteId'],
-        where: { createdAt: { gte: since } },
-        _count: { publishedNoteId: true },
-        orderBy: { _count: { publishedNoteId: 'desc' } },
-        take: limit,
+      const ordered = await trendingCache.getOrBuild(`trending:${limit}`, async () => {
+        const since = new Date(Date.now() - TRENDING_WINDOW_DAYS * 86_400_000);
+        const grouped = await prisma.publishedNoteLike.groupBy({
+          by: ['publishedNoteId'],
+          where: { createdAt: { gte: since } },
+          _count: { publishedNoteId: true },
+          orderBy: { _count: { publishedNoteId: 'desc' } },
+          take: limit,
+        });
+        const ids = grouped.map((g) => g.publishedNoteId);
+        if (ids.length === 0) return [];
+        const notes = await prisma.publishedNote.findMany({
+          where: { id: { in: ids }, visibility: 'public' },
+          select: cardSelect,
+        });
+        const byId = new Map(notes.map((n) => [n.id, n]));
+        return ids.map((id) => byId.get(id)).filter((n): n is Card => Boolean(n));
       });
-      const ids = grouped.map((g) => g.publishedNoteId);
-      if (ids.length === 0) return res.json({ items: [], total: 0, page, limit });
-      const notes = await prisma.publishedNote.findMany({
-        where: { id: { in: ids }, visibility: 'public' },
-        select: cardSelect,
-      });
-      const byId = new Map(notes.map((n) => [n.id, n]));
-      const ordered = ids.map((id) => byId.get(id)).filter((n): n is (typeof notes)[number] => Boolean(n));
       const items = await attachLiked(ordered, req.userId!);
       return res.json({ items, total: items.length, page, limit });
     }
@@ -222,16 +235,24 @@ export const listPublished = async (req: AuthRequest, res: Response) => {
         ? [{ likeCount: 'desc' }, { viewCount: 'desc' }, { publishedAt: 'desc' }]
         : [{ publishedAt: 'desc' }];
 
-    const [rows, total] = await Promise.all([
-      prisma.publishedNote.findMany({
-        where,
-        select: cardSelect,
-        orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.publishedNote.count({ where }),
-    ]);
+    const fetchPage = () =>
+      Promise.all([
+        prisma.publishedNote.findMany({
+          where,
+          select: cardSelect,
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        prisma.publishedNote.count({ where }),
+      ]).then(([rows, total]) => ({ rows, total }));
+
+    // Only unfiltered feed pages are shared across viewers; anything with a
+    // search term or personal filter goes straight to the database.
+    const hasFilters = Boolean(q || author || followingIds || topic || days > 0 || maxReadingTime > 0);
+    const { rows, total } = hasFilters
+      ? await fetchPage()
+      : await listCache.getOrBuild(`${feed}:${page}:${limit}`, fetchPage);
 
     const items = await attachLiked(rows, req.userId!);
     return res.json({ items, total, page, limit });
@@ -253,10 +274,13 @@ export const getPublishedById = async (req: AuthRequest, res: Response) => {
 
     if (!publication) return res.status(404).json({ error: 'Published note not found' });
 
-    // Count a view, but never the author's own opens.
+    // Count a view, but never the author's own opens. Fire-and-forget: the
+    // reader must not wait on a counter write (a hot row under load).
     let viewCount = publication.viewCount;
     if (publication.owner.id !== req.userId) {
-      await prisma.publishedNote.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+      prisma.publishedNote
+        .update({ where: { id }, data: { viewCount: { increment: 1 } } })
+        .catch((err) => console.error('View count update failed:', err));
       viewCount += 1;
     }
 
@@ -290,21 +314,26 @@ export const likeNote = async (req: AuthRequest, res: Response) => {
         prisma.publishedNoteLike.create({ data: { userId: req.userId!, publishedNoteId: id } }),
         prisma.publishedNote.update({ where: { id }, data: { likeCount: { increment: 1 } } }),
       ]);
-      // Notify the author of a genuinely new like (never their own).
+      // Notify the author of a genuinely new like (never their own). Decoupled
+      // from the response: the liker shouldn't wait for the author's bell.
       if (pub.ownerId !== req.userId) {
-        const liker = await prisma.user.findUnique({
-          where: { id: req.userId! },
-          select: { id: true, name: true, avatarUrl: true },
-        });
-        if (liker) {
-          await notifyNoteLike(pub.ownerId, {
-            publishedNoteId: id,
-            noteTitle: pub.title,
-            fromUserId: liker.id,
-            fromName: liker.name,
-            fromAvatarUrl: liker.avatarUrl,
-          });
-        }
+        prisma.user
+          .findUnique({
+            where: { id: req.userId! },
+            select: { id: true, name: true, avatarUrl: true },
+          })
+          .then((liker) =>
+            liker
+              ? notifyNoteLike(pub.ownerId, {
+                  publishedNoteId: id,
+                  noteTitle: pub.title,
+                  fromUserId: liker.id,
+                  fromName: liker.name,
+                  fromAvatarUrl: liker.avatarUrl,
+                })
+              : undefined,
+          )
+          .catch((err) => console.error('Like notification failed:', err));
       }
     }
 
