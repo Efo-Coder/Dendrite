@@ -83,6 +83,14 @@ async function nameThemes(themes: { term: string; keywords: string[] }[]): Promi
 // by title, so they are remapped alongside.
 export async function applyThemeNames(userId: string, graph: ConstellationGraphDTO): Promise<void> {
   const emergent = graph.constellations.filter((c) => c.source === 'keyword');
+
+  // Names for themes that dropped out of the current top set are stale — clear
+  // them so the table stays at a handful of rows per user. A theme that later
+  // returns simply gets named again (an empty current set clears everything).
+  await prisma.constellationThemeName.deleteMany({
+    where: { userId, themeId: { notIn: emergent.map((c) => c.id) } },
+  });
+
   if (emergent.length === 0) return;
 
   const stored = await prisma.constellationThemeName.findMany({
