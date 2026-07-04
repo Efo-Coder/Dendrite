@@ -55,6 +55,7 @@ model User {
   notifications     Notification[]
   publishedLikes    PublishedNoteLike[]
   reminders         Reminder[]
+  constellationThemeNames ConstellationThemeName[]
 
   @@unique([provider, providerId])
   // People search matches name/username with contains — trgm makes that indexed.
@@ -427,4 +428,20 @@ model Reminder {
   @@index([remindAt]) // poller scans for due rows
   @@index([userId, noteId])
   @@map("reminders")
+}
+
+// Claude-generated display name for an emergent constellation theme (themeId
+// "kw:<term>"). Named once, then persisted so the arbor keeps the same name
+// across graph rebuilds and deploys. Tag themes carry the user's bookmark name.
+model ConstellationThemeName {
+  id        String   @id @default(uuid())
+  userId    String
+  themeId   String
+  title     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, themeId])
+  @@map("constellation_theme_names")
 }

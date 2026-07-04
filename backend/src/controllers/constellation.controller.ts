@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { TtlCache } from '../lib/ttlCache';
 import { buildConstellationGraph } from '../services/constellation.service';
+import { applyThemeNames } from '../services/constellationNaming.service';
 import { getConstellationNotes } from '../services/constellationNotes.service';
 import type { ConstellationGraphDTO } from '../services/constellation.service';
 
@@ -12,7 +13,13 @@ const graphCache = new TtlCache<ConstellationGraphDTO>(5 * 60_000);
 
 export const getConstellations = async (req: AuthRequest, res: Response) => {
   try {
-    const graph = await graphCache.getOrBuild(req.userId!, () => buildConstellationGraph(req.userId!));
+    // Naming runs inside the cached build, so the Claude call happens at most
+    // once per cache miss — and only for themes without a stored name.
+    const graph = await graphCache.getOrBuild(req.userId!, async () => {
+      const g = await buildConstellationGraph(req.userId!);
+      await applyThemeNames(req.userId!, g);
+      return g;
+    });
     return res.json(graph);
   } catch (error) {
     console.error('GetConstellations error:', error);
