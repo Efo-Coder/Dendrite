@@ -12,6 +12,12 @@ export type CursorStyle = 'classic' | 'modern';
 // print route can reproduce the same factor as the live app.
 export const DENSITY: Record<DensityId, number> = { compact: 0.85, regular: 1, comfy: 1.15 };
 
+// Mini toolbar (editor footer): ordered tool ids. The defaults are permanent members —
+// reorderable but never removable — while user-added tools can be removed again.
+// The cap counts every configurable slot (defaults included); the More button is extra.
+export const MINI_TOOLBAR_DEFAULTS: string[] = ['bullet-list', 'image', 'dictate', 'summarize', 'info', 'version-history'];
+export const MINI_TOOLBAR_MAX = 10;
+
 interface SettingsState {
   dateDisplayMode: DateDisplayMode;
   palette: PaletteId;
@@ -22,6 +28,7 @@ interface SettingsState {
   density: DensityId;
   autoSave: boolean;
   cursorStyle: CursorStyle;
+  miniToolbarItems: string[];
 
   setDateDisplayMode: (mode: DateDisplayMode) => void;
   setPalette: (palette: PaletteId) => void;
@@ -32,6 +39,7 @@ interface SettingsState {
   setDensity: (density: DensityId) => void;
   setAutoSave: (on: boolean) => void;
   setCursorStyle: (style: CursorStyle) => void;
+  setMiniToolbarItems: (items: string[]) => void;
 }
 
 // View Transitions API isn't in every TS DOM lib version yet.
@@ -65,6 +73,7 @@ export const useSettingsStore = create<SettingsState>()(
       density: 'regular',
       autoSave: true,
       cursorStyle: 'classic',
+      miniToolbarItems: [...MINI_TOOLBAR_DEFAULTS],
 
       setDateDisplayMode: (mode) => set({ dateDisplayMode: mode }),
       setPalette: (palette) => set({ palette }),
@@ -75,13 +84,14 @@ export const useSettingsStore = create<SettingsState>()(
       setDensity: (density) => set({ density }),
       setAutoSave: (autoSave) => set({ autoSave }),
       setCursorStyle: (cursorStyle) => set({ cursorStyle }),
+      setMiniToolbarItems: (miniToolbarItems) => set({ miniToolbarItems }),
     }),
     {
       name: 'dendrite-settings',
-      version: 7,
+      version: 8,
       migrate: (persisted: unknown, version: number) => {
         if (version < 2) {
-          return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: null, fontSize: 19, activeLine: true, density: 'regular', autoSave: true, cursorStyle: 'classic' };
+          return { dateDisplayMode: 'updatedAt', palette: 'onyx', themeMode: 'light', font: null, fontSize: 19, activeLine: true, density: 'regular', autoSave: true, cursorStyle: 'classic', miniToolbarItems: [...MINI_TOOLBAR_DEFAULTS] };
         }
         // Migrations apply cumulatively — no early returns, otherwise an old
         // stored version skips every later step.
@@ -95,6 +105,7 @@ export const useSettingsStore = create<SettingsState>()(
         }
         // v7: drop cap moved from a global toggle to a per-paragraph format — drop the dead key.
         if (version < 7) delete (s as Record<string, unknown>).dropCap;
+        if (version < 8) s.miniToolbarItems = [...MINI_TOOLBAR_DEFAULTS];
         return s;
       },
     }

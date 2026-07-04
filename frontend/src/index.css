@@ -753,7 +753,10 @@ button.group:disabled .nav-underline::after { transform: scaleX(0) !important; }
   box-shadow: 0 4px 16px rgba(0,0,0,0), 0 0 0 0.5px transparent inset;
 }
 .win .note-card:hover { background: var(--surface); }
-.magic-hover button { position: relative; }
+/* Lift buttons above the indicator — except ones that opt into absolute positioning
+   (e.g. the add/remove badges on toolbar buttons), which the higher specificity here
+   would otherwise silently override. */
+.magic-hover button:not(.absolute) { position: relative; }
 .magic-hover button:hover { background-color: transparent; }
 .win .note-card.active {
   background: linear-gradient(180deg, var(--surface-hi), color-mix(in oklch, var(--surface) 80%, transparent));

@@ -21,7 +21,7 @@ const FontPicker = () => {
   const { onItemEnter, onItemLeave, Indicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref });
 
   return (
-    <SubPopup anchor={fontPickerPos} onClose={() => setFontPickerPos(null)} direction="top" padding={0} glassPad={['1', '4']} closeOnOutside={false} className="magic-hover" popupRef={ref}>
+    <SubPopup anchor={fontPickerPos} onClose={() => setFontPickerPos(null)} direction="top" padding={0} glassPad={['1', '4']} backdrop={fontPickerPos?.dockSide === undefined} closeOnOutside={false} className="magic-hover" popupRef={ref}>
       {Indicator}
       <div className="flex flex-col px-1 py-1">
         <MagicInput

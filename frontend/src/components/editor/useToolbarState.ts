@@ -159,58 +159,60 @@ export function useToolbarState(toolbarRef?: RefObject<HTMLElement | null>) {
     setCodeLangPickerPos(null);
   }, []);
 
-  const openColorFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
+  // `anchor` overrides the More-panel dock — the mini toolbar passes its own bar anchor
+  // so the picker opens above the clicked button instead of against the (closed) panel.
+  const openColorFromMenu = (e: MouseEvent<HTMLButtonElement>, anchor?: PopupAnchor) => {
     e.stopPropagation();
     if (colorPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setColorPickerPos(tbAnchor());
+    setColorPickerPos(anchor ?? tbAnchor());
   };
 
-  const openHighlightFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
+  const openHighlightFromMenu = (e: MouseEvent<HTMLButtonElement>, anchor?: PopupAnchor) => {
     e.stopPropagation();
     if (highlightPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setHighlightPickerPos(tbAnchor());
+    setHighlightPickerPos(anchor ?? tbAnchor());
   };
 
-  const openFontPickerFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
+  const openFontPickerFromMenu = (e: MouseEvent<HTMLButtonElement>, anchor?: PopupAnchor) => {
     e.stopPropagation();
     if (fontPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setFontPickerPos(tbAnchor());
+    setFontPickerPos(anchor ?? tbAnchor());
   };
 
-  const openFontSizeFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
+  const openFontSizeFromMenu = (e: MouseEvent<HTMLButtonElement>, anchor?: PopupAnchor) => {
     e.stopPropagation();
     if (fontSizePos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setFontSizePos(tbAnchor());
+    setFontSizePos(anchor ?? tbAnchor());
   };
 
-  const openLineHeightFromMenu = (e: MouseEvent<HTMLButtonElement>) => {
+  const openLineHeightFromMenu = (e: MouseEvent<HTMLButtonElement>, anchor?: PopupAnchor) => {
     e.stopPropagation();
     if (lineHeightPickerPos) { closeAllPopups(); return; }
     saveSelection();
     closeAllPopups();
-    setLineHeightPickerPos(tbAnchor());
+    setLineHeightPickerPos(anchor ?? tbAnchor());
   };
 
-  const openChecklistDropdown = (e: MouseEvent<HTMLButtonElement>) => {
+  const openChecklistDropdown = (e: MouseEvent<HTMLButtonElement>, anchor?: PopupAnchor) => {
     e.stopPropagation();
     if (checklistDropdownPos) { closeAllPopups(); return; }
     closeAllPopups();
-    setChecklistDropdownPos(tbAnchor());
+    setChecklistDropdownPos(anchor ?? tbAnchor());
   };
 
-  const openHeadingPicker = (e: MouseEvent<HTMLButtonElement>) => {
+  const openHeadingPicker = (e: MouseEvent<HTMLButtonElement>, anchor?: PopupAnchor) => {
     e.stopPropagation();
     if (headingPickerPos) { closeAllPopups(); return; }
     closeAllPopups();
-    setHeadingPickerPos(tbAnchor());
+    setHeadingPickerPos(anchor ?? tbAnchor());
   };
 
   const updateToolbar = useCallback(() => {
@@ -437,11 +439,11 @@ export function useToolbarState(toolbarRef?: RefObject<HTMLElement | null>) {
     setCodeLanguage(lang);
   };
 
-  const openCodeLangPicker = (e: MouseEvent<HTMLButtonElement>) => {
+  const openCodeLangPicker = (e: MouseEvent<HTMLButtonElement>, anchor?: PopupAnchor) => {
     e.stopPropagation();
     if (codeLangPickerPos) { closeAllPopups(); return; }
     closeAllPopups();
-    setCodeLangPickerPos(tbAnchor());
+    setCodeLangPickerPos(anchor ?? tbAnchor());
   };
 
   const formatCheckList = () => {
