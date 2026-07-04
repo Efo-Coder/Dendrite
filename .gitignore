@@ -73,3 +73,5 @@ frontend/test-output.css
 # Load testing (fixture contains valid JWTs; results are local measurements)
 backend/loadtest-seed.json
 loadtest/results/
+# Personal Claude Code settings (permissions etc.)
+.claude/settings.local.json
