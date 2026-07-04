@@ -25,6 +25,7 @@ import publishedRoutes from './routes/published.routes';
 import profileRoutes from './routes/profile.routes';
 import notificationRoutes from './routes/notification.routes';
 import reminderRoutes from './routes/reminder.routes';
+import aiRoutes from './routes/ai.routes';
 import { handleWebhook } from './controllers/checkout.controller';
 
 import { setupYjsConnection, persistAllDocs } from './wsHandler';
@@ -85,6 +86,7 @@ app.use('/api/published', publishedRoutes);
 app.use('/api/users', profileRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reminders', reminderRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });

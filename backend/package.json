@@ -23,6 +23,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@prisma/client": "^5.22.0",
     "@types/multer": "^2.0.0",
     "bcrypt": "^5.1.1",

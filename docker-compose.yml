@@ -35,6 +35,9 @@ services:
       # Puppeteer (in this container) loads the SPA's /print route from here to render PDFs.
       # Service name in dendrite-network — localhost would point at the backend itself.
       FRONTEND_URL: http://frontend:5173
+      # Claude API key for AI summarize — put it in a root .env file (gitignored);
+      # docker compose reads that automatically. Empty = AI routes return 503.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - "3000:3000"
     volumes:
