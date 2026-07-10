@@ -1,21 +1,34 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot, $createParagraphNode } from 'lexical';
 import { $convertFromMarkdownString, TRANSFORMERS } from '@lexical/markdown';
-import { aiService } from '../../services/ai.service';
+import { aiService, type SummarizeUsage } from '../../services/ai.service';
 import { getApiErrorMessage } from '../../lib/apiError';
 
 export type SummarizeStatus = 'idle' | 'loading' | 'done' | 'error';
 
 // Sends the note's plain text to the backend AI route and applies the returned
 // Markdown to the document (replace or append) after user confirmation.
-export function useSummarize() {
+// `enabled` (plan grants access) gates the usage fetch — free users never call it.
+export function useSummarize(enabled: boolean) {
   const [editor] = useLexicalComposerContext();
   const [status, setStatus] = useState<SummarizeStatus>('idle');
   const [markdown, setMarkdown] = useState('');
   const [error, setError] = useState('');
+  const [usage, setUsage] = useState<SummarizeUsage | null>(null);
   // Closing the modal mid-request must not let the late response reopen it.
   const requestIdRef = useRef(0);
+
+  // Load the current month's remaining quota once the plan allows summarizing.
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    aiService
+      .getUsage()
+      .then((u) => { if (!cancelled) setUsage(u); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [enabled]);
 
   const startSummarize = async () => {
     const text = editor
@@ -28,9 +41,10 @@ export function useSummarize() {
     setMarkdown('');
     setError('');
     try {
-      const md = await aiService.summarize(text);
+      const { markdown: md, usage: newUsage } = await aiService.summarize(text);
       if (requestIdRef.current !== requestId) return;
       setMarkdown(md);
+      if (newUsage) setUsage(newUsage);
       setStatus('done');
     } catch (err) {
       if (requestIdRef.current !== requestId) return;
@@ -68,5 +82,5 @@ export function useSummarize() {
     closeSummary();
   };
 
-  return { status, markdown, error, startSummarize, closeSummary, applyReplace, applyInsertBelow };
+  return { status, markdown, error, usage, startSummarize, closeSummary, applyReplace, applyInsertBelow };
 }

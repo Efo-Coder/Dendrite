@@ -35,6 +35,10 @@ model User {
   twoFactorEnabled            Boolean   @default(false)
   failedLoginAttempts         Int       @default(0)
   lockedUntil                 DateTime?
+  // Monthly AI-summarize quota: count within the calendar month named by
+  // aiSummarizeMonth ("YYYY-MM", UTC); resets when a new month is first used.
+  aiSummarizeMonth            String?
+  aiSummarizeCount            Int       @default(0)
   createdAt                   DateTime  @default(now())
   updatedAt                   DateTime  @updatedAt
 

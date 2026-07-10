@@ -7,7 +7,8 @@ export type PlanFeature =
   | 'pdfExport'
   | 'colorFavorites'
   | 'customColor'
-  | 'versionHistory';
+  | 'versionHistory'
+  | 'aiSummarize';
 
 const WRITER_FEATURES = new Set<PlanFeature>([
   'timerChecklist',
@@ -19,6 +20,7 @@ const WRITER_FEATURES = new Set<PlanFeature>([
   'colorFavorites',
   'customColor',
   'versionHistory',
+  'aiSummarize',
 ]);
 
 const AUTHOR_FEATURES = new Set<PlanFeature>([

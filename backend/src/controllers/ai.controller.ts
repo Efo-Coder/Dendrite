@@ -1,5 +1,7 @@
 import { Response } from 'express';
 import Anthropic from '@anthropic-ai/sdk';
+import { prisma } from '../lib/prisma';
+import { resolveUsage, currentPeriod } from '../lib/aiUsage';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 // Well below the model's context window; also caps cost per request.
@@ -16,9 +18,30 @@ const SYSTEM_PROMPT = [
 export const summarizeText = async (req: AuthRequest, res: Response) => {
   const { text } = req.body as { text?: string };
 
+  // Authorization before server-readiness: a free user must see 403 even when
+  // no API key is configured. Summarize is a paid feature; enforce here so the
+  // frontend gate can't be bypassed with a direct call to this expensive endpoint.
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId! },
+    select: { plan: true, aiSummarizeMonth: true, aiSummarizeCount: true },
+  });
+  const plan = (user?.plan || 'free').toLowerCase();
+  if (plan !== 'writer' && plan !== 'author') {
+    return res.status(403).json({ error: 'Writer plan required' });
+  }
+
+  const usage = resolveUsage(plan, user?.aiSummarizeMonth ?? null, user?.aiSummarizeCount ?? 0);
+  if (usage.limit !== null && usage.used >= usage.limit) {
+    return res.status(429).json({
+      error: `Monthly summarize limit reached (${usage.limit}). Upgrade to Author for unlimited.`,
+      usage,
+    });
+  }
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(503).json({ error: 'AI features are not configured on this server' });
   }
+
   if (!text?.trim()) {
     return res.status(400).json({ error: 'Text is required' });
   }
@@ -44,9 +67,29 @@ export const summarizeText = async (req: AuthRequest, res: Response) => {
     if (!markdown) {
       return res.status(502).json({ error: 'AI returned an empty result' });
     }
-    return res.json({ markdown });
+
+    // Count only successful summaries; roll the month over on first use.
+    const period = currentPeriod();
+    const newUsed = usage.used + 1;
+    await prisma.user.update({
+      where: { id: req.userId! },
+      data: { aiSummarizeMonth: period, aiSummarizeCount: newUsed },
+    });
+
+    return res.json({ markdown, usage: { used: newUsed, limit: usage.limit } });
   } catch (err) {
     console.error('summarizeText error:', err);
     return res.status(500).json({ error: 'Failed to summarize note' });
   }
+};
+
+// Current month's summarize usage for the signed-in user — drives the remaining
+// counter on the editor button without leaking the raw fields onto the user object.
+export const getSummarizeUsage = async (req: AuthRequest, res: Response) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId! },
+    select: { plan: true, aiSummarizeMonth: true, aiSummarizeCount: true },
+  });
+  const usage = resolveUsage(user?.plan, user?.aiSummarizeMonth ?? null, user?.aiSummarizeCount ?? 0);
+  return res.json(usage);
 };
