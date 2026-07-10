@@ -49,6 +49,11 @@ interface ToolbarButtonsInput {
   summarizer: ReturnType<typeof useSummarize>;
   noteId?: string;
   canCodeLang: boolean;
+  // AI summarize is a Writer feature; without access the button opens the
+  // upgrade modal instead of acting (frontend half of the gate — the backend
+  // enforces it too, so the API can't be hit directly).
+  canSummarize: boolean;
+  onSummarizeLocked: () => void;
   onInfo?: () => void;
   onVersionHistory?: () => void;
 }
@@ -100,7 +105,7 @@ export function sanitizeMiniToolbarItems(stored: string[]): string[] {
 
 // ─── Builder ─────────────────────────────────────────────────────────────────
 
-export function buildToolbarButtons({ ts, dictation, summarizer, noteId, canCodeLang, onInfo, onVersionHistory }: ToolbarButtonsInput): ToolbarButtons {
+export function buildToolbarButtons({ ts, dictation, summarizer, noteId, canCodeLang, canSummarize, onSummarizeLocked, onInfo, onVersionHistory }: ToolbarButtonsInput): ToolbarButtons {
   const isInCode = ts.blockType === 'code';
 
   const CodeToolIcon = ({ className }: { className?: string }) => {
@@ -151,13 +156,30 @@ export function buildToolbarButtons({ ts, dictation, summarizer, noteId, canCode
     { id: 'outdent', icon: IndentDecrease, title: 'Decrease indent', action: () => ts.outdentContent(), isDisabled: !ts.canOutdent },
   ];
 
+  // Summarize gating: a null limit means unlimited (Author); a finite limit
+  // shows the remaining count and routes clicks to upgrade once exhausted.
+  const usage = summarizer.usage;
+  const summarizeRemaining = usage && usage.limit !== null ? Math.max(0, usage.limit - usage.used) : null;
+  const summarizeAtLimit = summarizeRemaining === 0;
+  const summarizeTitle = !canSummarize
+    ? 'Summarize with AI — Writer plan required'
+    : summarizeRemaining !== null
+      ? `Summarize with AI — ${summarizeRemaining} of ${usage!.limit} left this month`
+      : 'Summarize with AI';
+
   const insertRow: ToolbarBtn[] = [
     { id: 'attach', icon: Paperclip, title: 'Attach file', action: () => ts.insertAttachment(), isDisabled: isInCode || !noteId },
     { id: 'image', icon: Image, title: 'Insert image', action: () => ts.insertImage(), isDisabled: isInCode },
     { id: 'divider', icon: Minus, title: 'Horizontal rule', action: () => ts.insertHorizontalRule(), isDisabled: isInCode },
     { id: 'table', icon: Table, title: 'Table', action: () => (ts.isInTable ? ts.removeTable() : ts.setShowTableModal(true)), isActive: ts.isInTable, isDisabled: isInCode },
     { id: 'dictate', icon: Mic, title: 'Dictate', action: () => dictation.toggleDictation(), isActive: dictation.isRecording, isDisabled: !dictation.isSupported },
-    { id: 'summarize', icon: Sparkles, title: 'Summarize with AI', action: () => void summarizer.startSummarize(), isDisabled: ts.wordCount === 0 },
+    {
+      id: 'summarize', icon: Sparkles,
+      title: summarizeTitle,
+      // No access or exhausted quota → click routes to upgrade (word count irrelevant there).
+      action: () => (canSummarize && !summarizeAtLimit ? void summarizer.startSummarize() : onSummarizeLocked()),
+      isDisabled: canSummarize && !summarizeAtLimit && ts.wordCount === 0,
+    },
   ];
 
   const historyRow: ToolbarBtn[] = [

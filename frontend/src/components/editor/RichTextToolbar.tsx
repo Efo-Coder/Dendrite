@@ -1,12 +1,12 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
-import { Plus } from 'lucide-react';
 import clsx from 'clsx';
 import { getModalPortalRoot } from '../../lib/modalPortalRoot';
 import { useMagicHover } from '../../hooks/useMagicHover';
 import type { PopupAnchor } from '../../hooks/useSmartPopupStyle';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useUpgradeModal } from '../../store/useUpgradeModal';
 import { useSettingsStore, MINI_TOOLBAR_DEFAULTS, MINI_TOOLBAR_MAX } from '../../store/useSettingsStore';
 import { canAccess } from '../../lib/planFeatures';
 import ImageInsertModal from '../modals/ImageInsertModal';
@@ -15,10 +15,11 @@ import TableInsertModal from '../modals/TableInsertModal';
 import AttachmentInsertModal from '../modals/AttachmentInsertModal';
 import SummarizePreviewModal from '../modals/SummarizePreviewModal';
 import ElevatedToolbar from './ElevatedToolbar';
-import MiniToolbar from './MiniToolbar';
+import MiniToolbar, { type MiniToolbarHandle } from './MiniToolbar';
 import ColorPickerPortal from './ColorPickerPortal';
 import FontPicker from './FontPicker';
 import { useDictation } from './useDictation';
+import { useMenuToolDrag } from './useMenuToolDrag';
 import { useSummarize } from './useSummarize';
 import { useToolbarState } from './useToolbarState';
 import { ToolbarStateContext } from './ToolbarStateContext';
@@ -38,6 +39,7 @@ interface RichTextToolbarProps {
 
 const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, minimalChrome = false, moreOpen, onMoreToggle }: RichTextToolbarProps) => {
   const { user } = useAuthStore();
+  const openUpgrade = useUpgradeModal((s) => s.open);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const toolbarState = useToolbarState(moreMenuRef);
   const {
@@ -63,8 +65,9 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
     insertTable, insertAttachmentNode, insertImageFromUrl,
   } = toolbarState;
 
+  const canSummarize = canAccess(user?.plan, 'aiSummarize');
   const dictation = useDictation();
-  const summarizer = useSummarize();
+  const summarizer = useSummarize(canSummarize);
 
   const storedMiniItems = useSettingsStore((s) => s.miniToolbarItems);
   const setMiniToolbarItems = useSettingsStore((s) => s.setMiniToolbarItems);
@@ -76,6 +79,8 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
     summarizer,
     noteId,
     canCodeLang: canAccess(user?.plan, 'syntaxHighlighting'),
+    canSummarize,
+    onSummarizeLocked: openUpgrade,
     onInfo,
     onVersionHistory,
   });
@@ -88,7 +93,18 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
   );
 
   const canAddTool = (id: string) => !miniItems.includes(id) && miniItems.length < MINI_TOOLBAR_MAX;
-  const addTool = (id: string) => { if (canAddTool(id)) setMiniToolbarItems([...miniItems, id]); };
+  // The drop slot indexes the *rendered* tools; translate into the stored order, which
+  // may also hold tools without a handler in this context (e.g. info in trash).
+  const addToolAt = (id: string, renderedIdx: number) => {
+    if (!canAddTool(id)) return;
+    const next = [...miniItems];
+    const storedIdx = renderedIdx >= miniTools.length ? next.length : next.indexOf(miniTools[renderedIdx].id);
+    next.splice(storedIdx, 0, id);
+    setMiniToolbarItems(next);
+  };
+
+  const miniRef = useRef<MiniToolbarHandle>(null);
+  const menuDrag = useMenuToolDrag({ miniRef, canDrag: (id) => !disabled && canAddTool(id), onDrop: addToolAt });
 
   const { onItemEnter: onMoreEnter, onItemLeave: onMoreLeave, Indicator: MoreIndicator } = useMagicHover({ mode: 'free', borderRadius: 8, ref: moreMenuRef });
 
@@ -107,38 +123,45 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
     isDocked(fontSizePos) || isDocked(lineHeightPickerPos) || isDocked(headingPickerPos) ||
     isDocked(codeLangPickerPos) || isDocked(checklistDropdownPos);
 
-  const renderBtn = (btn: ToolbarBtn) => (
-    <div key={btn.id} className="relative group/add">
+  // Tools drag out of the panel into the mini toolbar; a plain click still acts.
+  const renderBtn = (btn: ToolbarBtn) => {
+    const btnDisabled = disabled || !!btn.isDisabled;
+    return (
       <button
+        key={btn.id}
         type="button"
         onMouseDown={(e) => e.preventDefault()}
-        onClick={(e) => btn.action(e)}
-        onMouseEnter={onMoreEnter}
-        onMouseLeave={onMoreLeave}
-        disabled={disabled || !!btn.isDisabled}
-        className={menuBtnCls(!!btn.isActive)}
+        onClick={(e) => { if (!btnDisabled) btn.action(e); }}
+        onMouseEnter={btnDisabled ? undefined : onMoreEnter}
+        onMouseLeave={btnDisabled ? undefined : onMoreLeave}
+        // aria-disabled instead of disabled so disabled tools stay draggable into the bar.
+        aria-disabled={btnDisabled || undefined}
+        className={clsx(menuBtnCls(!!btn.isActive), 'touch-pan-y', btnDisabled && 'opacity-30')}
         title={btn.title}
+        {...menuDrag.handlers(btn)}
       >
         <btn.icon className="w-4 h-4" />
       </button>
-      {canAddTool(btn.id) && (
-        <button
-          type="button"
-          title="Add to quick bar"
-          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          onClick={(e) => { e.stopPropagation(); addTool(btn.id); }}
-          className="absolute -top-1 -right-1 z-1 flex h-4 w-4 items-center justify-center rounded-full border border-(--line) bg-(--panel-bg) text-(--ink-mid) opacity-0 pointer-events-none transition-opacity group-hover/add:opacity-100 group-hover/add:pointer-events-auto hover:text-(--accent)"
-        >
-          <Plus className="h-3 w-3" />
-        </button>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
     <ToolbarStateContext.Provider value={toolbarState}>
     <div className="relative">
       <ElevatedToolbar disabled={disabled} />
+
+      {/* Recording indicator lives OUTSIDE the overflow-hidden chrome below —
+          it floats above the footer and would otherwise be clipped. */}
+      {(dictation.isRecording || dictation.error) && (
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-1 mb-3 flex max-w-[60vw] -translate-x-1/2 items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--line)_75%,transparent)] bg-(--panel-bg) backdrop-blur-md px-3 py-1.5 text-xs text-(--ink-mid) whitespace-nowrap">
+          <span className={clsx('h-2 w-2 shrink-0 rounded-full bg-(--danger)', dictation.isRecording && 'animate-pulse')} />
+          <span className={clsx('truncate', dictation.error ? 'text-(--danger)' : 'tabular-nums')}>
+            {dictation.error
+              ? `Dictation failed: ${dictation.error}`
+              : `Recording ${Math.floor(dictation.elapsedSec / 60)}:${String(dictation.elapsedSec % 60).padStart(2, '0')}`}
+          </span>
+        </div>
+      )}
 
       <div
         className={clsx(
@@ -160,13 +183,8 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
             <motion.span>{roundedCount}</motion.span> {wordCount === 1 ? 'word' : 'words'}
           </span>
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 min-w-0">
-            {dictation.isRecording && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 flex max-w-[60vw] items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--line)_75%,transparent)] bg-(--panel-bg) backdrop-blur-md px-3 py-1.5 text-xs text-(--ink-mid) whitespace-nowrap">
-                <span className="w-2 h-2 shrink-0 rounded-full bg-(--danger) animate-pulse" />
-                <span className="truncate">{dictation.interimText || 'Listening…'}</span>
-              </div>
-            )}
             <MiniToolbar
+              ref={miniRef}
               tools={miniTools}
               removableIds={removableIds}
               disabled={disabled}
@@ -224,6 +242,7 @@ const RichTextToolbar = ({ disabled = false, noteId, onInfo, onVersionHistory, m
         </AnimatePresence>,
         getModalPortalRoot()
       )}
+      {menuDrag.ghost}
 
       <HeadingPicker />
       <CodeLangPicker />
