@@ -3,6 +3,7 @@ import { Note } from '../types';
 import { noteService } from '../services/note.service';
 import { getApiErrorMessage } from '../lib/apiError';
 import { getCachedList, setCachedList } from '../lib/listCache';
+import { loadOpenNote } from '../lib/viewState';
 import { randomCoverPreset } from '../config/coverPresets';
 
 // Cached so the Home dashboard renders its notes immediately on reload.
@@ -62,7 +63,9 @@ interface NoteState {
 
 export const useNoteStore = create<NoteState>((set) => ({
   notes: getCachedList<Note>(NOTES_CACHE) ?? [],
-  currentNote: null,
+  // Hydrated before the first render so the editor overlay's close-effect in
+  // DashboardPage never sees editorNote without a matching currentNote on reload.
+  currentNote: loadOpenNote(),
   isLoading: false,
   error: null,
   justCreatedNoteIds: [],

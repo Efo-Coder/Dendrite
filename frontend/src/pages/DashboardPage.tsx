@@ -6,7 +6,7 @@ import { useUpgradeModal } from '../store/useUpgradeModal';
 import { noteService } from '../services/note.service';
 import { Note } from '../types';
 import { PAGE_FADE } from '../lib/pageMotion';
-import { loadNav, saveNav, markNavigated } from '../lib/viewState';
+import { loadNav, saveNav, markNavigated, saveOpenNote } from '../lib/viewState';
 import { RenameProvider } from '../components/home/RenameContext';
 import AppSidebar from '../components/sidebar/AppSidebar';
 import EditorOverlay from './EditorOverlay';
@@ -50,7 +50,15 @@ const DashboardPage = () => {
   const [editorSidebarCollapsed, setEditorSidebarCollapsed] = useState(false);
   // The note shown in the editor overlay; origin is the rect it grows from, and
   // editorClosing drives the shrink-back morph before it actually unmounts.
-  const [editorNote, setEditorNote] = useState<Note | null>(null);
+  // After a reload it starts from the session cache so the overlay mounts with
+  // the first frame — otherwise Home flashes underneath until the refetch lands.
+  const [editorNote, setEditorNote] = useState<Note | null>(() => {
+    const cached = useNoteStore.getState().currentNote;
+    return cached && cached.id === persisted?.openNoteId ? cached : null;
+  });
+  // True only for that restored mount — the overlay then skips its open fade
+  // (the page fade already reveals it); any user-initiated open resets it.
+  const editorRestored = useRef(editorNote !== null);
   const [editorOrigin, setEditorOrigin] = useState<DOMRect | null>(null);
   const [editorClosing, setEditorClosing] = useState(false);
   // Bumped when the editor closes so the local-list views refetch (a just-created
@@ -132,6 +140,7 @@ const DashboardPage = () => {
   // origin rect (the clicked card, found by id, or an explicit rect for new notes).
   const openEditor = useCallback((note: Note, originRect?: DOMRect) => {
     const origin = originRect ?? document.querySelector(`[data-flip-id="${note.id}"]`)?.getBoundingClientRect() ?? null;
+    editorRestored.current = false;
     setEditorOrigin(origin);
     setEditorClosing(false);
     // List payloads carry only a preview — load the full body before the editor
@@ -161,6 +170,13 @@ const DashboardPage = () => {
     if (currentNote) setEditorNote(currentNote);
   }, [currentNote]);
 
+  // Mirror the open note into the reload cache (cleared on close). Preview-only
+  // stubs are skipped — the overlay must never remount from a body-less note.
+  useEffect(() => {
+    if (!editorNote) saveOpenNote(null);
+    else if (editorNote.content !== undefined) saveOpenNote(editorNote);
+  }, [editorNote]);
+
   // Editor closed itself (X / move-to-trash) → play the shrink-back morph.
   useEffect(() => {
     if (!currentNote && editorNote) setEditorClosing(true);
@@ -173,11 +189,21 @@ const DashboardPage = () => {
     setRefreshSignal((n) => n + 1);
   }, []);
 
-  // Reopen the note that was open before a reload (no origin → fades in).
+  // Refetch the note reopened from the reload cache (or open it late when the
+  // cache missed); if it's gone (deleted elsewhere), drop the stale editor.
   useEffect(() => {
     const id = persisted?.openNoteId;
     if (!id) return;
-    noteService.getNoteById(id).then((n) => { setEditorNote(n); setCurrentNote(n); }).catch(() => {});
+    noteService
+      .getNoteById(id)
+      .then((n) => { setEditorNote(n); setCurrentNote(n); })
+      .catch(() => {
+        // Only drop the reload note itself, never one the user opened meanwhile.
+        if (useNoteStore.getState().currentNote?.id === id) {
+          setCurrentNote(null);
+          setEditorNote(null);
+        }
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -277,6 +303,7 @@ const DashboardPage = () => {
             <EditorOverlay
               note={editorNote}
               origin={editorOrigin}
+              instant={editorRestored.current}
               closing={editorClosing}
               onClosed={handleEditorClosed}
               onToggleSidebar={() => setEditorSidebarCollapsed((v) => !v)}

@@ -1,5 +1,4 @@
 import { ReactNode, useRef, useEffect, useLayoutEffect, createContext } from 'react';
-import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import clsx from 'clsx';
 import type Lenis from 'lenis';
@@ -217,12 +216,7 @@ const LexicalEditorWrapper = ({
               ref={scrollRef}
               className="editor-canvas min-w-0 grow"
             >
-              <motion.div
-                ref={scrollContentRef}
-                initial={{ y: 6 }}
-                animate={{ y: 0 }}
-                transition={{ duration: 0.18, ease: 'easeOut' }}
-              >
+              <div ref={scrollContentRef}>
               {headerSlot && (
                 <div className="w-full pt-6">
                   {headerSlot}
@@ -271,7 +265,7 @@ const LexicalEditorWrapper = ({
                 <LineHeightSyncPlugin />
                 <ActiveLinePlugin />
               </div>
-              </motion.div>
+              </div>
             </div>
 
             {/* Table-of-contents column — its width collapses to 0 when the note

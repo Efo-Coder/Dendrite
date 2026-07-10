@@ -49,6 +49,8 @@ interface NoteEditorProps {
   onNoteUpdate?: () => void;
   onToggleSidebar?: () => void;
   sidebarCollapsed?: boolean;
+  // Restored on reload: render fully settled, without the entrance fade/slide.
+  instant?: boolean;
 }
 
 // Presence label for >1 active users: split by edit capability so viewers
@@ -60,7 +62,7 @@ function presenceLabel(users: ActiveUser[]): string {
   return viewing ? `${viewing} viewing` : `${editing} editing`;
 }
 
-const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: NoteEditorProps) => {
+const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed, instant }: NoteEditorProps) => {
   const { updateNote, deleteNote, togglePin, toggleFavorite, toggleArchive, toggleTrash, setCurrentNote, setNoteTitleOptimistic, updateNoteInStore } = useNoteStore();
   const { folders } = useFolderStore();
   const { user } = useAuthStore();
@@ -363,19 +365,16 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
   return (
     <motion.div
       className="relative h-full flex flex-col bg-transparent"
-      initial={{ opacity: 0 }}
+      initial={instant ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.18, ease: 'easeOut' }}
       onMouseMove={handleEditorMouseMove}
     >
-      <motion.div
+      <div
         className={clsx(
           'relative z-1 transition-[max-height,opacity] duration-500 ease-out',
           focusWritingMode ? 'max-h-0 overflow-hidden opacity-0 pointer-events-none' : 'max-h-8 overflow-visible opacity-100'
         )}
-        initial={{ y: 6 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
       >
             <div
               className="editor-topbar relative flex h-14 items-center justify-between px-6"
@@ -462,7 +461,7 @@ const NoteEditor = ({ note, onNoteUpdate, onToggleSidebar, sidebarCollapsed }: N
               </div>
             </div>
 
-      </motion.div>
+      </div>
 
       <div
         className={clsx(
