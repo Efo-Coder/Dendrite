@@ -1,141 +1,98 @@
+<div align="center">
+
 # Dendrite
 
-Moderne Notizen-App mit Rich-Text-Editor, Echtzeit-Kollaboration und sicherer Authentifizierung.
+### Write what endures.
 
-Live: [dendrite-notes.com](https://www.dendrite-notes.com)
+A calm, fast notebook for notes, journals and ideas —
+a quiet place for the thoughts you want to keep.
+
+**[dendrite-notes.com](https://www.dendrite-notes.com)** · currently in beta
+
+</div>
+
+![The Dendrite landing page](docs/screenshots/landing.jpg)
+
+---
+
+Most note apps are built for capture. Dendrite is built for keeping — for the
+notes you come back to. It is a full writing environment: a rich-text editor
+that stays out of the way, real-time collaboration, a place to publish what is
+worth sharing, and a map of the themes your own writing keeps returning to.
+
+---
+
+## Write
+
+A Lexical-based editor with headings, lists, tables, checkboxes, images and
+drop caps. The toolbar is yours to rearrange. Dictate a passage and it is
+transcribed as you speak; ask for a summary and Claude writes one. Everything
+autosaves.
+
+![The Dendrite editor](docs/screenshots/editor.jpg)
+
+## Return
+
+Home opens on the thoughts you left unfinished, one reflection question a day,
+and the spaces your writing lives in.
+
+![The Dendrite home dashboard](docs/screenshots/home.jpg)
+
+## Keep
+
+Bookmarks group notes across spaces and folders — every thread you have saved,
+in one library.
+
+![The Dendrite library](docs/screenshots/library.jpg)
+
+## Map
+
+The Arbor reads the themes running through your notes and draws them as
+branching growth. Follow a branch to its theme and enter it.
+
+![The Arbor — a map of recurring themes](docs/screenshots/arbor.jpg)
+
+## Share
+
+Publish a note and it becomes part of Explore, where other people's writing can
+be read, liked and copied into your own workspace.
+
+![Explore — published notes from the community](docs/screenshots/explore.jpg)
 
 ---
 
 ## Features
 
-- Rich-Text-Editor (Lexical) mit Toolbar, Bilder, Checklisten, Tabellen
-- Ordner- und Tag-System
-- Echtzeit-Kollaboration via WebSocket
-- Notizen teilen (Share-Links)
-- Anhänge / Datei-Upload
-- Suchfunktion
-- Dark Mode
-- Authentifizierung: JWT, Email-Verifikation, Passwort-Reset, 2FA (TOTP), OAuth
-- Abonnement-System (Stripe)
+**Writing** — rich-text editor, drop caps, tables, checklists with timers,
+image and file attachments, per-note covers, version history, PDF export,
+voice dictation, AI summaries
+
+**Organising** — spaces, nested folders, bookmarks, pinning, favourites,
+full-text search, reminders, trash with 30-day recovery
+
+**Together** — real-time collaboration over WebSocket with live presence,
+invitations with per-note roles, follows and notifications
+
+**Discovering** — publish to Explore, topic and length filters, trending and
+featured, likes, public profiles
+
+**Reflecting** — a daily question and the Arbor's map of recurring themes
+
+**Account** — email and OAuth sign-in, email verification, password reset,
+two-factor authentication, Stripe subscriptions
 
 ---
 
-## Tech Stack
+## Built with
 
-**Frontend**
-- React 18, TypeScript, Vite
-- Tailwind CSS v4
-- Zustand (State Management)
-- React Router v6
-- Lexical (Editor)
+React · TypeScript · Vite · Tailwind CSS · Lexical · Yjs · GSAP · Three.js
+Node · Express · Prisma · PostgreSQL · Docker
 
-**Backend**
-- Node.js, Express, TypeScript
-- Prisma ORM
-- WebSocket (ws)
-- Brevo (E-Mail)
-- Stripe (Payments)
-
-**Infrastruktur**
-- PostgreSQL 16
-- Docker & Docker Compose
-- Hetzner Cloud CPX22
+Setup, architecture, project structure and deployment are documented in
+**[DOCS.md](DOCS.md)**.
 
 ---
 
-## Lokale Entwicklung
-
-### Voraussetzungen
-
-- Docker & Docker Compose
-- Node.js 20+
-- Git
-
-### Setup
-
-```bash
-git clone https://github.com/Efo-Coder/Dendrite.git
-cd Dendrite
-cp .env.example .env   # Umgebungsvariablen anpassen
-docker-compose up --build
-```
-
-| Dienst       | URL                      |
-|--------------|--------------------------|
-| Frontend     | http://localhost:5173    |
-| Backend API  | http://localhost:3000    |
-| PostgreSQL   | localhost:5432           |
-
-### Nützliche Befehle
-
-```bash
-# Neu bauen und im Hintergrund starten
-docker compose up -d --build
-
-# Nur Backend
-docker compose up backend
-
-# Nur Frontend
-docker compose up frontend
-
-# Container stoppen
-docker compose down
-
-# Container + Volumes löschen
-docker compose down -v
-```
-
----
-
-## Projektstruktur
-
-```
-Dendrite/
-├── frontend/
-│   └── src/
-│       ├── components/
-│       │   ├── editor/        # Lexical Editor, Toolbar, Plugins
-│       │   ├── landing/       # Landing-Page Sektionen
-│       │   ├── modals/        # Alle Modal-Komponenten
-│       │   ├── noteList/      # Notizenübersicht
-│       │   ├── sidebar/       # Sidebar-Komponenten
-│       │   └── ui/            # Wiederverwendbare UI-Elemente
-│       ├── pages/             # Seitenkomponenten (Route-Level)
-│       ├── services/          # API-Aufrufe
-│       ├── store/             # Zustand Stores
-│       ├── hooks/             # Custom Hooks
-│       ├── types/             # TypeScript-Typen
-│       └── lib/               # Hilfsfunktionen
-├── backend/
-│   └── src/
-│       ├── controllers/       # Request Handler
-│       ├── routes/            # Express Router
-│       ├── middleware/        # Auth-Middleware
-│       ├── services/          # Business Logic (Email etc.)
-│       ├── config/            # Konfiguration (Multer etc.)
-│       └── utils/             # Hilfsfunktionen
-│   └── prisma/
-│       ├── schema.prisma
-│       └── migrations/
-├── docker-compose.yml
-└── docker-compose.prod.yml
-```
-
----
-
-## Deployment (Produktion)
-
-Server: Hetzner CPX22, Ubuntu — Repo unter `/opt/dendrite`
-
-```bash
-ssh root@178.105.243.68
-deploy   # Alias für Pull + docker-compose.prod.yml rebuild
-```
-
-Env-Datei: `/opt/dendrite/.env.prod`
-
----
-
-## Lizenz
+## License
 
 MIT
