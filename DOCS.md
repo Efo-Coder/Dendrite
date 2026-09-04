@@ -193,21 +193,17 @@ Prüfen: `certbot certificates`, `certbot renew --dry-run`, und bei Verdacht
 ## Screenshots erzeugen
 
 Die Bilder in `docs/screenshots/` entstehen headless über Playwright gegen die
-lokal laufende App. Die Mechanik (Login per Token-Injection in `localStorage`,
-Ansichtswahl über `sessionStorage['dendrite:nav']`) ist im Skill
-`.claude/skills/verifier-browser/` beschrieben.
+lokal laufende App. Werkzeug und Anleitung liegen in
+[`screenshots/`](screenshots/README.md):
 
-Zu beachten:
+- `seed.js` legt einen Demo-Workspace an (IDs mit `demo-`-Präfix, additiv und
+  idempotent) und gibt einen Login-Token aus. Nötig, weil die lokale DB sonst
+  Load-Test-Daten zeigt.
+- `shoot.js` fährt die Ansichten ab und schreibt die Bilder.
 
-- Der Cookie-Banner muss über `localStorage['dendrite-cookie-consent']`
-  vorab bestätigt werden, sonst steht er mitten im Bild.
-- Theme und `activeLine` liegen im Zustand-Store `dendrite-settings`
-  (Version 8), nicht in eigenen Keys.
-- Die Einblend-Animationen brauchen Zeit: Home und Library etwa 5 s, der Arbor
-  rund 12 s. Zu früh ausgelöst, sind die Karten halb transparent oder die
-  Visualisierung ist noch schwarz.
-- JPEG statt PNG — bei zweifacher Auflösung ist PNG wegen der Cover-Fotos
-  vier- bis fünfmal so groß.
+Die nicht offensichtlichen Details — Login per Token-Injection, Ansichtswahl
+über `sessionStorage['dendrite:nav']`, Cookie-Banner, der `dendrite-settings`-
+Store und die nötigen Wartezeiten — stehen im README des Ordners.
 
 ---
 

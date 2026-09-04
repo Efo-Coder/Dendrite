@@ -1,0 +1,11 @@
+{
+  "name": "dendrite-screenshots",
+  "private": true,
+  "description": "Generates the README screenshots from the locally running app",
+  "scripts": {
+    "shoot": "node shoot.js"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
