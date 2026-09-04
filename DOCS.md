@@ -4,8 +4,6 @@ Diese Datei enthält alles Technische: Stack, lokale Entwicklung, Aufbau des
 Projekts und Deployment. Die Präsentation der App steht im
 [README](README.md).
 
-Ergänzend im Repo: [SETUP.md](SETUP.md) (Docker-Einstieg).
-
 ---
 
 ## Tech Stack
